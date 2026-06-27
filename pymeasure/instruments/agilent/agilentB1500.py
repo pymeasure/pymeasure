@@ -880,12 +880,12 @@ class AgilentB1500(SCPIMixin, Instrument):
         data_array = np.array(data_list)
         data_array_list = np.split(data_array, number_of_points)
         data = pd.DataFrame(data=data_array_list)
-        data_mapped = data.applymap(self._data_format.format_single)
-        heads = data_mapped.iloc[[0]].applymap(lambda x: " ".join(x[1:3]))
+        data_mapped = data.map(self._data_format.format_single)
+        heads = data_mapped.iloc[[0]].map(lambda x: " ".join(x[1:3]))
         # channel & data_type
         heads_list = heads.to_numpy().tolist()  # 2D List
         first_row = heads_list[0]
-        data_twice_mapped = data_mapped.applymap(lambda x: x[3])
+        data_twice_mapped = data_mapped.map(lambda x: x[3])
         data_twice_mapped.columns = first_row
         return data_twice_mapped
 
