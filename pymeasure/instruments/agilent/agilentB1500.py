@@ -2399,7 +2399,9 @@ class QueryLearn:
     def CL(
         cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
     ) -> dict[str, str]:
-        smu = cls._get_smu(key + parameters, smu_references)
+        if isinstance(parameters, str):
+            key += parameters
+        smu = cls._get_smu(key, smu_references)
         return {smu.name: "OFF"}
 
     # Instrument Settings: 31
