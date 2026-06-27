@@ -115,18 +115,11 @@ class KeysightE364XASingleOutput(SCPIMixin, Instrument):
             name if name is not None else self._default_name,
             **kwargs,
         )
-        """Dynamically set 'update_validator_range' as a set process for the range command.
-
-        This callback will update the 'voltage_setpoint_values' and 'current_limit_values' each time
-        the range property is modified. The setpoint/limit values are class attributes of the
-        specific model of the device series.
-        During instantiation the range attribute is set to reflect the 'voltage_range' passed to the
-        constructor. This will initially setup said validator ranges and put the device in the
-        desired output range.
-        """
-
+        # Set 'update_validator_range' as a set process for the channels range command
         self.range_set_process = self.update_validator_range
+        # Set mapping of "HIGH" and "LOW" to device specific range keywords
         self.range_values = self._range_map
+        # Initialize device with desired output range modes
         self.range = voltage_range
 
     voltage_setpoint = Instrument.control(
@@ -219,19 +212,13 @@ class KeysightE364XADualOutput(SCPIMixin, Instrument):
             name if name is not None else self._default_name,
             **kwargs,
         )
-        """ Dynamically set 'update_validator_range' as a set process for the range command.
-
-        This callback will update the 'voltage_setpoint_values' and 'current_limit_values' each time
-        the range property is modified. The setpoint/limit values are class attributes of the
-        specific model of the device series.
-        During instantiation the range attribute is set to reflect the 'voltage_range' passed to the
-        constructor. This will initially setup said validator ranges and put the channels in the
-        desired output ranges.
-        """
+        # Set 'update_validator_range' as a set process for the channels range command
         self.ch_1.range_set_process = self.ch_1.update_validator_range
         self.ch_2.range_set_process = self.ch_2.update_validator_range
+        # Set mapping of "HIGH" and "LOW" to device specific range keywords
         self.ch_1.range_values = self._range_map
         self.ch_2.range_values = self._range_map
+        # Initialize device with desired output range modes
         self.ch_1.range = voltage_range[0]
         self.ch_2.range = voltage_range[1]
 

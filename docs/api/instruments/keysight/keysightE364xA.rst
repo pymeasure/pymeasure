@@ -8,28 +8,28 @@ Keysight E364xA Series of Power Supplies
 .. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3641A
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3642A    
+.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3642A
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3643A    
+.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3643A
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3644A    
+.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3644A
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3645A    
+.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3645A
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3646A    
+.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3646A
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3647A    
+.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3647A
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3648A    
+.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3648A
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3649A    
+.. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3649A
     :show-inheritance:
 
 .. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE364XASingleOutput
