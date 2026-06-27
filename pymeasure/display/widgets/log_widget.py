@@ -96,7 +96,7 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
         # Setup blinking
         if self._blink_qtimer is None:
             self._blink_qtimer = QtCore.QTimer()
-            
+
         self._blink_qtimer.timeout.connect(self._blink)
         self.handler.connect(self._blinking_start)
 
