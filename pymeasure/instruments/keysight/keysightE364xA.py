@@ -75,7 +75,7 @@ class KeysightE364XAChannel(Channel):
         cast=str,
     )
 
-    def update_output_range(self, value):
+    def update_validator_range(self, value):
         """Update the validator ranges after switching the output range.
 
         When the output range is switched, the maximum values of `voltage_setpoint`
@@ -110,7 +110,7 @@ class KeysightE364XASingleOutput(SCPIMixin, Instrument):
             name if name is not None else self._default_name,
             **kwargs,
         )
-        """Dynamically set 'update_output_range' as a set process for the range selection command.
+        """Dynamically set 'update_validator_range' as a set process for the range selection command.
 
         This callback will update the 'voltage_setpoint_values' and 'current_limit_values' each time
         the range property is modified. The setpoint/limit values are class attributes of the
@@ -120,7 +120,7 @@ class KeysightE364XASingleOutput(SCPIMixin, Instrument):
         desired output range.
         """
 
-        self.range_set_process = self.update_output_range
+        self.range_set_process = self.update_validator_range
         self.range_values = self._range_map
         self.range = voltage_range
 
@@ -170,7 +170,7 @@ class KeysightE364XASingleOutput(SCPIMixin, Instrument):
         cast=str,
     )
 
-    def update_output_range(self, value):
+    def update_validator_range(self, value):
         """Update the validator ranges after switching the output range.
 
         When the output range is switched, the maximum values of `voltage_setpoint`
@@ -209,7 +209,7 @@ class KeysightE364XADualOutput(SCPIMixin, Instrument):
             name if name is not None else self._default_name,
             **kwargs,
         )
-        """ Dynamically set 'update_output_range' as a set process for the range selection command.
+        """ Dynamically set 'update_validator_range' as a set process for the range selection command.
 
         This callback will update the 'voltage_setpoint_values' and 'current_limit_values' each time
         the range property is modified. The setpoint/limit values are class attributes of the
@@ -218,8 +218,8 @@ class KeysightE364XADualOutput(SCPIMixin, Instrument):
         constructor. This will initially setup said validator ranges and put the channels in the
         desired output ranges.
         """
-        self.ch_1.range_set_process = self.ch_1.update_output_range
-        self.ch_2.range_set_process = self.ch_2.update_output_range
+        self.ch_1.range_set_process = self.ch_1.update_validator_range
+        self.ch_2.range_set_process = self.ch_2.update_validator_range
         self.ch_1.range_values = self._range_map
         self.ch_2.range_values = self._range_map
         self.ch_1.range = voltage_range[0]
