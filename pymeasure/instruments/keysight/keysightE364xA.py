@@ -104,13 +104,15 @@ class KeysightE364XASingleOutput(SCPIMixin, Instrument):
     :type voltage_range: str ("LOW") or str ("HIGH")
     """
 
+    _default_name = "KeysightE364XASingleOutput"
+
     def __init__(self, adapter, name=None, voltage_range="LOW", **kwargs):
         super().__init__(
             adapter,
             name if name is not None else self._default_name,
             **kwargs,
         )
-        """Dynamically set 'update_validator_range' as a set process for the range selection command.
+        """Dynamically set 'update_validator_range' as a set process for the range command.
 
         This callback will update the 'voltage_setpoint_values' and 'current_limit_values' each time
         the range property is modified. The setpoint/limit values are class attributes of the
@@ -200,6 +202,7 @@ class KeysightE364XADualOutput(SCPIMixin, Instrument):
         initialization.
     :type voltage_range: tuple(str, str) with any combination of "LOW" or "HIGH"
     """
+    _default_name = "KeysightE364XADualOutput"
     ch_1 = Instrument.ChannelCreator(KeysightE364XAChannel, 1)
     ch_2 = Instrument.ChannelCreator(KeysightE364XAChannel, 2)
 
@@ -209,7 +212,7 @@ class KeysightE364XADualOutput(SCPIMixin, Instrument):
             name if name is not None else self._default_name,
             **kwargs,
         )
-        """ Dynamically set 'update_validator_range' as a set process for the range selection command.
+        """ Dynamically set 'update_validator_range' as a set process for the range command.
 
         This callback will update the 'voltage_setpoint_values' and 'current_limit_values' each time
         the range property is modified. The setpoint/limit values are class attributes of the
