@@ -2307,7 +2307,7 @@ class QueryLearn:
         """
         response = cls.query_learn(ask, query_type)
         if single_command is not False:
-            response = response[single_command]
+            response = {single_command: response[single_command]}
         ret = {}
         for key, value in response.items():
             # command without channel
