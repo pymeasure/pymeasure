@@ -30,7 +30,7 @@ import time
 from collections import Counter, OrderedDict, namedtuple
 from collections.abc import Callable, Sequence, ValuesView
 from enum import IntEnum
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -79,7 +79,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         """Get all SMU names as dict."""
         return self._smu_names
 
-    def query_learn(self, query_type: int | str) -> dict[str, str]:
+    def query_learn(self, query_type: int | str) -> dict[str, str | list[str]]:
         """Query settings from the instrument. (``*LRN?``)
 
         :param query_type: Query type (number according to manual)
@@ -249,7 +249,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     @property
     def auto_calibration(self) -> bool:
         """Control SMU auto-calibration every 30 minutes (bool). (``CM``)"""
-        response = self.query_learn(31)["CM"]
+        response = cast(str, self.query_learn(31)["CM"])
         response = bool(int(response))
         return response
 
@@ -601,7 +601,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         :type: bool
         """
-        response = self.query_learn(110)["PAD"]
+        response = cast(str, self.query_learn(110)["PAD"])
         response = bool(int(response))
         return response
 
@@ -693,7 +693,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         Halves the integration time when disabled.
         """
-        response = self.query_learn(56)["AZ"]
+        response = cast(str, self.query_learn(56)["AZ"])
         response = bool(int(response))
         return response
 
@@ -706,7 +706,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     @property
     def time_stamp(self) -> bool:
         """Control Time Stamp function (bool). (``TSC``)"""
-        response = self.query_learn(60)["TSC"]
+        response = cast(str, self.query_learn(60)["TSC"])
         response = bool(int(response))
         return response
 
@@ -2230,7 +2230,7 @@ class QueryLearn:
     """Methods to issue and process ``*LRN?`` (learn) command and response."""
 
     @staticmethod
-    def query_learn(ask: Callable[[str], str], query_type: int | str) -> dict[str, str]:
+    def query_learn(ask: Callable[[str], str], query_type: int | str) -> dict[str, str | list[str]]:
         """Issue ``*LRN?`` (learn) command to the instrument to read
         configuration.
         Return dictionary of commands and set values.
