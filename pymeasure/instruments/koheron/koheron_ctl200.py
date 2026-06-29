@@ -59,7 +59,7 @@ class CTL200(Instrument):
         kwargs.setdefault("baud_rate", 115200)
         kwargs.setdefault("write_termination", "\r\n")
         kwargs.setdefault("read_termination", "\r\n")
-        super().__init__(adapter, name, includeSCPI=False, **kwargs)
+        super().__init__(adapter, name, **kwargs)
 
     def _read_cleaned_response(self, sent_command):
         """Read lines from device and filter for echos and >> chars."""
@@ -344,6 +344,7 @@ class CTL200(Instrument):
         "status",
         """Get a dict with all status values ("lason", "vlaser", "itec",
         "vtec", "rtact", "iphd", "ain1", "ain2").""",
+        cast=str,
         get_process=lambda v: CTL200._parse_status(v.split()),
     )
 
