@@ -23,13 +23,13 @@
 #
 
 import pytest
-from pymeasure.instruments.rigol import DHO804
+from pymeasure.instruments.rigol import DHOBase
 
 
 @pytest.fixture(scope="module")
 def scope(connected_device_address):
-    """Connect to a real DHO804; skip if --device-address is not given."""
-    instr = DHO804(connected_device_address)
+    """Connect to a real DHO-series scope; skip if --device-address is not given."""
+    instr = DHOBase(connected_device_address)
     return instr
 
 
@@ -38,8 +38,8 @@ def scope(connected_device_address):
 # ======================================================================= #
 
 
-def test_idn_contains_dho804(scope):
-    assert "DHO804" in scope.id
+def test_idn_contains_dho(scope):
+    assert "DHO" in scope.id
 
 
 @pytest.mark.parametrize("ch_n", [1, 2, 3, 4])

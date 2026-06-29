@@ -23,4 +23,4 @@
 #
 
 from .rigol_dg800 import DG800
-from .rigol_dho804 import DHO804
+from .rigol_dho_base import DHOBase

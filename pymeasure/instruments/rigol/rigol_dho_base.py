@@ -64,8 +64,8 @@ class StatusByte(IntFlag):
     OSR = 128          # Bit 7: Operation Status Register
 
 
-class DHO804Channel(Channel):
-    """A single analog input channel of the Rigol DHO804."""
+class DHOBaseChannel(Channel):
+    """A single analog input channel of the Rigol DHO series."""
 
     PROBE_ATTENUATIONS = [
         0.001, 0.002, 0.005,
@@ -92,6 +92,7 @@ class DHO804Channel(Channel):
         """Control the input coupling: ``"AC"``, ``"DC"``, or ``"GND"``.""",
         validator=strict_discrete_set,
         values=["AC", "DC", "GND"],
+        cast=str,
     )
 
     bandwidth_limit = Channel.control(
@@ -154,6 +155,7 @@ class DHO804Channel(Channel):
         ":CHAN{ch}:LAB:CONT %s",
         """Control the label content shown for the channel (string, max
         10 chars).""",
+        cast=str,
     )
 
     label_enabled = Channel.control(
@@ -166,18 +168,17 @@ class DHO804Channel(Channel):
     )
 
 
-class DHO804(SCPIMixin, Instrument):
-    """PyMeasure driver for the **Rigol DHO804** 4-channel 12-bit
-    oscilloscope."""
+class DHOBase(SCPIMixin, Instrument):
+    """PyMeasure driver base class for the Rigol DHO series oscilloscopes."""
 
-    name = "Rigol DHO804"
+    name = "Rigol DHO"
 
-    ch_1 = Instrument.ChannelCreator(DHO804Channel, 1)
-    ch_2 = Instrument.ChannelCreator(DHO804Channel, 2)
-    ch_3 = Instrument.ChannelCreator(DHO804Channel, 3)
-    ch_4 = Instrument.ChannelCreator(DHO804Channel, 4)
+    ch_1 = Instrument.ChannelCreator(DHOBaseChannel, 1)
+    ch_2 = Instrument.ChannelCreator(DHOBaseChannel, 2)
+    ch_3 = Instrument.ChannelCreator(DHOBaseChannel, 3)
+    ch_4 = Instrument.ChannelCreator(DHOBaseChannel, 4)
 
-    def __init__(self, adapter, name="Rigol DHO804", **kwargs):
+    def __init__(self, adapter, name="Rigol DHO", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
     def wait_for_opc(self, timeout=10):
@@ -331,6 +332,7 @@ class DHO804(SCPIMixin, Instrument):
         or ``"SING"``.""",
         validator=strict_discrete_set,
         values=["AUTO", "NORM", "SING"],
+        cast=str,
     )
 
     trigger_source = Instrument.control(
@@ -349,6 +351,7 @@ class DHO804(SCPIMixin, Instrument):
         (falling), or ``"RFAL"`` (either).""",
         validator=strict_discrete_set,
         values=["POS", "NEG", "RFAL"],
+        cast=str,
     )
 
     trigger_level = Instrument.control(
