@@ -348,7 +348,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         }
         data_names_int = {"Sampling index"}  # convert to int instead of float
 
-        def __init__(self, smu_names: dict, output_format_str: str = ""):
+        def __init__(self, smu_names: dict[int, str], output_format_str: str = ""):
             """Store parameters of the chosen output format for later usage in data processing.
 
             Data Names: e.g. "Voltage (V)" or "Current Measurement (A)"
@@ -453,9 +453,13 @@ class AgilentB1500(SCPIMixin, Instrument):
             :return: Channel name
             """
             channel = self.channels[channel_string]
-            if isinstance(channel, int):
-                channel = int(str(channel)[0:-2])
-                # subchannels not relevant for SMU/CMU
+            if isinstance(channel, str):
+                self.check_status(status_string)
+                return channel
+
+            channel = int(str(channel)[0:-2])
+            # subchannels not relevant for SMU/CMU
+
             try:
                 smu_name = self.smu_names[channel]
                 if "SMU" in smu_name:
@@ -480,7 +484,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     class _data_formatting_FMT1(_data_formatting_generic):
         """Data formatting for FMT1 format."""
 
-        def __init__(self, smu_names={}, output_format_string: str = "FMT1"):
+        def __init__(self, smu_names: dict[int, str] = {}, output_format_string: str = "FMT1"):
             super().__init__(smu_names, output_format_string)
 
         def format_single(self, element: str) -> tuple[str, str | int, str, float]:
@@ -504,13 +508,13 @@ class AgilentB1500(SCPIMixin, Instrument):
     class _data_formatting_FMT11(_data_formatting_FMT1):
         """Data formatting for FMT11 format (based on FMT1)."""
 
-        def __init__(self, smu_names={}):
+        def __init__(self, smu_names: dict[int, str] = {}):
             super().__init__(smu_names, "FMT11")
 
     class _data_formatting_FMT21(_data_formatting_generic):
         """Data formatting for FMT21 format."""
 
-        def __init__(self, smu_names={}):
+        def __init__(self, smu_names: dict[int, str] = {}):
             super().__init__(smu_names, "FMT21")
 
         def format_single(self, element: str) -> tuple[str, str | int, str, float]:
@@ -532,7 +536,7 @@ class AgilentB1500(SCPIMixin, Instrument):
             return (status, channel, data_name, value)
 
     def _data_formatting(
-        self, output_format_str: str, smu_names: dict = {}
+        self, output_format_str: str, smu_names: dict[int, str] = {}
     ) -> AgilentB1500._data_formatting_generic | None:
         """Return data formatting class for given data format string.
 
