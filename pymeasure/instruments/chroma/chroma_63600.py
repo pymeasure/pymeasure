@@ -101,15 +101,17 @@ class Chroma63600_Channel(Channel):
     )
     status = Channel.measurement(
         "LOAD:PROTECTION?",  # Synonym: FETCH:STATUS?
-        """Get the status of the electronic load.
+        """
+        Get the status of the electronic load.
 
-    Returns :class:`InstrStatus`.
+        Returns :class:`InstrStatus`.
         """,
         get_process=lambda v: InstrStatus(v)
     )
     identify = Channel.measurement(
         "CHAN:ID?",
-        """Get module identification string."""
+        """Get module identification string.""",
+        cast=str,
     )
     current = Channel.measurement(
         "FETCH:CURRENT?",
