@@ -24,7 +24,9 @@
 import time
 
 from pymeasure.adapters import VISAAdapter
-from pyvisa.constants import VI_ATTR_ASRL_AVAIL_NUM
+from pyvisa.constants import ResourceAttribute
+
+from pymeasure.adapters.protocol import ProtocolAdapter
 
 
 class PrologixAdapter(VISAAdapter):
@@ -101,9 +103,16 @@ class PrologixAdapter(VISAAdapter):
 
     """
 
-    def __init__(self, resource_name, address=None,
-                 auto=False, eoi=True, eos="\n", gpib_read_timeout=None,
-                 **kwargs):
+    def __init__(
+        self,
+        resource_name: ProtocolAdapter | VISAAdapter | int | str,
+        address: int | None = None,
+        auto: bool = False,
+        eoi: bool = True,
+        eos: str = "\n",
+        gpib_read_timeout: int | None = None,
+        **kwargs,
+    ):
         super().__init__(resource_name,
                          asrl={
                              'timeout': 500,
@@ -120,7 +129,7 @@ class PrologixAdapter(VISAAdapter):
             self.gpib_read_timeout = gpib_read_timeout
 
     @property
-    def auto(self):
+    def auto(self) -> bool:
         """Control whether to address instruments to talk after sending them a command (bool).
 
         Configure Prologix GPIB controller to automatically address instruments
@@ -132,11 +141,11 @@ class PrologixAdapter(VISAAdapter):
         return bool(int(self.read(prologix=True)))
 
     @auto.setter
-    def auto(self, value):
+    def auto(self, value: bool) -> None:
         self.write(f"++auto {int(value)}")
 
     @property
-    def eoi(self):
+    def eoi(self) -> bool:
         """Control whether to assert the EOI signal with the last character
         of any command sent over GPIB port (bool).
 
@@ -148,11 +157,11 @@ class PrologixAdapter(VISAAdapter):
         self.read(prologix=True)
 
     @eoi.setter
-    def eoi(self, value):
+    def eoi(self, value: bool) -> None:
         self.write(f"++eoi {int(value)}")
 
     @property
-    def eos(self):
+    def eos(self) -> str:
         """Control GPIB termination characters (str).
 
         possible values:
@@ -171,12 +180,12 @@ class PrologixAdapter(VISAAdapter):
         return values[int(self.read(prologix=True))]
 
     @eos.setter
-    def eos(self, value):
+    def eos(self, value: str) -> None:
         values = {"\r\n": 0, "\r": 1, "\n": 2, "": 3}
         self.write(f"++eos {values[value]}")
 
     @property
-    def gpib_read_timeout(self):
+    def gpib_read_timeout(self) -> int:
         """Control the timeout value for the GPIB communication in milliseconds
 
         possible values: 1 - 3000
@@ -185,17 +194,17 @@ class PrologixAdapter(VISAAdapter):
         return int(self.read(prologix=True))
 
     @gpib_read_timeout.setter
-    def gpib_read_timeout(self, value):
+    def gpib_read_timeout(self, value: int) -> None:
         self.write(f"++read_tmo_ms {value}")
 
     @property
-    def version(self):
+    def version(self) -> str:
         """Get the version string of the Prologix controller.
         """
         self.write('++ver')
         return self.read(prologix=True)
 
-    def reset(self):
+    def reset(self) -> None:
         """Perform a power-on reset of the controller.
 
         The process takes about 5 seconds. All input received during this time
@@ -203,7 +212,7 @@ class PrologixAdapter(VISAAdapter):
         """
         self.write('++rst')
 
-    def write(self, command, **kwargs):
+    def write(self, command: str, **kwargs) -> None:
         """Write a string command to the instrument appending `write_termination`.
 
         If the GPIB address in :attr:`address` is defined, it is sent first.
@@ -214,7 +223,7 @@ class PrologixAdapter(VISAAdapter):
         """
         # Overrides write instead of _write in order to ensure proper logging
         if self.address is not None and not command.startswith("++"):
-            super().write("++addr %d" % self.address, **kwargs)
+            super().write(f"++addr {self.address}", **kwargs)
         super().write(command, **kwargs)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
@@ -243,7 +252,7 @@ class PrologixAdapter(VISAAdapter):
 
         return new_block
 
-    def write_binary_values(self, command, values, **kwargs):
+    def write_binary_values(self, command: str, values, **kwargs) -> int:
         """ Write binary data to the instrument, e.g. waveform for signal generators.
 
         values are encoded in a binary format according to
@@ -255,11 +264,11 @@ class PrologixAdapter(VISAAdapter):
         :returns: number of bytes written
         """
         if self.address is not None:
-            address_command = "++addr %d\n" % self.address
+            address_command = f"++addr {self.address}\n"
             self.write(address_command)
-        super().write_binary_values(command, values, "\n", **kwargs)
+        return super().write_binary_values(command, values, "\n", **kwargs)
 
-    def _read(self, prologix=False, **kwargs):
+    def _read(self, prologix: bool = False, **kwargs) -> str:
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
         :param prologix: Read the prologix adapter itself.
@@ -270,22 +279,22 @@ class PrologixAdapter(VISAAdapter):
             self.write("++read eoi")
         return super()._read()
 
-    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
+    def _read_bytes(self, count: int, break_on_termchar: bool = False, **kwargs) -> bytes:
         """Read bytes from the instrument.
 
-        :param int count: Number of bytes to read. A value of -1 indicates to
+        :param count: Number of bytes to read. A value of -1 indicates to
             read from the whole read buffer.
-        :param bool break_on_termchar: Stop reading at a termination character.
+        :param break_on_termchar: Stop reading at a termination character.
         :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        avail = self.connection.get_visa_attribute(VI_ATTR_ASRL_AVAIL_NUM)
+        avail = self.connection.get_visa_attribute(ResourceAttribute.asrl_avalaible_number)
         if avail == 0:
             # nothing buffered, need to request data from Prologix
             self.write("++read eoi")
         return super()._read_bytes(count, break_on_termchar, **kwargs)
 
-    def gpib(self, address, **kwargs):
+    def gpib(self, address: int | None, **kwargs) -> "PrologixAdapter":
         """ Return a PrologixAdapter object that references the GPIB
         address specified, while sharing the Serial connection with other
         calls of this function
@@ -296,12 +305,12 @@ class PrologixAdapter(VISAAdapter):
         """
         return PrologixAdapter(self, address, **kwargs)
 
-    def _check_for_srq(self):
+    def _check_for_srq(self) -> int:
         # it was int(self.ask("++srq"))
         self.write("++srq")
         return int(self.read())
 
-    def wait_for_srq(self, timeout=25, delay=0.1):
+    def wait_for_srq(self, timeout: float = 25, delay: float = 0.1) -> None:
         """ Blocks until a SRQ, and leaves the bit high
 
         :param timeout: Timeout duration in seconds.
@@ -314,7 +323,7 @@ class PrologixAdapter(VISAAdapter):
                 raise TimeoutError("Waiting for SRQ timed out.")
             time.sleep(delay)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.address is not None:
             return (f"<PrologixAdapter(resource_name='{self.connection.resource_name}', "
                     f"address={self.address:d})>")

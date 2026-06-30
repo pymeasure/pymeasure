@@ -75,7 +75,8 @@ class Agilent4284ASpot(Channel):
         See :attr:`.Agilent4284A.impedance_mode` for detailed explanation.
         """,
         validator=strict_discrete_set,
-        values=IMPEDANCE_MODES
+        values=IMPEDANCE_MODES,
+        cast=str,
         )
 
 
@@ -130,7 +131,8 @@ class Agilent4284ACorrection(Channel):
         See :attr:`.Agilent4284A.impedance_mode` for detailed explanation.
         """,
         validator=strict_discrete_set,
-        values=IMPEDANCE_MODES
+        values=IMPEDANCE_MODES,
+        cast=str,
         )
 
     cable_length = Channel.control(
@@ -261,7 +263,8 @@ class Agilent4284A(SCPIMixin, Instrument):
         * YTR: Admittance magnitude [Ohm] and phase [rad]
         """,
         validator=strict_discrete_set,
-        values=IMPEDANCE_MODES
+        values=IMPEDANCE_MODES,
+        cast=str,
     )
 
     impedance_range = Instrument.control(
@@ -391,7 +394,7 @@ class Agilent4284A(SCPIMixin, Instrument):
         b_data = []
         sweep_return = []
         for i in range(loops + 1):
-            param_str = ",".join(['%g' % p for p in param_div[i]])
+            param_str = ",".join([f'{p:g}' for p in param_div[i]])
             self.write(f"LIST:{param_dict[sweep_mode][0]} {param_str};:TRIG:IMM")
             status_event_register = int(self.ask("STAT:OPER?"))
             while (status_event_register & 8) != 8:  # Sweep bit no. 3

@@ -2,25 +2,24 @@ name: pymeasure
 channels:
   - conda-forge
 dependencies:
-  - cloudpickle=1.6.0
+  - cloudpickle=3.1.2
   - numpy >1
-  - pandas=2.2.3
+  - pandas=2.3.3
   - pint=0.24.4
-  - pyqt=5.15.11
+  - pyqt6=6.11.0
   - pyqtgraph=0.12.4
   - pyserial=3.4
-  - pyvisa=1.14.1
-  - pyzmq=26.2.0
+  - pyvisa=1.16.2
+  - pyzmq=27.1.0
   - qtpy=2.4.3
 # Development dependencies below
-  - pytest-qt=4.2.0
-  - pytest-runner=5.2
-  - pytest=7.2.0
-  - pytest-cov=4.1.0
-  - pyvisa-sim==0.6.0
+  - pytest-qt=4.5.0
+  - pytest=8.4.2
+  - pytest-cov=7.1.0
+  - pyvisa-sim==0.7.1
   - setuptools_scm # don't pin, to get newest features
   - sphinx=7.4.7
-  - sphinx_rtd_theme=3.0.0
+  - sphinx_rtd_theme=3.1.0
   - sphinx-autodoc-typehints=2.3.0
 #  pip is currently not needed, but the recommended tool when packages that are unavailable on conda are required
   # - pip  # don't pin, to gain newest conda compatibility fixes

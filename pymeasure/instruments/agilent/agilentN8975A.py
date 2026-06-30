@@ -64,6 +64,7 @@ class AgilentN8975AFrequency(Channel):
                 "fixed": "FIX",
                 "list": "LIST",
                 },
+        cast=str,
         )
 
     fixed_value = Channel.control(

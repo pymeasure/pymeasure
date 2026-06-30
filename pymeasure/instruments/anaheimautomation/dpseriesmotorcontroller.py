@@ -180,7 +180,7 @@ class DPSeriesMotorController(Instrument):
         """
         current_errors = self.error_reg
         if current_errors != 0:
-            logging.error("DP-Series motor controller error detected: %s" % current_errors)
+            logging.error(f"DP-Series motor controller error detected: {current_errors}")
         return current_errors
 
     def __init__(self, adapter, name="Anaheim Automation Stepper Motor Controller",
@@ -204,7 +204,6 @@ class DPSeriesMotorController(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             asrl={'baud_rate': 38400},
             **kwargs
         )
@@ -238,7 +237,7 @@ class DPSeriesMotorController(Instrument):
     @step_position.setter
     def step_position(self, pos):
         strict_range(pos, (-8388607, 8388607))
-        self.write("P%i" % pos)
+        self.write(f"P{pos}")
         self.write("G")
 
     @property
@@ -313,9 +312,9 @@ class DPSeriesMotorController(Instrument):
         """
         hm = int(home_mode)
         if hm == 0 or hm == 1:
-            self.write("H%i" % hm)
+            self.write(f"H{hm}")
         else:
-            raise ValueError("Invalid home mode %i specified!" % hm)
+            raise ValueError(f"Invalid home mode {hm} specified!")
 
     def write(self, command):
         """Override the instrument base write method to add the motor controller's address to the
@@ -327,9 +326,9 @@ class DPSeriesMotorController(Instrument):
         if "@" in command:
             cmd_str = command
         elif "%" in command or "~" in command:
-            cmd_str = "@%s" % command
+            cmd_str = f"@{command}"
         else:
-            cmd_str = "@%i%s" % (self._address, command)
+            cmd_str = f"@{self._address}{command}"
         super().write(cmd_str)
 
     def wait_for_completion(self, interval=0.5):

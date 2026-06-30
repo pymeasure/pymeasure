@@ -130,7 +130,6 @@ class HP11713A(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             send_end=True,
             **kwargs,
         )

@@ -105,7 +105,7 @@ class YokogawaGS200(SCPIUnknownMixin, Instrument):
                 "error."
             )
         else:
-            self.write("SOURce:LEVel %g" % level)
+            self.write(f"SOURce:LEVel {level:g}")
 
     def trigger_ramp_to_level(self, level, ramp_time):
         """

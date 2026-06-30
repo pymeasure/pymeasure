@@ -25,6 +25,7 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
     TeledyneOscilloscopeChannel, _results_list_to_dict
+from pymeasure.instruments.common_base import cast_or_str
 
 
 class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
@@ -204,6 +205,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         "HCSU?",
         """Get current hardcopy config.""",
         get_process_list=_results_list_to_dict,
+        cast=cast_or_str(float),
     )
 
     def hardcopy_setup(self, **kwargs):
