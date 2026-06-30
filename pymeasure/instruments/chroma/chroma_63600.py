@@ -97,6 +97,7 @@ class Chroma63600_Channel(Channel):
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True,
+        cast=str,
     )
     status = Channel.measurement(
         "LOAD:PROTECTION?",  # Synonym: FETCH:STATUS?
@@ -169,6 +170,7 @@ class Chroma63600_Channel(Channel):
         values=MODES,
         get_process=lambda v: (InstrMode(v),) if v=="PROG" else \
                               (InstrMode(v[:-1]),InstrModeRange(v[-1])),
+        cast=str,
     )
 
     # TIMING MODE
