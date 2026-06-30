@@ -93,7 +93,8 @@ class Chroma66205(SCPIMixin, Instrument):
 
     system_error = Instrument.measurement(
         "SYSTEM:ERROR?",
-        """Get the error string of the instrument."""
+        """Get the error string of the instrument.""",
+        cast=str,
     )
 
     # SETTINGS #
@@ -102,7 +103,8 @@ class Chroma66205(SCPIMixin, Instrument):
         "CONF:MEAS:MODE %s",
         """Control measurement mode. Can be RMS, DC, or VMEAN.""",
         validator=strict_discrete_set,
-        values=["RMS","DC","VMEAN"]
+        values=["RMS","DC","VMEAN"],
+        cast=str,
     )
     voltage_range = Instrument.control(
         "VOLT:RANG?",
@@ -111,6 +113,7 @@ class Chroma66205(SCPIMixin, Instrument):
         V600.""",
         validator=strict_discrete_set,
         values=["AUTO","V600","V300","V150","V60","V30","V15"],
+        cast=str,
     )
     current_range = Instrument.control(
         "CURR:RANG?",
@@ -121,6 +124,7 @@ class Chroma66205(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["AUTO", "A30", "A20", "A5", "A2", "A05", 'A03', "A02", "A005", "A002", "A0005",
                 "E015","E01","E005","E0025","E001"],
+        cast=str,
     )
     averages = Instrument.control(
         "CONF:MEAS:AVERAGE?",
@@ -145,6 +149,7 @@ class Chroma66205(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
         map_values=True,
+        cast=str,
     )
     ct_ratio = Instrument.control(
         "CONF:INP:CT:RAT?",
@@ -161,6 +166,7 @@ class Chroma66205(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
         map_values=True,
+        cast=str,
     )
     input_shunt = Instrument.control(
         "CONF:INP:SHUN?",
@@ -169,6 +175,7 @@ class Chroma66205(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
         map_values=True,
+        cast=str,
     )
     input_shunt_resistance = Instrument.control(
         "CONF:INP:SHUNT:RES?",
@@ -186,6 +193,7 @@ class Chroma66205(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
         map_values=True,
+        cast=str,
     )
     hold = Instrument.control(
         "CONF:HOLD?",
@@ -194,6 +202,7 @@ class Chroma66205(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
         map_values=True,
+        cast=str,
     )
     hold_mode = Instrument.control(
         "CONF:HOLD:MODE?",
@@ -201,6 +210,7 @@ class Chroma66205(SCPIMixin, Instrument):
         """Control the hold function mode. Can be STOP, MAX, or MIN.""",
         validator=strict_discrete_set,
         values=["STOP","MAX","MIN"],
+        cast=str,
     )
     hold_time = Instrument.control(
         "CONF:HOLD:TIME?",
@@ -222,7 +232,8 @@ class Chroma66205(SCPIMixin, Instrument):
         "CONF:MEAS:WINDOW:UPDATE %s",
         """Set fixed or varied interval according to window time. Can be FIXED or WINDOW.""",
         validator=strict_discrete_set,
-        values=["FIXED","WINDOW"]
+        values=["FIXED","WINDOW"],
+        cast=str,
     )
     integrate = Instrument.control(
         "CONF:INTEGRATE?",
@@ -231,6 +242,7 @@ class Chroma66205(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
         map_values=True,
+        cast=str,
     )
     integration_mode = Instrument.control(
         "CONF:INTEG:MODE?",
@@ -238,13 +250,14 @@ class Chroma66205(SCPIMixin, Instrument):
         """Set the mode of execution in integration mode. Can be NORMAL or CONTINUE.""",
         validator=strict_discrete_set,
         values=["NORMAL","CONTINUE"],
+        cast=str,
     )
     integration_time = Instrument.control(
         "CONF:INTEGRATE:TIME?",
         "CONF:INTEGRATE:TIME %d",
         """Set integration time in seconds, between 0s and 35,999,999s.""",
         validator=truncated_range,
-        values=[0,35999999]
+        values=[0,35999999],
     )
     filter = Instrument.control(
         "CONF:FILTER?",
@@ -253,6 +266,7 @@ class Chroma66205(SCPIMixin, Instrument):
         Can be OFF, BW500, or BW5500.""",
         validator=strict_discrete_set,
         values=["OFF","BW500","BW5500"],
+        cast=str,
     )
     filter_frequency = Instrument.control(
         "CONF:FILT:FREQ?",
@@ -261,6 +275,7 @@ class Chroma66205(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
         map_values=True,
+        cast=str,
     )
     energy_time = Instrument.control(
         "CONF:ENERGY:TIME?",
@@ -323,95 +338,95 @@ class Chroma66205(SCPIMixin, Instrument):
     # MEASUREMENTS #
     voltage_rms = Instrument.measurement(
         "FETCH? V",
-        """Get the last measured RMS voltage."""
+        """Get the last measured RMS voltage.""",
     )
     voltage_dc = Instrument.measurement(
         "FETCH? VDC",
-        """Get the last measured DC voltage."""
+        """Get the last measured DC voltage.""",
     )
     voltage_peak_pos = Instrument.measurement(
         "FETCH? VPK+",
-        """Get the last measured positive peak voltage."""
+        """Get the last measured positive peak voltage.""",
     )
     voltage_peak_neg = Instrument.measurement(
         "FETCH? VPK-",
-        """Get the last measured negative peak voltage."""
+        """Get the last measured negative peak voltage.""",
     )
     voltage_mean = Instrument.measurement(
         "FETCH? VMEAN",
-        """Get the last measured mean voltage."""
+        """Get the last measured mean voltage.""",
     )
     current_rms = Instrument.measurement(
         "FETCH? I",
-        """Get the last measured RMS current."""
+        """Get the last measured RMS current.""",
     )
     current_dc = Instrument.measurement(
         "FETCH? IDC",
-        """Get the last measured DC current."""
+        """Get the last measured DC current.""",
     )
     current_peak_pos = Instrument.measurement(
         "FETCH? IPK+",
-        """Get the last measured positive peak current."""
+        """Get the last measured positive peak current.""",
     )
     current_peak_neg = Instrument.measurement(
         "FETCH? IPK-",
-        """Get the last measured negative peak current."""
+        """Get the last measured negative peak current.""",
     )
     inrush_current = Instrument.measurement(
         "FETCH? IS",
-        """Get the last measured in-rush current."""
+        """Get the last measured in-rush current.""",
     )
     current_crest_factor = Instrument.measurement(
         "FETCH? CFI",
-        """Get the last measured current crest factor."""
+        """Get the last measured current crest factor.""",
     )
     voltage_crest_factor = Instrument.measurement(
         "FETCH:VOLT:CRES?",
-        """Get the last measured voltage crest factor."""
+        """Get the last measured voltage crest factor.""",
     )
     power_real = Instrument.measurement(
         "FETCH? W",
-        """Get the last measured RMS power."""
+        """Get the last measured RMS power.""",
     )
     power_dc = Instrument.measurement(
         "FETCH? WDC",
-        """Get the last measured DC power."""
+        """Get the last measured DC power.""",
     )
     power_factor = Instrument.measurement(
         "FETCH? PF",
-        """Get the last measured power factor."""
+        """Get the last measured power factor.""",
     )
     phase = Instrument.measurement(
         "FETCH? DEG",
-        """Get phase in degrees."""
+        """Get phase in degrees.""",
     )
     power_apparent = Instrument.measurement(
         "FETCH? VA",
-        """Get the last measured apparent power."""
+        """Get the last measured apparent power.""",
     )
     power_reactive = Instrument.measurement(
         "FETCH? VAR",
-        """Get the last measured reactive power."""
+        """Get the last measured reactive power.""",
     )
     frequency = Instrument.measurement(
         "FETCH? FREQ",
-        """Get the last measured frequency."""
+        """Get the last measured frequency.""",
     )
     voltage_THD = Instrument.measurement(
         "FETCH? THDV",
-        """Get the last measured voltage THD."""
+        """Get the last measured voltage THD.""",
     )
     current_THD = Instrument.measurement(
         "FETCH? THDI",
-        """Get the last measured current THD."""
+        """Get the last measured current THD.""",
     )
     energy_wh = Instrument.measurement(
         "FETCH? WH",
-        """Get the last measured energy in units of watt-hours."""
+        """Get the last measured energy in units of watt-hours.""",
     )
     charge_ah = Instrument.measurement(
         "FETCH? AH",
-        """Get the last measured charge in units of amp-hours."""
+        """Get the last measured charge in units of amp-hours.""",
     )
     trigger_mode = Instrument.control(
         "TRIG:MODE?",
@@ -420,6 +435,7 @@ class Chroma66205(SCPIMixin, Instrument):
         Can be NONE|INTEGRATION|INRUSH|LIMIT.""",
         validator=strict_discrete_set,
         values=["NONE","INTEGRATION","INRUSH","LIMIT"],
+        cast=str,
     )
     trigger = Instrument.control(
         "TRIGGER?",
@@ -427,6 +443,7 @@ class Chroma66205(SCPIMixin, Instrument):
         """Set trigger for energy calculation, inrush, or limit (go/no-go).
         Status is STOP|FINISH|RUNNING.
         To trigger, pass 'ON'. To stop or reset integration cycle, pass 'OFF'.""",
+        cast=str,
     )
 
     def measure(self,param: Measure):
