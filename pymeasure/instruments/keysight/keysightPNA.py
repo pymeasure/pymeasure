@@ -108,6 +108,7 @@ class Trace(Channel):
         """Get the measurement parameter of the trace (str).""",
         preprocess_reply=lambda v: v.strip('"'),
         maxsplit=0,
+        cast=str,
         )
 
     @property
@@ -127,6 +128,7 @@ class Trace(Channel):
 
         :return: ``FREQ``, ``POW``, ``PHAS``, ``DC``, ``POIN`` or ``DEF``
         """,
+        cast=str,
         )
 
     @property
@@ -169,6 +171,7 @@ class Trace(Channel):
             ``PRH``, ``VPH``, ``DBV`` or ``DEF``
 
         """,
+        cast=str,
         )
 
 
@@ -329,7 +332,7 @@ class KeysightPNA(SCPIMixin, Instrument):
         Control whether the byte order is swapped for data transfer (bool).
 
         Some computers read data from the analyzer in the reverse order. This property is only
-        effective if :attr:`.data_format` set to ``real32`` or ``real64``. If :attr:`.data_format`
+        effective if :attr:`.data_format` set to ``real32`` or ``real64``. If :attr:`data_format`
         is set to ``ascii``, :attr:`.byte_order_swapped` is ignored.
 
         - ``True``: Use for IBM compatible computers.
@@ -342,6 +345,7 @@ class KeysightPNA(SCPIMixin, Instrument):
         values={False: "NORM",
                 True: "SWAP",
                 },
+        cast=str,
         )
 
     data_format = Instrument.control(
@@ -373,6 +377,7 @@ class KeysightPNA(SCPIMixin, Instrument):
                 "real64": "REAL,64",
                 },
         maxsplit=0,
+        cast=str,
         )
 
     measurement_channels = Instrument.measurement(

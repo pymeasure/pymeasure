@@ -61,7 +61,6 @@ class OxfordInstrumentsBase(Instrument):
 
         super().__init__(adapter,
                          name=name,
-                         includeSCPI=False,
                          asrl={
                              'baud_rate': 9600,
                              'data_bits': 8,
@@ -178,4 +177,4 @@ class OxfordInstrumentsBase(Instrument):
         return bool(match)
 
     def __repr__(self):
-        return "<OxfordInstrumentsAdapter(adapter='%s')>" % self.adapter.connection.resource_name
+        return f"<OxfordInstrumentsAdapter(adapter='{self.adapter.connection.resource_name}')>"

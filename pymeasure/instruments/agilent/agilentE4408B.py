@@ -89,7 +89,7 @@ class AgilentE4408B(SCPIMixin, Instrument):
         """
         self.write(":FORMat:TRACe:DATA ASCII;")
         data = np.loadtxt(
-            StringIO(self.ask(":TRACE:DATA? TRACE%d;" % number)),
+            StringIO(self.ask(f":TRACE:DATA? TRACE{number};")),
             delimiter=',',
             dtype=np.float64
         )

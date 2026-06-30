@@ -435,7 +435,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 if filename in self.manager.experiments:
                     QtWidgets.QMessageBox.warning(
                         self, "Load Error",
-                        "The file %s cannot be opened twice." % os.path.basename(filename)
+                        f"The file {os.path.basename(filename)} cannot be opened twice."
                     )
                 elif filename == '':
                     return
@@ -447,7 +447,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                             curve.update_data()
                     experiment.browser_item.progressbar.setValue(100)
                     self.manager.load(experiment)
-                    log.info('Opened data file %s' % filename)
+                    log.info(f'Opened data file {filename}')
 
     def save_experiment_copy(self, source_filename):
         """Save a copy of the datafile to a selected folder and file.
@@ -490,8 +490,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         elif (system == 'Darwin'):
             _ = subprocess.Popen(['open', filename])
         else:
-            raise Exception("{cls} method open_file_externally does not support {system} OS".format(
-                cls=type(self).__name__, system=system))
+            raise Exception(f"{type(self).__name__} method open_file_externally does not support "
+                            f"{system} OS")
 
     def reveal_in_file_explorer(self, filename: str) -> None:
         """Method to open the file explorer at the location of the given filename.
@@ -510,9 +510,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             _ = subprocess.Popen(["open", "-R", path])
         else:
             raise Exception(
-                "{cls} method reveal_in_file_explorer does not support {system} OS".format(
-                    cls=type(self).__name__, system=system
-                )
+                f"{type(self).__name__} method reveal_in_file_explorer does not support {system} OS"
             )
 
     def make_procedure(self):

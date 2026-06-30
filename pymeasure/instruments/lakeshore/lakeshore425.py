@@ -84,7 +84,6 @@ class LakeShore425(Instrument):
                   'parity': 1,  # odd
                   'data_bits': 7
                   },
-            includeSCPI=False,
             **kwargs
         )
 
@@ -114,7 +113,7 @@ class LakeShore425(Instrument):
     @mode.setter
     def mode(self, value):
         mode, filter, band = value
-        self.write("RDGMODE %d,%d,%d" % (mode, filter, band))
+        self.write(f"RDGMODE {mode},{filter},{band}")
 
     def zero_probe(self):
         """ Initiates the zero field sequence to calibrate the probe """

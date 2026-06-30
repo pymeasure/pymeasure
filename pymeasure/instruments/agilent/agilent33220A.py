@@ -22,19 +22,21 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from collections.abc import Callable
+import logging
+from time import time
+
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, \
     strict_range, joined_validators
-from time import time
 from pyvisa.errors import VisaIOError
 
-import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 # Capitalize string arguments to allow for better conformity with other WFG's
-def capitalize_string(string: str, *args, **kwargs):
+def capitalize_string(string: str, *args, **kwargs) -> str:
     return string.upper()
 
 
@@ -42,7 +44,7 @@ def capitalize_string(string: str, *args, **kwargs):
 string_validator = joined_validators(capitalize_string, strict_discrete_set)
 
 
-class Agilent33220A(SCPIUnknownMixin, Instrument):
+class Agilent33220A(SCPIMixin, Instrument):
     """Represents the Agilent 33220A Arbitrary Waveform Generator.
 
     .. code-block:: python
@@ -227,12 +229,14 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
         cast=lambda v: int(float(v))
     )
 
-    def trigger(self):
+    def trigger(self) -> None:
         """ Send a trigger signal to the function generator. """
         self.write("*TRG;*WAI")
 
-    def wait_for_trigger(self, timeout=3600, should_stop=lambda: False):
-        """ Wait until the triggering has finished or timeout is reached.
+    def wait_for_trigger(
+        self, timeout: float = 3600, should_stop: Callable[[], bool] = lambda: False
+    ) -> None:
+        """Wait until the triggering has finished or timeout is reached.
 
         :param timeout: The maximum time the waiting is allowed to take. If
                         timeout is exceeded, a TimeoutError is raised. If
@@ -296,6 +300,6 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
         values={True: 1, False: 0},
     )
 
-    def beep(self):
+    def beep(self) -> None:
         """ Causes a system beep. """
         self.write("SYST:BEEP")

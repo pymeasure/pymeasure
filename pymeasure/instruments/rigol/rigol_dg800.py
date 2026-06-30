@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, Channel, SCPIMixin
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import truncated_discrete_set
 
 
@@ -37,6 +38,7 @@ class VoltageChannel(Channel):
         validator=truncated_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     load = Channel.control(
@@ -56,6 +58,7 @@ class VoltageChannel(Channel):
         validator=truncated_discrete_set,
         values={True: "INF", False: "50"},
         map_values=True,
+        cast=str,
     )
 
     frequency = Channel.control(
@@ -70,6 +73,7 @@ class VoltageChannel(Channel):
         validator=truncated_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     sine = Channel.setting(
@@ -148,12 +152,14 @@ class VoltageChannel(Channel):
 
     shape = Channel.control(
         ":SOUR{ch}:FUNC?",
-        ":SOUR1:FUNC %s",
+        ":SOUR{ch}:FUNC %s",
         """Control the waveform type of the specified channel.""",
+        cast=str,
     )
 
     waveform = Channel.measurement(
-        ":SOUR{ch}:APPL?", """Get a descriptor of the waveform applied."""
+        ":SOUR{ch}:APPL?", """Get a descriptor of the waveform applied.""",
+        cast=cast_or_str(float),
     )
 
 

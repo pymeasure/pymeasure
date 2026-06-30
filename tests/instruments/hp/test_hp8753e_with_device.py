@@ -60,7 +60,7 @@ def hp8753e(connected_device_address):
             prologix.write("++eot_enable 0")
             vna = HP8753E(adapter=prologix)
 
-    except IOError:
+    except OSError:
         print("Not able to connect to vna")
         assert False
 

@@ -34,6 +34,16 @@ class BasicTestInstrument(Instrument):
         super().__init__(adapter, name)
         self.kwargs = kwargs
 
+    def check_errors(self) -> list:
+        errors = []
+        while True:
+            err = self.values("SYST:ERR?")
+            if int(err[0]) != 0:
+                errors.append(err)
+            else:
+                break
+        return errors
+
     simple = Instrument.control(
         "VOLT?", "VOLT %s V",
         """Simple property replying with plain floats""",

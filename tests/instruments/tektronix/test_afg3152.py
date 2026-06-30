@@ -47,3 +47,19 @@ def test_beep():
         [("system:beep", None)],
     ) as inst:
         inst.beep()
+
+
+def test_enable():
+    with expected_protocol(
+        AFG3152C,
+        [("output1:state on", None)],
+    ) as inst:
+        inst.ch1.enable()
+
+
+def test_disable():
+    with expected_protocol(
+        AFG3152C,
+        [("output1:state off", None)],
+    ) as inst:
+        inst.ch1.disable()

@@ -36,7 +36,6 @@ class Fluke7341(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             asrl={'baud_rate': 2400},
             **kwargs
         )
@@ -64,6 +63,7 @@ class Fluke7341(Instrument):
         """Control the temperature unit: `c` for Celsius and `f` for Fahrenheit`.""",
         validator=strict_discrete_set,
         values=('c', 'f'),
+        cast=str,
     )
 
     temperature = Instrument.measurement("t",

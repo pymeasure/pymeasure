@@ -71,7 +71,6 @@ class TC038D(Instrument):
                  **kwargs):
         """Initialize the device."""
         super().__init__(adapter, name, timeout=timeout,
-                         includeSCPI=False,
                          **kwargs)
         self.address = address
 

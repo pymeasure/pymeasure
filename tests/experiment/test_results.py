@@ -168,8 +168,7 @@ class TestPandas3Numpy2Compat:
     def _write_rows(result, rows):
         """Append data rows directly to the results file."""
         with open(result.data_filename, 'a', encoding=Results.ENCODING) as f:
-            for row in rows:
-                f.write(result.format(row) + Results.LINE_BREAK)
+            f.writelines(result.format(row) + Results.LINE_BREAK for row in rows)
 
     def test_results_numeric_dtype_preserved_after_reload(self, tmpdir):
         """Numeric dtypes must be preserved after writing and reloading a Results file."""

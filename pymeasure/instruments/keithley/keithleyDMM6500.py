@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
+from pymeasure.instruments import Instrument, Channel, SCPIMixin, cast_or_str
 from pymeasure.instruments.validators import (
     truncated_range,
     truncated_discrete_set,
@@ -68,6 +68,7 @@ class ScannerCard2000Channel(Channel):
         validator=strict_discrete_set,
         values=MODES,
         map_values=True,
+        cast=str,
         get_process=lambda v: v.replace('"', ""),
     )
 
@@ -255,6 +256,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         values=["TSP", "SCPI", "SCPI2000", "SCPI34401"],
+        cast=str,
     )
     mode = Instrument.control(
         ":SENS:FUNC?",
@@ -268,6 +270,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=MODES,
         map_values=True,
+        cast=str,
         get_process=lambda v: v.replace('"', ""),
     )
 
@@ -378,6 +381,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         Valid values: 3, 30, 300, ``MIN``, ``DEF``, ``MAX``.""",
         validator=strict_discrete_set,
         values=[3, 30, 300, "MIN", "DEF", "MAX"],
+        cast=cast_or_str(float),
     )
 
     autozero_enabled = Instrument.control(
@@ -399,6 +403,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         Example: Using ``time`` package to set instrument's clock:
         ``dmm.system_time = time.strftime("%Y, %m, %d, %H, %M, %S")``
         """,
+        cast=str,
     )
 
     def trigger_single_autozero(self):
@@ -413,6 +418,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
             Return can be ``FRONT`` or ``REAR``.""",
         values={"FRONT": "FRON", "REAR": "REAR"},
         map_values=True,
+        cast=str,
     )
 
     ###########
@@ -1126,6 +1132,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         or ``SRE`` (single-precision).""",
         validator=strict_discrete_set,
         values=("ASC", "REAL", "SRE"),
+        cast=str,
     )
 
     ################
@@ -1136,6 +1143,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         ":SYST:CARD1:IDN?",
         """ Get scanner card's ID.""",
         separator="|",
+        cast=str,
     )
 
     scan_vch_start = Instrument.measurement(

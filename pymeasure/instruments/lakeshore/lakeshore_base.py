@@ -87,10 +87,10 @@ class LakeShoreTemperatureChannel(Channel):
             target_reached = np.allclose(reading, target, atol=abs_tolerance)
             sleep(interval)
             if (time() - t) > timeout:
-                raise Exception((
-                                    "Timeout occurred after waiting %g seconds for "
-                                    "the LakeShore 331 temperature to reach %g %s."
-                                ) % (timeout, target, unit))
+                raise Exception(
+                                    f"Timeout occurred after waiting {timeout:g} seconds for "
+                                    f"the LakeShore 331 temperature to reach {target:g} {unit}."
+                                )
             if should_stop():
                 return
 

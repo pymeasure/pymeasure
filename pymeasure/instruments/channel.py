@@ -23,7 +23,7 @@
 #
 
 import logging
-from typing import Optional, Sequence, Union
+from collections.abc import Sequence
 
 from .common_base import CommonBase, IdType
 
@@ -48,9 +48,18 @@ class Channel(CommonBase):
 
     placeholder: str = "ch"
 
+    parent: CommonBase
+
+    _name: str
+    _protected: bool
+    _collection: str
+
     def __init__(self, parent: CommonBase, id: IdType, **kwargs):
         self.parent = parent
         self.id = id
+        self._name: str = ""
+        self._protected: bool = False
+        self._collection: str = ""
         super().__init__(**kwargs)
 
     def insert_id(self, command: str) -> str:
@@ -90,7 +99,7 @@ class Channel(CommonBase):
         return self.parent.read_bytes(count, **kwargs)
 
     def write_binary_values(
-        self, command: str, values: Sequence[Union[int, float]], *args, **kwargs
+        self, command: str, values: Sequence[int | float], *args, **kwargs
     ) -> None:
         """Write binary values to the instrument.
 
@@ -135,7 +144,7 @@ class Channel(CommonBase):
         return self.parent.check_set_errors()
 
     # Communication functions
-    def wait_for(self, query_delay: Optional[float] = None) -> None:
+    def wait_for(self, query_delay: float | None = None) -> None:
         """Wait for some time. Used by 'ask' to wait before reading.
 
         :param query_delay: Delay between writing and reading in seconds. None is default delay.
