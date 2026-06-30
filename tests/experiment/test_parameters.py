@@ -139,6 +139,20 @@ def test_float_bounds():
         p.value = -10  # below minimum
 
 
+def test_float_step_type():
+    p = FloatParameter('Test')
+    assert p.step_type == "linear"  # default
+    p = FloatParameter('Test', step=2, step_type="log")
+    assert p.step_type == "log"
+    with pytest.raises(ValueError):
+        FloatParameter('Test', step_type="invalid")
+    # step must be positive for log stepping (it is a multiplicative factor)
+    with pytest.raises(ValueError):
+        FloatParameter('Test', step=-2, step_type="log")
+    with pytest.raises(ValueError):
+        FloatParameter('Test', step=0, step_type="log")
+
+
 def test_list_string():
     # make sure string representation of choices is unique
     with pytest.raises(ValueError):

@@ -267,6 +267,14 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
         string = re.sub(r"e(-?)0*(\d+)", r"e\1\2", string)
         return string
 
+    def stepBy(self, steps):
+        value = self.value()
+        if self._parameter.step_type == "log":
+            sign = 1 if value >= 0 else -1
+            self.setValue(value * self._parameter.step ** (sign * steps))
+        else:
+            super().stepBy(steps)
+
     def stepEnabled(self):
         if self.parameter.step:
             return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepUpEnabled | \
