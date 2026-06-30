@@ -121,7 +121,7 @@ def test_ch_3_identify_getter():
             Chroma63600,
             [*init_cmds,(b'CHAN 3;CHAN:ID?', b'CHROMA,63630-80-60,636308007635,1.92,1.92')],
     ) as inst:
-        assert inst.ch_3.identify == ['CHROMA', '63630-80-60', 636308007635.0, 1.92, 1.92]
+        assert inst.ch_3.identify == ['CHROMA', '63630-80-60', '636308007635', '1.92', '1.92']
 
 
 def test_ch_3_mode_setter():

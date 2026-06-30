@@ -88,6 +88,7 @@ class Chroma63600_Channel(Channel):
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True,
+        cast=str,
     )
 
     enabled = Channel.control(
@@ -106,7 +107,8 @@ class Chroma63600_Channel(Channel):
 
         Returns :class:`InstrStatus`.
         """,
-        get_process=lambda v: InstrStatus(v)
+        get_process=lambda v: InstrStatus(v),
+        cast=int,
     )
     identify = Channel.measurement(
         "CHAN:ID?",
@@ -140,6 +142,7 @@ class Chroma63600_Channel(Channel):
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True,
+        cast=str,
     )
     mode = Channel.control(
         ":MODE?",
