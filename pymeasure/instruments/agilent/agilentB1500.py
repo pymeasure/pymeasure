@@ -27,6 +27,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+import warnings
 from collections import Counter, OrderedDict, namedtuple
 from collections.abc import Callable, Sequence, ValuesView
 from enum import IntEnum
@@ -937,6 +938,22 @@ class AgilentB1500(SCPIMixin, Instrument):
 ######################################
 
 
+def _compliance_or_none(value: float | str | None) -> float | None:
+    """Normalize a compliance argument, mapping the deprecated ``""`` sentinel to ``None``.
+
+    .. deprecated:: 0.17.0
+        Passing an empty string to indicate "no value" is deprecated; ``None`` should
+        be used instead.
+    """
+    if value == "":
+        warnings.warn(
+            'Passing "" to indicate "no compliance value" is deprecated;pass None instead.',
+            FutureWarning,
+        )
+        return None
+    return cast("float | None", value)
+
+
 class SMU(Channel):
     """Provide specific methods for the SMUs of the Agilent B1500 mainframe.
 
@@ -1096,7 +1113,7 @@ class SMU(Channel):
         source_type: str,
         source_range: int | str,
         output: float,
-        comp: float | str = "",
+        comp: float | None = None,
         comp_polarity: CompliancePolarity | str = "",
         comp_range: int | str = "",
     ) -> None:
@@ -1108,6 +1125,9 @@ class SMU(Channel):
         :param comp: Compliance value, defaults to previous setting
         :param comp_polarity: Compliance polarity, defaults to auto
         :param comp_range: Compliance ranging type, defaults to auto
+
+        .. deprecated:: 0.17.0
+            Passing ``""`` to ``comp`` is deprecated; pass ``None`` (the default) instead.
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "DV"
@@ -1121,8 +1141,9 @@ class SMU(Channel):
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
+        comp = _compliance_or_none(comp)
         cmd += f" {{ch}}, {source_range}, {output}"
-        if not comp == "":
+        if comp is not None:
             cmd += f", {comp}"
             if not comp_polarity == "":
                 comp_polarity_value = CompliancePolarity.get(comp_polarity).value
@@ -1137,7 +1158,7 @@ class SMU(Channel):
         source_type: str,
         source_range: int | str,
         target_output: float,
-        comp: float | str = "",
+        comp: float | None = None,
         comp_polarity: CompliancePolarity | str = "",
         comp_range: int | str = "",
         stepsize: float = 0.001,
@@ -1155,6 +1176,9 @@ class SMU(Channel):
         :param comp_range: Compliance ranging type, defaults to auto
         :param stepsize: Maximum size of steps
         :param pause: Duration in seconds to wait between steps
+
+        .. deprecated:: 0.17.0
+            Passing ``""`` to ``comp`` is deprecated; pass ``None`` (the default) instead.
         """
         if source_type.upper() == "VOLTAGE":
             source_type = "VOLTAGE"
@@ -1273,7 +1297,7 @@ class SMU(Channel):
         stop: float,
         steps: int,
         comp: float,
-        Pcomp: float | str = "",
+        Pcomp: float | None = None,
     ) -> None:
         """Specify staircase sweep source parameters. (``WV`` or ``WI``)
 
@@ -1285,6 +1309,9 @@ class SMU(Channel):
         :param steps: Number of sweep steps
         :param comp: Compliance value
         :param Pcomp: Power compliance, defaults to not set
+
+        .. deprecated:: 0.17.0
+            Passing ``""`` to ``Pcomp`` is deprecated; pass ``None`` (the default) instead.
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "WV"
@@ -1305,7 +1332,8 @@ class SMU(Channel):
         steps = strict_range(steps, range(1, 10002))
         # check on comp value not yet implemented
         cmd += f"{{ch}}, {mode_value}, {source_range}, {start}, {stop}, {steps}, {comp}"
-        if not Pcomp == "":
+        Pcomp = _compliance_or_none(Pcomp)
+        if Pcomp is not None:
             cmd += f", {Pcomp}"
         self.write(cmd)
         self.check_errors()
@@ -1319,7 +1347,7 @@ class SMU(Channel):
         start: float,
         stop: float,
         comp: float,
-        Pcomp: float | str = "",
+        Pcomp: float | None = None,
     ) -> None:
         """Specify synchronous staircase sweep source (current or voltage)
         and its parameters. (``WSV`` or ``WSI``)
@@ -1330,6 +1358,9 @@ class SMU(Channel):
         :param stop: Sweep stop value
         :param comp: Compliance value
         :param Pcomp: Power compliance, defaults to not set
+
+        .. deprecated:: 0.17.0
+            Passing ``""`` to ``Pcomp`` is deprecated; pass ``None`` (the default) instead.
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "WSV"
@@ -1341,7 +1372,8 @@ class SMU(Channel):
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
         cmd += f"{{ch}}, {source_range}, {start}, {stop}, {comp}"
-        if not Pcomp == "":
+        Pcomp = _compliance_or_none(Pcomp)
+        if Pcomp is not None:
             cmd += f", {Pcomp}"
         self.write(cmd)
         self.check_errors()
