@@ -88,7 +88,9 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         return QueryLearn.query_learn(self.ask, query_type)
 
-    def query_learn_header(self, query_type: int | str, **kwargs) -> dict:
+    def query_learn_header(
+        self, query_type: int | str, **kwargs
+    ) -> dict[str, str] | dict[str, str | bool] | dict[str, OrderedDict[str, str | bool]]:
         """Query settings from the instrument. (``*LRN?``)
 
         Return dict of settings in human-readable format for debugging
@@ -615,11 +617,11 @@ class AgilentB1500(SCPIMixin, Instrument):
         self.write(f"PAD {value}")
         self.check_errors()
 
-    def query_meas_settings(self) -> dict:
+    def query_meas_settings(self) -> dict[str, str | bool]:
         """Read settings for ``TM``, ``AV``, ``CM``, ``FMT`` and ``MM``
         commands (31) from the instrument.
         """
-        return self.query_learn_header(31)
+        return cast(dict[str, str | bool], self.query_learn_header(31))
 
     def query_meas_mode(self) -> dict:
         """Read settings for ``MM`` command (part of 31) from the instrument."""
@@ -643,9 +645,9 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     # ADC Setup: AAD, AIT, AV, AZ
 
-    def query_adc_setup(self) -> dict:
+    def query_adc_setup(self) -> dict[str, str]:
         """Read ADC settings (55, 56) from the instrument."""
-        return {**self.query_learn_header(55), **self.query_learn_header(56)}
+        return cast(dict[str, str], {**self.query_learn_header(55), **self.query_learn_header(56)})
 
     def adc_setup(self, adc_type: ADCType | int | str, mode: ADCMode | int, N: str = "") -> None:
         """Set up operation mode and parameters of ADC for each ADC type.
@@ -720,9 +722,9 @@ class AgilentB1500(SCPIMixin, Instrument):
         self.write(f"TSC {value}")
         self.check_errors()
 
-    def query_time_stamp_setting(self) -> dict:
+    def query_time_stamp_setting(self) -> dict[str, str]:
         """Read time stamp settings (60) from the instrument."""
-        return self.query_learn_header(60)
+        return cast(dict[str, str], self.query_learn_header(60))
 
     def wait_time(self, wait_type: WaitTimeType, N: float, offset: int = 0) -> None:
         """Configure wait time. (``WAT``)
@@ -739,9 +741,9 @@ class AgilentB1500(SCPIMixin, Instrument):
     # Sweep Setup
     ######################################
 
-    def query_staircase_sweep_settings(self) -> dict:
+    def query_staircase_sweep_settings(self) -> dict[str, str | bool]:
         """Read Staircase Sweep Measurement settings (33) from the instrument."""
-        return self.query_learn_header(33)
+        return cast(dict[str, str | bool], self.query_learn_header(33))
 
     def sweep_timing(
         self,
@@ -794,9 +796,9 @@ class AgilentB1500(SCPIMixin, Instrument):
     # Sampling Setup
     ######################################
 
-    def query_sampling_settings(self) -> dict:
+    def query_sampling_settings(self) -> dict[str, str | bool]:
         """Read sampling measurement settings (47) from the instrument."""
-        return self.query_learn_header(47)
+        return cast(dict[str, str | bool], self.query_learn_header(47))
 
     @property
     def sampling_mode(self) -> SamplingMode:
@@ -824,7 +826,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param number: Number of Samples
         :param hold_base: Base hold time, defaults to 0
         """
-        n_channels = self.query_meas_settings()["Measurement Channels"]
+        n_channels = cast(str, self.query_meas_settings()["Measurement Channels"])
         n_channels = len(n_channels.split(", "))
         if interval >= 0.002:
             hold_bias = strict_discrete_range(hold_bias, (0, 655.35), 0.01)
@@ -894,7 +896,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         data_twice_mapped.columns = first_row
         return data_twice_mapped
 
-    def read_channels(self, nchannels: int) -> tuple:
+    def read_channels(self, nchannels: int) -> tuple[tuple[str, str | int, str, float], ...]:
         """Read data for 1 measurement point from the buffer for the specified number of channels.
 
         :param nchannels: Number of channels which return data (includes measurement
@@ -916,21 +918,21 @@ class AgilentB1500(SCPIMixin, Instrument):
     # Queries on all SMUs
     ######################################
 
-    def query_series_resistor(self) -> dict:
+    def query_series_resistor(self) -> dict[str, bool]:
         """Read series resistor status (53) for all SMUs."""
-        return self.query_learn_header(53)
+        return cast(dict[str, bool], self.query_learn_header(53))
 
-    def query_meas_range_current_auto(self) -> dict:
+    def query_meas_range_current_auto(self) -> dict[str, str]:
         """Read auto ranging mode status (54) for all SMUs."""
-        return self.query_learn_header(54)
+        return cast(dict[str, str], self.query_learn_header(54))
 
-    def query_meas_op_mode(self) -> dict:
+    def query_meas_op_mode(self) -> dict[str, str]:
         """Read SMU measurement operation mode (46) for all SMUs."""
-        return self.query_learn_header(46)
+        return cast(dict[str, str], self.query_learn_header(46))
 
-    def query_meas_ranges(self) -> dict:
+    def query_meas_ranges(self) -> dict[str, str]:
         """Read measurement ranging status (32) for all SMUs."""
-        return self.query_learn_header(32)
+        return cast(dict[str, str], self.query_learn_header(32))
 
 
 ######################################
@@ -1008,11 +1010,11 @@ class SMU(Channel):
 
     ##########################################
 
-    def _query_status_raw(self) -> dict:
+    def _query_status_raw(self) -> dict[str, list[str]]:
         return self.parent.query_learn(str(self.id))
 
     @property
-    def status(self) -> dict:
+    def status(self) -> dict[str, OrderedDict[str, str]]:
         """Get status of the SMU."""
         return self.parent.query_learn_header(str(self.id))
 
@@ -2328,7 +2330,7 @@ class QueryLearn:
         query_type: int | str,
         smu_references: dict[int, SMU],
         single_command: str | Literal[False] = False,
-    ) -> dict:
+    ) -> dict[str, str] | dict[str, str | bool] | dict[str, OrderedDict[str, str | bool]]:
         """Issue ``*LRN?`` (learn) command to the instrument to
         read configuration.
         Processes information to human readable values for debugging
@@ -2347,7 +2349,7 @@ class QueryLearn:
         ret = {}
         for key, value in response.items():
             # command without channel
-            command = re.findall(r"(?P<command>[A-Z]+)", key)[0]
+            command: str = re.findall(r"(?P<command>[A-Z]+)", key)[0]
             new_dict = getattr(cls, command)(
                 key=key, parameters=value, smu_references=smu_references
             )
