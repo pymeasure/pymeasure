@@ -19,6 +19,7 @@ This file provides guidance to agents when working with code in this repository.
 - Format with black: `black .` (line-length=100)
 - Sort imports with isort: `isort .`
 - Run single test: `python -m pytest tests/test_file.py::test_function`
+- Type check with pyright: `pyright`
 
 ## Code Style Guidelines
 

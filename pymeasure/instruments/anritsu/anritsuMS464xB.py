@@ -23,7 +23,7 @@
 #
 import logging
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin, cast_or_str
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range
@@ -118,14 +118,14 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
                            frequency_range=self.FREQUENCY_RANGE,
                            **kwargs)
 
-    def check_errors(self):
+    def check_errors(self) -> list[list[str | float]]:
         """ Read all errors from the instrument.
 
         :return: list of error entries
         """
         errors = []
         while True:
-            err = self.values("SYST:ERR?")
+            err = self.values("SYST:ERR?", cast=cast_or_str(float))
             if err[0] != "No Error":
                 log.error(f"{self.name}: {err[0]}")
                 errors.append(err)
@@ -160,6 +160,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values=["HZ", "KHZ", "MHZ", "GHZ"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
     datablock_numeric_format = Instrument.control(
@@ -178,6 +179,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values={"ASCII": "ASC", "8byte": "REAL", "4byte": "REAL32"},
         map_values=True,
+        cast=str,
     )
 
     datafile_include_heading = Instrument.control(
@@ -203,6 +205,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values=["LINPH", "LOGPH", "REIM"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
     data_drawing_enabled = Instrument.control(
@@ -263,6 +266,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values=["NORM", "SWAP"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
     max_number_of_points = Instrument.control(
@@ -346,6 +350,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values=["AUTO", "MAN", "EXTT", "EXT", "REM"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
     external_trigger_type = Instrument.control(
@@ -356,6 +361,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values=TRIGGER_TYPES,
         validator=strict_discrete_set,
+        cast=str,
     )
 
     external_trigger_delay = Instrument.control(
@@ -376,6 +382,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values=["POS", "NEG"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
     external_trigger_handshake = Instrument.control(
@@ -393,6 +400,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values=TRIGGER_TYPES,
         validator=strict_discrete_set,
+        cast=str,
     )
 
     manual_trigger_type = Instrument.control(
@@ -403,6 +411,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values=TRIGGER_TYPES,
         validator=strict_discrete_set,
+        cast=str,
     )
 
     def trigger(self):
@@ -433,6 +442,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         """,
         values=["CONT", "HOLD", "SING"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
     def load_data_file(self, filename):
@@ -512,8 +522,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         data = self.read_bytes(bytes_to_transfer)
         with open(filename, "w") as textfile:
             data_list = data.split(b"\r\n")
-            for s in data_list:
-                textfile.write(str(s)[2 : len(s)] + "\n")  # noqa
+            textfile.writelines(str(s)[2:len(s)] + "\n" for s in data_list)
 
 
 class Port(Channel):
@@ -561,6 +570,7 @@ class Trace(Channel):
         """,
         values=AnritsuMS464xB.SPARAM_LIST + ["MIX", "NFIG", "NPOW", "NTEMP", "AGA", "IGA"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
 
@@ -679,6 +689,7 @@ class MeasurementChannel(Channel):
         """,
         values=["TRAN", "NFIG", "PULS"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
     hold_function = Channel.control(
@@ -697,6 +708,7 @@ class MeasurementChannel(Channel):
         """,
         values=["CONT", "HOLD", "SING"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
     cw_mode_enabled = Channel.control(
@@ -812,6 +824,7 @@ class MeasurementChannel(Channel):
         """,
         values=["POIN", "SWE"],
         validator=strict_discrete_set,
+        cast=str,
     )
 
     averaging_enabled = Channel.control(
@@ -840,6 +853,7 @@ class MeasurementChannel(Channel):
         """,
         validator=strict_discrete_set,
         values=["LIN", "LOG", "FSEGM", "ISEGM", "POW", "MFGC"],
+        cast=str,
     )
 
     sweep_mode = Channel.control(
@@ -851,6 +865,7 @@ class MeasurementChannel(Channel):
         frequencies in the range).""",
         validator=strict_discrete_set,
         values=["VNA", "CLAS"],
+        cast=str,
     )
 
     sweep_time = Channel.control(

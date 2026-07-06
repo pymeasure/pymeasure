@@ -114,7 +114,6 @@ class VellemanK8090(Instrument):
             write_termination="",
             read_termination="",
             timeout=timeout,
-            includeSCPI=False,
             **kwargs,
         )
 

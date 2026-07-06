@@ -25,7 +25,8 @@
 from __future__ import annotations
 from contextlib import contextmanager
 
-from typing import Any, Generator, Optional, Sequence, TypeVar, Union
+from typing import Any, TypeVar
+from collections.abc import Generator, Sequence
 
 from pymeasure.adapters.protocol import ProtocolAdapter, BYTABLE
 from pymeasure.instruments import Instrument
@@ -37,9 +38,9 @@ Inst = TypeVar("Inst", bound=Instrument)
 @contextmanager
 def expected_protocol(
     instrument_cls: type[Inst],
-    comm_pairs: Sequence[tuple[Union[BYTABLE, None], Union[BYTABLE, None]]],
-    connection_attributes: Optional[dict[str, Any]] = None,
-    connection_methods: Optional[dict[str, Any]] = None,
+    comm_pairs: Sequence[tuple[BYTABLE | None, BYTABLE | None]],
+    connection_attributes: dict[str, Any] | None = None,
+    connection_methods: dict[str, Any] | None = None,
     **kwargs,
 ) -> Generator[Inst, Any, None]:
     """Context manager that checks sent/received instrument commands without a

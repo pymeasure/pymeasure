@@ -27,7 +27,10 @@ import pytest
 from pymeasure.instruments.texio.texioPSW360L30 import TexioPSW360L30
 
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
+@pytest.fixture(scope="module")
+def device(connected_device_address):
+    device = TexioPSW360L30(connected_device_address)
+    return device
 
 
 class TestTexioPSW360L30:
@@ -39,13 +42,6 @@ class TestTexioPSW360L30:
         - The device's address must be set in the RESOURCE constant;
     """
 
-    ##################################################
-    # TEXIO PSW-360L30 device address goes here:
-    RESOURCE = "TCPIP::192.168.10.119::2268::SOCKET"
-    ##################################################
-
-    INSTR = TexioPSW360L30(RESOURCE)
-
     #########################
     # PARAMETRIZATION CASES #
     #########################
@@ -54,7 +50,8 @@ class TestTexioPSW360L30:
     VOLTAGE_SETPOINT = [1, 2, 3, 4, 5]
 
     @pytest.fixture
-    def instr(self):
+    def instr(self, device: TexioPSW360L30):
+        self.INSTR = device
         self.INSTR.reset()
         return self.INSTR
 

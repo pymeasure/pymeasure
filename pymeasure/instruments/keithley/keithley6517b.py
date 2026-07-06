@@ -219,7 +219,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
         """
         log.info("%s is measuring resistance.", self.name)
         self.write(":SENS:FUNC 'RES';"
-                   ":SENS:RES:NPLC %f;" % nplc)
+                   f":SENS:RES:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:RES:RANG:AUTO 1;")
         else:
@@ -236,7 +236,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
         """
         log.info("%s is measuring voltage.", self.name)
         self.write(":SENS:FUNC 'VOLT';"
-                   ":SENS:VOLT:NPLC %f;" % nplc)
+                   f":SENS:VOLT:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:VOLT:RANG:AUTO 1;")
         else:
@@ -253,7 +253,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
         """
         log.info("%s is measuring current.", self.name)
         self.write(":SENS:FUNC 'CURR';"
-                   ":SENS:CURR:NPLC %f;" % nplc)
+                   f":SENS:CURR:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO 1;")
         else:

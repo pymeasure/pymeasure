@@ -6,17 +6,58 @@ on:
       - develop
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  docs_lint:
-    name: Docs and Linting
+  lint_typecheck:
+    name: Lint and Type Check
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: read
+      checks: write
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+      - name: Install pymeasure
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -e .[tests,gui,tcp,dev]
+          pip install PyQt6
+      - name: Add venv to PATH for pyright
+        run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - name: Lint with ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check --output-format github"
+      - name: Type check with pyright
+        if: success() || failure()
+        uses: jakebailey/pyright-action@v3
+        with:
+          version: PATH
+          annotate: all
+        continue-on-error: true
+
+  docs:
+    name: Docs
     runs-on: "ubuntu-latest"
     defaults:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v3
         with:
@@ -27,19 +68,14 @@ jobs:
         run: |
           python --version
           micromamba info
-      - name: Lint with ruff
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: "check --output-format github"
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Generate docs
-        if: always()  # run even if the previous step failed
         working-directory: ./docs
         run: |
           echo "::add-matcher::.github/sphinx.json"
           make html SPHINXOPTS="-W --keep-going"
       - name: Run doctests
-        if: always()  # run even if the previous step failed
+        if: always()
         working-directory: ./docs
         run: |
           echo "::add-matcher::.github/sphinx.json"
@@ -52,7 +88,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Install pymeasure requirements
@@ -65,7 +101,7 @@ jobs:
       - name: Python version
         run: python --version
       - name: Install Pymeasure
-        run: pip install -e .[tests]  # editable for covtest
+        run: pip install -e .[gui,tests]  # editable for covtest
       - name: Pymeasure version
         run: python -c "import pymeasure;print(pymeasure.__version__)"
       - name: Test for Coverage
@@ -74,7 +110,7 @@ jobs:
           echo "::add-matcher::.github/pytest.json"
           xvfb-run -a pytest --cov=pymeasure --cov-report=xml
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
@@ -93,9 +129,9 @@ jobs:
       fail-fast: true
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Install pymeasure requirements
@@ -110,7 +146,7 @@ jobs:
         run: python --version
       - name: Install Pymeasure
         # If the pytest problem matcher stops working because of bad paths, do an editable install
-        run: pip install .[tests]
+        run: pip install .[gui,tests]
       - name: Pymeasure version
         run: python -c "import pymeasure;print(pymeasure.__version__)"
       - name: Run pytest with xvfb
@@ -136,7 +172,7 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Install base pymeasure requirements
@@ -154,7 +190,7 @@ jobs:
       - name: Upgrade pandas to latest via pip
         run: pip install "pandas>=3.0"
       - name: Install Pymeasure
-        run: pip install .[tests]
+        run: pip install .[gui,tests]
       - name: Pymeasure version
         run: python -c "import pymeasure;print(pymeasure.__version__)"
       - name: pandas and numpy versions

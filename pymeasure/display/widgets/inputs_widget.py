@@ -91,7 +91,7 @@ class InputsWidget(QtWidgets.QWidget):
         for name in self._inputs:
             if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
                 label = QtWidgets.QLabel(self)
-                label.setText("%s:" % parameters[name].name)
+                label.setText(f"{parameters[name].name}:")
                 vbox.addWidget(label)
                 self.labels[name] = label
 

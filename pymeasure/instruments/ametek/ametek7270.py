@@ -22,7 +22,10 @@
 # THE SOFTWARE.
 #
 
+from typing import Literal
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
 
 import logging
@@ -30,7 +33,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def check_read_not_empty(value):
+def check_read_not_empty(value: Literal[""] | float) -> float:
     """Called by some properties to check if the reply is not an empty string
     that would mean the properties is currently invalid (probably because the reference mode
     is on single or dual)"""
@@ -102,54 +105,63 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
     x = Instrument.measurement(
         "X.",
         """Get X value in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     y = Instrument.measurement(
         "Y.",
         """Get Y value in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     x1 = Instrument.measurement(
         "X1.",
         """Get first harmonic X value in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     y1 = Instrument.measurement(
         "Y1.",
         """Get first harmonic Y value in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     x2 = Instrument.measurement(
         "X2.",
         """Get second harmonic X value in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     y2 = Instrument.measurement(
         "Y2.",
         """Get second harmonic Y value in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     xy = Instrument.measurement(
         "XY.",
         """Get both X and Y values in Volts (float, tuple).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     mag = Instrument.measurement(
         "MAG.",
         """Get magnitude in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     theta = Instrument.measurement(
         "PHA.",
         """Get signal phase in degrees (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
@@ -221,24 +233,28 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
     adc1 = Instrument.measurement(
         "ADC. 1",
         """Get the input value of ADC1 in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     adc2 = Instrument.measurement(
         "ADC. 2",
         """Get the input value of ADC2 in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     adc3 = Instrument.measurement(
         "ADC. 3",
         """Get the input value of ADC3 in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     adc4 = Instrument.measurement(
         "ADC. 4",
         """Get the input value of ADC4 in Volts (float).""",
+        cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
@@ -296,7 +312,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
     def set_differential_mode(self, lineFiltering=True):
         """ Sets instrument to differential mode -- assuming it is in voltage mode """
         self.ask("VMODE 3")
-        self.ask("LF %d 0" % 3 if lineFiltering else 0)
+        self.ask(f"LF {3 if lineFiltering else 0} 0")
 
     def set_current_mode(self, low_noise=False):
         """ Sets instrument to current control mode with either low noise or high bandwidth"""
@@ -330,6 +346,6 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     def shutdown(self):
         """ Ensures the instrument in a safe state """
-        log.info("Shutting down %s" % self.name)
+        log.info(f"Shutting down {self.name}")
         self.voltage = 0.
         super().shutdown()

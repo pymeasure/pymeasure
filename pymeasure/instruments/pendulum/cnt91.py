@@ -74,6 +74,7 @@ class CNT91(SCPIUnknownMixin, Instrument):
         validator=strict_discrete_set,
         values={"A": "EXT1", "B": "EXT2", "E": "EXT4", "IMM": "IMM"},
         map_values=True,
+        cast=str,
     )
 
     external_arming_start_slope = Instrument.control(
@@ -82,6 +83,7 @@ class CNT91(SCPIUnknownMixin, Instrument):
         """Control slope for the start arming condition (str 'POS' or 'NEG').""",
         validator=strict_discrete_set,
         values=["POS", "NEG"],
+        cast=str,
     )
 
     continuous = Instrument.control(
@@ -124,6 +126,7 @@ class CNT91(SCPIUnknownMixin, Instrument):
         validator=strict_discrete_set,
         values={"ASCII": "ASC", "REAL": "REAL"},
         map_values=True,
+        cast=str,
     )
 
     interpolator_autocalibrated = Instrument.control(

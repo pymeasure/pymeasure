@@ -23,12 +23,13 @@
 #
 
 from enum import IntFlag
-from typing import Any, Union
+from typing import Any
 
 from pyvisa.constants import InterfaceType
 
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.adapters import Adapter
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 # https://www.spellmanhv.com/en/high-voltage-power-supplies/XRV
@@ -241,7 +242,7 @@ class SpellmanXRV(Instrument):
     unscaled = Instrument.ChannelCreator(UnscaledData)
 
     def __init__(self,
-                 adapter: Union[Adapter, int, str],
+                 adapter: Adapter | int | str,
                  name: str = "Spellman XRV HV Power Supply",
                  query_delay: float = 0.15,
                  baud_rate: int = 9600,
@@ -251,7 +252,6 @@ class SpellmanXRV(Instrument):
             asrl={'baud_rate': baud_rate},
             read_termination=ETX,
             write_termination=ETX,
-            includeSCPI=False,
             timeout=2000,
             **kwargs)
 
@@ -479,7 +479,8 @@ class SpellmanXRV(Instrument):
     dsp = Instrument.measurement(
         "23",
         """Get the DSP part number and version (list).""",
-        )
+        cast=cast_or_str(float),
+    )
 
     configuration = Instrument.measurement(
         "27",
@@ -560,7 +561,8 @@ class SpellmanXRV(Instrument):
     fpga = Instrument.measurement(
         "43",
         """Get the FPGA part number and version (list).""",
-        )
+        cast=cast_or_str(float),
+    )
 
     errors = Instrument.measurement(
         "68",

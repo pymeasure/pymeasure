@@ -67,7 +67,7 @@ def create_filename(title):
     """
     config = get_config()
     if 'Filename' in config._sections.keys():
-        filename = unique_filename(suffix='_%s' % title, **config._sections['Filename'])
+        filename = unique_filename(suffix=f'_{title}', **config._sections['Filename'])
     else:
         filename = tempfile.mktemp()
     return filename
@@ -122,7 +122,7 @@ class Experiment:
         self.scribe.start()
 
         self.filename = create_filename(self.title)
-        log.info("Using data file: %s" % self.filename)
+        log.info(f"Using data file: {self.filename}")
 
         self.results = Results(self.procedure, self.filename)
         log.info("Set up Results")
