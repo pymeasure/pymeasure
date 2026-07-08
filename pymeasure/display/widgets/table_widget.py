@@ -570,7 +570,8 @@ class Table(QtWidgets.QTableView):
         if model.columnCount() != current_col_count:
             # Hide no-show columns
             for i in range(model.columnCount()):
-                label = model.headerData(i, QtCore.Qt.Orientation.Horizontal, QtCore.Qt.ItemDataRole.DisplayRole)
+                label = model.headerData(i, QtCore.Qt.Orientation.Horizontal,
+                                         QtCore.Qt.ItemDataRole.DisplayRole)
                 self.setColumnHidden(i, label not in self.parent().columns)
 
     def set_color(self, table, color):
