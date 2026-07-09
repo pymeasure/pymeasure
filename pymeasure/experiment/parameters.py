@@ -273,9 +273,9 @@ class FloatParameter(Parameter):
             raise ValueError(
                 f"FloatParameter step_type must be 'linear' or 'log', not '{step_type}'"
             )
-        if step_type == "log" and step is not None and step <= 0:
+        if step_type == "log" and step is not None and step <= 1:
             raise ValueError(
-                f"FloatParameter step must be positive when step_type is 'log', not {step}"
+                f"FloatParameter step must be larger than 1 when step_type is 'log', not {step}"
             )
         self.units = units
         self.minimum = minimum
