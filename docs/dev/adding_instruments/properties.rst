@@ -372,6 +372,58 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
         # notice how we don't need to cast to float anymore
     )
 
+Dynamic properties
+******************
+
+As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
+One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
+This feature allows accommodating some interesting use cases with a very compact syntax.
+
+Dynamic features of a property are enabled by setting its :code:`dynamic` parameter to :code:`True`.
+
+Afterwards, creating specifically-named attributes (either in class definitions or on instances) allows modifying the parameters used at the time of property definition.
+You need to define an attribute whose name is `<property name>_<property_parameter>` and assign to it the desired value.
+Pay attention *not* to inadvertently define other class attribute or instance attribute names matching this pattern, since they could unintentionally modify the property behaviour.
+
+.. note::
+   To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read.
+
+The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`.
+
+Dynamic validity range
+----------------------
+Let's assume we have an instrument with a command that accepts a different valid range of values depending on its current state.
+The code below shows how this can be accomplished with dynamic properties.
+
+.. testcode::
+
+    Extreme5000.voltage = Instrument.control(
+        ":VOLT?", ":VOLT %g",
+        """Control the voltage in Volts (float).""",
+        validator=strict_range,
+        values=[-1, 1],
+        dynamic = True,
+    )
+    def set_bipolar_mode(self, enabled = True):
+        """Safely switch between bipolar/unipolar mode."""
+
+        # some code to switch off the output first
+        # ...
+
+        if enabled:
+            self.mode = "BIPOLAR"
+            # set valid range of "voltage" property
+            self.voltage_values = [-1, 1]
+        else:
+            self.mode = "UNIPOLAR"
+            # note the "propertyname_parametername" form of the attribute
+            self.voltage_values = [0, 1]
+
+
+Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
+A side effect of this is that the property's docstring should be less specific, to avoid it containing dynamically changed information (like the admissible value range).
+In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
+
 .. _type-hints-property-creators:
 
 Type hints for property creators
@@ -482,58 +534,6 @@ In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and rea
     [0.2, 931.0]
 
 This interface is not too convenient, but luckily not often needed.
-
-Dynamic properties
-******************
-
-As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
-One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
-This feature allows accommodating some interesting use cases with a very compact syntax.
-
-Dynamic features of a property are enabled by setting its :code:`dynamic` parameter to :code:`True`.
-
-Afterwards, creating specifically-named attributes (either in class definitions or on instances) allows modifying the parameters used at the time of property definition.
-You need to define an attribute whose name is `<property name>_<property_parameter>` and assign to it the desired value.
-Pay attention *not* to inadvertently define other class attribute or instance attribute names matching this pattern, since they could unintentionally modify the property behaviour.
-
-.. note::
-   To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read.
-
-The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`.
-
-Dynamic validity range
-----------------------
-Let's assume we have an instrument with a command that accepts a different valid range of values depending on its current state.
-The code below shows how this can be accomplished with dynamic properties.
-
-.. testcode::
-
-    Extreme5000.voltage = Instrument.control(
-        ":VOLT?", ":VOLT %g",
-        """Control the voltage in Volts (float).""",
-        validator=strict_range,
-        values=[-1, 1],
-        dynamic = True,
-    )
-    def set_bipolar_mode(self, enabled = True):
-        """Safely switch between bipolar/unipolar mode."""
-
-        # some code to switch off the output first
-        # ...
-
-        if enabled:
-            self.mode = "BIPOLAR"
-            # set valid range of "voltage" property
-            self.voltage_values = [-1, 1]
-        else:
-            self.mode = "UNIPOLAR"
-            # note the "propertyname_parametername" form of the attribute
-            self.voltage_values = [0, 1]
-
-
-Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
-A side effect of this is that the property's docstring should be less specific, to avoid it containing dynamically changed information (like the admissible value range).
-In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
 
 .. _instruments_with_similar_features:
 
