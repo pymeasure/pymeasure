@@ -956,6 +956,7 @@ def _compliance_or_none(value: float | str | None, method: str) -> float | None:
             f'Passing "" to {method} to indicate "no compliance value" is deprecated; '
             "pass None instead.",
             FutureWarning,
+            stacklevel=3
         )
         return None
     return cast("float | None", value)
