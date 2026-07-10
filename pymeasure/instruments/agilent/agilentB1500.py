@@ -417,8 +417,9 @@ class AgilentB1500(SCPIMixin, Instrument):
             else:
                 name = f" {name}"
 
-            status = re.search(r"(?P<number>[0-9]*)(?P<letter>[ A-Z]*)", status_string)
-            assert status is not None  # pattern always matches, assert for type checking
+            status = cast(
+                re.Match[str], re.search(r"(?P<number>[0-9]*)(?P<letter>[ A-Z]*)", status_string)
+            )
             # depending on FMT, status may be a letter or up to 3 digits
             if len(status.group("number")) > 0:
                 status = int(status.group("number"))
