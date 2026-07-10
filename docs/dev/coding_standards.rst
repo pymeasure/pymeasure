@@ -63,6 +63,9 @@ PyMeasure documents code using reStructuredText and the `Sphinx documentation ge
 
 .. _Sphinx documentation generator: http://www.sphinx-doc.org/en/stable/
 
+reStructuredText heading underlines must be exactly as long as the heading text.
+For example, for a heading "HCP TC038 crystal oven" (22 characters), use exactly 22 hash characters: ``######################``.
+
 
 Usage of getter and setter functions
 ====================================
