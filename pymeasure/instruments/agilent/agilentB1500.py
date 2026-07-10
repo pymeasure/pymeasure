@@ -941,8 +941,11 @@ class AgilentB1500(SCPIMixin, Instrument):
 ######################################
 
 
-def _compliance_or_none(value: float | str | None) -> float | None:
+def _compliance_or_none(value: float | str | None, method: str) -> float | None:
     """Normalize a compliance argument, mapping the deprecated ``""`` sentinel to ``None``.
+
+    :param value: Compliance value to normalize.
+    :param method: Name of the calling method, included in the deprecation warning.
 
     .. deprecated:: 0.17.0
         Passing an empty string to indicate "no value" is deprecated; ``None`` should
@@ -950,7 +953,8 @@ def _compliance_or_none(value: float | str | None) -> float | None:
     """
     if value == "":
         warnings.warn(
-            'Passing "" to indicate "no compliance value" is deprecated;pass None instead.',
+            f'Passing "" to {method} to indicate "no compliance value" is deprecated; '
+            "pass None instead.",
             FutureWarning,
         )
         return None
@@ -1144,7 +1148,7 @@ class SMU(Channel):
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
-        comp = _compliance_or_none(comp)
+        comp = _compliance_or_none(comp, "force")
         cmd += f" {{ch}}, {source_range}, {output}"
         if comp is not None:
             cmd += f", {comp}"
@@ -1335,7 +1339,7 @@ class SMU(Channel):
         steps = strict_range(steps, range(1, 10002))
         # check on comp value not yet implemented
         cmd += f"{{ch}}, {mode_value}, {source_range}, {start}, {stop}, {steps}, {comp}"
-        Pcomp = _compliance_or_none(Pcomp)
+        Pcomp = _compliance_or_none(Pcomp, "staircase_sweep_source")
         if Pcomp is not None:
             cmd += f", {Pcomp}"
         self.write(cmd)
@@ -1375,7 +1379,7 @@ class SMU(Channel):
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
         cmd += f"{{ch}}, {source_range}, {start}, {stop}, {comp}"
-        Pcomp = _compliance_or_none(Pcomp)
+        Pcomp = _compliance_or_none(Pcomp, "synchronous_sweep_source")
         if Pcomp is not None:
             cmd += f", {Pcomp}"
         self.write(cmd)
