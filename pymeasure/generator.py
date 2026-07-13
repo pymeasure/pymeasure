@@ -506,7 +506,7 @@ class Generator:
                                 " PyVISA is not present")
         adapter.log.addHandler(ByteStreamHandler(self._stream))
         adapter.log.setLevel(logging.DEBUG)
-        self.inst = instrument_class(adapter, **kwargs) # type: ignore[reportCallIssue]
+        self.inst = instrument_class(adapter, **kwargs)  # type: ignore[reportCallIssue]
         self._init_comm_pairs = self.parse_stream()  # communication of instantiation.
         self._inkwargs = kwargs  # instantiation kwargs
         self.test_inst = TestInstrument(self.inst, self)
