@@ -24,6 +24,7 @@
 
 import pytest
 import serial
+from unittest.mock import patch
 
 from pymeasure.adapters import SerialAdapter
 
@@ -84,6 +85,40 @@ def test_read_bytes_break_on_termchar(adapter, count):
     adapter.read_termination = "\n"
     adapter.write_bytes(b"basd\x02\nfasdf\n")
     assert adapter.read_bytes(count, break_on_termchar=True) == b"basd\x02\n"
+
+
+def test_init_with_port_string():
+    """Construct a SerialAdapter passing a port string.
+
+    This covers the `serial.Serial(port, **kwargs)` branch. On Linux
+    `serial.Serial("loop://")` would attempt `os.open` and raise
+    `SerialException`, so we patch `serial.Serial` to verify the construction
+    path while still obtaining a usable `loop://` connection for assertions.
+    """
+    real_connection = serial.serial_for_url("loop://", timeout=0.2)
+    with patch(
+        "pymeasure.adapters.serial.serial.Serial",
+        return_value=real_connection,
+    ) as mock_serial:
+        adapter = SerialAdapter("loop://", timeout=0.2)
+    try:
+        mock_serial.assert_called_once_with("loop://", timeout=0.2)
+        assert adapter.connection is real_connection
+    finally:
+        adapter.connection.close()
+
+
+def test_flush_read_buffer(adapter):
+    """Verify that `flush_read_buffer` empties the input buffer."""
+    adapter.write_bytes(b"some data")
+    assert adapter.connection.in_waiting > 0
+    adapter.flush_read_buffer()
+    assert adapter.connection.in_waiting == 0
+
+
+def test_repr(adapter):
+    """Verify the `repr` of a SerialAdapter includes `port=`."""
+    assert repr(adapter) == "<SerialAdapter(port='loop://')>"
 
 
 @pytest.mark.parametrize("test_input,expected", [([1, 2, 3], b'OUTP#13\x01\x02\x03'),

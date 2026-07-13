@@ -157,3 +157,33 @@ def test_ping():
         [(b"\x01\x08\x00\x00\x12\x34\xed\x7c", b"\x01\x08\x00\x00\x12\x34\xed\x7c")],
     ) as inst:
         inst.ping(4660)
+
+
+def test_ping_non_default_test_data():
+    # Verify ECHO path with non-default test data (255 = 0x00FF).
+    with expected_protocol(
+        TC038D,
+        [(b"\x01\x08\x00\x00\x00\xff\xa0K", b"\x01\x08\x00\x00\x00\xff\xa0K")],
+    ) as inst:
+        inst.ping(255)
+
+
+def test_read_variable_data_error():
+    """Test whether error code 0x03 raises the right error."""
+    with expected_protocol(
+        TC038D,
+        [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B", b"\x01\x83\x03\x011")],
+    ) as inst:
+        with pytest.raises(ValueError, match="Variable data"):
+            inst.temperature
+
+
+def test_write_operation_error():
+    """Test whether error code 0x04 raises the right error on write."""
+    with expected_protocol(
+        TC038D,
+        [(b"\x01\x10\x01\x06\x00\x02\x04\x00\x00\x01A\xbf\xb5",
+          b"\x01\x90\x04@\xf3")],
+    ) as inst:
+        with pytest.raises(ValueError, match="Operation error"):
+            inst.setpoint = 32.1
