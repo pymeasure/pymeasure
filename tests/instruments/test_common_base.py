@@ -440,7 +440,7 @@ def test_MultiChannelCreator_different_list_lengths():
 
 def test_ChannelCreator_invalid_input():
     with pytest.raises(ValueError, match="Invalid"):
-        CommonBase.ChannelCreator("A", {}) # type: ignore
+        CommonBase.ChannelCreator("A", {})  # type: ignore
 
 
 # Test CommonBase communication
@@ -457,7 +457,7 @@ def test_ask_writes_and_reads():
                           ("5,6,7", {'cast': str}, ['5', '6', '7']),
                           ("X,Y,Z", {"cast": str}, ['X', 'Y', 'Z']),
                           ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
-                          ("X.Y.Z", {"separator": ".", "cast":str}, ["X", "Y", "Z"]),
+                           ("X.Y.Z", {"separator": ".", "cast": str}, ["X", "Y", "Z"]),
                           ("0,5,7.1", {'cast': bool}, [False, True, True]),
                           ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5]),
                           ("X,Y,Z", {'maxsplit': 1, "cast": str}, ["X", "Y,Z"]),
@@ -473,6 +473,7 @@ def test_values_fallback_emits_futurewarning():
     with pytest.warns(FutureWarning, match=r"Cannot cast.*In a future version"):
         result = cb.values("X,Y,Z")
     assert result == ["X", "Y", "Z"]
+
 
 def test_values_fallback_raises_futurewarning_in_pymeasure():
     cb = CommonBaseTesting(FakeAdapter(), "test")
@@ -804,7 +805,7 @@ def test_control_parameters_for_values():
             values_kwargs={'testing': True},
         )
 
-        def values(self, cmd, testing=False, **kwargs): # type: ignore[override]
+        def values(self, cmd, testing=False, **kwargs):  # type: ignore[override]
             self.testing = testing
             return super().values(cmd, **kwargs)
 
@@ -826,7 +827,7 @@ def test_measurement_parameters_for_values():
             values_kwargs={'testing': True},
         )
 
-        def values(self, command, testing=False, **kwargs): # type: ignore[override]
+        def values(self, command, testing=False, **kwargs):  # type: ignore[override]
             self.testing = testing
             return super().values(command, **kwargs)
 
@@ -1048,6 +1049,7 @@ def test_dynamic_property_values_defined_at_superclass_level():
     with pytest.raises(ValueError):
         inst.fake_ctrl2 = 2  # should not raise an error if change unsuccessful
 
+
 class ExampleControlTypes(CommonBase):
     """Verify via type checker whether control types typing works.
 
@@ -1153,7 +1155,6 @@ class ExampleControlTypes(CommonBase):
         map_values=True,
         validator=int_validator,
     )
-
 
 
 if TYPE_CHECKING and TYPING_EXTENSION:

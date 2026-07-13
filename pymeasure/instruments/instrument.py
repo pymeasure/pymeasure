@@ -40,6 +40,7 @@ log.addHandler(logging.NullHandler())
 
 AdapterType = Adapter | str | int
 
+
 class Instrument(CommonBase):
     """The base class for all Instrument definitions.
 

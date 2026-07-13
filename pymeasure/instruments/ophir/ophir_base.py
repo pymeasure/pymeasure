@@ -123,7 +123,7 @@ class OphirCommunication(Instrument):
         try:
             from pyvisa.constants import InterfaceType
 
-            info = self.adapter.connection.resource_info(self.adapter.resource_name) # type: ignore
+            info = self.adapter.connection.resource_info(self.adapter.resource_name)  # type: ignore
             self._is_rs232 = info.interface_type == InterfaceType.asrl
         except (AttributeError, TypeError):
             self._is_rs232 = False
