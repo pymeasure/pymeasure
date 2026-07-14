@@ -55,46 +55,46 @@ class CTL200(Instrument):
     _STATUS_KEYS = ["lason", "vlaser", "itec", "vtec", "rtact", "iphd", "ain1",
                     "ain2"]
 
-    def __init__(self, adapter, name="Koheron CTL200", **kwargs):
-        kwargs.setdefault("baud_rate", 115200)
-        kwargs.setdefault("write_termination", "\r\n")
-        kwargs.setdefault("read_termination", "\r\n")
-        super().__init__(adapter, name, **kwargs)
+    def __init__(self, adapter, name="Koheron CTL200", baud_rate=115200, **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            baud_rate=baud_rate,
+            write_termination="\r\n",
+            read_termination="\r\n",
+            **kwargs,
+        )
 
     def _read_cleaned_response(self, sent_command):
-        """Read lines from device and filter for echos and >> chars."""
-        if self._is_test_run():
-            return self.read()
+        """Read the reply of `sent_command`, discarding echo and prompt.
 
+        The device echoes every command before replying with a single value
+        line. Its prompt (">>") is not newline terminated, so it arrives
+        prepended to the echo of the following command.
+        """
         cmd_clean = sent_command.strip()
         while True:
             line = self.read().replace("\x00", "").strip()
-            if line in ("", ">>"):
-                continue
-            if line == cmd_clean:
-                continue
-            if line.startswith(">>") and line.removeprefix(">>").strip() == cmd_clean:
+            # Skip blank lines, the bare prompt, and the echoed command,
+            # each of which may carry a leading prompt.
+            if line.removeprefix(">>").strip() in ("", cmd_clean):
                 continue
             return line
 
-    def write(self, command):
-        """Write command to device and read echo."""
+    def write(self, command, **kwargs):
+        """Write a command and consume the echo and the reply.
+
+        The device replies to every command with a single value line, settings
+        included. It is discarded here to leave no unread data behind.
+        """
+        super().write(command, **kwargs)
+        self._read_cleaned_response(command)
+
+    def ask(self, command, query_delay=None):
+        """Write a command and return its reply without echo and prompt."""
         super().write(command)
-        if self._is_test_run():
-            return
-
+        self.wait_for(query_delay)
         return self._read_cleaned_response(command)
-
-    def ask(self, command):
-        """Query device and read answer without echos and >> chars."""
-        super().write(command)
-        return self._read_cleaned_response(command)
-
-    def _is_test_run(self):
-        return "Protocol" in type(self.adapter).__name__ or (
-            hasattr(self.adapter, "connection") and
-            "MagicMock" in type(self.adapter.connection).__name__
-        )
 
     # -- Laser -----------------------------------------------------------
 
@@ -107,11 +107,10 @@ class CTL200(Instrument):
         map_values=True,
     )
 
-    laser_current = Instrument.control(
+    laser_current_setpoint = Instrument.control(
         "ilaser",
         "ilaser %g",
         """Control the laser current setpoint in A (float).""",
-        cast=float,
         get_process=lambda v: v * 1e-3,
         set_process=lambda v: v * 1e3,
     )
@@ -121,7 +120,6 @@ class CTL200(Instrument):
         "ilmax %g",
         """Control the laser current software limit in A (float, strict_range
         from 0 to 1).""",
-        cast=float,
         validator=strict_range,
         values=[0, 1],
         get_process=lambda v: v * 1e-3,
@@ -131,13 +129,11 @@ class CTL200(Instrument):
     laser_voltage = Instrument.measurement(
         "vlaser",
         """Get the laser voltage in V (float).""",
-        cast=float,
     )
 
     photodiode_current = Instrument.measurement(
         "iphd",
         """Get the photodiode current in A (float).""",
-        cast=float,
         get_process=lambda v: v * 1e-3,
     )
 
@@ -146,7 +142,6 @@ class CTL200(Instrument):
         "ldelay %g",
         """Control the delay time between controller startup and laser
         startup in s (float, strict_range from 0.01 to 100).""",
-        cast=float,
         validator=strict_range,
         values=[0.01, 100],
         get_process=lambda v: v * 1e-3,
@@ -168,25 +163,21 @@ class CTL200(Instrument):
         "rtset",
         "rtset %g",
         """Control the thermistor resistance setpoint in Ω (float).""",
-        cast=float,
     )
 
     tec_current = Instrument.measurement(
         "itec",
         """Get the TEC current in A (float).""",
-        cast=float,
     )
 
     tec_voltage = Instrument.measurement(
         "vtec",
         """Get the TEC voltage in V (float).""",
-        cast=float,
     )
 
     thermistor_actual = Instrument.measurement(
         "rtact",
         """Get the actual thermistor resistance in Ω (float).""",
-        cast=float,
     )
 
     pid_proportional = Instrument.control(
@@ -194,7 +185,6 @@ class CTL200(Instrument):
         "pgain %g",
         """Control the proportional gain of the TEC PID controller (float,
         strict_range from 0 to 0.1).""",
-        cast=float,
         validator=strict_range,
         values=[0, 0.1],
     )
@@ -204,7 +194,6 @@ class CTL200(Instrument):
         "igain %g",
         """Control the integral gain of the TEC PID controller (float,
         strict_range from 0 to 0.1).""",
-        cast=float,
         validator=strict_range,
         values=[0, 0.1],
     )
@@ -214,7 +203,6 @@ class CTL200(Instrument):
         "dgain %g",
         """Control the differential gain of the TEC PID controller (float,
         strict_range from 0 to 0.1).""",
-        cast=float,
         validator=strict_range,
         values=[0, 0.1],
     )
@@ -238,7 +226,6 @@ class CTL200(Instrument):
         "rtmin %g",
         """Control the minimum thermistor resistance in Ω to trigger
         temperature protection if enabled (float).""",
-        cast=float,
     )
 
     thermistor_window_max = Instrument.control(
@@ -246,27 +233,24 @@ class CTL200(Instrument):
         "rtmax %g",
         """Control the maximum thermistor resistance in Ω to trigger
         temperature protection if enabled (float).""",
-        cast=float,
     )
 
     tec_voltage_limit_min = Instrument.control(
         "vtmin",
         "vtmin %g",
         """Control the minimum TEC voltage limit in V (float, strict_range from
-        -3.3 to 0).""",
+        -3 to 0).""",
         validator=strict_range,
-        values=[-3.3, 0.0],
-        cast=float,
+        values=[-3.0, 0.0],
     )
 
     tec_voltage_limit_max = Instrument.control(
         "vtmax",
         "vtmax %g",
         """Control the maximum TEC voltage limit in V (float, strict_range from
-        0 to 3.3).""",
+        0 to 3).""",
         validator=strict_range,
-        values=[0.0, 3.3],
-        cast=float,
+        values=[0.0, 3.0],
     )
 
     # -- Interlock -------------------------------------------------------
@@ -284,33 +268,29 @@ class CTL200(Instrument):
     analog_input_1 = Instrument.measurement(
         "ain1",
         """Get the voltage on auxiliary input AI1 in V (float).""",
-        cast=float,
     )
 
     analog_input_2 = Instrument.measurement(
         "ain2",
         """Get the voltage on auxiliary input AI2 in V (float).""",
-        cast=float,
     )
 
-    laser_mod_gain = Instrument.control(
+    laser_modulation_gain = Instrument.control(
         "lmodgain",
         "lmodgain %g",
         """Control the laser current modulation gain of auxiliary input 1 in
         A/V (float, strict_range from -100 to 100).""",
-        cast=float,
         validator=strict_range,
         values=[-100, 100],
         get_process=lambda v: v * 1e-3,
         set_process=lambda v: v * 1e3,
     )
 
-    tec_mod_gain = Instrument.control(
+    tec_modulation_gain = Instrument.control(
         "tmodgain",
         "tmodgain %g",
         """Control the temperature modulation gain of auxiliary input 2 in
         Ω/V (float, strict_range from -100000 to 100000).""",
-        cast=float,
         validator=strict_range,
         values=[-100000, 100000],
     )
@@ -326,6 +306,25 @@ class CTL200(Instrument):
         "model",
         """Get the board model version (str).""",
         cast=str,
+    )
+
+    serial_number = Instrument.measurement(
+        "serial",
+        """Get the serial number (str).""",
+        cast=str,
+    )
+
+    baud_rate_setting = Instrument.control(
+        "brate",
+        "brate %d",
+        """Control the UART baud rate of the device (int, strict_range from 9600
+        to 460800). The new baud rate takes effect immediately, which
+        desynchronizes the current connection: reconnect with a matching
+        :code:`baud_rate` to keep communicating. Use :meth:`save` to persist it
+        across power cycles.""",
+        validator=strict_range,
+        values=[9600, 460800],
+        cast=int,
     )
 
     @staticmethod
@@ -351,7 +350,7 @@ class CTL200(Instrument):
     board_temperature = Instrument.measurement(
         "tboard",
         """Get the current temperature of the driver board in °C (float).""",
-        cast=float)
+    )
 
     def save(self):
         """Save the current configuration to internal non-volatile memory."""
@@ -363,8 +362,10 @@ class CTL200(Instrument):
 
     error_status = Instrument.measurement(
         "err",
-        """Get the current error status (IntFlag).""",
-        get_process=lambda v: KoheronError(int(v)),
+        """Get the current error status (KoheronError). The device returns the
+        error code in hexadecimal format.""",
+        cast=str,
+        get_process=lambda v: KoheronError(int(v, 16)),
     )
 
     user_data = Instrument.control(
@@ -377,13 +378,13 @@ class CTL200(Instrument):
     )
 
     def check_errors(self):
-        """Read the error status flag and extract occurring errors."""
-        status = self.error_status
-        if status == KoheronError.NONE:
-            return []
-        errors = []
-        for error in KoheronError:
-            if error != KoheronError.NONE and error in status:
-                errors.append(f"Koheron CTL200 Error: {error.name}")
-        self.clear_error()
+        """Read the error status flag, log the errors, and clear them.
+
+        :return: List of error entries.
+        """
+        errors = [error.name for error in self.error_status]
+        for error in errors:
+            log.error(f"{self.name}: {error}")
+        if errors:
+            self.clear_error()
         return errors
