@@ -382,7 +382,10 @@ class CTL200(Instrument):
 
         :return: List of error entries.
         """
-        errors = [error.name for error in self.error_status]
+        status = self.error_status
+        # Iterating the flag itself requires Python 3.11, so mask the members
+        # instead. NONE has value 0 and drops out of the comprehension.
+        errors = [error.name for error in KoheronError if error.value & status]
         for error in errors:
             log.error(f"{self.name}: {error}")
         if errors:
