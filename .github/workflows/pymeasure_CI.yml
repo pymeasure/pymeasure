@@ -23,21 +23,31 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Install pymeasure requirements
-        uses: mamba-org/setup-micromamba@v3
+      - uses: actions/setup-python@v6
         with:
-          environment-file: .github/pymeasure.yml
-          cache-environment-key: pylatest-ubuntu-latest-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
-          cache-downloads: false
-      - name: Python version
-        run: python --version
+          python-version: "3.10"
+          cache: 'pip'
+      - name: Install pymeasure
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -e .[tests,gui,tcp,dev]
+          pip install PyQt6
+      - name: Add venv to PATH for pyright
+        run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
       - name: Lint with ruff
         uses: astral-sh/ruff-action@v3
         with:
           args: "check --output-format github"
-      - name: Install Pymeasure for type checking
-        run: pip install -e .[typecheck]
+      - name: Set up flake8 annotations
+        uses: rbialon/flake8-annotations@v1
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          # check whitespace/blank-line rules (E2, E3) ruff does not detect yet
+          flake8 . --count --show-source --statistics
       - name: Type check with pyright
+        if: success() || failure()
         uses: jakebailey/pyright-action@v3
         with:
           version: PATH

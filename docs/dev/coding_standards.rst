@@ -1,3 +1,5 @@
+.. _coding-standards:
+
 ################
 Coding Standards
 ################
@@ -20,15 +22,14 @@ Alternatively, you can run ``ruff check`` in the repository root to check for pr
 In addition, our automation on Github also runs some checkers.
 As this results in a much slower feedback loop for you, it's not recommended to rely only on this.
 
-.. _ruff: https://docs.astral.sh/ruff/linter/
+.. _ruff: https://docs.astral.sh/ruff/
 
-It is allowed but not required to use the `black`_ code formatter.
-To avoid introducing unrelated changes when working on an existing file, it is recommended to use the `darker`_ tool instead of `black`.
+It is recommended to format your code with ``ruff format`` (part of the :code:`dev` extra) before committing.
+Only format the regions you changed, not entire files: reformatting an untouched file produces large, unrelated diffs that make code reviews harder.
+To format only your changes, use the `darker`_ tool, which runs :code:`ruff format`/:code:`black` but limits reformatting to regions that show as changed in Git.
 This helps to keep the focus on the implementation instead of unrelated formatting, and thereby facilitates code reviews.
-:code:`darker` is compatible with :code:`black`, but only formats regions that show as changed in Git.
-If there are conflicts between :code:`black`/:code:`darker`'s output and ruff (especially related to `E203`_), ruff takes precedence. Use ``#noqa : E203`` to disable E203 warnings for a specific line if appropriate.
+If there are conflicts between :code:`ruff format`/:code:`darker`'s output and the ruff linter (especially related to `E203`_), the linter takes precedence. Use ``# noqa : E203`` to disable E203 warnings for a specific line if appropriate.
 
-.. _black: https://black.readthedocs.io/en/stable/
 .. _darker: https://github.com/akaihola/darker
 .. _E203: https://www.flake8rules.com/rules/E203.html
 
@@ -37,12 +38,32 @@ All type hints should adhere to the guidelines set out in the `typing`_ package.
 
 .. _typing: https://docs.python.org/3/library/typing.html
 
+Type checking
+=============
+
+The `pyright`_ type checker is configured for PyMeasure and runs on every change in our continuous integration.
+You can install it together with the linter via the :code:`dev` extra::
+
+    pip install -e .[dev]
+
+Run it from the repository root::
+
+    pyright
+
+Many editors and IDEs can integrate pyright for inline feedback while you work, which is recommended over relying only on CI.
+The property creators (see :ref:`type-hints-property-creators`) are heavily overloaded so that pyright can infer precise return types for instrument properties.
+
+.. _pyright: https://github.com/microsoft/pyright
+
 Documentation
 =============
 
 PyMeasure documents code using reStructuredText and the `Sphinx documentation generator`_. All functions, classes, and methods should be documented in the code using a docstring, see section :ref:`docstrings`.
 
 .. _Sphinx documentation generator: http://www.sphinx-doc.org/en/stable/
+
+reStructuredText heading underlines must be exactly as long as the heading text.
+For example, for a heading "HCP TC038 crystal oven" (22 characters), use exactly 22 hash characters: ``######################``.
 
 
 Usage of getter and setter functions

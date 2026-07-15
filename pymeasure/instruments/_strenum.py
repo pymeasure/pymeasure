@@ -22,5 +22,30 @@
 # THE SOFTWARE.
 #
 
-from .rigol_dg800 import DG800
-from .rigol_dho_base import DHOBase
+"""Internal helper providing :class:`StrEnum` on all supported Python versions.
+
+The standard library only ships :class:`enum.StrEnum` from Python 3.11 on.
+pymeasure supports Python 3.10+, so this module re-exports the native class on
+3.11+ and supplies a compatible fallback (``str`` + ``Enum`` with
+``__str__`` returning the value) on 3.10.
+
+Using ``sys.version_info`` instead of ``try: ... except ImportError`` keeps
+static type checkers (pyright) happy across target versions: they pick the
+matching branch unambiguously.
+"""
+
+import sys
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:  # pragma: no cover
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        """Backport of :class:`enum.StrEnum` for Python 3.10."""
+
+        def __str__(self) -> str:
+            return self.value
+
+
+__all__ = ["StrEnum"]

@@ -30,7 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.6.1,<3",
-    "pandas>=0.14,<4",
+    "pandas>=2.1,<4",
     "pint",
     "pyvisa>=1.9",
     "pyserial>=2.7",
@@ -57,8 +57,9 @@ docs = [
     "sphinx_rtd_theme>=1.1.0",
     "sphinx_autodoc_typehints>=2.3.0",
 ]
-typecheck = [
+dev = [
     "pyright>=1.1.400",
+    "ruff",
 ]
 
 [project.urls]
