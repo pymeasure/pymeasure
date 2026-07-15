@@ -962,6 +962,12 @@ def _compliance_or_none(value: float | str | None, method: str) -> float | None:
     return cast("float | None", value)
 
 
+TimedSpotCurrent = namedtuple("TimedSpotCurrent", ["time", "current"])
+TimedSpotVoltage = namedtuple("TimedSpotVoltage", ["time", "voltage"])
+SpotIV = namedtuple("SpotIV", ["current", "voltage"])
+TimedSpotIV = namedtuple("TimedSpotIV", ["time", "current", "voltage"])
+
+
 class SMU(Channel):
     """Provide specific methods for the SMUs of the Agilent B1500 mainframe.
 
@@ -1239,7 +1245,7 @@ class SMU(Channel):
     ######################################
     # Measurement Range
     # implemented: RI, RV
-    # not implemented: RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC
+    # not implemented: RC
     ######################################
 
     @property
@@ -1287,6 +1293,112 @@ class SMU(Channel):
             self.write(f"RM {{ch}}, {mode}")
         else:
             self.write(f"RM {{ch}}, {mode}, {rate}")
+
+    ######################################
+    # High Speed Spot Measurement
+    # implemented: TI, TTI, TV, TTV, TIV, TTIV
+    # not implemented: TC, TTC (MFCMU)
+    ######################################
+
+    def _spot_measurement(self, cmd: str) -> tuple[float, ...]:
+        """Perform a high speed spot measurement and parse the returned values.
+
+        :param cmd: Complete spot measurement command including parameters
+        :return: Measurement values in the order returned by the instrument
+        """
+        data_format = self.parent._data_format
+        if data_format is None:
+            raise ValueError("No data format set. Call data_format() before measuring.")
+        self.write(cmd)
+        response = self.read()
+        return tuple(data_format.format_single(element)[3] for element in response.split(","))
+
+    def measure_current(
+        self, meas_range: int | str | None = None, timestamp: bool = False
+    ) -> float | TimedSpotCurrent:
+        """Perform a high speed spot measurement of current. (``TI`` or ``TTI``)
+
+        The measurement starts immediately, regardless of the SMU operation
+        mode, trigger mode, and measurement mode. The channel must be
+        enabled (:meth:`enable`).
+
+        :param meas_range: Current measurement range index or name, defaults
+            to the minimum range covering the compliance value
+        :param timestamp: Whether to also return the time from timer reset
+            (:meth:`AgilentB1500.clear_timer`) to the start of the
+            measurement (``TTI`` instead of ``TI``)
+        :return: Current in A, or :class:`TimedSpotCurrent` of time in s and
+            current in A if ``timestamp`` is enabled
+        """
+        cmd = "TTI {ch}" if timestamp else "TI {ch}"
+        if meas_range is not None:
+            cmd += f", {self.current_ranging.meas(meas_range).index}"
+        values = self._spot_measurement(cmd)
+        return TimedSpotCurrent(*values) if timestamp else values[0]
+
+    def measure_voltage(
+        self, meas_range: int | str | None = None, timestamp: bool = False
+    ) -> float | TimedSpotVoltage:
+        """Perform a high speed spot measurement of voltage. (``TV`` or ``TTV``)
+
+        The measurement starts immediately, regardless of the SMU operation
+        mode, trigger mode, and measurement mode. The channel must be
+        enabled (:meth:`enable`).
+
+        :param meas_range: Voltage measurement range index or name, defaults
+            to the minimum range covering the compliance value
+        :param timestamp: Whether to also return the time from timer reset
+            (:meth:`AgilentB1500.clear_timer`) to the start of the
+            measurement (``TTV`` instead of ``TV``)
+        :return: Voltage in V, or :class:`TimedSpotVoltage` of time in s and
+            voltage in V if ``timestamp`` is enabled
+        """
+        cmd = "TTV {ch}" if timestamp else "TV {ch}"
+        if meas_range is not None:
+            cmd += f", {self.voltage_ranging.meas(meas_range).index}"
+        values = self._spot_measurement(cmd)
+        return TimedSpotVoltage(*values) if timestamp else values[0]
+
+    def measure_iv(
+        self,
+        current_range: int | str | None = None,
+        voltage_range: int | str | None = None,
+        timestamp: bool = False,
+    ) -> SpotIV | TimedSpotIV:
+        """Perform a high speed spot measurement of current and voltage.
+        (``TIV`` or ``TTIV``)
+
+        The measurement starts immediately, regardless of the SMU operation
+        mode, trigger mode, and measurement mode. The channel must be
+        enabled (:meth:`enable`).
+
+        HCSMU, HVSMU, and MCSMU measure current and voltage simultaneously.
+        HRSMU, MPSMU, and HPSMU measure the compliance side and the force
+        side in this order.
+
+        :param current_range: Current measurement range index or name,
+            defaults to the minimum range covering the compliance value.
+            Must be specified together with ``voltage_range``.
+        :param voltage_range: Voltage measurement range index or name,
+            defaults to the minimum range covering the output value.
+            Must be specified together with ``current_range``.
+        :param timestamp: Whether to also return the time from timer reset
+            (:meth:`AgilentB1500.clear_timer`) to the start of the
+            measurement (``TTIV`` instead of ``TIV``)
+        :return: :class:`SpotIV` of current in A and voltage in V, or
+            :class:`TimedSpotIV` additionally containing the time in s
+            if ``timestamp`` is enabled
+        """
+        cmd = "TTIV {ch}" if timestamp else "TIV {ch}"
+        if (current_range is None) != (voltage_range is None):
+            raise ValueError("current_range and voltage_range must be specified together.")
+        if current_range is not None and voltage_range is not None:
+            cmd += (
+                f", {self.current_ranging.meas(current_range).index}"
+                f", {self.voltage_ranging.meas(voltage_range).index}"
+            )
+        values = self._spot_measurement(cmd)
+        return TimedSpotIV(*values) if timestamp else SpotIV(*values)
 
     ######################################
     # Staircase Sweep Measurement: (WT, WM -> Instrument)
