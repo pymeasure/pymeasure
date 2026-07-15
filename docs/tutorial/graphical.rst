@@ -687,7 +687,7 @@ The list of strings for :code:`x_axis` and :code:`y_axis` set the default labels
    x_axis=['Iteration', 'Random Number 1'],
    y_axis=['Random Number 1','Random Number 2', 'Random Number 3']
 
-If one list is longer than the last element of the other list is used as the default label for the rest of the dockable plots.
+If one list is longer, the last element of the other list is used as the default label for the rest of the dockable plots.
 In our example that is why we have two **X Axis** labels with "Random Number 1".
 The longest list between :code:`x_axis` and :code:`y_axis` determines the number of plots.
 In our example :code:`y_axis` has the longest list with a length of three so three plots are created.

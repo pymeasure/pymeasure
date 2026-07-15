@@ -565,7 +565,8 @@ class SFM(SCPIMixin, Instrument):
         LOWD    low distortion mode   +0 dBm
         ======  ====================  =================
 
-        Continuous mode allows up to 14 dB of level setting without use of the mechanical attenuator.
+        Continuous mode allows up to 14 dB of level setting without use of the
+        mechanical attenuator.
         """,
         validator=strict_discrete_set,
         values=["NORM", "LOWN", "CONT", "LOWD"]

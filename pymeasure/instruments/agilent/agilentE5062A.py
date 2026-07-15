@@ -264,7 +264,7 @@ class VNAChannel(Channel):
         - D12_34
 
         In general, an occurrence of a number denotes the associated trace
-        having it's own subplot and an occurrence of '_' denotes a vertical
+        having its own subplot and an occurrence of '_' denotes a vertical
         split. Multiple occurrences of the same number denote the trace
         having a larger window than the other traces. Refer to Figure 3-1
         in the the programmer's manual for details. If a trace is active
