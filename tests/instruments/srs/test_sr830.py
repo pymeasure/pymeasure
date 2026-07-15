@@ -93,3 +93,20 @@ def test_output_conversion():
     ) as inst:
         conv = inst.output_conversion("X")
         assert conv(inst.x) == pytest.approx(-2.66e-7)
+
+
+@pytest.mark.parametrize(("value", "command"), (
+    (1e-9, "AUXV1,1e-09;"),
+    (1e-7, "AUXV1,1e-07;"),
+    (-1e-7, "AUXV1,-1e-07;"),
+))
+def test_aux_out_small_values(value, command):
+    """Verify that aux outputs transmit sub-microvolt values without truncation.
+
+    Using %f would silently round values smaller than 1e-6 to zero.
+    """
+    with expected_protocol(
+        SR830,
+        [(command, None)],
+    ) as inst:
+        inst.aux_out_1 = value

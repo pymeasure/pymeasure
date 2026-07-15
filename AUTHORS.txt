@@ -112,3 +112,4 @@ Niklas Schulz
 Haotian Zhang
 Maduka Ariyasiri
 Max Tweedale
+Vincent Gao
