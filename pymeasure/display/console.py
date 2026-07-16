@@ -25,6 +25,7 @@
 import argparse
 import copy
 import logging
+import os
 
 try:
     import progressbar
@@ -87,12 +88,12 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
                              "help_fields": ["default"]},
     }
 
-    def __init__(self, procedure_class, **kwargs):
+    def __init__(self, procedure_class: type[Procedure], **kwargs):
         super().__init__(**kwargs)
         self.procedure_class = procedure_class
         self.setup_parser()
 
-    def setup_parser(self):
+    def setup_parser(self) -> None:
         """ Setup command line arguments parsing from parameters information """
 
         self.procedure = self.procedure_class()
@@ -121,7 +122,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             experiment_opts_group.add_argument("--" + name, **kwargs)
 
     @staticmethod
-    def _cli_help_fields(description, kwargs, help_fields):
+    def _cli_help_fields(description: str, kwargs: dict, help_fields) -> str:
         if not isinstance(kwargs, dict):
             raise TypeError("kwargs must be a dictionary")
 
@@ -161,9 +162,9 @@ class ManagedConsole(QtCore.QCoreApplication):
     """
 
     def __init__(self,
-                 procedure_class,
-                 log_channel='',
-                 log_level=logging.INFO,
+                 procedure_class: type[Procedure],
+                 log_channel: str = '',
+                 log_level: int = logging.INFO,
                  **kwargs,
                  ):
 
@@ -234,7 +235,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         self.manager.finished.connect(self._terminate)
         self.manager.log.connect(self.log.handle)
 
-    def get_filename(self, directory, procedure=None):
+    def get_filename(self, directory: os.PathLike, procedure: Procedure | None = None) -> str:
         """ Return filename for saving results file
 
         :param directory: directory of the returned filename.
@@ -245,7 +246,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         else:
             return unique_filename(directory)
 
-    def queue(self):
+    def queue(self) -> None:
         procedure = self.procedure_class()
         procedure.set_parameters(self.parameter_values)
         filename = self.get_filename(self.directory, procedure)
@@ -254,17 +255,17 @@ class ManagedConsole(QtCore.QCoreApplication):
 
         self.manager.queue(experiment)
 
-    def _terminate(self):
+    def _terminate(self) -> None:
         if not self.manager.experiments.has_next():
             self.quit()
 
-    def abort(self):
+    def abort(self) -> None:
         """ Aborts the currently running Experiment, but raises an exception if
         there is no running experiment
         """
         self.manager.abort()
 
-    def new_experiment(self, results):
+    def new_experiment(self, results: Results) -> Experiment:
         browser_item = ConsoleBrowserItem(self.bar)
         return Experiment(results, browser_item=browser_item)
 

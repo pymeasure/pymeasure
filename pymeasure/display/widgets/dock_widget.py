@@ -23,7 +23,8 @@
 #
 import json
 import logging
-from os import path
+from collections.abc import Sequence
+from os import PathLike, path
 
 import pyqtgraph as pg
 from pyqtgraph.dockarea import Dock, DockArea
@@ -64,11 +65,11 @@ class DockWidget(TabWidget[list], QtWidgets.QWidget):
         self,
         name: str,
         procedure_class: type[Procedure],
-        x_axis_labels=None,
-        y_axis_labels=None,
-        linewidth=1,
-        layout_path="./",
-        layout_filename="",
+        x_axis_labels: Sequence[str],
+        y_axis_labels: Sequence[str],
+        linewidth: float = 1,
+        layout_path: PathLike | str = "./",
+        layout_filename: PathLike | str = "",
         parent: QtWidgets.QWidget | None = None,
     ):
         super().__init__(name=name, parent=parent)
@@ -143,7 +144,7 @@ class DockWidget(TabWidget[list], QtWidgets.QWidget):
 
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
-        vbox.addWidget(self.dock_area)
+        vbox.addWidget(self.dock_area)  # pyright: ignore[reportArgumentType]
         self.setLayout(vbox)
 
         # Load dock layout file if it exists in the directory of the current procedure

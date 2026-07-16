@@ -24,6 +24,7 @@
 
 import logging
 from multiprocessing import Queue
+from typing import Any
 
 from ..experiment.procedure import ProcedureStatus
 from .Qt import QtCore
@@ -47,7 +48,7 @@ class QListener(StoppableQThread):
     method call
     """
 
-    def __init__(self, port, topic='', timeout=0.01):
+    def __init__(self, port: int, topic: str = '', timeout: float = 0.01):
         """ Constructs the Listener object with a subscriber port
         over which to listen for messages
 
@@ -55,6 +56,8 @@ class QListener(StoppableQThread):
         :param topic: Topic to listen on
         :param timeout: Timeout in seconds to recheck stop flag
         """
+        if zmq is None:
+            raise ModuleNotFoundError("QListener needs ZMQ installed for TCP communication.")
         super().__init__()
 
         self.port = port
@@ -69,19 +72,19 @@ class QListener(StoppableQThread):
 
         self.poller = zmq.Poller()
         self.poller.register(self.subscriber, zmq.POLLIN)
-        self.timeout = timeout
+        self.timeout = round(timeout * 1000)
 
-    def receive(self, flags=0):
+    def receive(self, flags: int = 0) -> tuple[str, Any]:
         topic, record = self.subscriber.recv_serialized(
             deserialize=lambda msg: (msg[0].decode(), cloudpickle.loads(msg[1])),
             flags=flags
         )
         return topic, record
 
-    def message_waiting(self):
+    def message_waiting(self) -> list[tuple[Any, int]]:
         return self.poller.poll(self.timeout)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"<{self.__class__.__name__}(port={self.port},topic={self.topic},"
                 f"should_stop={self.should_stop()})>")
 
@@ -104,7 +107,7 @@ class Monitor(QtCore.QThread):
         super().__init__()
         self.queue = queue
 
-    def run(self):
+    def run(self) -> None:
         while True:
             data = self.queue.get()
             if data is None:

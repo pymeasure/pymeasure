@@ -89,12 +89,12 @@ class TestProcedure(Procedure):
 class MainWindow(ManagedWindowBase):
 
     def __init__(self):
-        widget_list = (TableWidget("Experiment Table",
+        widget_list = [TableWidget("Experiment Table",
                                    TestProcedure.DATA_COLUMNS,
                                    by_column=True,
                                    ),
                        LogWidget("Experiment Log"),
-                       )
+                       ]
 
         super().__init__(
             procedure_class=TestProcedure,
