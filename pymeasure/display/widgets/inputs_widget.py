@@ -23,9 +23,11 @@
 #
 
 import logging
+from collections.abc import Mapping, Sequence
 from functools import partial
 
 from ...experiment import parameters
+from ...experiment.procedure import Procedure
 from ..inputs import (
     BooleanInput,
     IntegerInput,
@@ -48,12 +50,18 @@ class InputsWidget(QtWidgets.QWidget):
     # tuple of Input classes that do not need an external label
     NO_LABEL_INPUTS = (BooleanInput,)
 
-    def __init__(self, procedure_class, inputs=(), parent=None, hide_groups=True,
-                 inputs_in_scrollarea=False):
-        super().__init__(parent)
+    def __init__(
+        self,
+        procedure_class: type[Procedure],
+        inputs: Sequence[str] | None = None,
+        parent: QtWidgets.QWidget | None = None,
+        hide_groups: bool = True,
+        inputs_in_scrollarea: bool = False,
+    ):
+        super().__init__(parent=parent)
         self._procedure_class = procedure_class
         self._procedure = procedure_class()
-        self._inputs = inputs
+        self._inputs = inputs or []
         self._setup_ui()
         self._layout(inputs_in_scrollarea)
         self._hide_groups = hide_groups
@@ -86,7 +94,7 @@ class InputsWidget(QtWidgets.QWidget):
 
             setattr(self, name, element)
 
-    def _layout(self, inputs_in_scrollarea):
+    def _layout(self, inputs_in_scrollarea: bool) -> None:
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(6)
         vbox.setContentsMargins(0, 0, 0, 0)
@@ -120,7 +128,7 @@ class InputsWidget(QtWidgets.QWidget):
 
         self.setLayout(vbox)
 
-    def _setup_visibility_groups(self):
+    def _setup_visibility_groups(self) -> None:
         groups = {}
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
@@ -160,7 +168,7 @@ class InputsWidget(QtWidgets.QWidget):
                 raise NotImplementedError(
                     f"Grouping based on {group_name} ({group_el}) is not implemented.")
 
-    def toggle_group(self, state, group_name, group):
+    def toggle_group(self, state, group_name, group) -> None:
         for (name, condition, group_state) in group:
             if callable(condition):
                 group_state[group_name] = condition(state)
@@ -180,12 +188,12 @@ class InputsWidget(QtWidgets.QWidget):
                 else:
                     self.labels[name].setDisabled(not visible)
 
-    def set_parameters(self, parameter_objects):
+    def set_parameters(self, parameter_objects: Mapping[str, parameters.Parameter]) -> None:
         for name in self._inputs:
             element = getattr(self, name)
             element.set_parameter(parameter_objects[name])
 
-    def get_procedure(self):
+    def get_procedure(self) -> Procedure:
         """ Returns the current procedure """
         self._procedure = self._procedure_class()
         parameter_values = {}
