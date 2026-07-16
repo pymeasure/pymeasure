@@ -480,7 +480,7 @@ class Results:
         return self._data
 
     def reload(self):
-        """ Performs a full reloading of the file data, neglecting
+        """ Perform a full reload of the file data, neglecting
         any changes in the comments
         """
         chunks = pd.read_csv(

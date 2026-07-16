@@ -2210,7 +2210,7 @@ class HP856Xx(Instrument):
     reference_level_calibration = Instrument.control(
         "RLCAL?", "RLCAL %g",
         """
-        Control the calibration of the reference level remotely and returns the
+        Control the calibration of the reference level remotely and return the
         current calibration. To calibrate the reference level, connect the 300 MHz calibration
         signal to the RF input. Set the center frequency to 300 MHz, the frequency span to 20
         MHz, and the reference level to -10 dBm. Use the RLCAL command to move the input signal

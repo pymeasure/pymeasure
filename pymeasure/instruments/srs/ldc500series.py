@@ -257,8 +257,8 @@ class LDC500SeriesPD(Channel):
     def calibrate(self, power):
         """Set the photodiode responsivity, ``responsivity``, via a real time power measurement.
 
-        Parameters:
-            power (float): Real time power measurement, in mW."""
+        :param float power: Real time power measurement, in mW.
+        """
 
         self.write(f"CALP {power:g}")
 
