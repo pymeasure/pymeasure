@@ -22,11 +22,10 @@
 # THE SOFTWARE.
 #
 
-from collections.abc import Iterable
 import io
 import logging
+from collections.abc import Callable, Iterable
 from typing import Any, Generic, TypeVar
-from collections.abc import Callable
 
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Channel

@@ -104,7 +104,7 @@ As a first step, this code imports the Generator and generates a middle man inst
 The :meth:`instantiate` method creates an instrument instance and logs the communication at startup.
 The Generator creates a special adapter for the communication with the device.
 It cannot inspect the instrument's :meth:`__init__`, however.
-Therefore you have to specify the **all** connection settings via the :code:`adapter_kwargs` dictionary, even those, which are defined in :meth:`__init__`.
+Therefore you have to specify **all** the connection settings via the :code:`adapter_kwargs` dictionary, even those, which are defined in :meth:`__init__`.
 These adapter arguments are not written to tests.
 If you have arguments for the instrument itself, e.g. a RS485 address, you may give it as a keyword argument.
 These additional keyword arguments are included in the tests.
