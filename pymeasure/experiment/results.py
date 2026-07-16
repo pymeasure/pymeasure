@@ -35,7 +35,7 @@ from string import Formatter
 import pandas as pd
 import pint
 
-from .procedure import Procedure, UnknownProcedure
+from .procedure import Procedure, ProcedureStatus, UnknownProcedure
 from pymeasure.units import ureg
 
 log = logging.getLogger(__name__)
@@ -231,7 +231,7 @@ class Results:
 
         if os.path.exists(data_filename):  # Assume header is already written
             self.reload()
-            self.procedure.status = Procedure.FINISHED
+            self.procedure.status = ProcedureStatus.FINISHED
             # TODO: Correctly store and retrieve status
         else:
             for filename in self.data_filenames:

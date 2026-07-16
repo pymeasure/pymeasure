@@ -31,7 +31,7 @@ import pandas as pd
 
 from ..Qt import QtCore, QtWidgets, QtGui
 from .tab_widget import TabWidget
-from ...experiment import Procedure
+from ...experiment.procedure import ProcedureStatus
 
 SORT_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
 SORTING_ENABLED = True  # Allow to disable sorting, for debug purpose only
@@ -564,7 +564,7 @@ class Table(QtWidgets.QTableView):
             if not self.check_status or force:
                 item.update_data()
             else:
-                if item.results.procedure.status == Procedure.RUNNING:
+                if item.results.procedure.status == ProcedureStatus.RUNNING:
                     item.update_data()
 
         if model.columnCount() != current_col_count:

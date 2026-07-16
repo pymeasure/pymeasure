@@ -23,10 +23,11 @@
 #
 
 import logging
+from queue import Queue
 
 from .Qt import QtCore
 from .thread import StoppableQThread
-from ..experiment.procedure import Procedure
+from ..experiment.procedure import ProcedureStatus
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -91,7 +92,7 @@ class Monitor(QtCore.QThread):
     are losts
     """
 
-    status = QtCore.Signal(int)
+    status = QtCore.Signal(ProcedureStatus)
     progress = QtCore.Signal(float)
     log = QtCore.Signal(object)
     worker_running = QtCore.Signal()
@@ -99,7 +100,7 @@ class Monitor(QtCore.QThread):
     worker_finished = QtCore.Signal()  # Distinguished from QThread.finished
     worker_abort_returned = QtCore.Signal()
 
-    def __init__(self, queue):
+    def __init__(self, queue: Queue):
         super().__init__()
         self.queue = queue
 
@@ -111,13 +112,13 @@ class Monitor(QtCore.QThread):
             topic, data = data
             if topic == 'status':
                 self.status.emit(data)
-                if data == Procedure.RUNNING:
+                if data == ProcedureStatus.RUNNING:
                     self.worker_running.emit()
-                elif data == Procedure.FAILED:
+                elif data == ProcedureStatus.FAILED:
                     self.worker_failed.emit()
-                elif data == Procedure.FINISHED:
+                elif data == ProcedureStatus.FINISHED:
                     self.worker_finished.emit()
-                elif data == Procedure.ABORTED:
+                elif data == ProcedureStatus.ABORTED:
                     self.worker_abort_returned.emit()
             elif topic == 'progress':
                 self.progress.emit(data)

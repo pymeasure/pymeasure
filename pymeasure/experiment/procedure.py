@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from enum import IntEnum
 import logging
 import sys
 import inspect
@@ -36,6 +37,23 @@ from pymeasure.units import ureg
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+class ProcedureStatus(IntEnum):
+    FINISHED = 0
+    FAILED = 1
+    ABORTED = 2
+    QUEUED = 3
+    RUNNING = 4
+
+
+STATUS_STRINGS = {
+    ProcedureStatus.FINISHED: "Finished",
+    ProcedureStatus.FAILED: "Failed",
+    ProcedureStatus.ABORTED: "Aborted",
+    ProcedureStatus.QUEUED: "Queued",
+    ProcedureStatus.RUNNING: "Running",
+}
 
 
 class Procedure:
@@ -60,17 +78,19 @@ class Procedure:
 
     DATA_COLUMNS = []
     MEASURE = {}
-    FINISHED, FAILED, ABORTED, QUEUED, RUNNING = 0, 1, 2, 3, 4
-    STATUS_STRINGS = {
-        FINISHED: 'Finished', FAILED: 'Failed',
-        ABORTED: 'Aborted', QUEUED: 'Queued',
-        RUNNING: 'Running'
-    }
+    FINISHED = ProcedureStatus.FINISHED
+    FAILED = ProcedureStatus.FAILED
+    ABORTED = ProcedureStatus.ABORTED
+    QUEUED = ProcedureStatus.QUEUED
+    RUNNING = ProcedureStatus.RUNNING
 
+    STATUS_STRINGS = STATUS_STRINGS
+
+    status: ProcedureStatus
     _parameters: dict[str, Parameter] = {}
 
     def __init__(self, **kwargs):
-        self.status = Procedure.QUEUED
+        self.status = ProcedureStatus.QUEUED
         self._update_parameters()
         self._update_metadata()
         for key in kwargs:
@@ -311,7 +331,7 @@ class Procedure:
         return result
 
     def __repr__(self) -> str:
-        return (f"<{self.__class__.__name__}(status={self.STATUS_STRINGS[self.status]},"
+        return (f"<{self.__class__.__name__}(status={STATUS_STRINGS[self.status]},"
                 f"parameters_are_set={self.parameters_are_set()})>")
 
 
