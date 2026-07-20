@@ -230,8 +230,8 @@ def test_descriptor_set_stores_converted_value_on_parameter():
     p.x = 42
     # the converted value lives on the parameter object's `_value`
     assert p._parameters['x']._value == 42
-    # the descriptor does not stash the raw value in `_param_values`
-    assert 'x' not in p._param_values or p._param_values.get('x') is None
+    # the descriptor no longer maintains a side `_param_values` dict
+    assert not hasattr(p, '_param_values')
 
 
 def test_descriptor_set_none_is_passthrough():

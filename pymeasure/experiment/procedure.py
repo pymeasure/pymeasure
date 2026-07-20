@@ -158,14 +158,9 @@ class Procedure:
         """
         if not self._parameters:
             self._parameters = {}
-        self._param_values: dict[str, Any] = {}
         for item, parameter in inspect.getmembers(self.__class__):
             if isinstance(parameter, Parameter):
                 self._parameters[item] = deepcopy(parameter)
-                if parameter.is_set():
-                    self._param_values[item] = parameter.value
-                else:
-                    self._param_values[item] = None
 
     def parameters_are_set(self) -> bool:
         """ Returns True if all parameters are set """
@@ -190,37 +185,23 @@ class Procedure:
         current values that are not in the default definitions
         """
         result: dict[str, Any] = {}
-        for name, parameter in self._parameters.items():
-            value = getattr(self, name)
-            if value is not None:
-                parameter.value = value
-                setattr(self, name, parameter.value)
-                result[name] = parameter.value
-            else:
-                result[name] = None
+        for name in self._parameters:
+            result[name] = getattr(self, name)
         return result
 
     def parameter_objects(self) -> dict[str, Parameter]:
         """ Returns a dictionary of all the Parameter objects and grabs any
         current values that are not in the default definitions
         """
-        result: dict[str, Parameter] = {}
-        for name, parameter in self._parameters.items():
-            value = getattr(self, name)
-            if value is not None:
-                parameter.value = value
-                setattr(self, name, parameter.value)
-            result[name] = parameter
-        return result
+        return dict(self._parameters)
 
     def refresh_parameters(self) -> None:
-        """ Enforces that all the parameters are re-cast and updated in the meta
-        dictionary
+        """ No-op retained for API compatibility.
+
+        Parameter values are eagerly converted by the descriptor's `__set__`
+        on assignment, so there is no longer a lazy-to-eager cast to enforce.
         """
-        for name, parameter in self._parameters.items():
-            value = getattr(self, name)
-            parameter.value = value
-            setattr(self, name, parameter.value)
+        return None
 
     def set_parameters(self, parameters: dict[str, Any], except_missing: bool = True) -> None:
         """ Sets a dictionary of parameters and raises an exception if additional
@@ -340,9 +321,15 @@ class UnknownProcedure(Procedure):
     during loading in the :class:`.Results` class
     """
 
-    def __init__(self, parameters: dict[str, Parameter]):
+    def __init__(self, parameters: dict[str, str]):
         super().__init__()
         self._parameters = parameters
+
+    def parameter_objects(self) -> dict[str, Parameter]:
+        return {}
+
+    def metadata_objects(self) -> dict[str, Metadata]:
+        return {}
 
     def startup(self) -> None:
         raise NotImplementedError("UnknownProcedure can not be run")

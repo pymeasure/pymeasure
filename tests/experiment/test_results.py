@@ -33,7 +33,7 @@ import numpy as np
 
 from pymeasure.units import ureg
 from pymeasure.experiment.results import Results, CSVFormatter
-from pymeasure.experiment.procedure import Procedure, Parameter
+from pymeasure.experiment.procedure import Procedure, Parameter, UnknownProcedure
 from pymeasure.experiment import BooleanParameter
 from data.procedure_for_testing import RandomProcedure
 
@@ -268,3 +268,34 @@ def test_parameter_reading():
     assert results.parameters["check_true"].value is True
     assert results.parameters["check_false"].value is False
     assert results.parameters["check_dir"].value == test_string
+
+
+def test_parse_header_with_missing_parameter_and_none_default():
+    """`parse_header` must not raise when a Parameter with `default=None` is missing from the header."""
+
+    class _MissingParamProcedure(Procedure):
+        present = Parameter('Present', default='set')
+        absent = Parameter('Absent', default=None)
+        DATA_COLUMNS = ('present', 'absent')
+
+    header = "#Procedure: <test_results._MissingParamProcedure>\n#Parameters:\n#\tPresent: set"
+    procedure = Results.parse_header(header, procedure_class=_MissingParamProcedure)
+    assert procedure.present == 'set'
+    assert procedure.absent is None
+
+
+def test_parse_header_unknown_procedure_does_not_raise():
+    """`parse_header` with an unimportable procedure returns an `UnknownProcedure` without raising."""
+
+    class _UnimportableMarker(Procedure):
+        DATA_COLUMNS = ('x',)
+
+    header = (
+        "#Procedure: <nonexistent.module.SomeProcedure>\n"
+        "#Parameters:\n"
+        "#\tIterations: 100\n"
+        "#\tDelay: 0.001"
+    )
+    procedure = Results.parse_header(header)
+    assert isinstance(procedure, UnknownProcedure)
+    assert procedure.parameter_objects() == {}
