@@ -264,7 +264,7 @@ class Procedure:
         pass
 
     def execute(self):
-        """ Preforms the commands needed for the measurement itself. During
+        """ Perform the commands needed for the measurement itself. During
         execution the shutdown method will always be run following this method.
         This includes when Exceptions are raised.
         """

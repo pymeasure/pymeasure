@@ -153,7 +153,7 @@ wrong format of the parameter",
         self.ask("CHR")
 
     def hold(self) -> None:
-        """Set the measurment to HOLD state.
+        """Set the measurement to HOLD state.
 
         .. note:: Write permission is required.
         """
@@ -443,7 +443,7 @@ wrong format of the parameter",
         validator=strict_discrete_set,
         values=[True, False],
         set_process=lambda v: "" if (v) else f";{int(v)}",  # "TOK" = request write permission
-                                                            # "TOK;0" = release write permision
+                                                            # "TOK;0" = release write permission
                                                             # "TOK;1" = get status
         cast=str,
         get_process_list=lambda v: v[1] == "true",

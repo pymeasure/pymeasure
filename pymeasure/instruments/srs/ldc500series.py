@@ -117,7 +117,7 @@ class LDC500SeriesLD(Channel):
         "SILM %g",
         """Control the laser diode current limit, in mA (float).
 
-        The ouput current is clamped to never exceed ``current_limit`` under any conditions.
+        The output current is clamped to never exceed ``current_limit`` under any conditions.
         If ``current_limit`` is reduced below ``current_setpoint``,
         ``current_setpoint`` is "dragged" down with ``current_limit``.
         """,
@@ -257,8 +257,8 @@ class LDC500SeriesPD(Channel):
     def calibrate(self, power):
         """Set the photodiode responsivity, ``responsivity``, via a real time power measurement.
 
-        Parmeters:
-            power (float): Real time power measurement, in mW."""
+        :param float power: Real time power measurement, in mW.
+        """
 
         self.write(f"CALP {power:g}")
 
@@ -303,7 +303,7 @@ class LDC500SeriesTEC(Channel):
         """Control the TEC control mode (str "CC" or "CT").
 
         If the TEC is on when ``mode`` is changed, the controller performs a *bumpless transfer*
-        to swich control modes on-the-fly.
+        to switch control modes on-the-fly.
 
         If ``mode`` is changed from "CT" to "CC", the present value of the TEC current is
         measured, and the CC setpoint is set to this measurement.

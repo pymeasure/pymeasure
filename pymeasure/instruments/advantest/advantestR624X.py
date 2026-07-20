@@ -195,7 +195,7 @@ class SequenceInterruptionType(IntEnum):
 
 
 class DOR(IntFlag):
-    """ bit assigment for the Device Operation Register (DOR):
+    """ bit assignment for the Device Operation Register (DOR):
 
         =========  ==========================
         Bit (dec)  Description
@@ -234,7 +234,7 @@ class DOR(IntFlag):
 
 
 class COR(IntFlag):
-    """ bit assigment for the Channel Operations Register (COR):
+    """ bit assignment for the Channel Operations Register (COR):
 
         =========  =============================================
         Bit (dec)  Description
@@ -275,7 +275,7 @@ class COR(IntFlag):
 
 
 class SRER(IntFlag):
-    """ bit assigment for the Service Request Enable Register (SRER):
+    """ bit assignment for the Service Request Enable Register (SRER):
 
         =========  ===========================================================
         Bit (dec)  Description
@@ -309,7 +309,7 @@ class SRER(IntFlag):
 
 
 class SESR(IntFlag):
-    """ bit assigment for the Standard Event Status Register (SESR):
+    """ bit assignment for the Standard Event Status Register (SESR):
 
         =========  ==========================
         Bit (dec)  Description
@@ -342,7 +342,7 @@ class SESR(IntFlag):
 
 
 class TriggerOutputSignalTiming(IntFlag):
-    """ bit assigment for the timing of the trigger output signal
+    """ bit assignment for the timing of the trigger output signal
        output from TRIGGER OUT on the rear panel:
 
         =========  =============================

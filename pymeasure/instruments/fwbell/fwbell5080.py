@@ -124,7 +124,7 @@ class FWBell5080(SCPIMixin, Instrument):
     def fields(self, samples=1):
         """ Returns a numpy array of field samples for a given sample number.
 
-        :param samples: The number of samples to preform
+        :param samples: The number of samples to perform
         """
         if samples < 1:
             raise Exception("F.W. Bell 5080 does not support samples less than 1.")

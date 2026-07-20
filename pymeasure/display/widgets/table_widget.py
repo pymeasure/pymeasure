@@ -558,12 +558,21 @@ class Table(QtWidgets.QTableView):
 
     def update_tables(self, force=False):
         model = self.source_model()
+        current_col_count = model.columnCount()
+
         for item in model.results_list:
             if not self.check_status or force:
                 item.update_data()
             else:
                 if item.results.procedure.status == Procedure.RUNNING:
                     item.update_data()
+
+        if model.columnCount() != current_col_count:
+            # Hide no-show columns
+            for i in range(model.columnCount()):
+                label = model.headerData(i, QtCore.Qt.Orientation.Horizontal,
+                                         QtCore.Qt.ItemDataRole.DisplayRole)
+                self.setColumnHidden(i, label not in self.parent().columns)
 
     def set_color(self, table, color):
         table.set_color(color)

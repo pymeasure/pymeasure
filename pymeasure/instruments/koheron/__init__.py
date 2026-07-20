@@ -22,5 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .rigol_dg800 import DG800
-from .rigol_dho_base import DHOBase
+from .koheron_ctl200 import CTL200, KoheronError
