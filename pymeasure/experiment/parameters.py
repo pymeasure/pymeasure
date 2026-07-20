@@ -32,7 +32,51 @@ import numpy as np
 T = TypeVar('T')
 
 
-class Parameter(Generic[T]):
+class _InstanceValueDescriptor(Generic[T]):
+    """Base class for descriptors that store their value on the parameter object.
+
+    The descriptor resolves the parameter object stored on `obj._parameters`
+    (rather than stashing the raw value in a side dict), eagerly converting
+    assignments via the parameter's `value` setter. Assigning `None` clears the
+    value (the unset sentinel) without invoking `convert`.
+    """
+
+    _attr_name: str = ""
+
+    def __set_name__(self, owner: type, name: str) -> None:
+        self._attr_name = name
+
+    @overload
+    def __get__(self, obj: None, objtype: type) -> _InstanceValueDescriptor[T]: ...
+
+    @overload
+    def __get__(self, obj: object, objtype: type) -> T | None: ...
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        parameters = getattr(obj, '_parameters', None)
+        if parameters is None or self._attr_name not in parameters:
+            return None
+        param = parameters[self._attr_name]
+        if param.is_set():
+            return param.value
+        return None
+
+    def __set__(self, obj: object, value: T | None) -> None:
+        parameters = getattr(obj, '_parameters', None)
+        if parameters is None or self._attr_name not in parameters:
+            # UnknownProcedure path: fall back to plain attribute storage.
+            obj.__dict__[self._attr_name] = value
+            return
+        param = parameters[self._attr_name]
+        if value is None:
+            param._value = None
+        else:
+            param.value = value
+
+
+class Parameter(_InstanceValueDescriptor[T]):
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
 
@@ -54,37 +98,6 @@ class Parameter(Generic[T]):
     :description: A string providing a human-friendly description for the
         parameter.
     """
-
-    _attr_name: str = ""
-
-    def __set_name__(self, owner: type, name: str) -> None:
-        self._attr_name = name
-
-    @overload
-    def __get__(self, obj: None, objtype: type): ...
-
-    @overload
-    def __get__(self, obj: object, objtype: type) -> T: ...
-
-    def __get__(self, obj, objtype=None):
-        if obj is None:
-            return self
-        param_values = getattr(obj, '_param_values', None)
-        if param_values is not None and self._attr_name in param_values:
-            return param_values[self._attr_name]
-        parameters = getattr(obj, '_parameters', None)
-        if parameters is not None and self._attr_name in parameters:
-            param = parameters[self._attr_name]
-            if param.is_set():
-                return param.value
-        return None
-
-    def __set__(self, obj: object, value: T | None) -> None:
-        param_values = getattr(obj, '_param_values', None)
-        if param_values is None:
-            obj._param_values = {}
-            param_values = obj._param_values
-        param_values[self._attr_name] = value
 
     def __init__(
         self,

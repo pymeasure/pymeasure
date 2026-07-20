@@ -25,12 +25,15 @@
 import numpy as np
 import pytest
 
-from pymeasure.experiment.parameters import Parameter
-from pymeasure.experiment.parameters import IntegerParameter
-from pymeasure.experiment.parameters import BooleanParameter
-from pymeasure.experiment.parameters import FloatParameter
-from pymeasure.experiment.parameters import ListParameter
-from pymeasure.experiment.parameters import VectorParameter
+from pymeasure.experiment.parameters import (
+    BooleanParameter,
+    FloatParameter,
+    IntegerParameter,
+    ListParameter,
+    Parameter,
+    VectorParameter,
+)
+from pymeasure.experiment.procedure import Procedure
 
 
 def test_parameter_default():
@@ -217,5 +220,69 @@ def test_vector(value, mapping):
     p = VectorParameter('test', length=3, units='tests')
     p.value = value
     assert p.value == mapping
+
+
+def test_descriptor_set_stores_converted_value_on_parameter():
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X')
+
+    p = TestProcedure()
+    p.x = 42
+    # the converted value lives on the parameter object's `_value`
+    assert p._parameters['x']._value == 42
+    # the descriptor does not stash the raw value in `_param_values`
+    assert 'x' not in p._param_values or p._param_values.get('x') is None
+
+
+def test_descriptor_set_none_is_passthrough():
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X', default=5)
+
+    p = TestProcedure()
+    # assigning None must not raise even though convert(None) would fail
+    p.x = None
+    assert p._parameters['x']._value is None
+    assert p._parameters['x'].is_set() is False
+    assert p.x is None
+
+
+def test_descriptor_set_eagerly_converts():
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X')
+
+    p = TestProcedure()
+    p.x = "42"
+    # value is eagerly converted to int immediately at assignment
+    assert p._parameters['x']._value == 42
+    assert isinstance(p._parameters['x']._value, int)
+    assert p._parameters['x'].is_set() is True
+    assert p.x == 42
+
+
+def test_descriptor_set_calls_convert_exactly_once():
+    calls = []
+
+    class CountingParameter(Parameter):
+        def convert(self, value):
+            calls.append(value)
+            return value
+
+    class TestProcedure(Procedure):
+        x = CountingParameter('X')
+
+    p = TestProcedure()
+    calls.clear()
+    p.x = "value"
+    assert calls == ["value"]
+
+
+def test_descriptor_get_returns_live_value_or_none():
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X', default=7)
+
+    p = TestProcedure()
+    assert p.x == 7
+    p._parameters['x']._value = None
+    assert p.x is None
 
 # TODO: Add tests for Measurable
