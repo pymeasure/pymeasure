@@ -23,12 +23,12 @@
 #
 
 import numpy as np
-from enum import Enum
 import time
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+from pymeasure.instruments._strenum import StrEnum
 
 
 class Chroma66205(SCPIMixin, Instrument):
@@ -39,7 +39,7 @@ class Chroma66205(SCPIMixin, Instrument):
     with programming information in English is available.
     """
 
-    class Measure(str, Enum):
+    class Measure(StrEnum):
         VOLTAGE = "V"
         DC_VOLTAGE = "VDC"
         MEAN_VOLTAGE = "VMEAN"
