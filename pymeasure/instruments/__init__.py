@@ -27,3 +27,4 @@ from .instrument import AdapterType, Instrument
 from .common_base import cast_or_str, identity, IdType, InstrumentProperty
 from .resources import find_serial_port, list_resources
 from .generic_types import SCPIMixin, SCPIUnknownMixin
+from .registry import clear, discover, get, list_plugins, register, unregister
