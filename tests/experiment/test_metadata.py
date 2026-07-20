@@ -125,8 +125,7 @@ def test_metadata_set_stores_on_metadata_object_not_side_dict():
     pr = TestProcedure()
     pr.md = 42
     assert pr._metadata["md"]._value == 42
-    assert "_metadata_values" not in pr.__dict__ or "md" not in getattr(
-        pr, "_metadata_values", {})
+    assert not hasattr(pr, "_metadata_values")
 
 
 def test_metadata_none_passthrough_does_not_call_convert():
@@ -192,7 +191,7 @@ def test_results_parse_header_routes_metadata_through_convert(tmp_path):
     class TestProcedure(Procedure):
         md = DoublingMetadata('Test MD')
 
-    pr = TestProcedure()
+    TestProcedure()
     header_lines = [
         "#Procedure: <TestProcedure>",
         "#Parameters:",

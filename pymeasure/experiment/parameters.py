@@ -99,9 +99,13 @@ class Parameter(_InstanceValueDescriptor[T]):
         this argument is ignored.
     :description: A string providing a human-friendly description for the
         parameter.
-    """
 
-    _container_attr: str = "_parameters"
+    The descriptor's ``__set__`` eagerly calls :meth:`convert` exactly once
+    per assignment (at assignment time) via the ``value`` setter. ``None`` is
+    reserved as the "unset" sentinel and bypasses ``convert``, so
+    :meth:`convert` is never called with ``None``. :meth:`convert` does not
+    need to be idempotent.
+    """
 
     def __init__(
         self,
@@ -660,6 +664,14 @@ class Metadata(_InstanceValueDescriptor[T]):
         fget method is provided
     :param fmt: A string used to format the value upon writing it to a file.
         Default is "%s"
+
+    The descriptor's ``__set__`` eagerly calls :meth:`convert` exactly once
+    per assignment (at assignment time) via the ``value`` setter. ``None`` is
+    reserved as the "unset" sentinel and bypasses ``convert``, so
+    :meth:`convert` is never called with ``None``. :meth:`convert` does not
+    need to be idempotent. ``Metadata.convert`` defaults to the identity
+    function, so ``Metadata`` behaves as before unless a subclass overrides
+    :meth:`convert`.
 
     """
 

@@ -271,7 +271,8 @@ def test_parameter_reading():
 
 
 def test_parse_header_with_missing_parameter_and_none_default():
-    """`parse_header` must not raise when a Parameter with `default=None` is missing from the header."""
+    """`parse_header` must not raise when a Parameter with `default=None`
+    is missing from the header."""
 
     class _MissingParamProcedure(Procedure):
         present = Parameter('Present', default='set')
@@ -285,7 +286,8 @@ def test_parse_header_with_missing_parameter_and_none_default():
 
 
 def test_parse_header_unknown_procedure_does_not_raise():
-    """`parse_header` with an unimportable procedure returns an `UnknownProcedure` without raising."""
+    """`parse_header` with an unimportable procedure returns an
+    `UnknownProcedure` without raising."""
 
     class _UnimportableMarker(Procedure):
         DATA_COLUMNS = ('x',)

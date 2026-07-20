@@ -198,8 +198,9 @@ class Procedure:
     def refresh_parameters(self) -> None:
         """ No-op retained for API compatibility.
 
-        Parameter values are eagerly converted by the descriptor's `__set__`
-        on assignment, so there is no longer a lazy-to-eager cast to enforce.
+        Historically re-cast parameter values; now a no-op retained for API
+        compatibility since ``__set__`` eagerly converts values at assignment
+        time.
         """
         return None
 

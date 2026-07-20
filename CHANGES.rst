@@ -19,6 +19,7 @@ Deprecated
 Changed
 -------
 - For property creators :code:`Instrument.control`... the conversion parameters (:code:`cast` etc.) are keyword only, now.
+- Refactored :class:`.Parameter` and :class:`.Metadata` to share a common descriptor base (``_InstanceValueDescriptor``). Values are now eagerly converted at assignment time via :meth:`~Parameter.convert` (identity for ``Metadata``). The ``_param_values``/``_metadata_values`` side-dicts on :class:`.Procedure` were removed; the live value now lives on the parameter/metadata object's ``_value``. ``convert`` no longer needs to be idempotent. ``None`` is the explicit "unset" sentinel and bypasses ``convert``. ``Procedure.refresh_parameters`` is now a no-op (retained for API compatibility). ``UnknownProcedure`` now returns empty ``parameter_objects``/``metadata_objects`` dicts so loading an unimportable procedure no longer raises.
 
 Version 0.16.0 (2026-05-20)
 ===========================
