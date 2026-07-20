@@ -23,5 +23,3 @@
 #
 
 from .chroma_63600 import Chroma63600
-
-
