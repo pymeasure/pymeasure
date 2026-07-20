@@ -287,7 +287,8 @@ class Chroma66205(SCPIMixin, Instrument):
     filter_frequency = Instrument.control(
         "CONF:FILT:FREQ?",
         "CONF:FILT:FREQ %s",
-        """Control the low pass filter on the path of frequency detect, True (ON) or False (OFF).""",
+        """Control the low pass filter on the path of frequency detect, True (ON) or
+        False (OFF).""",
         validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
         map_values=True,
