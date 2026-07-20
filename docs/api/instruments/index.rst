@@ -34,6 +34,7 @@ Instruments by manufacturer:
    anritsu/index
    attocube/index
    bkprecision/index
+   cryomagnetics/index
    danfysik/index
    deltaelektronica/index
    edwards/index
