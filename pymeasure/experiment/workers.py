@@ -33,7 +33,7 @@ from collections.abc import Sequence
 import numpy as np
 
 from .listeners import Recorder
-from .procedure import Procedure
+from .procedure import ProcedureStatus
 from .results import Results
 from ..thread import StoppableThread
 
@@ -66,7 +66,7 @@ class Worker(StoppableThread):
             raise ValueError("Invalid Results object during Worker construction")
         self.results = results
         self.results.procedure.check_parameters()
-        self.results.procedure.status = Procedure.QUEUED
+        self.results.procedure.status = ProcedureStatus.QUEUED
 
         self.recorder = None
         self.recorder_queue = Queue()
@@ -164,28 +164,28 @@ class Worker(StoppableThread):
 
     def handle_abort(self):
         log.exception("User stopped Worker execution prematurely")
-        self.update_status(Procedure.ABORTED)
+        self.update_status(ProcedureStatus.ABORTED)
 
     def handle_error(self):
         log.exception("Worker caught an error on %r", self.procedure)
         traceback_str = traceback.format_exc()
         self.emit('error', traceback_str)
-        self.update_status(Procedure.FAILED)
+        self.update_status(ProcedureStatus.FAILED)
 
     def is_last(self):
         raise NotImplementedError('should be monkey patched by a manager')
 
-    def update_status(self, status: int):
+    def update_status(self, status: ProcedureStatus) -> None:
         self.procedure.status = status
         self.emit('status', status)
 
     def shutdown(self):
         self.procedure.shutdown()
 
-        if self.should_stop() and self.procedure.status == Procedure.RUNNING:
-            self.update_status(Procedure.ABORTED)
-        elif self.procedure.status == Procedure.RUNNING:
-            self.update_status(Procedure.FINISHED)
+        if self.should_stop() and self.procedure.status == ProcedureStatus.RUNNING:
+            self.update_status(ProcedureStatus.ABORTED)
+        elif self.procedure.status == ProcedureStatus.RUNNING:
+            self.update_status(ProcedureStatus.FINISHED)
             self.emit('progress', 100.)
 
         self.recorder.stop()
@@ -213,7 +213,7 @@ class Worker(StoppableThread):
         self.procedure.is_last = self.is_last
 
         log.info("Worker started running an instance of %r", self.procedure.__class__.__name__)
-        self.update_status(Procedure.RUNNING)
+        self.update_status(ProcedureStatus.RUNNING)
         self.emit('progress', 0.)
 
         try:
