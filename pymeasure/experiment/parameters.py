@@ -36,12 +36,14 @@ class _InstanceValueDescriptor(Generic[T]):
     """Base class for descriptors that store their value on the parameter object.
 
     The descriptor resolves the parameter object stored on `obj._parameters`
-    (rather than stashing the raw value in a side dict), eagerly converting
-    assignments via the parameter's `value` setter. Assigning `None` clears the
-    value (the unset sentinel) without invoking `convert`.
+    (or `obj._metadata` for Metadata, determined by `_container_attr`) rather
+    than stashing the raw value in a side dict, eagerly converting
+    assignments via the parameter's `value` setter. Assigning `None` clears
+    the value (the unset sentinel) without invoking `convert`.
     """
 
     _attr_name: str = ""
+    _container_attr: str = "_parameters"
 
     def __set_name__(self, owner: type, name: str) -> None:
         self._attr_name = name
@@ -55,21 +57,21 @@ class _InstanceValueDescriptor(Generic[T]):
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
-        parameters = getattr(obj, '_parameters', None)
-        if parameters is None or self._attr_name not in parameters:
+        container = getattr(obj, self._container_attr, None)
+        if container is None or self._attr_name not in container:
             return None
-        param = parameters[self._attr_name]
+        param = container[self._attr_name]
         if param.is_set():
             return param.value
         return None
 
     def __set__(self, obj: object, value: T | None) -> None:
-        parameters = getattr(obj, '_parameters', None)
-        if parameters is None or self._attr_name not in parameters:
+        container = getattr(obj, self._container_attr, None)
+        if container is None or self._attr_name not in container:
             # UnknownProcedure path: fall back to plain attribute storage.
             obj.__dict__[self._attr_name] = value
             return
-        param = parameters[self._attr_name]
+        param = container[self._attr_name]
         if value is None:
             param._value = None
         else:
@@ -98,6 +100,8 @@ class Parameter(_InstanceValueDescriptor[T]):
     :description: A string providing a human-friendly description for the
         parameter.
     """
+
+    _container_attr: str = "_parameters"
 
     def __init__(
         self,
@@ -634,7 +638,7 @@ class Measurable(Generic[T]):
         self._value = value
 
 
-class Metadata(Generic[T]):
+class Metadata(_InstanceValueDescriptor[T]):
     """ Encapsulates the information for metadata of the experiment with
     information about the name, the fget function and the units, if supplied.
     If no fget function is specified, the value property will return the
@@ -659,7 +663,7 @@ class Metadata(Generic[T]):
 
     """
 
-    _attr_name: str = ""
+    _container_attr: str = "_metadata"
 
     def __init__(
         self,
@@ -676,35 +680,6 @@ class Metadata(Generic[T]):
         self.fmt: str = fmt
         self.evaluated: bool = False
 
-    def __set_name__(self, owner: type, name: str) -> None:
-        self._attr_name = name
-
-    @overload
-    def __get__(self, obj: None, objtype: type) -> Metadata[T]: ...
-
-    @overload
-    def __get__(self, obj: object, objtype: type) -> T | None: ...
-
-    def __get__(self, obj, objtype=None):
-        if obj is None:
-            return self
-        metadata_values = getattr(obj, '_metadata_values', None)
-        if metadata_values is not None and self._attr_name in metadata_values:
-            return metadata_values[self._attr_name]
-        metadata = getattr(obj, '_metadata', None)
-        if metadata is not None and self._attr_name in metadata:
-            md = metadata[self._attr_name]
-            if md.is_set():
-                return md.value
-        return None
-
-    def __set__(self, obj: object, value: T | None) -> None:
-        metadata_values = getattr(obj, '_metadata_values', None)
-        if metadata_values is None:
-            obj._metadata_values = {}
-            metadata_values = obj._metadata_values
-        metadata_values[self._attr_name] = value
-
     @property
     def value(self) -> T:
         if self.is_set():
@@ -712,19 +687,36 @@ class Metadata(Generic[T]):
         else:
             raise ValueError("Metadata value is not set")
 
+    @value.setter
+    def value(self, value: T) -> None:
+        self._value = self.convert(value)
+
     def is_set(self) -> bool:
         """ Returns True if the Parameter value is set
         """
         return self._value is not None
+
+    def convert(self, value: T) -> T:
+        """ Convert user input to python data format
+
+        Subclasses are expected to customize this method.
+        Default implementation is the identity function
+
+        :param value: value to be converted
+
+        :return: converted value
+        """
+
+        return value
 
     def evaluate(self, parent: object | None = None, new_value: T | None = None) -> T:
         if new_value is not None and self.fget is not None:
             raise ValueError("Metadata with a defined fget method"
                              " cannot be manually assigned a value")
         elif new_value is not None:
-            self._value = new_value
+            self.value = new_value
         elif self.fget is not None:
-            self._value = self.eval_fget(parent)
+            self.value = self.eval_fget(parent)
 
         self.evaluated = True
         return self.value

@@ -220,16 +220,10 @@ class Procedure:
         in their stead
         """
         self._metadata: dict[str, Metadata] = {}
-        self._metadata_values: dict[str, Any] = {}
 
         for item, metadata in inspect.getmembers(self.__class__):
             if isinstance(metadata, Metadata):
                 self._metadata[item] = deepcopy(metadata)
-
-                if metadata.is_set():
-                    self._metadata_values[item] = metadata.value
-                else:
-                    self._metadata_values[item] = None
 
     def evaluate_metadata(self) -> None:
         """ Evaluates all Metadata objects, fixing their values to the current value

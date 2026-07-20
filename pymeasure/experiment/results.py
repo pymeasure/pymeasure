@@ -406,7 +406,7 @@ class Results:
                 setattr(procedure, name, value)
 
                 # Set the value in the metadata
-                metadata._value = value
+                metadata.value = value
                 metadata.evaluated = True
 
         return procedure
