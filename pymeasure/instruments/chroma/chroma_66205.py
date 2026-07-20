@@ -531,7 +531,7 @@ class Chroma66205(SCPIMixin, Instrument):
         # Wave contains exactly two 60Hz cycles, so sample rate is 61440 (=2048 Samples / 2 * 60Hz)
         # This might not be consistent across all settings and configurations?
         Fs=61.44e3
-        ts = np.arange(0,len(wave)/Fs,1/Fs)
+        ts = np.arange(0,len(wave)/Fs, 1/Fs)
         return ts,wave
 
 
