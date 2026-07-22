@@ -968,6 +968,12 @@ SpotIV = namedtuple("SpotIV", ["current", "voltage"])
 TimedSpotIV = namedtuple("TimedSpotIV", ["time", "current", "voltage"])
 SpotCMU = namedtuple("SpotCMU", ["primary", "secondary"])
 TimedSpotCMU = namedtuple("TimedSpotCMU", ["time", "primary", "secondary"])
+SpotCMUMonitor = namedtuple(
+    "SpotCMUMonitor", ["primary", "secondary", "ac_voltage", "dc_voltage"]
+)
+TimedSpotCMUMonitor = namedtuple(
+    "TimedSpotCMUMonitor", ["time", "primary", "secondary", "ac_voltage", "dc_voltage"]
+)
 
 
 def _spot_measurement(unit: SMU | CMU, cmd: str) -> tuple[float, ...]:
@@ -2039,7 +2045,7 @@ class CMU(Channel):
 
     def measure(
         self, meas_range: int | None = None, timestamp: bool = False
-    ) -> SpotCMU | TimedSpotCMU:
+    ) -> SpotCMU | SpotCMUMonitor | TimedSpotCMU | TimedSpotCMUMonitor:
         """Perform a high speed spot measurement with the MFCMU. (``TC`` or ``TTC``)
 
         The measurement starts immediately, regardless of the trigger mode and
@@ -2047,18 +2053,22 @@ class CMU(Channel):
         measurement parameters must be selected with :meth:`set_measurement_mode`
         (``IMP``) beforehand.
 
-        The two returned values are the primary and secondary parameters
-        selected by :meth:`set_measurement_mode`, e.g. ``Cp`` and ``G`` for
-        :attr:`MFCMUMeasurementMode.CP_G`.
+        The primary and secondary parameters are selected by
+        :meth:`set_measurement_mode`, e.g. ``Cp`` and ``G`` for
+        :attr:`MFCMUMeasurementMode.CP_G`. If :attr:`voltage_monitor_enabled`
+        (``LMN``) is set, the AC (oscillator level) and DC bias voltage monitor
+        values are appended, and a ``...Monitor`` variant with the extra
+        ``ac_voltage`` and ``dc_voltage`` fields is returned instead.
 
         :param meas_range: Fixed measurement range from :attr:`MEASUREMENT_RANGES`
             in Ohm, defaults to auto ranging
         :param timestamp: Whether to also return the time from timer reset
             (:meth:`AgilentB1500.clear_timer`) to the start of the
             measurement (``TTC`` instead of ``TC``)
-        :return: :class:`SpotCMU` of primary and secondary parameter, or
-            :class:`TimedSpotCMU` additionally containing the time in s
-            if ``timestamp`` is enabled
+        :return: :class:`SpotCMU` (or :class:`TimedSpotCMU` with ``timestamp``)
+            of the primary and secondary parameter; the :class:`SpotCMUMonitor`
+            / :class:`TimedSpotCMUMonitor` variant additionally carrying
+            ``ac_voltage`` and ``dc_voltage`` when :attr:`voltage_monitor_enabled`
         """
         cmd = "TTC {ch}" if timestamp else "TC {ch}"
         if meas_range is None:
@@ -2067,7 +2077,9 @@ class CMU(Channel):
             meas_range = strict_discrete_set(meas_range, self.MEASUREMENT_RANGES)
             cmd += f", 2, {meas_range}"  # fixed range
         values = _spot_measurement(self, cmd)
-        return TimedSpotCMU(*values) if timestamp else SpotCMU(*values)
+        if timestamp:
+            return TimedSpotCMUMonitor(*values) if len(values) == 5 else TimedSpotCMU(*values)
+        return SpotCMUMonitor(*values) if len(values) == 4 else SpotCMU(*values)
 
     def set_cv_timings(
         self,

@@ -38,9 +38,11 @@ from pymeasure.instruments.agilent.agilentB1500 import (
     SPGUOperationMode,
     SPGUOutputMode,
     SpotCMU,
+    SpotCMUMonitor,
     SpotIV,
     SweepMode,
     TimedSpotCMU,
+    TimedSpotCMUMonitor,
     TimedSpotCurrent,
     TimedSpotIV,
     TimedSpotVoltage,
@@ -382,12 +384,39 @@ class TestCMU:
             result = inst.cmu.measure()
             assert isinstance(result, SpotCMU)
             assert result == (1e-12, 2e-6)
-            assert result.primary == 1e-12
-            assert result.secondary == 2e-6
+            primary, secondary = result
+            assert (primary, secondary) == (1e-12, 2e-6)
             timed_result = inst.cmu.measure(meas_range=1000, timestamp=True)
             assert isinstance(timed_result, TimedSpotCMU)
             assert timed_result == (0.123, 1e-12, 2e-6)
             assert timed_result.time == 0.123
+
+    def test_measure_with_monitor(self):
+        """Test that measure captures AC/DC voltage monitor values (LMN enabled)."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                ("FMT 1, 0", None),
+                ("ERRX?", '+0,"No Error."'),
+                ("TC 2, 0", "NBC+001.000E-12,NBY+002.000E-06,NBV+000.030E+00,NBV+001.000E+00"),
+                (
+                    "TTC 2, 0",
+                    "NBT+000.123E+00,NBC+001.000E-12,NBY+002.000E-06,"
+                    "NBV+000.030E+00,NBV+001.000E+00",
+                ),
+            ],
+        ) as inst:
+            inst.data_format(1)
+            result = inst.cmu.measure()
+            assert isinstance(result, SpotCMUMonitor)
+            assert result == (1e-12, 2e-6, 0.03, 1.0)
+            primary, secondary, ac_voltage, dc_voltage = result
+            assert (primary, secondary, ac_voltage, dc_voltage) == (1e-12, 2e-6, 0.03, 1.0)
+            assert result.ac_voltage == 0.03
+            assert result.dc_voltage == 1.0
+            timed_result = inst.cmu.measure(timestamp=True)
+            assert isinstance(timed_result, TimedSpotCMUMonitor)
+            assert timed_result == (0.123, 1e-12, 2e-6, 0.03, 1.0)
 
     def test_measure_invalid_range(self):
         """Test that measure rejects a range not in MEASUREMENT_RANGES."""
