@@ -2018,6 +2018,20 @@ class CMU(Channel):
             )
         self.write(f"IMP {measurement_mode.value}")
 
+    @property
+    def voltage_monitor_enabled(self) -> bool:
+        """Control the MFCMU AC and DC voltage data monitor and output. (``LMN``)
+
+        When enabled, the AC (oscillator level), forced and measured DC bias voltage values are
+        returned together with the measurement data.
+        """
+        response = cast(str, self.parent.query_learn(71)["LMN"])
+        return bool(int(response))
+
+    @voltage_monitor_enabled.setter
+    def voltage_monitor_enabled(self, enabled: bool) -> None:
+        self.write(f"LMN {int(enabled)}")
+
     #: Fixed measurement ranges (impedance, Ohm) selectable for the MFCMU
     #: high speed spot measurement. Available ranges depend on the output
     #: signal frequency set by :attr:`frequency_ac` (``FC``).

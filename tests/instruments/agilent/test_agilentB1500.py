@@ -354,6 +354,19 @@ class TestCMU:
         ) as inst:
             inst.cmu.set_measurement_mode(measurement_mode)
 
+    @pytest.mark.parametrize("enabled", [True, False])
+    def test_voltage_monitor_enabled(self, enabled):
+        """Test voltage_monitor_enabled property (LMN)."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                (f"LMN {int(enabled)}", None),
+                ("*LRN? 71", f"LMN{int(enabled)}"),
+            ],
+        ) as inst:
+            inst.cmu.voltage_monitor_enabled = enabled
+            assert inst.cmu.voltage_monitor_enabled == enabled
+
     def test_measure(self):
         """Test high speed spot measurement with the MFCMU (TC/TTC)."""
         with expected_protocol(
