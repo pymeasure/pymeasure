@@ -37,8 +37,10 @@ from pymeasure.instruments.agilent.agilentB1500 import (
     SPGUChannelOutputMode,
     SPGUOperationMode,
     SPGUOutputMode,
+    SpotCMU,
     SpotIV,
     SweepMode,
+    TimedSpotCMU,
     TimedSpotCurrent,
     TimedSpotIV,
     TimedSpotVoltage,
@@ -351,6 +353,34 @@ class TestCMU:
             [(f"IMP {measurement_mode.value}", None)],
         ) as inst:
             inst.cmu.set_measurement_mode(measurement_mode)
+
+    def test_measure(self):
+        """Test high speed spot measurement with the MFCMU (TC/TTC)."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                ("FMT 1, 0", None),
+                ("ERRX?", '+0,"No Error."'),
+                ("TC 2, 0", "NBC+001.000E-12,NBY+002.000E-06"),
+                ("TTC 2, 2, 1000", "NBT+000.123E+00,NBC+001.000E-12,NBY+002.000E-06"),
+            ],
+        ) as inst:
+            inst.data_format(1)
+            result = inst.cmu.measure()
+            assert isinstance(result, SpotCMU)
+            assert result == (1e-12, 2e-6)
+            assert result.primary == 1e-12
+            assert result.secondary == 2e-6
+            timed_result = inst.cmu.measure(meas_range=1000, timestamp=True)
+            assert isinstance(timed_result, TimedSpotCMU)
+            assert timed_result == (0.123, 1e-12, 2e-6)
+            assert timed_result.time == 0.123
+
+    def test_measure_invalid_range(self):
+        """Test that measure rejects a range not in MEASUREMENT_RANGES."""
+        with expected_protocol(AgilentB1500Mock, []) as inst:
+            with pytest.raises(ValueError):
+                inst.cmu.measure(meas_range=500)
 
     def test_set_cv_timings(self):
         """Test set_cv_timings method."""

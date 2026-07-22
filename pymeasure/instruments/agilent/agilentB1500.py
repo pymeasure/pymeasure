@@ -966,6 +966,23 @@ TimedSpotCurrent = namedtuple("TimedSpotCurrent", ["time", "current"])
 TimedSpotVoltage = namedtuple("TimedSpotVoltage", ["time", "voltage"])
 SpotIV = namedtuple("SpotIV", ["current", "voltage"])
 TimedSpotIV = namedtuple("TimedSpotIV", ["time", "current", "voltage"])
+SpotCMU = namedtuple("SpotCMU", ["primary", "secondary"])
+TimedSpotCMU = namedtuple("TimedSpotCMU", ["time", "primary", "secondary"])
+
+
+def _spot_measurement(unit: SMU | CMU, cmd: str) -> tuple[float, ...]:
+    """Write a high speed spot measurement command and parse the response.
+
+    :param unit: SMU or CMU issuing the measurement
+    :param cmd: Complete spot measurement command including parameters
+    :return: Measurement values in the order returned by the instrument
+    """
+    data_format = unit.parent._data_format
+    if data_format is None:
+        raise ValueError("No data format set. Call data_format() before measuring.")
+    unit.write(cmd)
+    response = unit.read()
+    return tuple(data_format.format_single(element)[3] for element in response.split(","))
 
 
 class SMU(Channel):
@@ -1297,21 +1314,7 @@ class SMU(Channel):
     ######################################
     # High Speed Spot Measurement
     # implemented: TI, TTI, TV, TTV, TIV, TTIV
-    # not implemented: TC, TTC (MFCMU)
     ######################################
-
-    def _spot_measurement(self, cmd: str) -> tuple[float, ...]:
-        """Perform a high speed spot measurement and parse the returned values.
-
-        :param cmd: Complete spot measurement command including parameters
-        :return: Measurement values in the order returned by the instrument
-        """
-        data_format = self.parent._data_format
-        if data_format is None:
-            raise ValueError("No data format set. Call data_format() before measuring.")
-        self.write(cmd)
-        response = self.read()
-        return tuple(data_format.format_single(element)[3] for element in response.split(","))
 
     def measure_current(
         self, meas_range: int | str | None = None, timestamp: bool = False
@@ -1333,7 +1336,7 @@ class SMU(Channel):
         cmd = "TTI {ch}" if timestamp else "TI {ch}"
         if meas_range is not None:
             cmd += f", {self.current_ranging.meas(meas_range).index}"
-        values = self._spot_measurement(cmd)
+        values = _spot_measurement(self, cmd)
         return TimedSpotCurrent(*values) if timestamp else values[0]
 
     def measure_voltage(
@@ -1356,7 +1359,7 @@ class SMU(Channel):
         cmd = "TTV {ch}" if timestamp else "TV {ch}"
         if meas_range is not None:
             cmd += f", {self.voltage_ranging.meas(meas_range).index}"
-        values = self._spot_measurement(cmd)
+        values = _spot_measurement(self, cmd)
         return TimedSpotVoltage(*values) if timestamp else values[0]
 
     def measure_iv(
@@ -1397,7 +1400,7 @@ class SMU(Channel):
                 f", {self.current_ranging.meas(current_range).index}"
                 f", {self.voltage_ranging.meas(voltage_range).index}"
             )
-        values = self._spot_measurement(cmd)
+        values = _spot_measurement(self, cmd)
         return TimedSpotIV(*values) if timestamp else SpotIV(*values)
 
     ######################################
@@ -2014,6 +2017,43 @@ class CMU(Channel):
                 f"{self.parent._data_format.format}."
             )
         self.write(f"IMP {measurement_mode.value}")
+
+    #: Fixed measurement ranges (impedance, Ohm) selectable for the MFCMU
+    #: high speed spot measurement. Available ranges depend on the output
+    #: signal frequency set by :attr:`frequency_ac` (``FC``).
+    MEASUREMENT_RANGES = [50, 100, 300, 1000, 3000, 10000, 30000, 100000, 300000]
+
+    def measure(
+        self, meas_range: int | None = None, timestamp: bool = False
+    ) -> SpotCMU | TimedSpotCMU:
+        """Perform a high speed spot measurement with the MFCMU. (``TC`` or ``TTC``)
+
+        The measurement starts immediately, regardless of the trigger mode and
+        measurement mode. The channel must be enabled (:meth:`enable`) and the
+        measurement parameters must be selected with :meth:`set_measurement_mode`
+        (``IMP``) beforehand.
+
+        The two returned values are the primary and secondary parameters
+        selected by :meth:`set_measurement_mode`, e.g. ``Cp`` and ``G`` for
+        :attr:`MFCMUMeasurementMode.CP_G`.
+
+        :param meas_range: Fixed measurement range from :attr:`MEASUREMENT_RANGES`
+            in Ohm, defaults to auto ranging
+        :param timestamp: Whether to also return the time from timer reset
+            (:meth:`AgilentB1500.clear_timer`) to the start of the
+            measurement (``TTC`` instead of ``TC``)
+        :return: :class:`SpotCMU` of primary and secondary parameter, or
+            :class:`TimedSpotCMU` additionally containing the time in s
+            if ``timestamp`` is enabled
+        """
+        cmd = "TTC {ch}" if timestamp else "TC {ch}"
+        if meas_range is None:
+            cmd += ", 0"  # auto ranging
+        else:
+            meas_range = strict_discrete_set(meas_range, self.MEASUREMENT_RANGES)
+            cmd += f", 2, {meas_range}"  # fixed range
+        values = _spot_measurement(self, cmd)
+        return TimedSpotCMU(*values) if timestamp else SpotCMU(*values)
 
     def set_cv_timings(
         self,
