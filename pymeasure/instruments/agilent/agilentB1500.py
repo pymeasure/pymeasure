@@ -1331,11 +1331,10 @@ class SMU(Channel):
         mode, trigger mode, and measurement mode. The channel must be
         enabled (:meth:`enable`).
 
-        :param meas_range: Current measurement range index or name, defaults
-            to the minimum range covering the compliance value
+        :param meas_range: Current measurement range index or name (``0`` for auto ranging),
+            defaults to the minimum range covering the compliance value
         :param timestamp: Whether to also return the time from timer reset
-            (:meth:`AgilentB1500.clear_timer`) to the start of the
-            measurement (``TTI`` instead of ``TI``)
+            (:meth:`AgilentB1500.clear_timer`) to the start of the measurement
         :return: Current in A, or :class:`TimedSpotCurrent` of time in s and
             current in A if ``timestamp`` is enabled
         """
@@ -1354,11 +1353,10 @@ class SMU(Channel):
         mode, trigger mode, and measurement mode. The channel must be
         enabled (:meth:`enable`).
 
-        :param meas_range: Voltage measurement range index or name, defaults
-            to the minimum range covering the compliance value
+        :param meas_range: Voltage measurement range index or name (``0`` for auto ranging),
+            defaults to the minimum range covering the compliance value
         :param timestamp: Whether to also return the time from timer reset
-            (:meth:`AgilentB1500.clear_timer`) to the start of the
-            measurement (``TTV`` instead of ``TV``)
+            (:meth:`AgilentB1500.clear_timer`) to the start of the measurement
         :return: Voltage in V, or :class:`TimedSpotVoltage` of time in s and
             voltage in V if ``timestamp`` is enabled
         """
@@ -1385,15 +1383,14 @@ class SMU(Channel):
         HRSMU, MPSMU, and HPSMU measure the compliance side and the force
         side in this order.
 
-        :param current_range: Current measurement range index or name,
+        :param current_range: Current measurement range index or name (``0`` for auto ranging),
             defaults to the minimum range covering the compliance value.
             Must be specified together with ``voltage_range``.
-        :param voltage_range: Voltage measurement range index or name,
+        :param voltage_range: Voltage measurement range index or name (``0`` for auto ranging),
             defaults to the minimum range covering the output value.
             Must be specified together with ``current_range``.
         :param timestamp: Whether to also return the time from timer reset
-            (:meth:`AgilentB1500.clear_timer`) to the start of the
-            measurement (``TTIV`` instead of ``TIV``)
+            (:meth:`AgilentB1500.clear_timer`) to the start of the measurement
         :return: :class:`SpotIV` of current in A and voltage in V, or
             :class:`TimedSpotIV` additionally containing the time in s
             if ``timestamp`` is enabled
@@ -2028,7 +2025,7 @@ class CMU(Channel):
     def voltage_monitor_enabled(self) -> bool:
         """Control the MFCMU AC and DC voltage data monitor and output. (``LMN``)
 
-        When enabled, the AC (oscillator level), forced and measured DC bias voltage values are
+        When enabled, the AC (oscillator level) and DC bias voltage values are
         returned together with the measurement data.
         """
         response = cast(str, self.parent.query_learn(71)["LMN"])
@@ -2048,23 +2045,20 @@ class CMU(Channel):
     ) -> SpotCMU | SpotCMUMonitor | TimedSpotCMU | TimedSpotCMUMonitor:
         """Perform a high speed spot measurement with the MFCMU. (``TC`` or ``TTC``)
 
-        The measurement starts immediately, regardless of the trigger mode and
-        measurement mode. The channel must be enabled (:meth:`enable`) and the
-        measurement parameters must be selected with :meth:`set_measurement_mode`
-        (``IMP``) beforehand.
+        The measurement starts immediately, regardless of the trigger mode and measurement mode.
+        The channel must be enabled (:meth:`enable`) and the measurement parameters must be
+        selected with :meth:`set_measurement_mode` beforehand.
 
-        The primary and secondary parameters are selected by
-        :meth:`set_measurement_mode`, e.g. ``Cp`` and ``G`` for
-        :attr:`MFCMUMeasurementMode.CP_G`. If :attr:`voltage_monitor_enabled`
-        (``LMN``) is set, the AC (oscillator level) and DC bias voltage monitor
-        values are appended, and a ``...Monitor`` variant with the extra
-        ``ac_voltage`` and ``dc_voltage`` fields is returned instead.
+        The primary and secondary parameters are selected by :meth:`set_measurement_mode`,
+        e.g. ``Cp`` and ``G`` for :attr:`MFCMUMeasurementMode.CP_G`.
+        If :attr:`voltage_monitor_enabled` is set, the AC (oscillator level) and DC bias voltage
+        monitor values are appended, and a tuple with the extra ``ac_voltage`` and ``dc_voltage``
+        fields is returned instead.
 
         :param meas_range: Fixed measurement range from :attr:`MEASUREMENT_RANGES`
             in Ohm, defaults to auto ranging
         :param timestamp: Whether to also return the time from timer reset
-            (:meth:`AgilentB1500.clear_timer`) to the start of the
-            measurement (``TTC`` instead of ``TC``)
+            (:meth:`AgilentB1500.clear_timer`) to the start of the measurement
         :return: :class:`SpotCMU` (or :class:`TimedSpotCMU` with ``timestamp``)
             of the primary and secondary parameter; the :class:`SpotCMUMonitor`
             / :class:`TimedSpotCMUMonitor` variant additionally carrying

@@ -112,7 +112,7 @@ class TestSMU:
             inst.smu1.disable()
 
     def test_measure_current(self):
-        """Test high speed spot measurement of current (TI/TTI)."""
+        """Test measure_current method."""
         with expected_protocol(
             AgilentB1500Mock,
             [
@@ -131,7 +131,7 @@ class TestSMU:
             assert result.current == 5e-12
 
     def test_measure_voltage(self):
-        """Test high speed spot measurement of voltage (TV/TTV)."""
+        """Test measure_voltage method."""
         with expected_protocol(
             AgilentB1500Mock,
             [
@@ -149,7 +149,7 @@ class TestSMU:
             assert result.voltage == 1.5
 
     def test_measure_iv(self):
-        """Test high speed spot measurement of current and voltage (TIV/TTIV)."""
+        """Test measure_iv method."""
         with expected_protocol(
             AgilentB1500Mock,
             [
@@ -358,7 +358,7 @@ class TestCMU:
 
     @pytest.mark.parametrize("enabled", [True, False])
     def test_voltage_monitor_enabled(self, enabled):
-        """Test voltage_monitor_enabled property (LMN)."""
+        """Test voltage_monitor_enabled property."""
         with expected_protocol(
             AgilentB1500Mock,
             [
@@ -370,7 +370,7 @@ class TestCMU:
             assert inst.cmu.voltage_monitor_enabled == enabled
 
     def test_measure(self):
-        """Test high speed spot measurement with the MFCMU (TC/TTC)."""
+        """Test measure method."""
         with expected_protocol(
             AgilentB1500Mock,
             [
@@ -392,7 +392,7 @@ class TestCMU:
             assert timed_result.time == 0.123
 
     def test_measure_with_monitor(self):
-        """Test that measure captures AC/DC voltage monitor values (LMN enabled)."""
+        """Test that measure captures AC/DC voltage values (:attr:`voltage_monitor_enabled`)."""
         with expected_protocol(
             AgilentB1500Mock,
             [
