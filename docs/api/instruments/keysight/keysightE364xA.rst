@@ -1,6 +1,6 @@
-##########################################
+########################################
 Keysight E364xA Series of Power Supplies
-##########################################
+########################################
 
 .. autoclass:: pymeasure.instruments.keysight.keysightE364xA.KeysightE3640A
     :show-inheritance:

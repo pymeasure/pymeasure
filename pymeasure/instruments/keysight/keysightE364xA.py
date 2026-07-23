@@ -42,7 +42,8 @@ class KeysightE364XAChannel(Channel):
     voltage_setpoint = Channel.control(
         "INST:NSEL {ch};:VOLT?",
         "INST:NSEL {ch};:VOLT %g",
-        """Control output voltage setpoint. Range depends on selected LOW or HIGH mode.""",
+        """Control output voltage setpoint in volts (float).
+        Range depends on selected LOW or HIGH mode.""",
         validator=strict_range,
         dynamic=True,
     )
@@ -50,19 +51,20 @@ class KeysightE364XAChannel(Channel):
     current_limit = Channel.control(
         "INST:NSEL {ch};:CURR?",
         "INST:NSEL {ch};:CURR %g",
-        """Control current limit of this channel. Range depends on selected LOW or HIGH mode.""",
+        """Control current limit of this channel in amps (float).
+        Range depends on selected LOW or HIGH mode.""",
         validator=strict_range,
         dynamic=True,
     )
 
     voltage = Channel.measurement(
         "INST:NSEL {ch};:MEAS:VOLT?",
-        """Measure voltage at the channel output.""",
+        """Measure voltage at the channel output in volts (float).""",
     )
 
     current = Channel.measurement(
         "INST:NSEL {ch};:MEAS:CURR?",
-        """Measure current at the channel output.""",
+        """Measure current at the channel output in amps (float).""",
     )
 
     range = Channel.control(
@@ -115,17 +117,15 @@ class KeysightE364XASingleOutput(SCPIMixin, Instrument):
             name if name is not None else self._default_name,
             **kwargs,
         )
-        # Set 'update_validator_range' as a set process for the channels range command
         self.range_set_process = self.update_validator_range
-        # Set mapping of "HIGH" and "LOW" to device specific range keywords
         self.range_values = self._range_map
-        # Initialize device with desired output range modes
         self.range = voltage_range
 
     voltage_setpoint = Instrument.control(
         "VOLT?",
         "VOLT %g",
-        """Control output voltage setpoint. Range depends on selected LOW or HIGH mode.""",
+        """Control output voltage setpoint in volts (float).
+        Range depends on selected LOW or HIGH mode.""",
         validator=strict_range,
         dynamic=True,
     )
@@ -133,19 +133,20 @@ class KeysightE364XASingleOutput(SCPIMixin, Instrument):
     current_limit = Instrument.control(
         "CURR?",
         "CURR %g",
-        """Control current limit of device. Range depends on selected LOW or HIGH mode.""",
+        """Control current limit of device in amps (float).
+        Range depends on selected LOW or HIGH mode.""",
         validator=strict_range,
         dynamic=True,
     )
 
     voltage = Instrument.measurement(
         "MEAS:VOLT?",
-        """Measure voltage at the device output.""",
+        """Measure voltage at the device output in volts (float).""",
     )
 
     current = Instrument.measurement(
         "MEAS:CURR?",
-        """Measure current at the device output.""",
+        """Measure current at the device output in amps (float).""",
     )
 
     output_enabled = Instrument.control(
