@@ -36,7 +36,7 @@ def test_single_init():
         pass  # Verify the expected communication.
 
 
-def test_current_limit_setter():
+def test_single_current_limit_setter():
     with expected_protocol(
             KeysightE3643A,
             [(b'VOLT:RANG P35V', None),
@@ -45,7 +45,7 @@ def test_current_limit_setter():
         inst.current_limit = 0.6
 
 
-def test_current_limit_getter():
+def test_single_current_limit_getter():
     with expected_protocol(
             KeysightE3643A,
             [(b'VOLT:RANG P35V', None),
@@ -94,7 +94,7 @@ def test_single_output_enabled_getter(comm_pairs, value):
       (b'VOLT:RANG P60V', None)],
      'HIGH'),
 ))
-def test_range_setter(comm_pairs, value):
+def test_single_range_setter(comm_pairs, value):
     with expected_protocol(
             KeysightE3643A,
             comm_pairs,
@@ -110,7 +110,7 @@ def test_range_setter(comm_pairs, value):
       (b'VOLT:RANG?', b'P60V\n')],
      'HIGH'),
 ))
-def test_range_getter(comm_pairs, value):
+def test_single_range_getter(comm_pairs, value):
     with expected_protocol(
             KeysightE3643A,
             comm_pairs,
@@ -118,7 +118,7 @@ def test_range_getter(comm_pairs, value):
         assert inst.range == value
 
 
-def test_voltage_setpoint_setter():
+def test_single_voltage_setpoint_setter():
     with expected_protocol(
             KeysightE3643A,
             [(b'VOLT:RANG P35V', None),
@@ -127,7 +127,7 @@ def test_voltage_setpoint_setter():
         inst.voltage_setpoint = 15.0
 
 
-def test_voltage_setpoint_getter():
+def test_single_voltage_setpoint_getter():
     with expected_protocol(
             KeysightE3643A,
             [(b'VOLT:RANG P35V', None),
@@ -146,26 +146,6 @@ def test_dual_init():
         pass  # Verify the expected communication.
 
 
-def test_ch_1_current_limit_setter():
-    with expected_protocol(
-            KeysightE3649A,
-            [(b'INST:NSEL 1;:VOLT:RANG P35V', None),
-             (b'INST:NSEL 2;:VOLT:RANG P35V', None),
-             (b'INST:NSEL 1;:CURR 0.6', None)],
-    ) as inst:
-        inst.ch_1.current_limit = 0.6
-
-
-def test_ch_1_current_limit_getter():
-    with expected_protocol(
-            KeysightE3649A,
-            [(b'INST:NSEL 1;:VOLT:RANG P35V', None),
-             (b'INST:NSEL 2;:VOLT:RANG P35V', None),
-             (b'INST:NSEL 1;:CURR?', b'+6.00000000E-01\n')],
-    ) as inst:
-        assert inst.ch_1.current_limit == 0.6
-
-
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b'INST:NSEL 1;:VOLT:RANG P35V', None),
       (b'INST:NSEL 2;:VOLT:RANG P35V', None),
@@ -176,7 +156,7 @@ def test_ch_1_current_limit_getter():
       (b'INST:NSEL 1;:VOLT:RANG P60V', None)],
      'HIGH'),
 ))
-def test_ch_1_range_setter(comm_pairs, value):
+def test_dual_range_setter(comm_pairs, value):
     with expected_protocol(
             KeysightE3649A,
             comm_pairs,
@@ -194,7 +174,7 @@ def test_ch_1_range_setter(comm_pairs, value):
       (b'INST:NSEL 1;:VOLT:RANG?', b'P60V\n')],
      'HIGH'),
 ))
-def test_ch_1_range_getter(comm_pairs, value):
+def test_dual_range_getter(comm_pairs, value):
     with expected_protocol(
             KeysightE3649A,
             comm_pairs,
@@ -202,7 +182,7 @@ def test_ch_1_range_getter(comm_pairs, value):
         assert inst.ch_1.range == value
 
 
-def test_ch_1_voltage_setpoint_setter():
+def test_dual_voltage_setpoint_setter():
     with expected_protocol(
             KeysightE3649A,
             [(b'INST:NSEL 1;:VOLT:RANG P35V', None),
@@ -212,7 +192,7 @@ def test_ch_1_voltage_setpoint_setter():
         inst.ch_1.voltage_setpoint = 15.0
 
 
-def test_ch_1_voltage_setpoint_getter():
+def test_dual_voltage_setpoint_getter():
     with expected_protocol(
             KeysightE3649A,
             [(b'INST:NSEL 1;:VOLT:RANG P35V', None),
@@ -222,7 +202,7 @@ def test_ch_1_voltage_setpoint_getter():
         assert inst.ch_1.voltage_setpoint == 15.0
 
 
-def test_ch_2_current_limit_setter():
+def test_dual_current_limit_setter():
     with expected_protocol(
             KeysightE3649A,
             [(b'INST:NSEL 1;:VOLT:RANG P35V', None),
@@ -232,7 +212,7 @@ def test_ch_2_current_limit_setter():
         inst.ch_2.current_limit = 0.6
 
 
-def test_ch_2_current_limit_getter():
+def test_dual_current_limit_getter():
     with expected_protocol(
             KeysightE3649A,
             [(b'INST:NSEL 1;:VOLT:RANG P35V', None),
@@ -240,62 +220,6 @@ def test_ch_2_current_limit_getter():
              (b'INST:NSEL 2;:CURR?', b'+6.00000000E-01\n')],
     ) as inst:
         assert inst.ch_2.current_limit == 0.6
-
-
-@pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'INST:NSEL 1;:VOLT:RANG P35V', None),
-      (b'INST:NSEL 2;:VOLT:RANG P35V', None),
-      (b'INST:NSEL 2;:VOLT:RANG P35V', None)],
-     'LOW'),
-    ([(b'INST:NSEL 1;:VOLT:RANG P35V', None),
-      (b'INST:NSEL 2;:VOLT:RANG P35V', None),
-      (b'INST:NSEL 2;:VOLT:RANG P60V', None)],
-     'HIGH'),
-))
-def test_ch_2_range_setter(comm_pairs, value):
-    with expected_protocol(
-            KeysightE3649A,
-            comm_pairs,
-    ) as inst:
-        inst.ch_2.range = value
-
-
-@pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'INST:NSEL 1;:VOLT:RANG P35V', None),
-      (b'INST:NSEL 2;:VOLT:RANG P35V', None),
-      (b'INST:NSEL 2;:VOLT:RANG?', b'P35V\n')],
-     'LOW'),
-    ([(b'INST:NSEL 1;:VOLT:RANG P35V', None),
-      (b'INST:NSEL 2;:VOLT:RANG P35V', None),
-      (b'INST:NSEL 2;:VOLT:RANG?', b'P60V\n')],
-     'HIGH'),
-))
-def test_ch_2_range_getter(comm_pairs, value):
-    with expected_protocol(
-            KeysightE3649A,
-            comm_pairs,
-    ) as inst:
-        assert inst.ch_2.range == value
-
-
-def test_ch_2_voltage_setpoint_setter():
-    with expected_protocol(
-            KeysightE3649A,
-            [(b'INST:NSEL 1;:VOLT:RANG P35V', None),
-             (b'INST:NSEL 2;:VOLT:RANG P35V', None),
-             (b'INST:NSEL 2;:VOLT 15', None)],
-    ) as inst:
-        inst.ch_2.voltage_setpoint = 15.0
-
-
-def test_ch_2_voltage_setpoint_getter():
-    with expected_protocol(
-            KeysightE3649A,
-            [(b'INST:NSEL 1;:VOLT:RANG P35V', None),
-             (b'INST:NSEL 2;:VOLT:RANG P35V', None),
-             (b'INST:NSEL 2;:VOLT?', b'+1.50000000E+01\n')],
-    ) as inst:
-        assert inst.ch_2.voltage_setpoint == 15.0
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
