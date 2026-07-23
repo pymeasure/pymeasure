@@ -213,15 +213,10 @@ class KeysightE364XADualOutput(SCPIMixin, Instrument):
             name if name is not None else self._default_name,
             **kwargs,
         )
-        # Set 'update_validator_range' as a set process for the channels range command
-        self.ch_1.range_set_process = self.ch_1.update_validator_range
-        self.ch_2.range_set_process = self.ch_2.update_validator_range
-        # Set mapping of "HIGH" and "LOW" to device specific range keywords
-        self.ch_1.range_values = self._range_map
-        self.ch_2.range_values = self._range_map
-        # Initialize device with desired output range modes
-        self.ch_1.range = voltage_range[0]
-        self.ch_2.range = voltage_range[1]
+        for i, ch in enumerate(self.channels.values()):
+            ch.range_set_process = ch.update_validator_range
+            ch.range_values = self._range_map
+            ch.range = voltage_range[i]
 
     output_enabled = Instrument.control(
         "OUTP?",
