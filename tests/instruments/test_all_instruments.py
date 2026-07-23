@@ -166,7 +166,7 @@ def test_name_argument(cls):
 
 # This uses a pyvisa-sim default instrument, we could also define our own.
 SIM_RESOURCE = "ASRL2::INSTR"
-is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec("pyvisa_sim")) # type: ignore
+is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec("pyvisa_sim"))  # type: ignore
 
 
 @pytest.mark.skipif(

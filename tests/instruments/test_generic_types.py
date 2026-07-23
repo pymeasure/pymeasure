@@ -33,7 +33,6 @@ class Test_SCPIMixin:
     class SCPIInstrument(SCPIMixin, Instrument):
         pass
 
-
     @pytest.mark.parametrize("method, write, reply", (
         ("id", "*IDN?", "xyz, abc"),
         ("complete", "*OPC?", "1"),

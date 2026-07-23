@@ -58,8 +58,8 @@ def getAO(device, channel, range=None):
 
 def readAI(device, channel, range=None, count=1):
     """ Reads a single measurement (count==1) from the analog input channel
-    of the device specified. Multiple readings can be preformed with count
-    not equal to one, which are seperated by an arbitrary time
+    of the device specified. Multiple readings can be performed with count
+    not equal to one, which are separated by an arbitrary time
     """
     ai = getAI(device, channel, range)
     converter = ai.get_converter()

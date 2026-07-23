@@ -334,7 +334,7 @@ class CommonBase:
         def __init__(
             self,
             cls: type[C] | Sequence[type[C]],
-            id: IdType | list[IdType] | tuple[IdType, ...] |None = None,
+            id: IdType | list[IdType] | tuple[IdType, ...] | None = None,
             prefix: str | None = "ch_",
             **kwargs,
         ) -> None:
@@ -469,7 +469,7 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments for the channel creator.
         :returns: Instance of the created child.
         """
-        child = cls(self, id, **kwargs) # type: ignore[reportCallIssue]
+        child = cls(self, id, **kwargs)  # type: ignore[reportCallIssue]
         collection_data = getattr(self, collection, {})
         if isinstance(collection_data, CommonBase.BaseChannelCreator):
             collection_data = {}
@@ -573,7 +573,7 @@ class CommonBase:
                     # strings and bool of a non-empty string is always True
                     results.append(bool(float(result)))  # type: ignore[arg-type]
                 else:
-                    results.append(cast(result)) # type: ignore[call-arg]
+                    results.append(cast(result))  # type: ignore[call-arg]
             except Exception:
                 # Keep as string
                 warn(

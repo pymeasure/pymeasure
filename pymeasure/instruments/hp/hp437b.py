@@ -558,7 +558,7 @@ class HP437B(Instrument):
               - 50 MHz
             * - Resolution
               - 0.01 dB
-            * - Duty Cylce
+            * - Duty Cycle
               - 1.000%, Off
             * - Relative
               - 0 dB, Off

@@ -59,7 +59,7 @@ class SmartlineV1(Instrument):
 
     :param adapter: pyvisa resource name of the instrument or adapter instance
     :param string name: Name of the instrument.
-    :param int address: RS485 adddress of the instrument 1-15.
+    :param int address: RS485 address of the instrument 1-15.
     :param int baud_rate: baudrate used for the communication with the device.
     :param kwargs: Any valid key-word argument for Instrument
 

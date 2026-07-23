@@ -299,7 +299,7 @@ class HP6632A(HPLegacyInstrument):
     voltage = HPLegacyInstrument.control(
         "VOUT?", "VSET %g",
         """
-        A floating point proptery that controls the output voltage of the device.
+        A floating point property that controls the output voltage of the device.
 
         """,
         dynamic=True,
