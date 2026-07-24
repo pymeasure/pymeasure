@@ -58,12 +58,12 @@ class NewSensorFlagMap(IntFlag):
 
 
 class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
-    """Represents Thorlabs PM100USB powermeter interface."""
+    """Represents Thorlabs PM100USB power and energy meter console interface."""
 
     sensor_flag_map = OldSensorFlagMap
     uses_new_flag_format = False
 
-    def __init__(self, adapter, name="ThorlabsPM100USB powermeter", **kwargs):
+    def __init__(self, adapter, name="ThorlabsPM100USB power and energy meter console", **kwargs):
         super().__init__(adapter, name, **kwargs)
         self.configure_sensor()
 
@@ -256,15 +256,15 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
 
 
 class ThorlabsPM100A(ThorlabsPM100USB):
-    """Represents Thorlabs PM100D powermeter interface."""
+    """Represents Thorlabs PM100A power and energy meter console interface."""
 
 
 class ThorlabsPM100D(ThorlabsPM100USB):
-    """Represents Thorlabs PM100D powermeter interface."""
+    """Represents Thorlabs PM100D power and energy meter console interface."""
 
 
 class ThorlabsPM100D2(ThorlabsPM100USB):
-    """Represents Thorlabs PM100D2 powermeter interface."""
+    """Represents Thorlabs PM100D2 power and energy meter console interface."""
 
     sensor_flag_map = NewSensorFlagMap
     uses_new_flag_format = True
@@ -275,4 +275,4 @@ class ThorlabsPM100D2(ThorlabsPM100USB):
 
 
 class ThorlabsPM100D3(ThorlabsPM100D2):
-    """Represents Thorlabs PM100D3 powermeter interface."""
+    """Represents Thorlabs PM100D3 power and energy meter console interface."""
