@@ -51,7 +51,7 @@ def values(self, command, cast=int, separator=',', preprocess_reply=None, **kwar
         results = preprocess_reply(results)
     for i, result in enumerate(results):
         try:
-            if cast == bool:
+            if cast is bool:
                 # Need to cast to float first since results are usually
                 # strings and bool of a non-empty string is always True
                 results[i] = bool(float(result))
@@ -150,7 +150,6 @@ class CXN(Instrument):
         self.address = address
         super().__init__(adapter,
                          name,
-                         includeSCPI=False,
                          write_termination="",
                          read_termination="",
                          asrl=dict(baud_rate=38400),

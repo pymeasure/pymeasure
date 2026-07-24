@@ -73,7 +73,7 @@ class VirtualBench_Direct(pyvb.PyVirtualBench):
         if (status != pyvb.Status.SUCCESS):
             raise pyvb.PyVirtualBenchException(status, self.nilcicapi,
                                                self.library_handle)
-        log.info("Initializing %s." % self.name)
+        log.info(f"Initializing {self.name}.")
 
     def __del__(self):
         """ Ensures the connection is closed upon deletion
@@ -81,7 +81,7 @@ class VirtualBench_Direct(pyvb.PyVirtualBench):
         self.release()
 
 
-class VirtualBench():
+class VirtualBench:
     """ Represents National Instruments Virtual Bench main frame.
 
     Subclasses implement the functionalities of the different modules:
@@ -114,7 +114,7 @@ class VirtualBench():
         self.device_name = device_name
         self.name = name
         self.vb = pyvb.PyVirtualBench(self.device_name)
-        log.info("Initializing %s." % self.name)
+        log.info(f"Initializing {self.name}.")
 
     def __del__(self):
         """ Ensures the connection is closed upon deletion
@@ -125,7 +125,7 @@ class VirtualBench():
     def shutdown(self):
         ''' Finalize the VirtualBench library.
         '''
-        log.info("Shutting down %s" % self.name)
+        log.info(f"Shutting down {self.name}")
         self.vb.release()
         self.isShutdown = True
 
@@ -143,8 +143,8 @@ class VirtualBench():
         :rtype: (int, float)
         """
         if not isinstance(timestamp, pyvb.Timestamp):
-            raise ValueError("{} is not a VirtualBench Timestamp object"
-                             .format(timestamp))
+            raise ValueError(f"{timestamp} is not a VirtualBench Timestamp object"
+                             )
         return self.vb.convert_timestamp_to_values(timestamp)
 
     def convert_values_to_timestamp(self, seconds_since_1970,
@@ -267,7 +267,7 @@ class VirtualBench():
         self.dmm = self.DigitalMultimeter(self.vb, reset=reset,
                                           vb_name=self.name)
 
-    class VirtualBenchInstrument():
+    class VirtualBenchInstrument:
         def __init__(self, acquire_instr, reset,
                      instr_identifier, vb_name=''):
             """Initialize instrument of VirtualBench device.
@@ -287,7 +287,7 @@ class VirtualBench():
             self._vb_handle = acquire_instr.__self__
             self._device_name = self._vb_handle.device_name
             self.name = (vb_name + " " + instr_identifier.upper()).strip()
-            log.info("Initializing %s." % self.name)
+            log.info(f"Initializing {self.name}.")
             self._instrument_handle = acquire_instr(self._device_name, reset)
             self.isShutdown = False
 
@@ -302,7 +302,7 @@ class VirtualBench():
             during the session. If output is enabled on any channels, they
             remain in their current state.
             '''
-            log.info("Shutting down %s" % self.name)
+            log.info(f"Shutting down {self.name}")
             self._instrument_handle.release()
             self.isShutdown = True
 
@@ -331,7 +331,7 @@ class VirtualBench():
             (self._line_names, self._line_numbers) = self.validate_lines(
                 lines, return_single_lines=True, validate_init=False)
             # Create DIO Instance
-            log.info("Initializing %s." % self.name)
+            log.info(f"Initializing {self.name}.")
             self.dio = self._vb_handle.acquire_digital_input_output(
                 self._line_names, reset)
             # for methods provided by super class
@@ -837,7 +837,7 @@ class VirtualBench():
             ''' Transitions the session from the Stopped state to the Running
             state.
             '''
-            log.info("%s START" % self.name)
+            log.info(f"{self.name} START")
             self.fgen.run()
 
         def self_calibrate(self):
@@ -850,7 +850,7 @@ class VirtualBench():
             ''' Transitions the acquisition from either the Triggered or
             Running state to the Stopped state.
             '''
-            log.info("%s STOP" % self.name)
+            log.info(f"{self.name} STOP")
             self.fgen.stop()
 
         def reset_instrument(self):
@@ -940,7 +940,7 @@ class VirtualBench():
                 except Exception:
                     error()
                 # validate numbers in range 1-2
-                if not int(channel) in range(1, 3):
+                if int(channel) not in range(1, 3):
                     error()
                 # validate device name: either 'mso' or 'device_name/mso'
                 if device == 'mso':
@@ -1469,7 +1469,7 @@ class VirtualBench():
             self.ps.enable_tracking(enable_tracking)
 
         def read_output(self, channel):
-            ''' Reads the voltage and current levels and outout mode of the
+            ''' Reads the voltage and current levels and output mode of the
             specified channel.
             '''
             channel = self.validate_channel(channel)

@@ -46,6 +46,7 @@ class RelayChannel(Channel):
         "SS{ch}?",
         """Get the setpoint relay status""",
         values={True: "SET", False: "CLEAR"},
+        cast=str,
     )
 
     setpoint = Channel.control(
@@ -65,6 +66,7 @@ class RelayChannel(Channel):
         """Control the switching direction""",
         validator=strict_discrete_set,
         values=["ABOVE", "BELOW"],
+        cast=str,
         check_set_errors=True,
     )
 
@@ -92,7 +94,6 @@ class MKSInstrument(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             read_termination=";",  # in reality its ";FF"
             # which is, however, invalid for pyvisa. Therefore extra bytes have to
             # be read in the read() method and the terminators are hardcoded here.
@@ -105,7 +106,7 @@ class MKSInstrument(Instrument):
 
     def _extract_reply(self, reply):
         """ preprocess_reply function which tries to extract <Response> from
-        '@<aaa>ACK<Response>;FF'. If <Response> can not be identified the orignal string
+        '@<aaa>ACK<Response>;FF'. If <Response> can not be identified the original string
         is returned.
         :param reply: reply string
         :returns: string with only the response, or the original string

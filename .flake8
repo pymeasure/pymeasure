@@ -1,6 +1,8 @@
 [flake8]
-exclude = .git,__pycache__,docs/conf.py,build,dist
+exclude = .git,__pycache__,docs/conf.py,build,dist,.venv
 max-line-length = 100
 max-complexity = 15
+select = E2, E3
+extend-ignore = E121, E123, E126, E226, E227, E241, E704, W503, W504
 per-file-ignores =
     __init__.py:F401

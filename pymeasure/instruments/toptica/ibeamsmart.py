@@ -36,28 +36,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def _deprecation_warning(text):
-    def func(x):
-        warn(text, FutureWarning)
-        return x
-
-    return func
-
-
-def _deprecation_warning_channels(property_name):
-    def func(x):
-        warn(f'Deprecated property name "{property_name}", use the channels '
-             '"enabled" property instead.', FutureWarning)
-        return x
-
-    return func
-
-
-def deprecated_strict_discrete_set(value, values):
-    warn("This property is deprecated, use channels instead.", FutureWarning)
-    return strict_discrete_set(value, values)
-
-
 class DriverChannel(Channel):
     """A laser diode driver channel for the IBeam Smart laser."""
 
@@ -75,9 +53,10 @@ class DriverChannel(Channel):
         """Control the enabled state of the driver channel.""",
         validator=strict_discrete_set,
         values=[True, False],
-        get_process=lambda s: True if s == 'ON' else False,
+        get_process=lambda s: s == 'ON',
         set_process=lambda v: "en" if v else "di",
         check_set_errors=True,
+        cast=str,
     )
 
 
@@ -116,7 +95,6 @@ class IBeamSmart(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             read_termination='\r\n',
             write_termination='\r\n',
             asrl={'baud_rate': baud_rate},
@@ -192,10 +170,12 @@ class IBeamSmart(Instrument):
 
     version = Instrument.measurement(
         "ver", """Get Firmware version number.""",
+        cast=str,
     )
 
     serial = Instrument.measurement(
         "serial", """Get Serial number of the laser system.""",
+        cast=str,
     )
 
     temp = Instrument.measurement(
@@ -218,51 +198,10 @@ class IBeamSmart(Instrument):
         """Control emission status of the laser diode driver (bool).""",
         validator=strict_discrete_set,
         values=[True, False],
-        get_process=lambda s: True if s == 'ON' else False,
+        get_process=lambda s: s == 'ON',
         set_process=lambda v: "on" if v else "off",
         check_set_errors=True,
-    )
-
-    laser_enabled = Instrument.control(
-        "sta la", "la %s",
-        """Control emission status of the laser diode driver (bool).
-
-        .. deprecated:: 0.12 Use attr:`emission` instead.
-        """,
-        validator=deprecated_strict_discrete_set,
-        values=[True, False],
-        get_process=lambda s: True if s == 'ON' else False,
-        set_process=lambda v: "on" if v else "off",
-        check_set_errors=True,
-        preprocess_reply=_deprecation_warning(
-            "Property `laser_enabled` is deprecated, use `emission` instead."),
-    )
-
-    channel1_enabled = Instrument.control(
-        "sta ch 1", "%s",
-        """Control status of Channel 1 of the laser (bool).
-
-        .. deprecated:: 0.12 Use :attr:`ch_1.enabled` instead.
-        """,
-        validator=deprecated_strict_discrete_set,
-        values=[True, False],
-        get_process=lambda s: True if s == 'ON' else False,
-        set_process=lambda v: "en 1" if v else "di 1",
-        check_set_errors=True,
-        preprocess_reply=_deprecation_warning_channels("channel1_enabled"),
-    )
-
-    channel2_enabled = Instrument.control(
-        "sta ch 2", "%s",
-        """Control status of Channel 2 of the laser (bool).
-
-        .. deprecated:: 0.12 Use :attr:`ch_2.enabled` instead.""",
-        validator=deprecated_strict_discrete_set,
-        values=[True, False],
-        get_process=lambda s: True if s == 'ON' else False,
-        set_process=lambda v: "en 2" if v else "di 2",
-        check_set_errors=True,
-        preprocess_reply=_deprecation_warning_channels("channel2_enabled"),
+        cast=str,
     )
 
     power = Instrument.control(
@@ -275,8 +214,18 @@ class IBeamSmart(Instrument):
         check_set_errors=True,
     )
 
-    def enable_continous(self):
-        """Enable countinous emmission mode."""
+    def enable_continous(self) -> None:
+        """Enable countinous emission mode.
+
+        .. deprecated:: 0.17.0
+            Use :meth:`enable_continuous` instead.
+        """
+        warn("Method `enable_continous` is deprecated, use `enable_continuous` instead.",
+             FutureWarning)
+        self.enable_continuous()
+
+    def enable_continuous(self) -> None:
+        """Enable countinous emission mode."""
         self.write('di ext')
         self.check_set_errors()
         self.emission = True
@@ -286,7 +235,7 @@ class IBeamSmart(Instrument):
         """Enable pulsing mode.
 
         The optical output is controlled by a digital
-        input signal on a dedicated connnector on the device."""
+        input signal on a dedicated connector on the device."""
         self.emission = True
         self.ch_2.enabled = True
         self.write('en ext')

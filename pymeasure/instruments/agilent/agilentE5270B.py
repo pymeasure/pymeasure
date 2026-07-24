@@ -165,6 +165,7 @@ class SMUChannel(Channel):
         "TI{ch}",
         """Measure the current in Amps (float).""",
         get_process=lambda v: float(v[3:]),
+        cast=str,
     )
 
     voltage_setpoint = Instrument.setting(
@@ -195,6 +196,7 @@ class SMUChannel(Channel):
         "TV{ch}",
         """Measure the voltage in Volts (float).""",
         get_process=lambda v: float(v[3:]),
+        cast=str,
     )
 
 
@@ -273,5 +275,6 @@ class AgilentE5270B(SCPIMixin, Instrument):
 
         """,
         maxsplit=0,
-        get_process=lambda v: v.split(";")
+        get_process=lambda v: v.split(";"),
+        cast=str,
     )

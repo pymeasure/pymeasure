@@ -172,10 +172,10 @@ class TestPTWUnidosMethods:
         assert len(unidos.measurement_history) == 0
 
     @pytest.mark.parametrize("time", [2, 10])
-    def test_intervall(self, unidos, time):
-        unidos.intervall(time)
+    def test_interval_measurement(self, unidos, time):
+        unidos.interval_measurement(time)
         sleep(0.1 * time)
-        assert unidos.status in ["INT"]
+        assert unidos.status == "INT"
         assert unidos.integration_time == time
 
 

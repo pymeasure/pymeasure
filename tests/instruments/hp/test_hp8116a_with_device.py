@@ -27,7 +27,11 @@ import math
 import time
 from pymeasure.instruments.hp import HP8116A, hp8116a
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
+
+@pytest.fixture(scope="module")
+def device(connected_device_address) -> HP8116A:
+    device = HP8116A(connected_device_address)
+    return device
 
 
 class TestHP8116A:
@@ -40,7 +44,6 @@ class TestHP8116A:
         - You must set HAS_OPTION_001 according to the device's sweep/burst capability.
     """
 
-    RESOURCE = 'GPIB0::12'
     HAS_OPTION_001 = True
 
     BOOLEANS = [False, True]
@@ -73,10 +76,9 @@ class TestHP8116A:
     FREQUENCIES = [[1, 1], [1.23, 1.23], [1e3, 1e3], [1.23e3, 1.23e3], [1e6, 1e6], [1.23e6, 1.23e6],
                    [1.234, 1.23], [1.234e3, 1.23e3], [10.234e3, 10.2e3], [1.234e6, 1.23e6]]
 
-    instr = HP8116A(RESOURCE)
-
     @pytest.fixture
-    def make_resetted_instr(self):
+    def make_resetted_instr(self, device: HP8116A):
+        self.instr = device
         self.instr.reset()
         return self.instr
 

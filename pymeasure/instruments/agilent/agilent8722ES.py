@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import discreteTruncate
+from pymeasure.instruments.validators import truncated_discrete_set_positive
 from pymeasure.errors import RangeException
 from pyvisa import VisaIOError
 
@@ -91,14 +91,14 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
     @property
     def parameter(self):
         for parameter in Agilent8722ES.SCATTERING_PARAMETERS:
-            if int(self.values("%s?" % parameter)) == 1:
+            if int(self.values(f"{parameter}?")) == 1:
                 return parameter
         return None
 
     @parameter.setter
     def parameter(self, value):
         if value in Agilent8722ES.SCATTERING_PARAMETERS:
-            self.write("%s" % value)
+            self.write(f"{value}")
         else:
             raise Exception("Invalid scattering parameter requested"
                             " for Agilent 8722ES")
@@ -120,9 +120,9 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
         """ Sets the number of scan points, truncating to an allowed
         value if not properly provided
         """
-        points = discreteTruncate(points, Agilent8722ES.SCAN_POINT_VALUES)
+        points = truncated_discrete_set_positive(points, Agilent8722ES.SCAN_POINT_VALUES)
         if points:
-            self.write("POIN%d" % points)
+            self.write(f"POIN{points}")
         else:
             raise RangeException("Maximum scan points (1601) for"
                                  " Agilent 8722ES exceeded")
@@ -130,9 +130,9 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
     def set_IF_bandwidth(self, bandwidth):
         """ Sets the resolution bandwidth (IF bandwidth) """
         allowedBandwidth = [10, 30, 100, 300, 1000, 3000, 3700, 6000]
-        bandwidth = discreteTruncate(bandwidth, allowedBandwidth)
+        bandwidth = truncated_discrete_set_positive(bandwidth, allowedBandwidth)
         if bandwidth:
-            self.write("IFBW%d" % bandwidth)
+            self.write(f"IFBW{bandwidth}")
         else:
             raise RangeException("Maximum IF bandwidth (6000) for Agilent "
                                  "8722ES exceeded")
@@ -193,7 +193,7 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
     def scan_single(self):
         """ Initiates a single scan """
         if self.averaging_enabled:
-            self.write("NUMG%d" % self.averages)
+            self.write(f"NUMG{self.averages}")
         else:
             self.write("SING")
 

@@ -28,7 +28,7 @@ Then construct an object by passing the VISA address. For this example we connec
         from pymeasure.instruments.resources import list_resources
         list_resources()
 
-    If you know the USB properties (vendor id, product id, serial numer) of the serial device, you can query for the VISA resource string::
+    If you know the USB properties (vendor id, product id, serial number) of the serial device, you can query for the VISA resource string::
 
         from pymeasure.instruments import find_serial_port
         resource_name = find_serial_port(vendor_id=15, product_id=0x12e5, serial_number="sn56X")
@@ -75,7 +75,7 @@ Instead of passing a string, you could equally pass an adapter object. ::
     from pymeasure.adapters import VISAAdapter
 
     adapter = VISAAdapter("GPIB::4")
-    sourcemeter = Keithely2400(adapter)
+    sourcemeter = Keithley2400(adapter)
 
 To instead use a Prologix GPIB device connected on :code:`/dev/ttyUSB0` (proper permissions are needed in Linux, see :class:`PrologixAdapter <pymeasure.adapters.PrologixAdapter>`), the adapter is constructed in a similar way.
 The Prologix adapter can be shared by many instruments.
@@ -97,7 +97,7 @@ This might be because you have a non-standard device or connection, or are troub
 
 When using a string or integer to connect to an instrument, a :py:class:`~pymeasure.adapters.VISAAdapter` is used internally.
 Additional settings need to be passed in as keyword arguments.
-For example, to use a fast baud rate on a quick connection when connecting to the Keithely2400 as above, do ::
+For example, to use a fast baud rate on a quick connection when connecting to the Keithley2400 as above, do ::
 
     sourcemeter = Keithley2400("ASRL2", timeout=500, baud_rate=115200)
 

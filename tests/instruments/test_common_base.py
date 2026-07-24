@@ -23,39 +23,56 @@
 #
 
 import logging
+from typing import TYPE_CHECKING, Any
 
 import pytest
+try:
+    from typing_extensions import assert_type
+    TYPING_EXTENSION = True
+except ImportError:
+    TYPING_EXTENSION = False
 
 from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.common_base import DynamicProperty, CommonBase
-from pymeasure.adapters import FakeAdapter, ProtocolAdapter
+from pymeasure.instruments.common_base import (
+    DynamicProperty, CommonBase, IdType, InstrumentProperty, cast_or_str, identity,
+)
+from pymeasure.adapters import Adapter, FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 
 class CommonBaseTesting(CommonBase):
     """Add read/write methods in order to use the ProtocolAdapter."""
 
-    def __init__(self, parent, id=None, *args, **kwargs):
+    parent: CommonBase | Adapter
+    id: IdType
+
+    def __init__(self, parent: CommonBase | Adapter, id: IdType = None, *args, **kwargs):
         if "test" in kwargs:
             self.test = kwargs.pop("test")
         super().__init__(*args, **kwargs)
         self.parent = parent
         self.id = id
+        self._name: str = ""
+        self._protected: bool = False
+        self._collection: str = ""
         self.args = args
         self.kwargs = kwargs
 
     def wait_for(self, query_delay=0):
         pass
 
-    def write(self, command):
-        self.parent.write(command)
+    def write(self, command, **kwargs):
+        self.parent.write(command, **kwargs)
 
-    def read(self):
-        return self.parent.read()
+    def read(self, **kwargs):
+        return self.parent.read(**kwargs)
 
 
 class GenericBase(CommonBaseTesting):
+    parent: CommonBase
+    id: IdType = 1
+
     #  Use truncated_range as this easily lets us test for the range boundaries
     fake_ctrl = CommonBase.control(
         "C{ch}:control?", "C{ch}:control %d", "docs",
@@ -80,11 +97,6 @@ class GenericBase(CommonBaseTesting):
         """A special control with different channel specifiers for get and set.""",
         cast=str,
     )
-
-
-@pytest.fixture()
-def generic():
-    return GenericBase()
 
 
 class FakeBase(CommonBaseTesting):
@@ -115,7 +127,8 @@ class FakeBase(CommonBaseTesting):
         values=(1, 10),
         dynamic=True,
         check_get_errors=True,
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
     )
 
 
@@ -149,10 +162,18 @@ class NewRangeBase(FakeBase):
     fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
 
 
-class Child(CommonBase):
+class ChildChannel(CommonBase):
     """A child, which accepts parent and id arguments."""
 
-    def __init__(self, parent, id=None, *args, **kwargs):
+    parent: CommonBase
+    id: IdType
+
+    def __init__(self, parent: CommonBase, id: IdType = None, *args, **kwargs):
+        self.parent = parent
+        self.id = id
+        self._name: str = ""
+        self._protected: bool = False
+        self._collection: str = ""
         super().__init__()
 
 
@@ -169,7 +190,7 @@ class SingleChannelParent(CommonBaseTesting):
     ch_C = CommonBase.ChannelCreator(GenericBase, "C")
     an_1 = CommonBase.ChannelCreator(GenericBase, 1, collection="analog", test=True)
     an_2 = CommonBase.ChannelCreator(GenericBase, 2, collection="analog", test=True)
-    function = CommonBase.ChannelCreator(Child)
+    function = CommonBase.ChannelCreator(ChildChannel)
 
 
 class MixChannelParent(CommonBaseTesting):
@@ -197,20 +218,20 @@ def test_dynamic_property_fset_unset():
 # Test CommonBase.MultipleChannelCreator child management
 class TestInitWithMultipleChannelCreator:
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> MultiChannelParent:
         return MultiChannelParent(ProtocolAdapter())
 
-    def test_channels(self, parent):
+    def test_channels(self, parent: MultiChannelParent):
         assert len(parent.channels) == 3
         assert parent.ch_A == parent.channels['A']
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_analog(self, parent):
+    def test_analog(self, parent: MultiChannelParent):
         assert len(parent.analog) == 2
         assert parent.an_1 == parent.analog[1]
         assert isinstance(parent.analog[1], GenericBase)
 
-    def test_removal_of_protected_children_fails(self, parent):
+    def test_removal_of_protected_children_fails(self, parent: MultiChannelParent):
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
             parent.remove_child(parent.ch_A)
 
@@ -221,8 +242,8 @@ class TestInitWithMultipleChannelCreator:
         p2 = MultiChannelParent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
-    def test_channel_pairs_length(self, parent):
-        assert len(parent.get_channel_pairs(parent.__class__)) == 5
+    def test_channel_pairs_length(self, parent: MultiChannelParent):
+        assert len(parent.get_channel_pairs()) == 5
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.channels, CommonBase.MultiChannelCreator)
@@ -231,27 +252,27 @@ class TestInitWithMultipleChannelCreator:
 # Test CommonBase.ChannelCreator child management
 class TestInitWithChannelCreator:
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> SingleChannelParent:
         return SingleChannelParent(ProtocolAdapter())
 
-    def test_channels(self, parent):
+    def test_channels(self, parent: SingleChannelParent):
         assert len(parent.channels) == 3
         assert parent.ch_A == parent.channels['A']
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_analog(self, parent):
+    def test_analog(self, parent: SingleChannelParent):
         assert len(parent.analog) == 2
         assert parent.an_1 == parent.analog[1]
         assert isinstance(parent.analog[1], GenericBase)
 
-    def test_function(self, parent):
-        assert isinstance(parent.function, Child)
+    def test_function(self, parent: SingleChannelParent):
+        assert isinstance(parent.function, ChildChannel)
 
-    def test_removal_of_protected_children_fails(self, parent):
+    def test_removal_of_protected_children_fails(self, parent: SingleChannelParent):
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
             parent.remove_child(parent.ch_A)
 
-    def test_removal_of_protected_single_children_fails(self, parent):
+    def test_removal_of_protected_single_children_fails(self, parent: SingleChannelParent):
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
             parent.remove_child(parent.function)
 
@@ -262,8 +283,8 @@ class TestInitWithChannelCreator:
         p2 = SingleChannelParent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
-    def test_channel_pairs_length(self, parent):
-        assert len(parent.get_channel_pairs(parent.__class__)) == 6
+    def test_channel_pairs_length(self, parent: SingleChannelParent):
+        assert len(parent.get_channel_pairs()) == 6
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.ch_A, CommonBase.ChannelCreator)
@@ -275,22 +296,22 @@ class TestInitWithChannelCreator:
 # child management
 class TestInitWithMixChannelCreator:
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> MixChannelParent:
         return MixChannelParent(ProtocolAdapter())
 
-    def test_channels(self, parent):
+    def test_channels(self, parent: MixChannelParent):
         assert len(parent.channels) == 5
         assert parent.ch_A == parent.channels['A']
         assert parent.output_Z == parent.channels['Z']
         assert isinstance(parent.ch_A, GenericBase)
         assert isinstance(parent.output_Z, GenericBase)
 
-    def test_analog(self, parent):
+    def test_analog(self, parent: MixChannelParent):
         assert len(parent.analog) == 10
         assert parent.an_1 == parent.analog[1]
         assert isinstance(parent.analog[1], GenericBase)
 
-    def test_removal_of_protected_children_fails(self, parent):
+    def test_removal_of_protected_children_fails(self, parent: MixChannelParent):
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
             parent.remove_child(parent.ch_A)
 
@@ -303,8 +324,8 @@ class TestInitWithMixChannelCreator:
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
         assert isinstance(p2.output_Z, GenericBase)
 
-    def test_channel_pairs_length(self, parent):
-        assert len(parent.get_channel_pairs(parent.__class__)) == 15
+    def test_channel_pairs_length(self, parent: MixChannelParent):
+        assert len(parent.get_channel_pairs()) == 15
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.channels, CommonBase.MultiChannelCreator)
@@ -316,41 +337,41 @@ class TestAddChild:
     """Test the `add_child` method"""
 
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> CommonBaseTesting:
         parent = CommonBaseTesting(ProtocolAdapter())
         parent.add_child(GenericBase, "A", test=5)
         parent.add_child(GenericBase, "B")
         parent.add_child(GenericBase, prefix=None, collection="function")
         return parent
 
-    def test_correct_class(self, parent):
+    def test_correct_class(self, parent: CommonBaseTesting):
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_arguments(self, parent):
+    def test_arguments(self, parent: CommonBaseTesting):
         assert parent.channels["A"].id == "A"
         assert parent.channels["A"].test == 5
 
-    def test_attribute_access(self, parent):
+    def test_attribute_access(self, parent: CommonBaseTesting):
         assert parent.ch_B == parent.channels["B"]
 
-    def test_len(self, parent):
+    def test_len(self, parent: CommonBaseTesting):
         assert len(parent.channels) == 2
 
-    def test_attributes(self, parent):
+    def test_attributes(self, parent: CommonBaseTesting):
         assert parent.ch_A._name == "ch_A"
         assert parent.ch_B._collection == "channels"
 
-    def test_overwriting_list_raises_error(self, parent):
+    def test_overwriting_list_raises_error(self, parent: CommonBaseTesting):
         """A single channel is only allowed, if there is no list of that name."""
         with pytest.raises(ValueError, match="already exists"):
             parent.add_child(GenericBase, prefix=None)
 
-    def test_single_channel(self, parent):
+    def test_single_channel(self, parent: CommonBaseTesting):
         """Test, that id=None creates a single channel."""
         assert isinstance(parent.function, GenericBase)
         assert parent.function._name == "function"
 
-    def test_evaluating_false_id_creates_channels(self, parent):
+    def test_evaluating_false_id_creates_channels(self, parent: CommonBaseTesting):
         """Test that an id evaluating false (e.g. 0) creates a channels list."""
         parent.add_child(GenericBase, 0, collection="special")
         assert isinstance(parent.special, dict)
@@ -358,7 +379,7 @@ class TestAddChild:
 
 class TestRemoveChild:
     @pytest.fixture()
-    def parent_without_children(self):
+    def parent_without_children(self) -> CommonBaseTesting:
         parent = CommonBaseTesting(ProtocolAdapter())
         parent.add_child(GenericBase, "A")
         parent.add_child(GenericBase, "B")
@@ -383,24 +404,24 @@ class TestInheritanceWithChildren:
         function = CommonBase.ChannelCreator(GenericBase, "overridden", prefix=None)
 
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> InstrumentSubclass:
         return self.InstrumentSubclass(ProtocolAdapter())
 
-    def test_inherited_children_are_present(self, parent):
+    def test_inherited_children_are_present(self, parent: InstrumentSubclass):
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_ChannelCreator_is_replaced_by_channel_collection(self, parent):
+    def test_ChannelCreator_is_replaced_by_channel_collection(self, parent: InstrumentSubclass):
         assert not isinstance(parent.channels, CommonBase.ChannelCreator)
 
-    def test_overridden_child_is_present(self, parent):
+    def test_overridden_child_is_present(self, parent: InstrumentSubclass):
         assert parent.function.id == "overridden"
 
 
 # Test MultiChannelCreator
 @pytest.mark.parametrize("args, pairs, kwargs", (
-        ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
-        (((Child, GenericBase, Child), (1, 2, 3)),
-         [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
+        ((ChildChannel, ["A", "B"]), [(ChildChannel, "A"), (ChildChannel, "B")], {'prefix': "ch_"}),
+        (((ChildChannel, GenericBase, ChildChannel), (1, 2, 3)),
+         [(ChildChannel, 1), (GenericBase, 2), (ChildChannel, 3)], {'prefix': "ch_"}),
 ))
 def test_MultiChannelCreator(args, pairs, kwargs):
     """Test whether the channel creator receives the right arguments."""
@@ -414,35 +435,51 @@ def test_MultiChannelCreator(args, pairs, kwargs):
 
 def test_MultiChannelCreator_different_list_lengths():
     with pytest.raises(AssertionError, match="Lengths"):
-        CommonBase.MultiChannelCreator(("A", "B", "C"), (Child,) * 2)
+        CommonBase.MultiChannelCreator(id=("A", "B", "C"), cls=(ChildChannel,) * 2)
 
 
 def test_ChannelCreator_invalid_input():
     with pytest.raises(ValueError, match="Invalid"):
-        CommonBase.ChannelCreator("A", {})
+        CommonBase.ChannelCreator("A", {})  # type: ignore
 
 
 # Test CommonBase communication
 def test_ask_writes_and_reads():
-    with expected_protocol(CommonBaseTesting, [("Sent", "Received")]) as inst:
+    with expected_protocol(CommonBaseTesting, [("Sent", "Received")]) as inst:  # type: ignore[arg-type]
         assert inst.ask("Sent") == "Received"
 
 
 @pytest.mark.parametrize("value, kwargs, result",
                          (("5,6,7", {}, [5, 6, 7]),
+                          ("5.1,6,x", {"cast": cast_or_str(float)}, [5.1, 6, "x"]),
+                          ("5,6,x", {"cast": cast_or_str(int)}, [5, 6, "x"]),
                           ("5.6.7", {'separator': '.'}, [5, 6, 7]),
                           ("5,6,7", {'cast': str}, ['5', '6', '7']),
-                          ("X,Y,Z", {}, ['X', 'Y', 'Z']),
+                          ("X,Y,Z", {"cast": str}, ['X', 'Y', 'Z']),
                           ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
-                          ("X.Y.Z", {'separator': '.'}, ['X', 'Y', 'Z']),
+                           ("X.Y.Z", {"separator": ".", "cast": str}, ["X", "Y", "Z"]),
                           ("0,5,7.1", {'cast': bool}, [False, True, True]),
                           ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5]),
-                          ("X,Y,Z", {'maxsplit': 1}, ["X", "Y,Z"]),
-                          ("X,Y,Z", {'maxsplit': 0}, ["X,Y,Z"]),
+                          ("X,Y,Z", {'maxsplit': 1, "cast": str}, ["X", "Y,Z"]),
+                          ("X,Y,Z", {'maxsplit': 0, "cast": str}, ["X,Y,Z"]),
                           ))
 def test_values(value, kwargs, result):
     cb = CommonBaseTesting(FakeAdapter(), "test")
     assert cb.values(value, **kwargs) == result
+
+
+def test_values_fallback_emits_futurewarning():
+    cb = CommonBaseTesting(FakeAdapter(), "test")
+    with pytest.warns(FutureWarning, match=r"Cannot cast.*In a future version"):
+        result = cb.values("X,Y,Z")
+    assert result == ["X", "Y", "Z"]
+
+
+def test_values_fallback_raises_futurewarning_in_pymeasure():
+    cb = CommonBaseTesting(FakeAdapter(), "test")
+    # "match" should match pyproject.toml error raising
+    with pytest.raises(FutureWarning, match=r"Cannot cast.*In a future version"):
+        cb.values("X,Y,Z")
 
 
 def test_binary_values(fake):
@@ -648,7 +685,7 @@ def test_control_invalid_values_get():
     class Fake(FakeBase):
         x = CommonBase.control(
             "", "%d", "",
-            values=b"abasdfe", map_values=True)
+            values=b"abasdfe", map_values=True, cast=str)
 
     with pytest.raises(ValueError, match="Values of type"):
         Fake().x
@@ -700,6 +737,7 @@ def test_control_get_process(dynamic):
             values=[0, 10],
             get_process=lambda v: int(v.replace('JUNK', '')),
             dynamic=dynamic,
+            cast=str,
         )
 
     fake = Fake()
@@ -723,9 +761,9 @@ def test_control_get_process_list(dynamic):
         )
 
     # override get_process_list should only work when dynamic
-    Fake.x_get_process_list = lambda v: [0, "2"]
+    Fake.x_get_process_list = lambda v: [0, "2"]  # type: ignore[attr-defined]
 
-    with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:
+    with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:  # type: ignore[arg-type]
         if dynamic:
             assert inst.x == [0, "2"]
         else:
@@ -755,42 +793,6 @@ def test_control_preprocess_reply_property(dynamic):
     assert type(fake.x) is int
 
 
-def test_control_kwargs_handed_to_values():
-    """Test that kwargs parameters are handed to `values` method."""
-    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
-        class Fake(FakeBase):
-            x = CommonBase.control(
-                "", "JUNK%d",
-                "",
-                preprocess_reply=lambda v: v.replace('JUNK', ''),
-                cast=int,
-                testing=True,
-            )
-
-            def values(self, cmd, testing=False, **kwargs):
-                self.testing = testing
-                return super().values(cmd, **kwargs)
-
-    fake = Fake()
-    fake.x = 5
-    fake.x
-    assert fake.testing is True
-
-
-def test_control_warning_at_kwargs():
-    """Test whether a control kwarg raises a warning."""
-    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
-        class Fake(CommonBase):
-            x = CommonBase.control("", "", "", testing=True)
-
-
-def test_measurement_warning_at_kwargs():
-    """Test whether a measurement kwarg raises a warning."""
-    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
-        class Fake2(CommonBase):
-            x2 = CommonBase.measurement("", "", testing=True)
-
-
 def test_control_parameters_for_values():
     """Test how to hand a parameter to `values` method."""
 
@@ -803,7 +805,7 @@ def test_control_parameters_for_values():
             values_kwargs={'testing': True},
         )
 
-        def values(self, cmd, testing=False, **kwargs):
+        def values(self, cmd, testing=False, **kwargs):  # type: ignore[override]
             self.testing = testing
             return super().values(cmd, **kwargs)
 
@@ -821,13 +823,13 @@ def test_measurement_parameters_for_values():
             "JUNK%d",
             "",
             preprocess_reply=lambda v: v.replace('JUNK', ''),
-            cast=int,
+            cast=cast_or_str(int),
             values_kwargs={'testing': True},
         )
 
-        def values(self, cmd, testing=False, **kwargs):
+        def values(self, command, testing=False, **kwargs):  # type: ignore[override]
             self.testing = testing
-            return super().values(cmd, **kwargs)
+            return super().values(command, **kwargs)
 
     fake = Fake()
     fake.write("5")
@@ -845,7 +847,7 @@ def test_measurement_cast(cast, expected):
         x = CommonBase.measurement(
             "x", "doc", cast=cast)
 
-    with expected_protocol(Fake, [("x", "5.5")]) as instr:
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:  # type: ignore[arg-type]
         assert instr.x == expected
 
 
@@ -857,7 +859,7 @@ def test_measurement_cast_int():
         x = CommonBase.measurement(
             "x", "doc", cast=int)
 
-    with expected_protocol(Fake, [("x", "5")]) as instr:
+    with expected_protocol(Fake, [("x", "5")]) as instr:  # type: ignore[arg-type]
         y = instr.x
         assert y == 5
         assert type(y) is int
@@ -871,7 +873,7 @@ def test_measurement_unitful_property():
         x = CommonBase.measurement(
             "x", "doc", get_process=lambda v: ureg.Quantity(v, ureg.m))
 
-    with expected_protocol(Fake, [("x", "5.5")]) as instr:
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:  # type: ignore[arg-type]
         y = instr.x
         assert y.m_as(ureg.m) == 5.5
 
@@ -930,7 +932,7 @@ def test_control_multivalue(dynamic):
         )
 
     fake = Fake()
-    fake.x = (5, 6)
+    fake.x = (5, 6)  # type: ignore[assignment]
     assert fake.read() == '5,6'
 
 
@@ -1046,3 +1048,266 @@ def test_dynamic_property_values_defined_at_superclass_level():
     inst.fake_ctrl2 = 17  # should raise an error if change unsuccessful
     with pytest.raises(ValueError):
         inst.fake_ctrl2 = 2  # should not raise an error if change unsuccessful
+
+
+class ExampleControlTypes(CommonBase):
+    """Verify via type checker whether control types typing works.
+
+    Properties without explicit type annotations so that the type checker
+    infers the return type of ``CommonBase.control``. The expected types
+    are then checked with ``assert_type`` in the ``TYPE_CHECKING`` block
+    below, which catches cases where the inferred type is ``Any``
+    (a bare annotation would shadow that).
+    """
+    @staticmethod
+    def return_int(value: Any) -> int:
+        return 5
+
+    @staticmethod
+    def int_validator(value: int, values: Any) -> Any:
+        pass
+
+    no_arguments = CommonBase.control(
+        "g",
+        "s",
+        "d",
+    )
+
+    cast_only = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+    )
+
+    cast_function = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=return_int,
+    )
+
+    get_process_with_cast = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process=identity,
+    )
+
+    get_process_with_cast_func = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=return_int,
+        get_process=identity,
+    )
+
+    get_process_list_with_cast = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list_with_cast = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list_with_cast_function = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=lambda v: int(v),
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    map_values = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process=identity,
+        map_values=True,
+    )
+
+    map_values_validator = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process=identity,
+        map_values=True,
+        validator=int_validator,
+    )
+
+
+if TYPE_CHECKING and TYPING_EXTENSION:
+    assert_type(ExampleControlTypes.no_arguments, InstrumentProperty[float])
+    assert_type(ExampleControlTypes.cast_only, InstrumentProperty[int])
+    assert_type(ExampleControlTypes.cast_function, InstrumentProperty[int])
+    assert_type(ExampleControlTypes.get_process_with_cast, InstrumentProperty[int])
+    assert_type(ExampleControlTypes.get_process_list_with_cast, InstrumentProperty[list[int]])
+    assert_type(
+        ExampleControlTypes.get_process_and_get_process_list,
+        InstrumentProperty[list[float] | float],
+    )
+    assert_type(
+        ExampleControlTypes.get_process_and_get_process_list_with_cast,
+        InstrumentProperty[list[int] | int],
+    )
+    assert_type(
+        ExampleControlTypes.get_process_and_get_process_list_with_cast_function,
+        InstrumentProperty[list[int] | int],
+    )
+    assert_type(ExampleControlTypes.map_values, InstrumentProperty[Any])
+    assert_type(ExampleControlTypes.map_values_validator, InstrumentProperty[int])
+
+
+class ExampleMeasurementTypes(CommonBase):
+    """Verify via type checker whether measurement types typing works."""
+
+    @staticmethod
+    def return_int(value: Any) -> int:
+        return 5
+
+    no_arguments = CommonBase.measurement(
+        "g",
+        "d",
+    )
+
+    cast_only = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+    )
+
+    cast_function = CommonBase.measurement(
+        "g",
+        "d",
+        cast=return_int,
+    )
+
+    get_process_with_cast = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+        get_process=identity,
+    )
+
+    get_process_list_with_cast = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list = CommonBase.measurement(
+        "g",
+        "d",
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list_with_cast = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list_with_cast_function = CommonBase.measurement(
+        "g",
+        "d",
+        cast=lambda v: int(v),
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    map_values = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+        get_process=identity,
+        map_values=True,
+    )
+
+
+if TYPE_CHECKING and TYPING_EXTENSION:
+    assert_type(ExampleMeasurementTypes.no_arguments, InstrumentProperty[float])
+    assert_type(ExampleMeasurementTypes.cast_only, InstrumentProperty[int])
+    assert_type(ExampleMeasurementTypes.cast_function, InstrumentProperty[int])
+    assert_type(ExampleMeasurementTypes.get_process_with_cast, InstrumentProperty[int])
+    assert_type(ExampleMeasurementTypes.get_process_list_with_cast, InstrumentProperty[list[int]])
+    assert_type(
+        ExampleMeasurementTypes.get_process_and_get_process_list,
+        InstrumentProperty[list[float] | float],
+    )
+    assert_type(
+        ExampleMeasurementTypes.get_process_and_get_process_list_with_cast,
+        InstrumentProperty[list[int] | int],
+    )
+    assert_type(
+        ExampleMeasurementTypes.get_process_and_get_process_list_with_cast_function,
+        InstrumentProperty[list[int] | int],
+    )
+    assert_type(ExampleMeasurementTypes.map_values, InstrumentProperty[Any])
+
+
+class ExampleSettingTypes(CommonBase):
+    """Verify via type checker whether setting types typing works."""
+
+    @staticmethod
+    def int_validator(value: int, values: Any) -> Any:
+        pass
+
+    @staticmethod
+    def int_set_process(value: int) -> Any:
+        pass
+
+    default = CommonBase.setting(
+        "s %d",
+        "d",
+    )
+
+    validator = CommonBase.setting(
+        "s %d",
+        "d",
+        validator=int_validator,
+        set_process=lambda v: v,
+    )
+
+    validator_untyped = CommonBase.setting(
+        "s %d",
+        "d",
+        validator=strict_discrete_set,
+    )
+
+    set_process = CommonBase.setting(
+        "c",
+        "d",
+        set_process=int_set_process,
+    )
+
+
+if TYPE_CHECKING and TYPING_EXTENSION:
+    assert_type(ExampleSettingTypes.default, InstrumentProperty[Any])
+    assert_type(ExampleSettingTypes.validator, InstrumentProperty[int])
+    assert_type(ExampleSettingTypes.validator_untyped, InstrumentProperty[Any])
+    assert_type(ExampleSettingTypes.set_process, InstrumentProperty[int])

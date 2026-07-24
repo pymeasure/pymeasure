@@ -96,7 +96,6 @@ class DSPBase(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
 
@@ -259,12 +258,12 @@ class DSPBase(Instrument):
     @property
     def gain(self):
         """Control the AC gain of signal channel amplifier."""
-        return self.values("ACGAIN")
+        return self.values("ACGAIN")[0]
 
     @gain.setter
     def gain(self, value):
         value = strict_discrete_set(int(value / 10), list(range(0, 10)))
-        self.write("ACGAIN %d" % value)
+        self.write(f"ACGAIN {value}")
 
     @property
     def sensitivity(self):
@@ -293,12 +292,12 @@ class DSPBase(Instrument):
         value = sensitivities.index(value)
 
         # Set sensitivity
-        self.write("SEN %d" % value)
+        self.write(f"SEN {value}")
 
     @property
     def auto_gain(self):
         """Control lock-in amplifier for automatic AC gain."""
-        return int(self.values("AUTOMATIC")) == 1
+        return int(self.values("AUTOMATIC")[0]) == 1
 
     @auto_gain.setter
     def auto_gain(self, value):
@@ -459,7 +458,7 @@ class DSPBase(Instrument):
     def setDifferentialMode(self, lineFiltering=True):
         """Sets lock-in amplifier to differential mode, measuring A-B."""
         self.write("VMODE 3")
-        self.write("LF %d 0" % (3 if lineFiltering else 0))
+        self.write(f"LF {3 if lineFiltering else 0} 0")
 
     def setChannelAMode(self):
         """Sets lock-in amplifier to measure a voltage signal only from the A
@@ -596,8 +595,8 @@ class DSPBase(Instrument):
             if self.CURVE_BITS.index(quantity) in quantity_enums:
                 quantity_enums = [self.CURVE_BITS.index(quantity)]
             else:
-                raise KeyError("The selected quantity '%s' is not recorded;"
-                               "quantity should be one of: %s" % (
+                raise KeyError("The selected quantity '{}' is not recorded;"
+                               "quantity should be one of: {}".format(
                                    quantity, ", ".join(
                                        [self.CURVE_BITS[q] for q in quantity_enums]
                                    )))
@@ -605,7 +604,7 @@ class DSPBase(Instrument):
         # Retrieve the data
         data = {}
         for enum in quantity_enums:
-            self.write("DC %d" % enum)
+            self.write(f"DC {enum}")
             q_data = []
 
             while True:
@@ -753,7 +752,7 @@ class DSPBase(Instrument):
 
         Sets oscillator amplitude to 0 V and AC gain to 0 dB.
         """
-        log.info("Shutting down %s." % self.name)
+        log.info(f"Shutting down {self.name}.")
         self.voltage = 0.
         self.gain = 0.
         super().shutdown()

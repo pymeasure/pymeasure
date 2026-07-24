@@ -50,6 +50,7 @@ Instruments by manufacturer:
    keithley/index
    kepco/index
    keysight/index
+   koheron/index
    kuhneelectronic/index
    lakeshore/index
    lecroy/index
@@ -57,6 +58,7 @@ Instruments by manufacturer:
    newport/index
    ni/index
    novanta/index
+   ophir/index
    oxfordinstruments/index
    parker/index
    philips/index

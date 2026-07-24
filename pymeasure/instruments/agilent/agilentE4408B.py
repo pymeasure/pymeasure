@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import truncated_range
 
 from io import StringIO
@@ -30,10 +30,10 @@ import numpy as np
 import pandas as pd
 
 
-class AgilentE4408B(SCPIUnknownMixin, Instrument):
-    """ Represents the AgilentE4408B Spectrum Analyzer
+class AgilentE4408B(SCPIMixin, Instrument):
+    """Represents the AgilentE4408B Spectrum Analyzer
     and provides a high-level interface for taking scans of
-    high-frequency spectrums
+    high-frequency spectrums.
     """
 
     def __init__(self, adapter, name="Agilent E4408B Spectrum Analyzer", **kwargs):
@@ -45,49 +45,36 @@ class AgilentE4408B(SCPIUnknownMixin, Instrument):
 
     start_frequency = Instrument.control(
         ":SENS:FREQ:STAR?;", ":SENS:FREQ:STAR %e Hz;",
-        """ A floating point property that represents the start frequency
-        in Hz. This property can be set.
-        """
+        """Control the start frequency in Hz (float).""",
     )
     stop_frequency = Instrument.control(
         ":SENS:FREQ:STOP?;", ":SENS:FREQ:STOP %e Hz;",
-        """ A floating point property that represents the stop frequency
-        in Hz. This property can be set.
-        """
+        """Control the stop frequency in Hz (float).""",
     )
     frequency_points = Instrument.control(
         ":SENSe:SWEEp:POINts?;", ":SENSe:SWEEp:POINts %d;",
-        """ An integer property that represents the number of frequency
-        points in the sweep. This property can take values from 101 to 8192.
-        """,
+        """Control the number of frequency points in the sweep
+        (int, truncated from 101 to 8192).""",
         validator=truncated_range,
         values=[101, 8192],
         cast=int
     )
     frequency_step = Instrument.control(
         ":SENS:FREQ:CENT:STEP:INCR?;", ":SENS:FREQ:CENT:STEP:INCR %g Hz;",
-        """ A floating point property that represents the frequency step
-        in Hz. This property can be set.
-        """
+        """Control the frequency step in Hz (float).""",
     )
     center_frequency = Instrument.control(
         ":SENS:FREQ:CENT?;", ":SENS:FREQ:CENT %e Hz;",
-        """ A floating point property that represents the center frequency
-        in Hz. This property can be set.
-        """
+        """Control the center frequency in Hz (float).""",
     )
     sweep_time = Instrument.control(
         ":SENS:SWE:TIME?;", ":SENS:SWE:TIME %.2e;",
-        """ A floating point property that represents the sweep time
-        in seconds. This property can be set.
-        """
+        """Control the sweep time in seconds (float).""",
     )
 
     @property
     def frequencies(self):
-        """ Returns a numpy array of frequencies in Hz that
-        correspond to the current settings of the instrument.
-        """
+        """Get a numpy array of frequencies in Hz corresponding to the current settings."""
         return np.linspace(
             self.start_frequency,
             self.stop_frequency,
@@ -95,23 +82,21 @@ class AgilentE4408B(SCPIUnknownMixin, Instrument):
             dtype=np.float64
         )
 
-    def trace(self, number=1):
-        """ Returns a numpy array of the data for a particular trace
-        based on the trace number (1, 2, or 3).
+    def trace(self, number: int = 1):
+        """Get a numpy array of the data for a particular trace.
+
+        :param number: Trace number (1, 2, or 3).
         """
         self.write(":FORMat:TRACe:DATA ASCII;")
         data = np.loadtxt(
-            StringIO(self.ask(":TRACE:DATA? TRACE%d;" % number)),
+            StringIO(self.ask(f":TRACE:DATA? TRACE{number};")),
             delimiter=',',
             dtype=np.float64
         )
         return data
 
     def trace_df(self, number=1):
-        """ Returns a pandas DataFrame containing the frequency
-        and peak data for a particular trace, based on the
-        trace number (1, 2, or 3).
-        """
+        """Get a pandas DataFrame containing the frequency and peak data for a particular trace."""
         return pd.DataFrame({
             'Frequency (GHz)': self.frequencies * 1e-9,
             'Peak (dB)': self.trace(number)

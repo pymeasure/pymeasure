@@ -138,5 +138,5 @@ class DSP7265(DSPBase):
     @adc3_time.setter
     def adc3_time(self, value):
         # Takes time in seconds
-        self.write("ADC3TIME %g" % int(1000 * value))
+        self.write(f"ADC3TIME {int(1000 * value):g}")
         sleep(value * 1.2)

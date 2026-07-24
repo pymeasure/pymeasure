@@ -69,3 +69,37 @@ def test_x(reading, value):
             [('X.', reading)],
     ) as instr:
         assert instr.x == value
+
+
+@pytest.mark.parametrize("reading, value", [(b"0\r\n", 0), (b"5\r\n", 5), (b"9\r\n", 9)])
+def test_gain_getter(reading, value):
+    with expected_protocol(
+            DSPBase,
+            [("ACGAIN", reading)],
+    ) as instr:
+        assert instr.gain == value
+
+
+@pytest.mark.parametrize("reading, value", [(b"0\r\n", False), (b"1\r\n", True)])
+def test_auto_gain_getter(reading, value):
+    with expected_protocol(
+            DSPBase,
+            [("AUTOMATIC", reading)],
+    ) as instr:
+        assert instr.auto_gain == value
+
+
+def test_auto_gain_setter_enable():
+    with expected_protocol(
+            DSPBase,
+            [("AUTOMATIC 1", None)],
+    ) as instr:
+        instr.auto_gain = True
+
+
+def test_auto_gain_setter_disable():
+    with expected_protocol(
+            DSPBase,
+            [("AUTOMATIC 0", None)],
+    ) as instr:
+        instr.auto_gain = False

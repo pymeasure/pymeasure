@@ -248,7 +248,7 @@ class TestTrace:
             assert "DBM" == inst.ch_1.tr_1.y_unit
 
 
-class TestMeasurementChannel():
+class TestMeasurementChannel:
     def test_initiate(self):
         with expected_protocol(
             KeysightPNA,
@@ -304,7 +304,7 @@ class TestMeasurementChannel():
             assert [1, 2, 3, 6, 8] == inst.ch_1.measurements
 
 
-class TestKeysightPNA():
+class TestKeysightPNA:
     def test_abort(self):
         with expected_protocol(
             KeysightPNA,

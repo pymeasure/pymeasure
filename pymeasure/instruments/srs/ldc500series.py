@@ -63,6 +63,7 @@ class LDC500SeriesLD(Channel):
         Laser will only operate with a closed interlock.""",
         values={True: "CLOSED", False: "OPEN"},
         map_values=True,
+        cast=str,
     )
 
     enabled = Instrument.control(
@@ -72,6 +73,7 @@ class LDC500SeriesLD(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     mode = Instrument.control(
@@ -93,6 +95,7 @@ class LDC500SeriesLD(Channel):
         validator=strict_discrete_set,
         values=["CC", "CP"],
         check_set_errors=True,
+        cast=str,
     )
 
     # --- direct ld current control ---
@@ -114,7 +117,7 @@ class LDC500SeriesLD(Channel):
         "SILM %g",
         """Control the laser diode current limit, in mA (float).
 
-        The ouput current is clamped to never exceed ``current_limit`` under any conditions.
+        The output current is clamped to never exceed ``current_limit`` under any conditions.
         If ``current_limit`` is reduced below ``current_setpoint``,
         ``current_setpoint`` is "dragged" down with ``current_limit``.
         """,
@@ -136,6 +139,7 @@ class LDC500SeriesLD(Channel):
         """,
         validator=strict_discrete_set,
         values=("HIGH", "LOW"),
+        cast=str,
     )
 
     # --- ld voltage control ---
@@ -163,6 +167,7 @@ class LDC500SeriesLD(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     modulation_bandwidth = Instrument.control(
@@ -181,6 +186,7 @@ class LDC500SeriesLD(Channel):
         """,
         validator=strict_discrete_set,
         values=("HIGH", "LOW"),
+        cast=str,
     )
 
 
@@ -194,6 +200,7 @@ class LDC500SeriesPD(Channel):
         validator=strict_discrete_set,
         values={"mW": "ON", "uA": "OFF"},
         map_values=True,
+        cast=str,
     )
 
     bias = Instrument.control(
@@ -250,10 +257,10 @@ class LDC500SeriesPD(Channel):
     def calibrate(self, power):
         """Set the photodiode responsivity, ``responsivity``, via a real time power measurement.
 
-        Parmeters:
-            power (float): Real time power measurement, in mW."""
+        :param float power: Real time power measurement, in mW.
+        """
 
-        self.write("CALP %g" % power)
+        self.write(f"CALP {power:g}")
 
     power = Instrument.measurement(
         "RWPD?",
@@ -296,7 +303,7 @@ class LDC500SeriesTEC(Channel):
         """Control the TEC control mode (str "CC" or "CT").
 
         If the TEC is on when ``mode`` is changed, the controller performs a *bumpless transfer*
-        to swich control modes on-the-fly.
+        to switch control modes on-the-fly.
 
         If ``mode`` is changed from "CT" to "CC", the present value of the TEC current is
         measured, and the CC setpoint is set to this measurement.
@@ -304,6 +311,7 @@ class LDC500SeriesTEC(Channel):
         If ``mode`` is changed from "CC" to "CT", the present value of the temperature sensor
         is measured, and the CT setpoint is set to this measurement.
         """,
+        cast=str,
     )
 
     thermometer_type = Instrument.control(

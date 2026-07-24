@@ -65,7 +65,8 @@ class VNATrace(Channel):
         """Control the measurement parameter of the trace (str). Can be
         S11, S21, S12, or S22""",
         validator=strict_discrete_set,
-        values=['S11', 'S12', 'S21', 'S22']
+        values=['S11', 'S12', 'S21', 'S22'],
+        cast=str,
     )
 
 
@@ -153,9 +154,10 @@ class VNAChannel(Channel):
         =======  ===========
 
         Defaults to linear. Note that the API for configuring segment type
-        sweeps is not implememented in this class.""",
+        sweeps is not implemented in this class.""",
         validator=strict_discrete_set,
-        values=['LIN', 'LOG', 'SEGM', 'POW']
+        values=['LIN', 'LOG', 'SEGM', 'POW'],
+        cast=str,
     )
 
     averaging_enabled = Channel.control(
@@ -209,7 +211,7 @@ class VNAChannel(Channel):
     def visible_traces(self, value):
         value = int(float(value))
         value = strict_range(value, [1, 4])
-        self.write("CALC{ch}:PARameter:COUNt %d" % value)
+        self.write(f"CALC{{ch}}:PARameter:COUNt {value}")
         self._update_trace_count(value)
 
     power = Channel.control(
@@ -238,7 +240,7 @@ class VNAChannel(Channel):
     def attenuation(self, value):
         value = int(float(value))
         value = strict_discrete_set(value, [0, 10, 20, 30, 40])
-        self.write("SOURce{ch}:POWer:ATTenuation %d" % value)
+        self.write(f"SOURce{{ch}}:POWer:ATTenuation {value}")
         self._update_power_values(value)
 
     display_layout = Channel.control(
@@ -261,9 +263,9 @@ class VNAChannel(Channel):
         - D1_2_3_4
         - D12_34
 
-        In general, an occurance of a number denotes the associated trace
-        having it's own subplot and an occurence of '_' denotes a vertical
-        split. Multiple occurences of the same number denote the trace
+        In general, an occurrence of a number denotes the associated trace
+        having its own subplot and an occurrence of '_' denotes a vertical
+        split. Multiple occurrences of the same number denote the trace
         having a larger window than the other traces. Refer to Figure 3-1
         in the the programmer's manual for details. If a trace is active
         but it's associated number is not present in the ``display_layout``
@@ -271,7 +273,8 @@ class VNAChannel(Channel):
 
         """,
         validator=strict_discrete_set,
-        values=DISPLAY_LAYOUT_OPTIONS
+        values=DISPLAY_LAYOUT_OPTIONS,
+        cast=str,
     )
 
     TRACE_FORMAT = [
@@ -324,14 +327,15 @@ class VNAChannel(Channel):
 
         """,
         validator=strict_discrete_set,
-        values=TRACE_FORMAT
+        values=TRACE_FORMAT,
+        cast=str,
         )
 
     def _read_binary_data(self):
         """Internal method that reads and interprents binary data arrays as
         floats. Assumes the query has already been sent.
 
-        Uses the IEEE 64-bit fp transer format (little-endian).
+        Uses the IEEE 64-bit fp transfer format (little-endian).
 
         """
         header = self.read_bytes(8)  # 2 start bytes + 6 <nbytes> bytes
@@ -508,19 +512,20 @@ class AgilentE5062A(SCPIMixin, Instrument):
         - D1_2_3_4
         - D12_34
 
-        In general, an occurance of a number denotes the associated channel
-        being visible and an occurence of '_' denotes a vertical
-        split. Multiple occurences of the same number denote the channel having
+        In general, an occurrence of a number denotes the associated channel
+        being visible and an occurrence of '_' denotes a vertical
+        split. Multiple occurrences of the same number denote the channel having
         a larger window than the other channels. Refer to Figure 3-1 in the the
         programmer's manual for details.
 
         Note that this splits windows for multiple *channels*, not
         traces. Basic S-param measurements most likely want to use only a
-        single channel, but with multuple *traces* instead. See
+        single channel, but with multiple *traces* instead. See
         e.g. ``AgilentE5062A.channels[1].visible_traces``
         """,
         validator=strict_discrete_set,
-        values=DISPLAY_LAYOUT_OPTIONS
+        values=DISPLAY_LAYOUT_OPTIONS,
+        cast=str,
     )
 
     output_enabled = Instrument.control(
@@ -558,7 +563,9 @@ class AgilentE5062A(SCPIMixin, Instrument):
             'INT',
             'EXT',
             'MAN',
-            'BUS'])
+            'BUS'],
+        cast=str,
+    )
 
     def trigger_bus(self):
         """If the trigger source is BUS and the VNA is waiting for a trigger
