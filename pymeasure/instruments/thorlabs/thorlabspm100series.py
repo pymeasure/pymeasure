@@ -197,7 +197,7 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         """Get sensor info and configure the `ThorlabsPM100USB` class for the sensor.
 
         Call whenever the sensor is changed."""
-        response = self.values("SYST:SENSOR:IDN?")
+        response = self.values("SYST:SENSOR:IDN?", cast=str)
         if response[0] == "no sensor":
             raise OSError("No sensor connected.")
         self.sensor_name = response[0].strip('"')

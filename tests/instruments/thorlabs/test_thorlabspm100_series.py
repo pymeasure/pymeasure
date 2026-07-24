@@ -25,14 +25,14 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.thorlabs import (
+from pymeasure.instruments.thorlabs.thorlabspm100series import (
     ThorlabsPM100USB,
     ThorlabsPM100A,
     ThorlabsPM100D,
     ThorlabsPM100D2,
     ThorlabsPM100D3,
+    SensorTypes,
 )
-from pymeasure.instruments.thorlabs.thorlabspm100usb import SensorTypes
 
 PM100D_S130C_INIT_COMMS = ("SYST:SENSOR:IDN?", "S130C,210921324,21-SEP-2021,1,3,33")
 PM100D2_S130C_INIT_COMMS = ("SYST:SENSOR:IDN?", '"S130C","210921324","21-SEP-2021",1,3,2147484069')
