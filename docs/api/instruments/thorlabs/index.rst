@@ -9,6 +9,6 @@ This section contains specific documentation on the Thorlabs instruments that ar
 .. toctree::
    :maxdepth: 2
 
-   thorlabspm100usb
+   thorlabspm100series
    thorlabspro8000
    thorlabsmbxseries

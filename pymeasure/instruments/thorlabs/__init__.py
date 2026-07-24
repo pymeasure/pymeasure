@@ -22,6 +22,12 @@
 # THE SOFTWARE.
 #
 
-from .thorlabspm100usb import ThorlabsPM100USB
+from .thorlabspm100series import (
+    ThorlabsPM100USB,
+    ThorlabsPM100A,
+    ThorlabsPM100D,
+    ThorlabsPM100D2,
+    ThorlabsPM100D3,
+)
 from .thorlabspro8000 import ThorlabsPro8000
 from .thorlabsmbxseries import ThorlabsMBXSeries
