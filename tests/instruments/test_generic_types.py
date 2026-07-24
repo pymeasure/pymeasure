@@ -25,8 +25,37 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.generic_types import SCPIMixin
+from pymeasure.instruments.generic_types import IEEE4882Mixin, SCPIMixin
 from pymeasure.instruments import Instrument
+
+
+class Test_IEEE4882Mixin:
+    class IEEE4882Instrument(IEEE4882Mixin, Instrument):
+        pass
+
+    @pytest.mark.parametrize("method, write, reply", (
+        ("id", "*IDN?", "xyz, abc"),
+        ("complete", "*OPC?", "1"),
+        ("status", "*STB?", "189"),
+        ("options", "*OPT?", "a9"),
+    ))
+    def test_IEEE4882_properties(self, method, write, reply):
+        with expected_protocol(
+                self.IEEE4882Instrument,
+                [(write, reply)],
+                name="test") as inst:
+            assert getattr(inst, method) == reply
+
+    @pytest.mark.parametrize("method, write", (
+        ("clear", "*CLS"),
+        ("reset", "*RST"),
+    ))
+    def test_IEEE4882_write_commands(self, method, write):
+        with expected_protocol(
+                self.IEEE4882Instrument,
+                [(write, None)],
+                name="test") as inst:
+            getattr(inst, method)()
 
 
 class Test_SCPIMixin:
@@ -73,3 +102,7 @@ class Test_SCPIMixin:
                 name="test") as inst:
             assert inst.check_errors() == [[-100, '"Command error"'],
                                            [-222, '"Data out of range"']]
+
+
+def test_SCPIMixin_inherits_IEEE4882Mixin():
+    assert issubclass(SCPIMixin, IEEE4882Mixin)
