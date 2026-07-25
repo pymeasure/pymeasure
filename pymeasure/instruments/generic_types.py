@@ -37,9 +37,10 @@ class IEEE4882Mixin(CommonBase):
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize the mixin and pass through arguments to the next class in the MRO."""
         super().__init__(*args, **kwargs)
 
-    #IEEE 488.2 default properties
+    # IEEE 488.2 default properties
     complete = CommonBase.measurement(
         "*OPC?",
         """Get the synchronization bit.
@@ -116,6 +117,7 @@ class SCPIUnknownMixin(SCPIMixin):
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize the mixin and warn that SCPI support for this instrument is unverified."""
         warn("It is not known whether this device support SCPI commands or not. Please inform "
              "the pymeasure maintainers if you know the answer.", FutureWarning)
         super().__init__(*args, **kwargs)
