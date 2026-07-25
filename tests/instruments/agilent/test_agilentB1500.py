@@ -37,7 +37,15 @@ from pymeasure.instruments.agilent.agilentB1500 import (
     SPGUChannelOutputMode,
     SPGUOperationMode,
     SPGUOutputMode,
+    SpotCMU,
+    SpotCMUMonitor,
+    SpotIV,
     SweepMode,
+    TimedSpotCMU,
+    TimedSpotCMUMonitor,
+    TimedSpotCurrent,
+    TimedSpotIV,
+    TimedSpotVoltage,
 )
 from pymeasure.test import expected_protocol
 
@@ -102,6 +110,76 @@ class TestSMU:
             [(f"CL {self.channel}", None)],
         ) as inst:
             inst.smu1.disable()
+
+    def test_measure_current(self):
+        """Test measure_current method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                ("FMT 1, 0", None),
+                ("ERRX?", '+0,"No Error."'),
+                (f"TI {self.channel}", "NAI+000.005E-09"),
+                (f"TTI {self.channel}, 11", "NAT+000.123E+00,NAI+000.005E-09"),
+            ],
+        ) as inst:
+            inst.data_format(1)
+            assert inst.smu1.measure_current() == 5e-12
+            result = inst.smu1.measure_current("1 nA", timestamp=True)
+            assert isinstance(result, TimedSpotCurrent)
+            assert result == (0.123, 5e-12)
+            assert result.time == 0.123
+            assert result.current == 5e-12
+
+    def test_measure_voltage(self):
+        """Test measure_voltage method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                ("FMT 1, 0", None),
+                ("ERRX?", '+0,"No Error."'),
+                (f"TV {self.channel}", "NAV+001.500E+00"),
+                (f"TTV {self.channel}, 20", "NAT+000.123E+00,NAV+001.500E+00"),
+            ],
+        ) as inst:
+            inst.data_format(1)
+            assert inst.smu1.measure_voltage() == 1.5
+            result = inst.smu1.measure_voltage("2 V", timestamp=True)
+            assert isinstance(result, TimedSpotVoltage)
+            assert result == (0.123, 1.5)
+            assert result.voltage == 1.5
+
+    def test_measure_iv(self):
+        """Test measure_iv method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                ("FMT 1, 0", None),
+                ("ERRX?", '+0,"No Error."'),
+                (f"TIV {self.channel}", "NAI+000.005E-09,NAV+001.000E+00"),
+                (
+                    f"TTIV {self.channel}, 11, 0",
+                    "NAT+000.123E+00,NAI+000.005E-09,NAV+001.000E+00",
+                ),
+            ],
+        ) as inst:
+            inst.data_format(1)
+            result = inst.smu1.measure_iv()
+            assert isinstance(result, SpotIV)
+            assert result == (5e-12, 1.0)
+            assert result.current == 5e-12
+            assert result.voltage == 1.0
+            timed_result = inst.smu1.measure_iv("1 nA", 0, timestamp=True)
+            assert isinstance(timed_result, TimedSpotIV)
+            assert timed_result == (0.123, 5e-12, 1.0)
+            assert timed_result.time == 0.123
+
+    def test_measure_iv_requires_both_ranges(self):
+        """Test that measure_iv rejects current_range without voltage_range and vice versa."""
+        with expected_protocol(AgilentB1500Mock, []) as inst:
+            with pytest.raises(ValueError):
+                inst.smu1.measure_iv(current_range="1 nA")
+            with pytest.raises(ValueError):
+                inst.smu1.measure_iv(voltage_range="2 V")
 
 
 class TestSPGU:
@@ -277,6 +355,74 @@ class TestCMU:
             [(f"IMP {measurement_mode.value}", None)],
         ) as inst:
             inst.cmu.set_measurement_mode(measurement_mode)
+
+    @pytest.mark.parametrize("enabled", [True, False])
+    def test_voltage_monitor_enabled(self, enabled):
+        """Test voltage_monitor_enabled property."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                (f"LMN {int(enabled)}", None),
+                ("*LRN? 71", f"LMN{int(enabled)}"),
+            ],
+        ) as inst:
+            inst.cmu.voltage_monitor_enabled = enabled
+            assert inst.cmu.voltage_monitor_enabled == enabled
+
+    def test_measure(self):
+        """Test measure method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                ("FMT 1, 0", None),
+                ("ERRX?", '+0,"No Error."'),
+                ("TC 2, 0", "NBC+001.000E-12,NBY+002.000E-06"),
+                ("TTC 2, 2, 1000", "NBT+000.123E+00,NBC+001.000E-12,NBY+002.000E-06"),
+            ],
+        ) as inst:
+            inst.data_format(1)
+            result = inst.cmu.measure()
+            assert isinstance(result, SpotCMU)
+            assert result == (1e-12, 2e-6)
+            primary, secondary = result
+            assert (primary, secondary) == (1e-12, 2e-6)
+            timed_result = inst.cmu.measure(meas_range=1000, timestamp=True)
+            assert isinstance(timed_result, TimedSpotCMU)
+            assert timed_result == (0.123, 1e-12, 2e-6)
+            assert timed_result.time == 0.123
+
+    def test_measure_with_monitor(self):
+        """Test that measure captures AC/DC voltage values (:attr:`voltage_monitor_enabled`)."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                ("FMT 1, 0", None),
+                ("ERRX?", '+0,"No Error."'),
+                ("TC 2, 0", "NBC+001.000E-12,NBY+002.000E-06,NBV+000.030E+00,NBV+001.000E+00"),
+                (
+                    "TTC 2, 0",
+                    "NBT+000.123E+00,NBC+001.000E-12,NBY+002.000E-06,"
+                    "NBV+000.030E+00,NBV+001.000E+00",
+                ),
+            ],
+        ) as inst:
+            inst.data_format(1)
+            result = inst.cmu.measure()
+            assert isinstance(result, SpotCMUMonitor)
+            assert result == (1e-12, 2e-6, 0.03, 1.0)
+            primary, secondary, ac_voltage, dc_voltage = result
+            assert (primary, secondary, ac_voltage, dc_voltage) == (1e-12, 2e-6, 0.03, 1.0)
+            assert result.ac_voltage == 0.03
+            assert result.dc_voltage == 1.0
+            timed_result = inst.cmu.measure(timestamp=True)
+            assert isinstance(timed_result, TimedSpotCMUMonitor)
+            assert timed_result == (0.123, 1e-12, 2e-6, 0.03, 1.0)
+
+    def test_measure_invalid_range(self):
+        """Test that measure rejects a range not in MEASUREMENT_RANGES."""
+        with expected_protocol(AgilentB1500Mock, []) as inst:
+            with pytest.raises(ValueError):
+                inst.cmu.measure(meas_range=500)
 
     def test_set_cv_timings(self):
         """Test set_cv_timings method."""
