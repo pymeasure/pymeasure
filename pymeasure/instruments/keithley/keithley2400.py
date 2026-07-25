@@ -479,7 +479,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     source_current_range_auto_enabled = Instrument.control(
         ":SOURCE:CURRENT:RANGE:AUTO?",
         ":SOURCE:CURRENT:RANGE:AUTO %d",
-        """Control whether souce current auto-range is enabled (bool).""",
+        """Control whether source current auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,

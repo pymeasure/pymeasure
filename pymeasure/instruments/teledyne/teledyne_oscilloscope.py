@@ -1048,9 +1048,9 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         :param source: trigger source [c1, c2, c3, c4, line]
         :param trigger_type: condition that will trigger the acquisition of waveforms
                [edge,slew,glit,intv,runt,drop]
-        :param hold_type: hold type (refer to page 172 of programing guide)
-        :param hold_value1: hold value1 (refer to page 172 of programing guide)
-        :param hold_value2: hold value2 (refer to page 172 of programing guide)
+        :param hold_type: hold type (refer to page 172 of programming guide)
+        :param hold_value1: hold value1 (refer to page 172 of programming guide)
+        :param hold_value2: hold value2 (refer to page 172 of programming guide)
         :param coupling: input coupling for the selected trigger sources
         :param level: trigger level voltage for the active trigger source
         :param level2: trigger lower level voltage for the active trigger source (only slew/runt
@@ -1089,9 +1089,9 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
           slew,glit,intv,runt,drop]
         - "source": trigger source [c1,c2,c3,c4]
-        - "hold_type": hold type (refer to page 172 of programing guide)
-        - "hold_value1": hold value1 (refer to page 172 of programing guide)
-        - "hold_value2": hold value2 (refer to page 172 of programing guide)
+        - "hold_type": hold type (refer to page 172 of programming guide)
+        - "hold_value1": hold value1 (refer to page 172 of programming guide)
+        - "hold_value2": hold value2 (refer to page 172 of programming guide)
         - "coupling": input coupling for the selected trigger sources
         - "level": trigger level voltage for the active trigger source
         - "level2": trigger lower level voltage for the active trigger source (only slew/runt

@@ -188,7 +188,7 @@ If your set of values is a list, then the command will use the index of the list
         map_values=True
     )
 
-Now the actual GPIB/SCIP command is ":RANG 1" for a value of 100 mV, since the index of 100 mV in the values list is 1.
+Now the actual GPIB/SCPI command is ":RANG 1" for a value of 100 mV, since the index of 100 mV in the values list is 1.
 
 .. doctest::
 

@@ -221,7 +221,7 @@ class SmartlineV2(Instrument):
         - Data length is number of data in bytes (padding with zeroes on left)
         - Checksum: Add the decimal numbers of the characters before, mod 64, add 64, show as ASCII.
 
-    :param adress: The device address in the range 1-16.
+    :param address: The device address in the range 1-16.
     """
 
     Sources = Sources

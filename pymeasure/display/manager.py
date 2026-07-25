@@ -58,7 +58,7 @@ class Experiment(QtCore.QObject):
 
 class ExperimentQueue(QtCore.QObject):
     """ Represents a queue of Experiments and allows queries to
-    be easily preformed.
+    be easily performed.
     """
 
     def __init__(self):

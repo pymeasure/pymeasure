@@ -156,7 +156,7 @@ class HP3478A(HPLegacyInstrument):
     }
 
     class ERRORS(IntFlag):
-        """Enum element for errror bit decoding
+        """Enum element for error bit decoding
         """
         AD_LINK = 32  # AD link error
         AD_SELFCHK = 16  # AD self check error
@@ -333,7 +333,7 @@ class HP3478A(HPLegacyInstrument):
 
     @property
     def mode(self):
-        """Return current selected measurement mode, this propery can be set.
+        """Return current selected measurement mode, this property can be set.
         Allowed values are
 
         ====  ==============================================================
@@ -410,7 +410,7 @@ class HP3478A(HPLegacyInstrument):
     def SRQ_mask(self):
         """Return current SRQ mask, this property can be set,
 
-        bit assigment for SRQ:
+        bit assignment for SRQ:
 
         =========  ==========================
         Bit (dec)  Description
@@ -434,7 +434,7 @@ class HP3478A(HPLegacyInstrument):
     def trigger(self):
         """Return current selected trigger mode, this property can be set
 
-        Possibe values are:
+        Possible values are:
 
         ========  ===========================================
         Value     Meaning

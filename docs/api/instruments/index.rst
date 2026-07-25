@@ -50,6 +50,7 @@ Instruments by manufacturer:
    keithley/index
    kepco/index
    keysight/index
+   koheron/index
    kuhneelectronic/index
    lakeshore/index
    lecroy/index

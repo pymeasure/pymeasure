@@ -466,7 +466,7 @@ class ErrorCode:
         529: ("RBW <303", "Unable to adjust <300 Hz resolution bandwidths"),
         530: ("RBW <304", "Unable to adjust <300 Hz resolution bandwidths"),
         531: (
-            "RBW <305", "Unable to adjust gain versus frequency for resoultion bandwidths <300 Hz"),
+            "RBW <305", "Unable to adjust gain versus frequency for resolution bandwidths <300 Hz"),
         532: ("RBW <306", "Absolute gain data for resolution bandwidths <300 Hz not acceptable"),
         533: ("RBW <307", "Unable to adjust <300 Hz resolution bandwidths"),
         534: ("RBW <308", "Unable to adjust frequency accuracy for resolution bandwidths <100 Hz"),
@@ -2210,7 +2210,7 @@ class HP856Xx(Instrument):
     reference_level_calibration = Instrument.control(
         "RLCAL?", "RLCAL %g",
         """
-        Control the calibration of the reference level remotely and retuns the
+        Control the calibration of the reference level remotely and return the
         current calibration. To calibrate the reference level, connect the 300 MHz calibration
         signal to the RF input. Set the center frequency to 300 MHz, the frequency span to 20
         MHz, and the reference level to -10 dBm. Use the RLCAL command to move the input signal
@@ -2416,7 +2416,7 @@ class HP856Xx(Instrument):
 
         self.write(f"SRQ {input}")
 
-    # `center_frequency_step_size` would be a command but is pretty unnecesary
+    # `center_frequency_step_size` would be a command but is pretty unnecessary
 
     sweep_time = Instrument.control(
         "ST?", "ST %s",

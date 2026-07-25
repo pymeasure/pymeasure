@@ -182,7 +182,7 @@ class ThorlabsMBXSeriesVOA(Channel):
 
 
 class ThorlabsMBXSeriesRGB(Channel):
-    """ThorlabsMBXSeries channel for control of the asethetic RGB under-chassis lighting."""
+    """ThorlabsMBXSeries channel for control of the aesthetic RGB under-chassis lighting."""
 
     mode = Instrument.control(
         "RGB:POWER?",

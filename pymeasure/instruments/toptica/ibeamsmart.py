@@ -235,7 +235,7 @@ class IBeamSmart(Instrument):
         """Enable pulsing mode.
 
         The optical output is controlled by a digital
-        input signal on a dedicated connnector on the device."""
+        input signal on a dedicated connector on the device."""
         self.emission = True
         self.ch_2.enabled = True
         self.write('en ext')

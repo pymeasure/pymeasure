@@ -1469,7 +1469,7 @@ class VirtualBench:
             self.ps.enable_tracking(enable_tracking)
 
         def read_output(self, channel):
-            ''' Reads the voltage and current levels and outout mode of the
+            ''' Reads the voltage and current levels and output mode of the
             specified channel.
             '''
             channel = self.validate_channel(channel)
