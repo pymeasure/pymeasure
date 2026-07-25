@@ -962,6 +962,35 @@ def _compliance_or_none(value: float | str | None, method: str) -> float | None:
     return cast("float | None", value)
 
 
+TimedSpotCurrent = namedtuple("TimedSpotCurrent", ["time", "current"])
+TimedSpotVoltage = namedtuple("TimedSpotVoltage", ["time", "voltage"])
+SpotIV = namedtuple("SpotIV", ["current", "voltage"])
+TimedSpotIV = namedtuple("TimedSpotIV", ["time", "current", "voltage"])
+SpotCMU = namedtuple("SpotCMU", ["primary", "secondary"])
+TimedSpotCMU = namedtuple("TimedSpotCMU", ["time", "primary", "secondary"])
+SpotCMUMonitor = namedtuple(
+    "SpotCMUMonitor", ["primary", "secondary", "ac_voltage", "dc_voltage"]
+)
+TimedSpotCMUMonitor = namedtuple(
+    "TimedSpotCMUMonitor", ["time", "primary", "secondary", "ac_voltage", "dc_voltage"]
+)
+
+
+def _spot_measurement(unit: SMU | CMU, cmd: str) -> tuple[float, ...]:
+    """Write a high speed spot measurement command and parse the response.
+
+    :param unit: SMU or CMU issuing the measurement
+    :param cmd: Complete spot measurement command including parameters
+    :return: Measurement values in the order returned by the instrument
+    """
+    data_format = unit.parent._data_format
+    if data_format is None:
+        raise ValueError("No data format set. Call data_format() before measuring.")
+    unit.write(cmd)
+    response = unit.read()
+    return tuple(data_format.format_single(element)[3] for element in response.split(","))
+
+
 class SMU(Channel):
     """Provide specific methods for the SMUs of the Agilent B1500 mainframe.
 
@@ -1239,7 +1268,7 @@ class SMU(Channel):
     ######################################
     # Measurement Range
     # implemented: RI, RV
-    # not implemented: RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC
+    # not implemented: RC
     ######################################
 
     @property
@@ -1287,6 +1316,95 @@ class SMU(Channel):
             self.write(f"RM {{ch}}, {mode}")
         else:
             self.write(f"RM {{ch}}, {mode}, {rate}")
+
+    ######################################
+    # High Speed Spot Measurement
+    # implemented: TI, TTI, TV, TTV, TIV, TTIV
+    ######################################
+
+    def measure_current(
+        self, meas_range: int | str | None = None, timestamp: bool = False
+    ) -> float | TimedSpotCurrent:
+        """Perform a high speed spot measurement of current. (``TI`` or ``TTI``)
+
+        The measurement starts immediately, regardless of the SMU operation
+        mode, trigger mode, and measurement mode. The channel must be
+        enabled (:meth:`enable`).
+
+        :param meas_range: Current measurement range index or name (``0`` for auto ranging),
+            defaults to the minimum range covering the compliance value
+        :param timestamp: Whether to also return the time from timer reset
+            (:meth:`AgilentB1500.clear_timer`) to the start of the measurement
+        :return: Current in A, or :class:`TimedSpotCurrent` of time in s and
+            current in A if ``timestamp`` is enabled
+        """
+        cmd = "TTI {ch}" if timestamp else "TI {ch}"
+        if meas_range is not None:
+            cmd += f", {self.current_ranging.meas(meas_range).index}"
+        values = _spot_measurement(self, cmd)
+        return TimedSpotCurrent(*values) if timestamp else values[0]
+
+    def measure_voltage(
+        self, meas_range: int | str | None = None, timestamp: bool = False
+    ) -> float | TimedSpotVoltage:
+        """Perform a high speed spot measurement of voltage. (``TV`` or ``TTV``)
+
+        The measurement starts immediately, regardless of the SMU operation
+        mode, trigger mode, and measurement mode. The channel must be
+        enabled (:meth:`enable`).
+
+        :param meas_range: Voltage measurement range index or name (``0`` for auto ranging),
+            defaults to the minimum range covering the compliance value
+        :param timestamp: Whether to also return the time from timer reset
+            (:meth:`AgilentB1500.clear_timer`) to the start of the measurement
+        :return: Voltage in V, or :class:`TimedSpotVoltage` of time in s and
+            voltage in V if ``timestamp`` is enabled
+        """
+        cmd = "TTV {ch}" if timestamp else "TV {ch}"
+        if meas_range is not None:
+            cmd += f", {self.voltage_ranging.meas(meas_range).index}"
+        values = _spot_measurement(self, cmd)
+        return TimedSpotVoltage(*values) if timestamp else values[0]
+
+    def measure_iv(
+        self,
+        current_range: int | str | None = None,
+        voltage_range: int | str | None = None,
+        timestamp: bool = False,
+    ) -> SpotIV | TimedSpotIV:
+        """Perform a high speed spot measurement of current and voltage.
+        (``TIV`` or ``TTIV``)
+
+        The measurement starts immediately, regardless of the SMU operation
+        mode, trigger mode, and measurement mode. The channel must be
+        enabled (:meth:`enable`).
+
+        HCSMU, HVSMU, and MCSMU measure current and voltage simultaneously.
+        HRSMU, MPSMU, and HPSMU measure the compliance side and the force
+        side in this order.
+
+        :param current_range: Current measurement range index or name (``0`` for auto ranging),
+            defaults to the minimum range covering the compliance value.
+            Must be specified together with ``voltage_range``.
+        :param voltage_range: Voltage measurement range index or name (``0`` for auto ranging),
+            defaults to the minimum range covering the output value.
+            Must be specified together with ``current_range``.
+        :param timestamp: Whether to also return the time from timer reset
+            (:meth:`AgilentB1500.clear_timer`) to the start of the measurement
+        :return: :class:`SpotIV` of current in A and voltage in V, or
+            :class:`TimedSpotIV` additionally containing the time in s
+            if ``timestamp`` is enabled
+        """
+        cmd = "TTIV {ch}" if timestamp else "TIV {ch}"
+        if (current_range is None) != (voltage_range is None):
+            raise ValueError("current_range and voltage_range must be specified together.")
+        if current_range is not None and voltage_range is not None:
+            cmd += (
+                f", {self.current_ranging.meas(current_range).index}"
+                f", {self.voltage_ranging.meas(voltage_range).index}"
+            )
+        values = _spot_measurement(self, cmd)
+        return TimedSpotIV(*values) if timestamp else SpotIV(*values)
 
     ######################################
     # Staircase Sweep Measurement: (WT, WM -> Instrument)
@@ -1902,6 +2020,60 @@ class CMU(Channel):
                 f"{self.parent._data_format.format}."
             )
         self.write(f"IMP {measurement_mode.value}")
+
+    @property
+    def voltage_monitor_enabled(self) -> bool:
+        """Control the MFCMU AC and DC voltage data monitor and output. (``LMN``)
+
+        When enabled, the AC (oscillator level) and DC bias voltage values are
+        returned together with the measurement data.
+        """
+        response = cast(str, self.parent.query_learn(71)["LMN"])
+        return bool(int(response))
+
+    @voltage_monitor_enabled.setter
+    def voltage_monitor_enabled(self, enabled: bool) -> None:
+        self.write(f"LMN {int(enabled)}")
+
+    #: Fixed measurement ranges (impedance, Ohm) selectable for the MFCMU
+    #: high speed spot measurement. Available ranges depend on the output
+    #: signal frequency set by :attr:`frequency_ac` (``FC``).
+    MEASUREMENT_RANGES = [50, 100, 300, 1000, 3000, 10000, 30000, 100000, 300000]
+
+    def measure(
+        self, meas_range: int | None = None, timestamp: bool = False
+    ) -> SpotCMU | SpotCMUMonitor | TimedSpotCMU | TimedSpotCMUMonitor:
+        """Perform a high speed spot measurement with the MFCMU. (``TC`` or ``TTC``)
+
+        The measurement starts immediately, regardless of the trigger mode and measurement mode.
+        The channel must be enabled (:meth:`enable`) and the measurement parameters must be
+        selected with :meth:`set_measurement_mode` beforehand.
+
+        The primary and secondary parameters are selected by :meth:`set_measurement_mode`,
+        e.g. ``Cp`` and ``G`` for :attr:`MFCMUMeasurementMode.CP_G`.
+        If :attr:`voltage_monitor_enabled` is set, the AC (oscillator level) and DC bias voltage
+        monitor values are appended, and a tuple with the extra ``ac_voltage`` and ``dc_voltage``
+        fields is returned instead.
+
+        :param meas_range: Fixed measurement range from :attr:`MEASUREMENT_RANGES`
+            in Ohm, defaults to auto ranging
+        :param timestamp: Whether to also return the time from timer reset
+            (:meth:`AgilentB1500.clear_timer`) to the start of the measurement
+        :return: :class:`SpotCMU` (or :class:`TimedSpotCMU` with ``timestamp``)
+            of the primary and secondary parameter; the :class:`SpotCMUMonitor`
+            / :class:`TimedSpotCMUMonitor` variant additionally carrying
+            ``ac_voltage`` and ``dc_voltage`` when :attr:`voltage_monitor_enabled`
+        """
+        cmd = "TTC {ch}" if timestamp else "TC {ch}"
+        if meas_range is None:
+            cmd += ", 0"  # auto ranging
+        else:
+            meas_range = strict_discrete_set(meas_range, self.MEASUREMENT_RANGES)
+            cmd += f", 2, {meas_range}"  # fixed range
+        values = _spot_measurement(self, cmd)
+        if timestamp:
+            return TimedSpotCMUMonitor(*values) if len(values) == 5 else TimedSpotCMU(*values)
+        return SpotCMUMonitor(*values) if len(values) == 4 else SpotCMU(*values)
 
     def set_cv_timings(
         self,
