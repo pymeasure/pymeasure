@@ -11,3 +11,4 @@ This section contains specific documentation on the Tektronix instruments that a
 
    tds2000
    afg3152c
+   tek371A
