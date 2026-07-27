@@ -25,20 +25,30 @@
 import logging
 from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.adapters import VISAAdapter                                          #To call adapter from driver
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class VisaSplitAdapter(VISAAdapter):                                        #Buffer adapter call to split SCPI commands into 2 lines
+    def write(self, command, **kwargs):                                     #In main test file, from pymeasure.instruments.keithley.keithley2200 import Keithley2200, VisaSplitAdapter
+        for part in command.split(";"):                                     #Don't need to import VisaAdapter, that is done
+            part = part.strip()
+            if part:
+                super().write(part, **kwargs)
+
+
+
 class PSChannel(Channel):
     """Implementation of a Keithley 2200 channel."""
 
-    VOLTAGE_RANGE = [0, 70]
-    CURRENT_RANGE = [0, 45]
+    VOLTAGE_RANGE = [0, 30]                 #Changed froim 0,70
+    CURRENT_RANGE = [0, 5]                 #Changed from 0,45
 
     output_enabled = Instrument.control(
-        "SOURCE:OUTP:ENAB?",
-        "SOURCE:OUTP:ENAB %d",
+        "CHAN:OUTP:STAT?",                                          #Changed from SOUR:OUP:ENAB
+        "CHAN:OUTP:STAT %d",
         """ Control the output state.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -109,18 +119,18 @@ class Keithley2200(SCPIUnknownMixin, Instrument):
 
     ch_3 = Instrument.ChannelCreator(PSChannel, 3)
 
-    display_enabled = Instrument.control(
-        "DISP?",
-        ":DISP %d",
-        """Control whether the display is enabled.""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
+    # display_enabled = Instrument.control(                                 # NO display commands for the 2230-30-1
+    #     "DISP?",
+    #     ":DISP %d",
+    #     """Control whether the display is enabled.""",
+    #     validator=strict_discrete_set,
+    #     values={True: 1, False: 0},
+    #     map_values=True,
+    # )
 
-    display_text_data = Instrument.control(
-        ":DISP:TEXT:DATA?",
-        ":DISP:TEXT:DATA '%s'",
-        """Control text to be displayed(32 characters).""",
-        get_process=lambda v: v.replace('"', ""),
-    )
+    # display_text_data = Instrument.control(
+    #     ":DISP:TEXT:DATA?",
+    #     ":DISP:TEXT:DATA '%s'",
+    #     """Control text to be displayed(32 characters).""",
+    #     get_process=lambda v: v.replace('"', ""),
+    # )
