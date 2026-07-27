@@ -125,7 +125,7 @@ class OxfordInstrumentsBase(Instrument):
         """
         super().write(command)
 
-        if not command[0] == "$":
+        if command[0] != "$":
             response = self.read()
 
             log.debug(
@@ -172,7 +172,7 @@ class OxfordInstrumentsBase(Instrument):
         except TypeError:
             match = False
 
-        if match and not match.groups()[0] == command[0]:
+        if match and match.groups()[0] != command[0]:
             match = False
 
         return bool(match)

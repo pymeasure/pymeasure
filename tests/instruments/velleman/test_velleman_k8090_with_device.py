@@ -61,7 +61,7 @@ def test_version(instrument):
 
 
 def test_status(instrument):
-    last_on, curr_on, time_on = instrument.status
+    _last_on, curr_on, _time_on = instrument.status
 
     assert isinstance(curr_on, Switches)
 

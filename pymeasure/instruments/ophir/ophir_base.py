@@ -359,7 +359,7 @@ class OphirBase(OphirCommunication):
     ) -> tuple[tuple[float, float] | None, Sequence[float | str | None]]:
         """Get wavelength limits for continuous sensor and wavelength list."""
         values = self.values("AW", cast=str)  # All Wavelengths
-        current, limits, entries = self._extract_wavelengths(values)
+        _current, limits, entries = self._extract_wavelengths(values)
         return limits, entries
 
     wavelength = Instrument.control(

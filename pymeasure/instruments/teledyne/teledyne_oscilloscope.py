@@ -64,7 +64,7 @@ def _trigger_select_num_pars(value):
 
     :param value: input parameters as a tuple
     """
-    value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+    value = tuple(v.upper() if isinstance(v, str) else v for v in value)
     num_expected_pars = 0
     if 3 <= len(value) <= 5:
         if value[0] == "EDGE":
@@ -91,11 +91,11 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
         raise ValueError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) < 3 or len(value) > 5:
         raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
-    value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+    value = tuple(v.upper() if isinstance(v, str) else v for v in value)
     value = list(value)
     value[1] = sanitize_source(value[1])
     value = tuple(value)
-    if value[0] not in values.keys():
+    if value[0] not in values:
         raise ValueError(f'Value {value[0]} not in the discrete set {values.keys()}')
     num_expected_pars = num_pars_finder(value)
     if len(value) != num_expected_pars:

@@ -206,9 +206,6 @@ def test_frequency_setter():
     ([(b'SOUR:VOLT:UNIT VPP', None),
       (b'SOUR:FREQ?', b'+2.00000000000E+03')],
      2000.0),
-    ([(b'SOUR:VOLT:UNIT VPP', None),
-      (b'SOUR:FREQ?', b'+2.00000000000E+03')],
-     2000.0),
 ))
 def test_frequency_getter(comm_pairs, value):
     with expected_protocol(

@@ -103,7 +103,7 @@ class TestProcedure(Procedure):
         """
         # return duration
 
-        estimates = list()
+        estimates = []
 
         estimates.append(("Duration", f"{int(duration)} s"))
         estimates.append(("Number of lines", f"{int(self.iterations)}"))

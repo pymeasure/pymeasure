@@ -155,7 +155,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.widget_list = widget_list
 
         # Check if the get_estimates function is reimplemented
-        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
+        self.use_estimator = self.procedure_class.get_estimates != Procedure.get_estimates
 
         # Validate DATA_COLUMNS fit pymeasure column header format
         Procedure.parse_columns(self.procedure_class.DATA_COLUMNS)

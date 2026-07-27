@@ -128,7 +128,7 @@ class Agilent4294A(SCPIMixin, Instrument):
         self.write(f'SAVDTIF "{REMOTE_FILE}"')
 
         vErr = self.ask("OUTPERRO?").split(",")
-        if not int(vErr[0]) == 0:
+        if int(vErr[0]) != 0:
             self.write(f'PURG "{REMOTE_FILE}"')
             self.write(f'SAVDTIF "{REMOTE_FILE}"')
             vErr = self.ask("OUTPERRO?").split(",")

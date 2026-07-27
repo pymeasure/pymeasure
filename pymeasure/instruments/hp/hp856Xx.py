@@ -550,8 +550,8 @@ class ErrorCode:
         755: ("SYSTEM", "Hardware/firmware interaction; check other errors"),
         900: ("TG UNLVL", "Tracking generator output is unleveled"),
         901: ("TGFrqLmt",
-              "Tracking generator output unleveled because START FREQ is set "
-              "below tracking generator frequency limit (300 kHz)"),
+              ("Tracking generator output unleveled because START FREQ is set "
+              "below tracking generator frequency limit (300 kHz)")),
         902: ("BAD NORM",
               "The state of the stored trace does not match the current state of the analyzer"),
         903: ("&> DLMT", "Unnormalized trace A is off-screen with trace math or normalization on"),
@@ -569,13 +569,13 @@ class ErrorCode:
         :param code: Representing an error as id or short description
         :type code: str, int
         """
-        if not (isinstance(code, int) or isinstance(code, str)):
+        if not (isinstance(code, (int, str))):
             print(type(code))
             raise TypeError("Initialziation type for code must be integer or string")
 
         try:
             self.code = int(code)
-            if self.code not in self.__error_code_list.keys():
+            if self.code not in self.__error_code_list:
                 raise ValueError()
 
         except (ValueError, TypeError):
@@ -2133,7 +2133,7 @@ class HP856Xx(Instrument):
             instr.recall_state(7)
         """
         values = ["LAST", "PWRON"] + [str(f) for f in range(9)]
-        if not (isinstance(inp, str) or isinstance(inp, int)):
+        if not (isinstance(inp, (str, int))):
             raise TypeError(f"Should be of type 'str' or 'int' but is '{type(inp)}'")
 
         if str(inp) not in values:
@@ -2291,7 +2291,7 @@ class HP856Xx(Instrument):
             instr.save_state("PWRON")
         """
         values = ["PWRON"] + [str(f) for f in range(9)]
-        if not (isinstance(inp, str) or isinstance(inp, int)):
+        if not (isinstance(inp, (str, int))):
             raise TypeError(f"Should be of type 'str' or 'int' but is '{type(inp)}'")
 
         if str(inp) not in values:

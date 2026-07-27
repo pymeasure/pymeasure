@@ -152,7 +152,7 @@ class CXN(Instrument):
                          name,
                          write_termination="",
                          read_termination="",
-                         asrl=dict(baud_rate=38400),
+                         asrl={'baud_rate': 38400},
                          **kwargs)
 
     @staticmethod

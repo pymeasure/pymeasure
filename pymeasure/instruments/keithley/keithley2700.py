@@ -121,7 +121,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         check_set_errors=True,
         separator=None,
         get_process=lambda v: [
-            int(vv) for vv in (v.strip(" ()@,").split(",")) if not vv == ""
+            int(vv) for vv in (v.strip(" ()@,").split(",")) if vv != ""
         ],
     )
 

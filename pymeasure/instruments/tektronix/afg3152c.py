@@ -47,10 +47,8 @@ class AFG3152CChannel(Channel):
     DUTY_LIMIT = [0.001, 99.999]
     AMPLITUDE_LIMIT = {
         "VPP": [20e-3, 10],
-        "VRMS": list(map(lambda x: round(x / 2 / sqrt(2), 3), [20e-3, 10])),
-        "DBM": list(
-            map(lambda x: round(20 * log10(x / 2 / sqrt(0.1)), 2), [20e-3, 10])
-        ),
+        "VRMS": [round(x / 2 / sqrt(2), 3) for x in [20e-3, 10]],
+        "DBM": [round(20 * log10(x / 2 / sqrt(0.1)), 2) for x in [20e-3, 10]],
     }  # Vpp, Vrms and dBm limits
     UNIT_LIMIT = ["VPP", "VRMS", "DBM"]
     IMP_LIMIT = [1, 1e4]

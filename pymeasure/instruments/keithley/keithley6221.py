@@ -394,7 +394,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
             raise ValueError("datapoints must be a list or numpy array")
         elif len(datapoints) > 100:
             raise ValueError("datapoints cannot be longer than 100 points")
-        elif not all([x >= -1 and x <= 1 for x in datapoints]):
+        elif not all(x >= -1 and x <= 1 for x in datapoints):
             raise ValueError("all data points must be between -1 and 1")
 
         if location not in [1, 2, 3, 4]:

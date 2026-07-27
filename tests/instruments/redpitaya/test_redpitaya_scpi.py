@@ -68,10 +68,6 @@ def test_acq_buffer_filled_getter():
      'ASCII'),
     ([(b'ACQ:DATA:FORMAT BIN', None)],
      'BIN'),
-    ([(b'ACQ:DATA:FORMAT BIN', None)],
-     'BIN'),
-    ([(b'ACQ:DATA:FORMAT ASCII', None)],
-     'ASCII'),
 ))
 def test_acq_format_setter(comm_pairs, value):
     with expected_protocol(

@@ -137,7 +137,6 @@ def test_voltage_source(keithley2400):
         ("source_delay_auto_enabled", True),
         ("source_delay_auto_enabled", False),
         ("auto_zero_enabled", True),
-        ("auto_zero_enabled", True),
         ("output_off_state", "disconnected"),
         ("output_off_state", "normal"),
         ("output_off_state", "zero"),

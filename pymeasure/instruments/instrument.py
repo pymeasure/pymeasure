@@ -25,7 +25,6 @@
 import logging
 import time
 from collections.abc import Sequence
-from typing import TypeVar
 from warnings import warn
 
 from typing_extensions import Self
@@ -33,8 +32,6 @@ from typing_extensions import Self
 from ..adapters.adapter import Adapter
 from ..adapters.visa import VISAAdapter
 from .common_base import CommonBase
-
-_Self = TypeVar("_Self", bound="Instrument")  # typing.Self for Python>3.10
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

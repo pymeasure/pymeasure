@@ -97,7 +97,7 @@ wrong format of the parameter",
                 raise ConnectionError(f"Unknown read error. Received: {got}")
 
         else:
-            command, sep, response = got.partition(";")  # command is removed from response
+            _command, _sep, response = got.partition(";")  # command is removed from response
             return response.replace(";", ",")
 
     def check_set_errors(self) -> list[str]:
@@ -134,9 +134,8 @@ wrong format of the parameter",
         err_code = int(flags, 0)
 
         for n in range(len(err_txt)):
-            if err_code & (2**n):
-                if err_txt[n] is not None:
-                    err_msg.append(err_txt[n])
+            if err_code & (2**n) and err_txt[n] is not None:
+                err_msg.append(err_txt[n])
 
         return err_msg
 
@@ -504,7 +503,7 @@ wrong format of the parameter",
         if guid.upper() in ["", "ALL"]:
             d_rec = self.ask("RDA")
         else:
-            guid, comma, d_rec = self.ask(f"RDR;{guid}").partition(",")
+            guid, _comma, d_rec = self.ask(f"RDR;{guid}").partition(",")
 
         return json.loads(d_rec)  # str -> dict
 

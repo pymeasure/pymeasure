@@ -187,7 +187,7 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
                 self.ask("NOOP?")
             except VisaIOError as e:
                 if e.abbreviation != "VI_ERROR_TMO":
-                    raise e
+                    raise
             else:
                 break
 

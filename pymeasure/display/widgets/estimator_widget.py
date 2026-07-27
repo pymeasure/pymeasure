@@ -113,8 +113,8 @@ class EstimatorWidget(QtWidgets.QWidget):
         # Check if the output of the function is acceptable
         raise_error = True
         if isinstance(estimates, (list, tuple)):
-            if all([isinstance(est, (tuple, list)) for est in estimates]):
-                if all([len(est) == 2 for est in estimates]):
+            if all(isinstance(est, (tuple, list)) for est in estimates):
+                if all(len(est) == 2 for est in estimates):
                     raise_error = False
 
         if raise_error:
@@ -130,7 +130,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         self.number_of_estimates = len(estimates)
 
     def _setup_ui(self):
-        self.line_edits = list()
+        self.line_edits = []
         for idx in range(self.number_of_estimates):
             qlb = QtWidgets.QLabel(self)
 
@@ -166,7 +166,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         # Make a procedure
         procedure = self._parent.make_procedure()
 
-        kwargs = dict()
+        kwargs = {}
 
         sequence = None
         sequence_length = None
@@ -216,7 +216,7 @@ class EstimatorWidget(QtWidgets.QWidget):
             self.line_edits[idx][1].setText(estimate[1])
 
     def _estimates_from_duration(self, duration, sequence_length):
-        estimates = list()
+        estimates = []
 
         estimates.append(("Duration", f"{int(duration)} s"))
 

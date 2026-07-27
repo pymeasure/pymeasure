@@ -395,8 +395,8 @@ class FSW(FSSeries):
 
     @active_channel.setter
     def activate_channel(self, channel):
-        availabel_channels = [chan for chan in self.available_channels.keys()]
-        channel = strict_discrete_set(channel, availabel_channels)
+        available_channels = [chan for chan in self.available_channels]
+        channel = strict_discrete_set(channel, available_channels)
         self.write(f"INST '{channel}'")
 
     split_view = Instrument.control(

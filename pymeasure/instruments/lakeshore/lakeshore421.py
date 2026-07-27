@@ -69,7 +69,7 @@ class LakeShore421(Instrument):
         self.last_write_time = time()
 
     def _raw_to_field(self, field_raw, multiplier_name):
-        if not field_raw == "OL":
+        if field_raw != "OL":
             multiplier = getattr(self, multiplier_name)
             field = multiplier * field_raw
         else:

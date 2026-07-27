@@ -38,7 +38,7 @@ def clean_closed_channels(output):
     elif isinstance(output, list):
         list_final = []
         for i, entry in enumerate(output):
-            if isinstance(entry, float) or isinstance(entry, int):
+            if isinstance(entry, (float, int)):
                 list_final += [int(entry)]
             elif isinstance(entry, str):
                 list_final += [int(entry.replace("(", "").replace(")", "").replace("@", ""))]

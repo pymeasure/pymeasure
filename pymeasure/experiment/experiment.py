@@ -67,7 +67,7 @@ def create_filename(title):
     If no config is specified, create a temporary file.
     """
     config = get_config()
-    if 'Filename' in config._sections.keys():
+    if 'Filename' in config._sections:
         filename = unique_filename(suffix=f'_{title}', **config._sections['Filename'])
     else:
         filename = tempfile.mktemp()
@@ -116,7 +116,7 @@ class Experiment:
 
         config = get_config()
         set_mpl_rcparams(config)
-        if 'Logging' in config._sections.keys():
+        if 'Logging' in config._sections:
             self.scribe = setup_logging(log, **config._sections['Logging'])
         else:
             self.scribe = console_log(log)

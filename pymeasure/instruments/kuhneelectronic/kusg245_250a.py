@@ -44,9 +44,7 @@ def _err_msg_invalid_termination_character(b):
 def _is_expecting_acknowledgement(command):
     if command in ["v", "5", "8", "6", "7", "T"]:
         return False
-    if command.endswith("?"):
-        return False
-    return True
+    return not command.endswith("?")
 
 
 class Kusg245_250A(Instrument):

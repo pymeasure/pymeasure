@@ -142,7 +142,7 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
             self.tab_widget.tabBar().setIconSize(QtCore.QSize(12, 12))
             self.tab_widget.tabBar().currentChanged.connect(self._blinking_stop)
 
-        if message.startswith("<!--ERROR-->") or message.startswith("<!--CRITICAL-->"):
+        if message.startswith(("<!--ERROR-->", "<!--CRITICAL-->")):
             error = True
         elif message.startswith("<!--WARNING-->"):
             error = False
@@ -156,7 +156,7 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
 
         # Define color and icon based on severity
         # If already red, this should not be updated
-        if not self._blink_color == "red":
+        if self._blink_color != "red":
             self._blink_color = "red" if error else "darkorange"
 
             pixmapi = QtWidgets.QStyle.StandardPixmap.SP_MessageBoxCritical if \

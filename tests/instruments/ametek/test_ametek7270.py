@@ -358,16 +358,6 @@ def test_time_constant_setter(comm_pairs, value):
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b'REFN 7', b'')],
      7),
-    ([(b'REFN 7', b'')],
-     7),
-    ([(b'REFN 7', b'')],
-     7),
-    ([(b'REFN 7', b'')],
-     7),
-    ([(b'REFN 7', b'')],
-     7),
-    ([(b'REFN 7', b'')],
-     7),
 ))
 def test_harmonic_setter(comm_pairs, value):
     with expected_protocol(

@@ -116,7 +116,7 @@ class SQM160(Instrument):
                          name,
                          write_termination="",
                          read_termination="",
-                         asrl=dict(baud_rate=baud_rate),
+                         asrl={"baud_rate": baud_rate},
                          timeout=3000,
                          **kwargs)
 

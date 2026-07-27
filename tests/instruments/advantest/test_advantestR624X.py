@@ -1002,8 +1002,8 @@ def test_ch_voltage_fixed_pulsed_sweep():
 def test_ch_voltage_sweep():
     with expected_protocol(
         AdvantestR6246,
-        [("wv 1,1,1,20,0.0000e+00,5.0000e+00,100,"
-          "1.0000e-01,0.0000e+00", None)]
+        [(("wv 1,1,1,20,0.0000e+00,5.0000e+00,100,"
+          "1.0000e-01,0.0000e+00"), None)]
     ) as inst:
         inst.ch_A.voltage_sweep(
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1,
@@ -1013,8 +1013,8 @@ def test_ch_voltage_sweep():
 def test_ch_voltage_pulsed_sweep():
     with expected_protocol(
         AdvantestR6246,
-        [("pwv 1,1,1,20,0.0000e+00,0.0000e+00,5.0000e+00,100,"
-          "1.0000e-01,0.0000e+00", None)]
+        [(("pwv 1,1,1,20,0.0000e+00,0.0000e+00,5.0000e+00,100,"
+          "1.0000e-01,0.0000e+00"), None)]
     ) as inst:
         inst.ch_A.voltage_pulsed_sweep(
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1,
@@ -1070,8 +1070,8 @@ def test_ch_current_fixed_pulsed_sweep():
 def test_ch_current_sweep():
     with expected_protocol(
         AdvantestR6246,
-        [("wi 1,1,1,20,0.0000e+00,1.0000e-03,100,"
-          "1.0000e+01,0.0000e+00", None)]
+        [(("wi 1,1,1,20,0.0000e+00,1.0000e-03,100,"
+          "1.0000e+01,0.0000e+00"), None)]
     ) as inst:
         inst.ch_A.current_sweep(
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1,
@@ -1081,8 +1081,8 @@ def test_ch_current_sweep():
 def test_ch_current_pulsed_sweep():
     with expected_protocol(
         AdvantestR6246,
-        [("pwi 1,1,1,20,0.0000e+00,0.0000e+00,1.0000e-03,100,"
-          "1.0000e+01,0.0000e+00", None)]
+        [(("pwi 1,1,1,20,0.0000e+00,0.0000e+00,1.0000e-03,100,"
+          "1.0000e+01,0.0000e+00"), None)]
     ) as inst:
         inst.ch_A.current_pulsed_sweep(
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1,

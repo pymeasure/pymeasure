@@ -462,7 +462,6 @@ def test_ask_writes_and_reads():
                           ("5.6.7", {'separator': '.'}, [5, 6, 7]),
                           ("5,6,7", {'cast': str}, ['5', '6', '7']),
                           ("X,Y,Z", {"cast": str}, ['X', 'Y', 'Z']),
-                          ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
                            ("X.Y.Z", {"separator": ".", "cast": str}, ["X", "Y", "Z"]),
                           ("0,5,7.1", {'cast': bool}, [False, True, True]),
                           ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5]),

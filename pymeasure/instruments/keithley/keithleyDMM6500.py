@@ -1258,7 +1258,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
     @property
     def scan_modes(self):
         """Get a dictionary of every channel's mode."""
-        res = dict()
+        res = {}
         for i in range(self.scan_vch_start, self.scan_vch_end + 1):
             res[i] = self.channels[i].mode
         return res
@@ -1274,10 +1274,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         completed.
         This property is used while running time-consuming scanning operation."""
         res = int(self.ask("*ESR?")) & 1
-        if res == 1:
-            return True
-        else:
-            return False
+        return res == 1
 
     def scan_start(self, block_communication=True, count=None, interval=None):
         """Start the scanner card to close each channel of :attr:`scan_channels` sequentially
@@ -1344,10 +1341,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
             mode = self.mode
         if mode in self.MODES_HAVE_AUTORANGE:
             value = self.ask(f":SENS:{self._mode_command(mode)}:RANG:AUTO?")
-            if value == "1":
-                return True
-            else:
-                return False
+            return value == "1"
         else:
             return False
 

@@ -73,7 +73,7 @@ class SmartlineV1(Instrument):
                          name,
                          write_termination="\r",
                          read_termination="\r",
-                         asrl=dict(baud_rate=baud_rate),
+                         asrl={"baud_rate": baud_rate},
                          **kwargs)
         self.address = address
 

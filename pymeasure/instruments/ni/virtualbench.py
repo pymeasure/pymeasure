@@ -405,17 +405,16 @@ class VirtualBench:
                         except (IndexError, KeyError):
                             error()
                         # device_name has to match
-                        if not device == self._device_name:
+                        if device != self._device_name:
                             error()
                     # constructing line references for output
                     return_lines.append((self._device_name + '/dig/%d') % line)
                 else:
                     error()
                 # check if lines are initialized
-                if validate_init is True:
-                    if line not in self._line_numbers:
-                        raise ValueError(
-                            f"Digital Line {line} is not initialized")
+                if validate_init is True and line not in self._line_numbers:
+                    raise ValueError(
+                        f"Digital Line {line} is not initialized")
 
             # create comma separated channel string
             return_lines = ', '.join(return_lines)
@@ -957,7 +956,7 @@ class VirtualBench:
                     except Exception:
                         error()
                     # device_name has to match
-                    if not device == self._device_name:
+                    if device != self._device_name:
                         error()
                 # constructing line references for output
                 return_value.append('mso/' + channel)
@@ -1327,8 +1326,7 @@ class VirtualBench:
 
             number_of_samples = int(self.sample_rate *
                                     self.acquisition_time) + 1
-            if not number_of_samples == (len(analog_data_out) /
-                                         analog_data_stride):
+            if number_of_samples != len(analog_data_out) / analog_data_stride:
                 # try updating timing parameters
                 self.query_timing()
                 number_of_samples = int(self.sample_rate *
@@ -1343,7 +1341,7 @@ class VirtualBench:
             times = (
                 list(range(-pretrigger_samples, 0))
                 + list(range(number_of_samples - pretrigger_samples)))
-            times = [list(map(lambda x: x * 1 / self.sample_rate, times))]
+            times = [[x * 1 / self.sample_rate for x in times]]
 
             np_array = np.array(analog_data_out)
             np_array = np.split(np_array, analog_data_stride)

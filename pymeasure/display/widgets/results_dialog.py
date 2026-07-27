@@ -104,13 +104,13 @@ class ResultsDialog(QtWidgets.QFileDialog):
                 widget.load(widget.new_curve(results))
 
             self.preview_param.clear()
-            for key, param in results.procedure.parameter_objects().items():
+            for param in results.procedure.parameter_objects().values():
                 new_item = QtWidgets.QTreeWidgetItem([param.name, str(param)])
                 self.preview_param.addTopLevelItem(new_item)
             self.preview_param.sortItems(0, QtCore.Qt.SortOrder.AscendingOrder)
 
             self.preview_metadata.clear()
-            for key, metadata in results.procedure.metadata_objects().items():
+            for metadata in results.procedure.metadata_objects().values():
                 new_item = QtWidgets.QTreeWidgetItem([metadata.name, str(metadata)])
                 self.preview_metadata.addTopLevelItem(new_item)
             self.preview_metadata.sortItems(0, QtCore.Qt.SortOrder.AscendingOrder)

@@ -153,7 +153,7 @@ class TC038(Instrument):
         "WWR" + registers["setpoint"] + ",01,%s",
         """Control the setpoint of the temperature controller in °C.""",
         cast=_data_to_temp,
-        set_process=lambda temp: f"{int(round(temp * 10)):04X}",
+        set_process=lambda temp: f"{round(temp * 10):04X}",
         check_set_errors=True,
     )
 

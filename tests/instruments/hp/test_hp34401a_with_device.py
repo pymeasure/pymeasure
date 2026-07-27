@@ -150,7 +150,7 @@ def test_nplc(resetted_hp34401a, function_, nplc):
 
 
 @pytest.mark.parametrize("function_", ["FREQ", "PERIOD"])
-@pytest.mark.parametrize("gate_time", [0.01, 0.01, 1])
+@pytest.mark.parametrize("gate_time", [0.01, 1])
 def test_gate_time(resetted_hp34401a, function_, gate_time):
     resetted_hp34401a.function_ = function_
     resetted_hp34401a.gate_time = gate_time

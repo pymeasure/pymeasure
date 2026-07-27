@@ -131,7 +131,7 @@ class Worker(StoppableThread):
 
     def handle_batch_record(self, record: Any):
         if self._is_dictionary_of_sequences(record):
-            lengths = list(len(value) for value in record.values())
+            lengths = [len(value) for value in record.values()]
             if not all(length == lengths[0] for length in lengths):
                 log.error(
                     'Data loss detected: not all sequences in the batch have the same length.'

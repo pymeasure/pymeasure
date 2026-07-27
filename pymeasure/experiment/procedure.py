@@ -75,7 +75,7 @@ class Procedure:
         self._update_parameters()
         self._update_metadata()
         for key in kwargs:
-            if key in self._parameters.keys():
+            if key in self._parameters:
                 setattr(self, key, kwargs[key])
                 log.info(f'Setting parameter {key} to {kwargs[key]}')
         self.gen_measurement()
@@ -113,9 +113,8 @@ class Procedure:
 
         self.MEASURE = {}
         for item, parameter in inspect.getmembers(self.__class__):
-            if isinstance(parameter, Measurable):
-                if parameter.measure:
-                    self.MEASURE.update({parameter.name: item})
+            if isinstance(parameter, Measurable) and parameter.measure:
+                self.MEASURE.update({parameter.name: item})
 
         if not self.DATA_COLUMNS:
             self.DATA_COLUMNS = Measurable.DATA_COLUMNS
@@ -149,7 +148,7 @@ class Procedure:
 
     def parameters_are_set(self):
         """ Returns True if all parameters are set """
-        for name, parameter in self._parameters.items():
+        for name in self._parameters:
             if getattr(self, name) is None:
                 return False
         return True
@@ -255,7 +254,7 @@ class Procedure:
         """ Collect the names of all eligible placeholders (parameters & metadata)"""
         placeholders = []
         for _, item in inspect.getmembers(cls):
-            if isinstance(item, Metadata) or isinstance(item, Parameter):
+            if isinstance(item, (Metadata, Parameter)):
                 placeholders.append(item.name)
 
         return list(set(placeholders))

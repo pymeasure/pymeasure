@@ -161,7 +161,7 @@ class DynamicProperty(InstrumentProperty[T]):
 
         kwargs = {}
         for attr in self.fget_params_list:
-            attr_instance_name = self.prefix + "_".join([self.name, attr])
+            attr_instance_name = self.prefix + f"{self.name}_{attr}"
             if hasattr(obj, attr_instance_name):
                 kwargs[attr] = getattr(obj, attr_instance_name)
         return self.fget(obj, **kwargs)
@@ -171,7 +171,7 @@ class DynamicProperty(InstrumentProperty[T]):
             raise AttributeError(f"Can't set attribute {self.name}")
         kwargs = {}
         for attr in self.fset_params_list:
-            attr_instance_name = self.prefix + "_".join([self.name, attr])
+            attr_instance_name = self.prefix + f"{self.name}_{attr}"
             if hasattr(obj, attr_instance_name):
                 kwargs[attr] = getattr(obj, attr_instance_name)
         self.fset(obj, value, **kwargs)
@@ -419,9 +419,8 @@ class CommonBase:
 
     def __setattr__(self, name: str, value: Any) -> None:
         """ Add reserved_prefix in front of special variables."""
-        if hasattr(self, '_special_names'):
-            if name in self._special_names:
-                name = self.__reserved_prefix + name
+        if hasattr(self, '_special_names') and name in self._special_names:
+            name = self.__reserved_prefix + name
         super().__setattr__(name, value)
 
     def __getattribute__(self, name: str) -> Any:
@@ -429,9 +428,8 @@ class CommonBase:
         support dynamic property behaviour."""
         if name in ('_special_names', '__dict__'):
             return super().__getattribute__(name)
-        if hasattr(self, '_special_names'):
-            if name in self._special_names:
-                raise AttributeError(f"{name} is a reserved variable name and it cannot be read")
+        if hasattr(self, '_special_names') and name in self._special_names:
+            raise AttributeError(f"{name} is a reserved variable name and it cannot be read")
         return super().__getattribute__(name)
 
     # Channel management

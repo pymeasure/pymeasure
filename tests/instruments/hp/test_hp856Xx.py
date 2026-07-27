@@ -243,7 +243,7 @@ class TestHP856Xx:
                     ("DL " + string_params, None)
                 ]
         ) as instr:
-            instr.display_line_enabled = True if string_params == "ON" else False
+            instr.display_line_enabled = string_params == "ON"
 
     def test_check_done(self):
         with expected_protocol(

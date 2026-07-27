@@ -395,7 +395,7 @@ class ListParameter(Parameter):
             if self.units is not None and value.endswith(" " + self.units):
                 value = value[:-len(self.units)].strip()
 
-        if str(value) in self._choices.keys():
+        if str(value) in self._choices:
             value = self._choices[str(value)]
         else:
             raise ValueError("Invalid choice for parameter. "

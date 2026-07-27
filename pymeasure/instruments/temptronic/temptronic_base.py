@@ -779,7 +779,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
         :returns: :class:`ErrorCode`
         """
         code = self.error_code
-        if not code == 0:
+        if code != 0:
             log.warning('%s', code)
         return code
 

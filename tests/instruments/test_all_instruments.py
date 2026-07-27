@@ -202,7 +202,7 @@ def test_includeSCPI_not_set_to_True(cls):
 
 def property_name_to_id(value):
     """Create a test id from `value`."""
-    device, property_name, prop = value
+    device, property_name, _prop = value
     return f"{device.__name__}.{property_name}"
 
 

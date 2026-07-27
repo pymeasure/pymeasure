@@ -286,7 +286,7 @@ class Results:
                               repr(self.procedure_class)).group("name")
         h.append(f"Procedure: <{procedure}>")
         h.append("Parameters:")
-        for name, parameter in self.parameters.items():
+        for parameter in self.parameters.values():
             h.append("\t{}: {}".format(parameter.name, str(
                 parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
@@ -320,7 +320,7 @@ class Results:
             return
 
         m = ["Metadata:"]
-        for _, metadata in self.procedure.metadata_objects().items():
+        for metadata in self.procedure.metadata_objects().values():
             value = str(metadata).encode("unicode_escape").decode("utf-8")
             m.append(f"\t{metadata.name}: {value}")
 

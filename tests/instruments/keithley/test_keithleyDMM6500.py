@@ -541,9 +541,6 @@ def test_relative_enabled_getter(comm_pairs, value):
     ([(b'*LANG SCPI', None),
       (b':READ?', b'9.900000E+37\n')],
      9.9e+37),
-    ([(b'*LANG SCPI', None),
-      (b':READ?', b'9.900000E+37\n')],
-     9.9e+37),
 ))
 def test_resistance_getter(comm_pairs, value):
     with expected_protocol(
@@ -750,9 +747,6 @@ def test_voltage_relative_getter():
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'*LANG SCPI', None),
-      (b':SENS:VOLT:REL:STAT?', b'0\n')],
-     False),
     ([(b'*LANG SCPI', None),
       (b':SENS:VOLT:REL:STAT?', b'0\n')],
      False),

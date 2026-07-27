@@ -73,7 +73,7 @@ class TestAmmeter:
     """Test of the ammeter functions."""
 
     def test_device_id(self, resetted_b298x):
-        vendor, device_id, serial_number, firmware_version = resetted_b298x.id.split(',')
+        _vendor, device_id, _serial_number, _firmware_version = resetted_b298x.id.split(',')
         assert "B298" in device_id
 
     def test_input_enabled(self, agilentB298x):

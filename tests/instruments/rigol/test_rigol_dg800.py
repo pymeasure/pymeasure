@@ -57,8 +57,6 @@ def test_channel_1_duty_cycle_setter():
      0.1),
     ([(b':SOUR1:PULS:DCYC?', b'5.000000E-01\n')],
      0.5),
-    ([(b':SOUR1:PULS:DCYC?', b'5.000000E-01\n')],
-     0.5),
 ))
 def test_channel_1_duty_cycle_getter(comm_pairs, value):
     with expected_protocol(

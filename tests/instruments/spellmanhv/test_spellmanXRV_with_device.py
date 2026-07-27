@@ -185,7 +185,7 @@ class TestUnscaledData:
     def test_analog_monitor(self, spellman):
         analog_monitor = spellman.unscaled.analog_monitor
         assert type(analog_monitor) is dict
-        for key in analog_monitor.keys():
+        for key in analog_monitor:
             assert type(analog_monitor[key]) is int
             assert analog_monitor[key] in range(4096)
 
@@ -202,5 +202,5 @@ class TestUnscaledData:
     def test_system_voltages(self, spellman):
         system_voltages = spellman.unscaled.system_voltages
         assert type(system_voltages) is dict
-        for key in system_voltages.keys():
+        for key in system_voltages:
             assert system_voltages[key] in range(4096)

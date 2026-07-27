@@ -174,7 +174,7 @@ class ListInput(Input, QtWidgets.QComboBox):
 
             self._stringChoices = tuple((str(choice) + suffix) for choice in parameter.choices)
         except TypeError:  # choices is None
-            self._stringChoices = tuple()
+            self._stringChoices = ()
         self.clear()
         self.addItems(self._stringChoices)
 

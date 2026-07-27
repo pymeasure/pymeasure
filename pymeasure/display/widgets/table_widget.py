@@ -126,7 +126,9 @@ class PandasModelBase(QtCore.QAbstractTableModel):
     float_digits = 6
     concat_axis = 0
 
-    def __init__(self, column_index=None, results_list=[], parent=None):
+    def __init__(self, column_index=None, results_list=None, parent=None):
+        if results_list is None:
+            results_list = []
         super().__init__(parent)
         self.column_index = column_index
         self._init_data(results_list)
@@ -449,10 +451,10 @@ class PandasModelByColumn(PandasModelBase):
 
     @property
     def vertical_header(self):
-        header = set([])
+        header = set()
         for r in self.results_list:
             header = header.union(set(r.data.index))
-        header = sorted(list(header))
+        header = sorted(header)
         return header
 
 
@@ -708,7 +710,7 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
 
     def preview_widget(self, parent=None):
         """ Return a widget suitable for preview during loading """
-        by_column = False if self.table_layout == self.layout_names[0] else True
+        by_column = self.table_layout != self.layout_names[0]
         return TableWidget("Table preview",
                            columns=self.columns,
                            by_column=by_column,

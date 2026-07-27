@@ -99,7 +99,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             This method is called implicitly by the QTreeView that is
             displaying us, as the way of finding out what to display where.
         """
-        if not index.isValid() or not role == QtCore.Qt.ItemDataRole.DisplayRole:
+        if not index.isValid() or role != QtCore.Qt.ItemDataRole.DisplayRole:
             return
 
         data = index.internalPointer()[index.column()]

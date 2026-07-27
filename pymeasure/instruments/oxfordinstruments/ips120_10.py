@@ -363,7 +363,7 @@ class IPS120_10(OxfordInstrumentsBase):
             raise MagnetError("IPS 120-10: magnet not at rest; cannot disable persistent mode")
 
         # Check if the setpoint equals the persistent field
-        if not self.field == self.field_setpoint:
+        if self.field != self.field_setpoint:
             log.warning("IPS 120-10: field setpoint and persistent field not identical; "
                         "setting the setpoint to the persistent field.")
             self.field_setpoint = self.field

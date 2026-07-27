@@ -128,4 +128,4 @@ def test_zmq_topic_filtering_works(caplog):
     worker.join(timeout=20.0)  # give it enough time to finish the procedure
     assert procedure.status == procedure.FINISHED
     assert len(received) == 3
-    assert all([item[0] == 'results' for item in received])
+    assert all(item[0] == 'results' for item in received)

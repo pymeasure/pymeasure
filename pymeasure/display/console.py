@@ -175,7 +175,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         self.log.setLevel(log_level)
 
         # Check if the get_estimates function is reimplemented
-        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
+        self.use_estimator = self.procedure_class.get_estimates != Procedure.get_estimates
         if self.use_estimator:
             log.warning("Estimator not yet implemented")
 
