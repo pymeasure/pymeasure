@@ -29,7 +29,7 @@ import logging
 try:
     import progressbar
     # Check that progressbar is progressbar2
-    progressbar.streams
+    _ = progressbar.streams
 except (AttributeError, ImportError):
     progressbar = None
 import signal
@@ -108,8 +108,8 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
         experiment_opts_group = self.add_argument_group("Experiment options")
         for name in parameter_objects:
             if name in special_options:
-                raise Exception(f"Experiment option {name} " +
-                                "is already defined as common options")
+                raise ValueError(f"Experiment option {name} " +
+                                 "is already defined as common options")
             kwargs = {}
             parameter = parameter_objects[name]
             default, _, _type = parameter.cli_args
@@ -122,7 +122,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
     @staticmethod
     def _cli_help_fields(description, kwargs, help_fields):
         if not isinstance(kwargs, dict):
-            raise ValueError("kwargs must be a dictionary")
+            raise TypeError("kwargs must be a dictionary")
 
         message = ""
         if isinstance(description, str):

@@ -219,7 +219,7 @@ class BooleanParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    def convert(self, value):
+    def convert(self, value) -> bool:
         if isinstance(value, str):
             if value.lower() == "true":
                 value = True
@@ -230,7 +230,7 @@ class BooleanParameter(Parameter):
         elif isinstance(value, (int, float)) and value in [0, 1]:
             value = bool(value)
         elif isinstance(value, bool):
-            value = value
+            pass  # already bool
         elif isinstance(value, np.bool_):
             value = bool(value)
         else:
@@ -331,8 +331,8 @@ class VectorParameter(Parameter):
         elif isinstance(value, (list, tuple, np.ndarray)):
             raw_list = value
         else:
-            raise ValueError("VectorParameter given undesired value of "
-                             f"type '{type(value)}'")
+            raise TypeError("VectorParameter given undesired value of "
+                            f"type '{type(value)}'")
         if len(raw_list) != self._length:
             raise ValueError("VectorParameter given value of length "
                              f"{len(raw_list)} instead of {self._length}")
@@ -391,9 +391,8 @@ class ListParameter(Parameter):
                              "allowed choices are set to None.")
 
         # strip units if included
-        if isinstance(value, str):
-            if self.units is not None and value.endswith(" " + self.units):
-                value = value[:-len(self.units)].strip()
+        if isinstance(value, str) and self.units is not None and value.endswith(" " + self.units):
+            value = value[: -len(self.units)].strip()
 
         if str(value) in self._choices:
             value = self._choices[str(value)]
@@ -444,7 +443,7 @@ class PhysicalParameter(VectorParameter):
         elif isinstance(value, (list, tuple)):
             raw_list = value
         else:
-            raise ValueError("VectorParameter given undesired value of "
+            raise TypeError("VectorParameter given undesired value of "
                              f"type '{type(value)}'")
         if len(raw_list) != self._length:
             raise ValueError("VectorParameter given value of length "

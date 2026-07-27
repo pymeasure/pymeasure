@@ -306,7 +306,7 @@ class ANC300Controller(Instrument):
         super().read()  # ignore echo of password
         auth_msg = super().read()
         if auth_msg != 'Authorization success':
-            raise Exception(f"Attocube authorization failed '{auth_msg}'")
+            raise ValueError(f"Attocube authorization failed '{auth_msg}'")
         # switch console echo off
         self.ask('echo off')
 

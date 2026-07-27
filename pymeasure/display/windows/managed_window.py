@@ -349,18 +349,18 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             # Remove
             action_remove = QtGui.QAction(menu)
             action_remove.setText(f"Remove Graph{'s' if len(experiments) > 1 else ''}")
-            if self.manager.is_running():
-                if self.manager.running_experiment() in experiments:  # Experiment running
-                    action_remove.setEnabled(False)
+            if self.manager.is_running() and self.manager.running_experiment() in experiments:
+                # Experiment running
+                action_remove.setEnabled(False)
             action_remove.triggered.connect(lambda: self.remove_experiment(experiments))
             menu.addAction(action_remove)
 
             # Delete
             action_delete = QtGui.QAction(menu)
             action_delete.setText(f"Delete Data File{'s' if len(experiments) > 1 else ''}")
-            if self.manager.is_running():
-                if self.manager.running_experiment() in experiments:  # Experiment running
-                    action_delete.setEnabled(False)
+            if self.manager.is_running() and self.manager.running_experiment() in experiments:
+                # Experiment running
+                action_delete.setEnabled(False)
             action_delete.triggered.connect(lambda: self.delete_experiment_data(experiments))
             menu.addAction(action_delete)
 
@@ -489,7 +489,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         elif (system == 'Darwin'):
             _ = subprocess.Popen(['open', filename])
         else:
-            raise Exception(f"{type(self).__name__} method open_file_externally does not support "
+            raise TypeError(f"{type(self).__name__} method open_file_externally does not support "
                             f"{system} OS")
 
     def reveal_in_file_explorer(self, filename: str) -> None:
@@ -508,13 +508,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         elif system == "Darwin":
             _ = subprocess.Popen(["open", "-R", path])
         else:
-            raise Exception(
+            raise TypeError(
                 f"{type(self).__name__} method reveal_in_file_explorer does not support {system} OS"
             )
 
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):
-            raise Exception("ManagedWindow can not make a Procedure"
+            raise TypeError("ManagedWindow can not make a Procedure"
                             " without a InputsWidget type")
         return self.inputs.get_procedure()
 
@@ -536,9 +536,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             curve_list = curve[:]
 
         curve_color = pg.intColor(0)
-        for curve in curve_list:
-            if hasattr(curve, 'color'):
-                curve_color = curve.color
+        for curve_element in curve_list:
+            if hasattr(curve_element, 'color'):
+                curve_color = curve_element.color
                 break
 
         browser_item = BrowserItem(results, curve_color)
@@ -551,8 +551,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         can click "Queue" to capture the same parameters.
         """
         if not isinstance(self.inputs, InputsWidget):
-            raise Exception("ManagedWindow can not set parameters"
-                            " without a InputsWidget")
+            raise TypeError("ManagedWindow can not set parameters without a InputsWidget")
         self.inputs.set_parameters(parameters)
 
     def _queue(self, checked):
@@ -634,7 +633,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         try:
             self.manager.abort()
         except:  # noqa
-            log.error('Failed to abort experiment', exc_info=True)
+            log.exception('Failed to abort experiment')
             self.abort_button.setText("Abort")
             self.abort_button.clicked.disconnect()
             self.abort_button.clicked.connect(self.abort)

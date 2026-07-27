@@ -110,7 +110,7 @@ def test_failing_properties(method, command):
             Ametek7270,
             [(f'{command}'.encode(), b'\n')]
     ) as inst:
-        getattr(inst, method) == 0.0
+        getattr(inst, method)
 
 
 def test_harmonic_getter():

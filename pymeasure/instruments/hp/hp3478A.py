@@ -496,7 +496,7 @@ class HP3478A(HPLegacyInstrument):
             # 'W' command reads a nibble from the SRAM, but then adds a value of 64 to return
             # it as an ASCII value.
             if rvalue < 64 or rvalue >= 80:
-                raise Exception("calibration nibble out of range")
+                raise ValueError("calibration nibble out of range")
             cal_data.append(rvalue-64)
 
         return cal_data
@@ -508,7 +508,7 @@ class HP3478A(HPLegacyInstrument):
         """
 
         if not self.calibration_enabled:
-            raise Exception("CAL ENABLE switch not set to ON")
+            raise ValueError("CAL ENABLE switch not set to ON")
 
         self.write_calibration_data(cal_data, True)
 
@@ -540,7 +540,7 @@ class HP3478A(HPLegacyInstrument):
 
         """
         if len(cal_data) != 256:
-            raise Exception("cal_data must contain 256 values")
+            raise ValueError("cal_data must contain 256 values")
 
         sum = 0
         for idx in range(13):

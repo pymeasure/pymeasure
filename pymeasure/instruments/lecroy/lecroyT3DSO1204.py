@@ -43,7 +43,7 @@ def _math_define_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 3:
         raise ValueError(f'Number of parameters {len(value)} different from 3')
     output = (sanitize_source(value[0]), value[1], sanitize_source(value[2]))
@@ -59,7 +59,7 @@ def _measure_delay_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 3:
         raise ValueError(f'Number of parameters {len(value)} different from 3')
     output = (value[0], sanitize_source(value[1]), sanitize_source(value[2]))

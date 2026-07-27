@@ -53,7 +53,7 @@ def keysightPNA(connected_device_address):
     instr = KeysightPNA(connected_device_address, timeout=10000)
     instr.clear()
     instr.reset()  # also resets data_format to ascii
-    instr.complete
+    _ = instr.complete
     assert [] == instr.check_errors()
     return instr
 
@@ -99,7 +99,7 @@ class TestMeasurementChannel:
 
     def test_single(self, keysightPNA):
         keysightPNA.ch_1.single()
-        keysightPNA.complete
+        _ = keysightPNA.complete
         assert [] == keysightPNA.check_errors()
 
     def test_continuous(self, keysightPNA):

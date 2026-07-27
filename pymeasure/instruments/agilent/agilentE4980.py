@@ -163,4 +163,4 @@ Select trigger source; accept the values:
             if time.upper() in ["SHORT", "MED", "LONG"]:
                 self.write(f":APER {time}, {averages}")
             else:
-                raise Exception("Time must be a string: SHORT, MED, LONG")
+                raise TypeError("Time must be a string: SHORT, MED, LONG")

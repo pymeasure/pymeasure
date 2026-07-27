@@ -29,7 +29,7 @@ from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
 
-def values(self, command, cast=int, separator=',', preprocess_reply=None, **kwargs):
+def values(self: Instrument, command, cast=int, separator=',', preprocess_reply=None, **kwargs):
     """Write a command to the instrument and return a list of formatted
     values from the result.
 
@@ -57,7 +57,7 @@ def values(self, command, cast=int, separator=',', preprocess_reply=None, **kwar
                 results[i] = bool(float(result))
             else:
                 results[i] = cast(result)
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass  # Keep as bytes
     return results
 

@@ -391,7 +391,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
         # Check validity of parameters
         if not isinstance(datapoints, (list, np.ndarray)):
-            raise ValueError("datapoints must be a list or numpy array")
+            raise TypeError("datapoints must be a list or numpy array")
         elif len(datapoints) > 100:
             raise ValueError("datapoints cannot be longer than 100 points")
         elif not all(x >= -1 and x <= 1 for x in datapoints):

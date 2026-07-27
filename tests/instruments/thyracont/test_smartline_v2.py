@@ -83,20 +83,24 @@ def test_calculateChecksum(message, result):
 def test_transmitter_error():
     with expected_protocol(SmartlineV2, [("0010MV00D", "0017MV00ERROR1X")]) as inst:
         with pytest.raises(ConnectionError) as exc:
-            inst.pressure
+            _ = inst.pressure
         assert exc.value.args[0] == "Sensor defect or stacked out."
 
 
 def test_wrong_answer_command():
-    with expected_protocol(SmartlineV2, [("0010MV00D", "0011MX00ERROR1X")]) as inst:
-        with pytest.raises(ConnectionError, match="Wrong response to MV: '0011MX00ERROR1X'."):
-            inst.pressure
+    with (
+        expected_protocol(SmartlineV2, [("0010MV00D", "0011MX00ERROR1X")]) as inst,
+        pytest.raises(ConnectionError, match="Wrong response to MV: '0011MX00ERROR1X'."),
+    ):
+        _ = inst.pressure
 
 
 def test_wrong_answer_checksum():
-    with expected_protocol(SmartlineV2, [("0010MV00D", "0011MV00ERROR1X")]) as inst:
-        with pytest.raises(ConnectionError, match="Response checksum is wrong."):
-            inst.pressure
+    with (
+        expected_protocol(SmartlineV2, [("0010MV00D", "0011MV00ERROR1X")]) as inst,
+        pytest.raises(ConnectionError, match="Response checksum is wrong."),
+    ):
+        _ = inst.pressure
 
 
 # Test properties

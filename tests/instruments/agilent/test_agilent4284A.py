@@ -155,7 +155,7 @@ class TestCorrection:
              (":CORR:OPEN:STAT?", mapping[state])]
         ) as inst:
             inst.correction.open_enabled = state
-            state == inst.correction.open_enabled
+            assert state == inst.correction.open_enabled
 
     @pytest.mark.parametrize("state", [True, False])
     def test_short_enabled(self, state):
@@ -166,7 +166,7 @@ class TestCorrection:
              (":CORR:SHOR:STAT?", mapping[state])]
         ) as inst:
             inst.correction.short_enabled = state
-            state == inst.correction.short_enabled
+            assert state == inst.correction.short_enabled
 
     @pytest.mark.parametrize("state", [True, False])
     def test_load_enabled(self, state):
@@ -177,7 +177,7 @@ class TestCorrection:
              (":CORR:LOAD:STAT?", mapping[state])]
         ) as inst:
             inst.correction.load_enabled = state
-            state == inst.correction.load_enabled
+            assert state == inst.correction.load_enabled
 
     @pytest.mark.parametrize("impedance_mode", IMPEDANCE_MODES)
     def test_load_function(self, impedance_mode):
@@ -187,7 +187,7 @@ class TestCorrection:
              (":CORR:LOAD:TYPE?", impedance_mode)]
         ) as inst:
             inst.correction.load_function = impedance_mode
-            impedance_mode == inst.correction.load_function
+            assert impedance_mode == inst.correction.load_function
 
     @pytest.mark.parametrize("cable_length", [0, 1, 2, 4])
     def test_cable_length(self, cable_length):
@@ -197,7 +197,7 @@ class TestCorrection:
              (":CORR:LENG?", cable_length)]
         ) as inst:
             inst.correction.cable_length = cable_length
-            cable_length == inst.correction.cable_length
+            assert cable_length == inst.correction.cable_length
 
     @pytest.mark.parametrize("cable_length", [-1, 1.1, 3, 2e1])
     def test_cable_length_validator(self, cable_length):
@@ -242,7 +242,7 @@ class TestSpotCorrection:
              (f":CORR:SPOT{spot}:STAT?", mapping[state])]
         ) as inst:
             inst.correction.spots[spot].enabled = state
-            state == inst.correction.spots[spot].enabled
+            assert state == inst.correction.spots[spot].enabled
 
     @pytest.mark.parametrize("frequency", [20, 100, 1e4, 1e6])
     def test_spot_frequency(self, spot, frequency):
@@ -262,4 +262,4 @@ class TestSpotCorrection:
              (f":CORR:SPOT{spot}:LOAD:STAN?", impedance_mode)]
         ) as inst:
             inst.correction.spots[spot].load_function = impedance_mode
-            impedance_mode == inst.correction.spots[spot].load_function
+            assert impedance_mode == inst.correction.spots[spot].load_function

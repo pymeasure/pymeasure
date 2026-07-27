@@ -79,7 +79,7 @@ def test_read_CRC_error():
         [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
           b"\x01\x03\x04\x00\x00\x03\xE8\x01\x02")],
     ) as inst, pytest.raises(ConnectionError):
-        inst.temperature
+        _ = inst.temperature
 
 
 def test_read_address_error():
@@ -89,7 +89,7 @@ def test_read_address_error():
         [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
           b"\x01\x83\x02\xc0\xf1")],
     ) as inst, pytest.raises(ValueError, match="start address"):
-        inst.temperature
+        _ = inst.temperature
 
 
 def test_read_elements_error():
@@ -99,7 +99,7 @@ def test_read_elements_error():
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
               b"\x01\x83\x03\x011")],
     ) as inst, pytest.raises(ValueError, match="Variable data"):
-        inst.temperature
+        _ = inst.temperature
 
 
 def test_read_any_error():
@@ -109,7 +109,7 @@ def test_read_any_error():
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
               b"\x01\x43\x05\xd13")],
     ) as inst, pytest.raises(ConnectionError):
-        inst.temperature
+        _ = inst.temperature
 
 
 # Test properties

@@ -82,7 +82,7 @@ def test_monitored_error():
         [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03"),
          (b"\x0201010WRM\x03", b"\x020101ER0600\x03")]
     ) as inst, pytest.raises(ConnectionError, match="monitor"):
-        inst.monitored_value
+        _ = inst.monitored_value
 
 
 def test_set_monitored():

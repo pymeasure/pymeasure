@@ -347,7 +347,7 @@ class Racal1992(Instrument):
                 break
 
             if time.time() > end_time:
-                raise Exception("Timeout while waiting for measurement")
+                raise TimeoutError("Timeout while waiting for measurement")
 
         return stb
 

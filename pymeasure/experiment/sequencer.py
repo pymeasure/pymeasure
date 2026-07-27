@@ -176,7 +176,7 @@ class SequenceHandler:
                               f"for parameter '{name}', depth {depth}")
                 raise SequenceEvaluationError("ValueError, likely wrong function argument")
             except Exception as e:
-                raise SequenceEvaluationError(e)
+                raise SequenceEvaluationError(e) from e
         else:
             if log_enabled:
                 log.error("No sequence entered for " +

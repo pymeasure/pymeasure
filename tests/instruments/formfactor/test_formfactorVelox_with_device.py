@@ -122,4 +122,4 @@ class TestVelox:
 
     def test_options(self, prober):
         with pytest.raises(NotImplementedError):
-            prober.options
+            _ = prober.options

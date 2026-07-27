@@ -30,10 +30,11 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    from pymeasure.adapters.prologix import PrologixAdapter
     from pymeasure.adapters.visa import VISAAdapter
 except ImportError:
     log.warning("PyVISA library could not be loaded")
+else:
+    from pymeasure.adapters.prologix import PrologixAdapter
 
 try:
     from pymeasure.adapters.serial import SerialAdapter

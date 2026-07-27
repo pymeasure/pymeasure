@@ -86,8 +86,9 @@ class Instrument(CommonBase):
             try:
                 adapter = VISAAdapter(adapter, **kwargs)
             except ImportError:
-                raise Exception("Invalid Adapter provided for Instrument since"
-                                " PyVISA is not present")
+                raise TypeError(
+                    "Invalid Adapter provided for Instrument sincePyVISA is not present"
+                )
         self.adapter = adapter
         self.isShutdown = False
         self.name = name

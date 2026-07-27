@@ -432,10 +432,8 @@ class TestInheritanceWithChildren:
 def test_MultiChannelCreator(args, pairs, kwargs):
     """Test whether the channel creator receives the right arguments."""
     d = CommonBase.MultiChannelCreator(*args)
-    i = 0
-    for pair in d.pairs:
+    for i, pair in enumerate(d.pairs):
         assert pair == pairs[i]
-        i += 1
     assert d.kwargs == kwargs
 
 
@@ -523,7 +521,7 @@ def test_control_check_get_errors(fake, caplog):
         return [(7, "some error")]
 
     fake.check_get_errors = checking
-    fake.fake_ctrl_errors
+    _ = fake.fake_ctrl_errors
     assert fake.error is True
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
@@ -538,7 +536,7 @@ def test_control_check_get_errors_multiple_errors(fake, caplog):
         return [15, (19, "x")]
 
     fake.check_get_errors = checking
-    fake.fake_ctrl_errors
+    _ = fake.fake_ctrl_errors
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
@@ -548,7 +546,7 @@ def test_control_check_get_errors_multiple_errors(fake, caplog):
 
 def test_control_check_get_errors_log_exception(fake, caplog):
     with pytest.raises(NotImplementedError):
-        fake.fake_ctrl_errors
+        _ = fake.fake_ctrl_errors
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
@@ -683,7 +681,7 @@ def test_control_dict_str_map(dynamic):
 def test_value_not_in_map(fake):
     fake.parent._buffer = "123"
     with pytest.raises(KeyError, match="not found in mapped values"):
-        fake.fake_measurement
+        _ = fake.fake_measurement
 
 
 def test_control_invalid_values_get():
@@ -693,7 +691,7 @@ def test_control_invalid_values_get():
             values=b"abasdfe", map_values=True, cast=str)
 
     with pytest.raises(ValueError, match="Values of type"):
-        Fake().x
+        _ = Fake().x
 
 
 def test_control_invalid_values_set():
@@ -816,7 +814,7 @@ def test_control_parameters_for_values():
 
     fake = Fake()
     fake.x = 5
-    fake.x
+    _ = fake.x
     assert fake.testing is True
 
 
@@ -838,7 +836,7 @@ def test_measurement_parameters_for_values():
 
     fake = Fake()
     fake.write("5")
-    fake.x
+    _ = fake.x
     assert fake.testing is True
 
 
@@ -909,7 +907,7 @@ def test_measurement_set(fake):
 
 def test_setting_get(fake):
     with pytest.raises(LookupError, match="Property can not be read."):
-        fake.fake_setting
+        _ = fake.fake_setting
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -1033,17 +1031,17 @@ def test_dynamic_property_values_update_in_one_instance_leaves_other_unchanged()
 
 def test_dynamic_property_reading_special_attributes_forbidden(fake):
     with pytest.raises(AttributeError):
-        fake.fake_ctrl_validator
+        _ = fake.fake_ctrl_validator
 
 
 def test_dynamic_property_with_inheritance():
     inst = ExtendedBase()
     # Test for inherited attribute
     with pytest.raises(AttributeError):
-        inst.fake_ctrl_validator
+        _ = inst.fake_ctrl_validator
     # Test for new attribute
     with pytest.raises(AttributeError):
-        inst.fake_ctrl2_validator
+        _ = inst.fake_ctrl2_validator
 
 
 def test_dynamic_property_values_defined_at_superclass_level():

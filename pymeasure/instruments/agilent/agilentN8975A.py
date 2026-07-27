@@ -145,7 +145,7 @@ class AgilentN8975A(SCPIMixin, Instrument):
         self.continuous_mode_enabled = False
         self.abort()
         self.initiate()
-        self.complete
+        _ = self.complete
 
     average = Instrument.control(
         "AVER:COUN?",

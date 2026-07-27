@@ -30,9 +30,9 @@ from pymeasure.instruments import Instrument
 
 
 def get_dict_attr(obj, attr):
-    for obj in [obj] + obj.__class__.mro():
-        if attr in obj.__dict__:
-            return obj.__dict__[attr]
+    for obj_element in [obj] + obj.__class__.mro():
+        if attr in obj_element.__dict__:
+            return obj_element.__dict__[attr]
     raise AttributeError
 
 

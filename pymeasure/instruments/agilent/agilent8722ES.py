@@ -101,8 +101,7 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
         if value in Agilent8722ES.SCATTERING_PARAMETERS:
             self.write(f"{value}")
         else:
-            raise Exception("Invalid scattering parameter requested"
-                            " for Agilent 8722ES")
+            raise ValueError("Invalid scattering parameter requested for Agilent 8722ES")
 
     @property
     def scan_points(self):
@@ -113,8 +112,7 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
         if search:
             return int(float(search.group()))
         else:
-            raise Exception("Improper message returned for the"
-                            " number of points")
+            raise ValueError("Improper message returned for the number of points")
 
     @scan_points.setter
     def scan_points(self, points):

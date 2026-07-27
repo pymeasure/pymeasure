@@ -397,8 +397,7 @@ class CommonBase:
         """Return a list of all the Instrument's channel pairs"""
         channel_pairs: list[tuple[type[Child], IdType]] = []
         for name, creator in cls.get_channels():
-            for pair in creator.pairs:
-                channel_pairs.append(pair)
+            channel_pairs += list(creator.pairs)
         return channel_pairs
 
     def _create_channels(self) -> None:
@@ -414,7 +413,7 @@ class CommonBase:
                 elif isinstance(creator, CommonBase.ChannelCreator):
                     child = self.add_child(cls, id, attr_name=name, **creator.kwargs)
                 else:
-                    raise ValueError(f"Invalid class '{creator}' for channel creation.")
+                    raise TypeError(f"Invalid class '{creator}' for channel creation.")
                 child._protected = True
 
     def __setattr__(self, name: str, value: Any) -> None:
@@ -572,7 +571,7 @@ class CommonBase:
                     results.append(bool(float(result)))  # type: ignore[arg-type]
                 else:
                     results.append(cast(result))  # type: ignore[call-arg]
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # Keep as string
                 warn(
                     f"Cannot cast '{result}' with '{cast}' for command '{command}'. "

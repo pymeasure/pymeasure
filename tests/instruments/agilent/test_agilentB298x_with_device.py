@@ -62,7 +62,7 @@ def resetted_b298x(agilentB298x):
 @pytest.fixture
 def b298x_idle(agilentB298x):
     agilentB298x.abort()
-    agilentB298x.trigger_all_is_idle
+    _ = agilentB298x.trigger_all_is_idle
     agilentB298x.source_enabled = True
     agilentB298x.input_enabled = True
     return agilentB298x

@@ -100,7 +100,7 @@ class AH2500A(Instrument):
             log.warning("Excess noise, check your experiment setup")
             return (math.nan, math.nan, math.nan)
         else:  # some unknown return string (e.g. misconfigured units)
-            raise Exception(f'Returned string "{string}" could not be parsed')
+            raise ValueError(f'Returned string "{string}" could not be parsed')
 
     def trigger(self):
         """

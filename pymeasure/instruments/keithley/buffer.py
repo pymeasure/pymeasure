@@ -88,7 +88,7 @@ class KeithleyBuffer:
             if should_stop():
                 return
             if (time() - t) > timeout:
-                raise Exception("Timed out waiting for Keithley buffer to fill.")
+                raise TimeoutError("Timed out waiting for Keithley buffer to fill.")
 
     @property
     def buffer_data(self):

@@ -53,7 +53,7 @@ def test_ion_gauge_status_invalid_channel():
         MKS937B,
         [],
     ) as inst, pytest.raises(AttributeError):
-        inst.ch_2.ion_gauge_status
+        _ = inst.ch_2.ion_gauge_status
 
 
 def test_unit_setter():

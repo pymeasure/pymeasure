@@ -63,7 +63,7 @@ class Worker(StoppableThread):
 
         self.port = port
         if not isinstance(results, Results):
-            raise ValueError("Invalid Results object during Worker construction")
+            raise TypeError("Invalid Results object during Worker construction")
         self.results = results
         self.results.procedure.check_parameters()
         self.results.procedure.status = Procedure.QUEUED
@@ -227,7 +227,7 @@ class Worker(StoppableThread):
             self.procedure.execute()
         except (KeyboardInterrupt, SystemExit):
             self.handle_abort()
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.handle_error()
         finally:
             self.shutdown()

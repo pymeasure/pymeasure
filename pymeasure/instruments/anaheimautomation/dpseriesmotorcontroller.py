@@ -180,7 +180,7 @@ class DPSeriesMotorController(Instrument):
         """
         current_errors = self.error_reg
         if current_errors != 0:
-            logging.error(f"DP-Series motor controller error detected: {current_errors}")
+            log.error(f"DP-Series motor controller error detected: {current_errors}")
         return current_errors
 
     def __init__(self, adapter, name="Anaheim Automation Stepper Motor Controller",

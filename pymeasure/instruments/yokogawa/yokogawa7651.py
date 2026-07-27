@@ -181,12 +181,11 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
         :param duration: A time in seconds over which to ramp
         """
         start_current = self.source_current
-        stop_current = current
         pause = duration / steps
-        if (start_current != stop_current):
-            currents = np.linspace(start_current, stop_current, steps)
-            for current in currents:
-                self.source_current = current
+        if (start_current != current):
+            currents = np.linspace(start_current, current, steps)
+            for current_value in currents:
+                self.source_current = current_value
                 sleep(pause)
 
     def ramp_to_voltage(self, voltage, steps=25, duration=0.5):
@@ -197,12 +196,11 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
         :param duration: A time in seconds over which to ramp
         """
         start_voltage = self.source_voltage
-        stop_voltage = voltage
         pause = duration / steps
-        if (start_voltage != stop_voltage):
-            voltages = np.linspace(start_voltage, stop_voltage, steps)
-            for voltage in voltages:
-                self.source_voltage = voltage
+        if (start_voltage != voltage):
+            voltages = np.linspace(start_voltage, voltage, steps)
+            for voltage_value in voltages:
+                self.source_voltage = voltage_value
                 sleep(pause)
 
     def shutdown(self):

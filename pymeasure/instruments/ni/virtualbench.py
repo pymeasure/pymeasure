@@ -1,3 +1,4 @@
+# ruff: file-ignore[BLE001]
 #
 # This file is part of the PyMeasure package.
 #
@@ -147,8 +148,7 @@ class VirtualBench:
         :rtype: (int, float)
         """
         if not isinstance(timestamp, pyvb.Timestamp):
-            raise ValueError(f"{timestamp} is not a VirtualBench Timestamp object"
-                             )
+            raise TypeError(f"{timestamp} is not a VirtualBench Timestamp object")
         return self.vb.convert_timestamp_to_values(timestamp)
 
     def convert_values_to_timestamp(self, seconds_since_1970,
@@ -190,7 +190,7 @@ class VirtualBench:
         :rtype: (str, int)
         """
         if not isinstance(names_in, str):
-            raise ValueError(f"{names_in} is not a string")
+            raise TypeError(f"{names_in} is not a string")
         return self.vb.collapse_channel_string(names_in)
 
     def expand_channel_string(self, names_in):
@@ -935,15 +935,15 @@ class VirtualBench:
             channels = self._vb_handle.expand_channel_string(channel)[0]
             channels = channels.split(', ')
             return_value = []
-            for channel in channels:
+            for channel_element in channels:
                 # split off lines by last '/'
                 try:
-                    (device, channel) = re.match(
-                        r'(.*)(?:/)(.+)', channel).groups()
+                    (device, channel_element) = re.match(
+                        r'(.*)(?:/)(.+)', channel_element).groups()
                 except Exception:
                     error()
                 # validate numbers in range 1-2
-                if int(channel) not in range(1, 3):
+                if int(channel_element) not in range(1, 3):
                     error()
                 # validate device name: either 'mso' or 'device_name/mso'
                 if device == 'mso':
@@ -959,7 +959,7 @@ class VirtualBench:
                     if device != self._device_name:
                         error()
                 # constructing line references for output
-                return_value.append('mso/' + channel)
+                return_value.append('mso/' + channel_element)
 
             return_value = ', '.join(return_value)
             return_value = self._vb_handle.collapse_channel_string(

@@ -29,13 +29,13 @@ import pyqtgraph as pg
 from ..curves import ResultsCurve
 from ..Qt import QtCore, QtWidgets
 from .plot_frame import PlotFrame
-from .tab_widget import TabWidget
+from .tab_widget import DEFAULT_COLOR, TabWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class PlotWidget(TabWidget, QtWidgets.QWidget):
+class PlotWidget(TabWidget[ResultsCurve], QtWidgets.QWidget):
     """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
     to allow different columns of the data to be dynamically chosen
     """
@@ -103,7 +103,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 600)
 
-    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+    def new_curve(self, results, color=DEFAULT_COLOR, **kwargs) -> ResultsCurve:
         if 'pen' not in kwargs:
             kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
         if 'antialias' not in kwargs:
@@ -126,16 +126,16 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
 
-    def load(self, curve):
+    def load(self, curve: ResultsCurve) -> None:
         curve.x = self.columns_x.currentText()
         curve.y = self.columns_y.currentText()
         curve.update_data()
         self.plot.addItem(curve)
 
-    def remove(self, curve):
+    def remove(self, curve: ResultsCurve) -> None:
         self.plot.removeItem(curve)
 
-    def set_color(self, curve, color):
+    def set_color(self, curve: ResultsCurve, color) -> None:
         """ Change the color of the pen of the curve """
         curve.set_color(color)
 
@@ -148,5 +148,5 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
                           parent=parent,
                           )
 
-    def clear_widget(self):
+    def clear_widget(self) -> None:
         self.plot.clear()

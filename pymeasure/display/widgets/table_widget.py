@@ -27,11 +27,10 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
-import pyqtgraph as pg
 
 from ...experiment import Procedure
 from ..Qt import QtCore, QtGui, QtWidgets
-from .tab_widget import TabWidget
+from .tab_widget import DEFAULT_COLOR, TabWidget
 
 SORT_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
 SORTING_ENABLED = True  # Allow to disable sorting, for debug purpose only
@@ -246,23 +245,23 @@ class PandasModelBase(QtCore.QAbstractTableModel):
                 self.endInsertColumns()
         else:
             top_bottom = self._get_row_column_set(results, r1, c1, r2, c2)
-            for r1, c1, r2, c2 in top_bottom:
-                self.dataChanged.emit(self.createIndex(r1, c1),
-                                      self.createIndex(r2, c2))
+            for r1_e, c1_e, r2_e, c2_e in top_bottom:
+                self.dataChanged.emit(self.createIndex(r1_e, c1_e),
+                                      self.createIndex(r2_e, c2_e))
 
     def pandas_row_count(self):
         """ Return total row count of the panda dataframes
 
         The value depends on the geometry selected to display dataframes
         """
-        raise Exception("Subclass should implement it")
+        raise NotImplementedError("Subclass should implement it")
 
     def pandas_column_count(self):
         """ Return total column count of the panda dataframes
 
         The value depends on the geometry selected to display dataframes
         """
-        raise Exception("Subclass should implement it")
+        raise NotImplementedError("Subclass should implement it")
 
     def _get_row_column_set(self, results, r1, c1, r2, c2):
         """ Return set of top/bottom coordinates for data changed event.
@@ -270,19 +269,19 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         Depending on the geometry of the table a single top/bottom could be
         translated in multiple tops/bottoms
         """
-        raise Exception("Subclass should implement it")
+        raise NotImplementedError("Subclass should implement it")
 
     def translate_to_local(self, row, col):
         """ Translate from full table coordinate to single results coordinates """
-        raise Exception("Subclass should implement it")
+        raise NotImplementedError("Subclass should implement it")
 
     def translate_to_global(self, results, row, col):
         """ Translate from single results coordinates to full table coordinates """
-        raise Exception("Subclass should implement it")
+        raise NotImplementedError("Subclass should implement it")
 
     @property
     def horizontal_header(self):
-        raise Exception("Subclass should implement it")
+        raise NotImplementedError("Subclass should implement it")
 
     @property
     def vertical_header(self):
@@ -612,7 +611,7 @@ class Table(QtWidgets.QTableView):
         self.setModel(new_model)
 
 
-class TableWidget(TabWidget, QtWidgets.QWidget):
+class TableWidget(TabWidget[ResultsTable], QtWidgets.QWidget):
     """ Widget to display experiment data in a tabular format
     """
     layout_class_map = {
@@ -695,18 +694,18 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
         self.column_index = index
         self.table.set_index(index)
 
-    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+    def new_curve(self, results, color=DEFAULT_COLOR, **kwargs) -> ResultsTable:
         return ResultsTable(results, color, self.column_index, wdg=self, **kwargs)
 
-    def load(self, table):
-        self.table.add_table(table)
+    def load(self, curve: ResultsTable) -> None:
+        self.table.add_table(curve)
 
-    def remove(self, table):
-        self.table.remove_table(table)
+    def remove(self, curve: ResultsTable) -> None:
+        self.table.remove_table(curve)
 
-    def set_color(self, table, color):
+    def set_color(self, curve: ResultsTable, color) -> None:
         """ Change the color of the pen of the curve """
-        self.table.set_color(table, color)
+        self.table.set_color(curve, color)
 
     def preview_widget(self, parent=None):
         """ Return a widget suitable for preview during loading """
@@ -720,5 +719,5 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
                            parent=None,
                            )
 
-    def clear_widget(self):
+    def clear_widget(self) -> None:
         self.table.clear()

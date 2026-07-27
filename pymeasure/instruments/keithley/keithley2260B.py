@@ -22,14 +22,10 @@
 # THE SOFTWARE.
 #
 
-import logging
 from warnings import warn
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 
 class Keithley2260B(SCPIMixin, Instrument):
@@ -122,14 +118,18 @@ class Keithley2260B(SCPIMixin, Instrument):
     @property
     def enabled(self):
         """Control whether the output is enabled, see :attr:`output_enabled`."""
-        log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
-                    'instead.', FutureWarning)
+        warn(
+            'Deprecated property name "enabled", use the identical "output_enabled", instead.',
+            FutureWarning,
+        )
         return self.output_enabled
 
     @enabled.setter
     def enabled(self, value):
-        log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
-                    'instead.', FutureWarning)
+        warn(
+            'Deprecated property name "enabled", use the identical "output_enabled", instead.',
+            FutureWarning,
+        )
         self.output_enabled = value
 
     def shutdown(self):

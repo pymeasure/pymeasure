@@ -91,7 +91,7 @@ class TestRedpitaya:
         inst = redpitaya_scpi
 
         for ind in range(4):
-            inst.analog_in_slow[ind].voltage
+            _ = inst.analog_in_slow[ind].voltage
             inst.analog_out_slow[ind].voltage = 0.5
 
     def test_acquisition(self, redpitaya_scpi):

@@ -112,10 +112,12 @@ class EstimatorWidget(QtWidgets.QWidget):
 
         # Check if the output of the function is acceptable
         raise_error = True
-        if isinstance(estimates, (list, tuple)):
-            if all(isinstance(est, (tuple, list)) for est in estimates):
-                if all(len(est) == 2 for est in estimates):
-                    raise_error = False
+        if (
+            isinstance(estimates, (list, tuple))
+            and all(isinstance(est, (tuple, list)) for est in estimates)
+            and all(len(est) == 2 for est in estimates)
+        ):
+            raise_error = False
 
         if raise_error:
             raise TypeError(

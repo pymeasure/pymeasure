@@ -31,13 +31,13 @@ from pyqtgraph.dockarea.Dock import DockLabel
 
 from ..Qt import QtWidgets
 from .plot_widget import PlotFrame, PlotWidget
-from .tab_widget import TabWidget
+from .tab_widget import DEFAULT_COLOR, TabWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class DockWidget(TabWidget, QtWidgets.QWidget):
+class DockWidget(TabWidget[list], QtWidgets.QWidget):
     """
     Widget that contains a DockArea with a number of Docks as determined by the length of
     the longest x_axis_labels or y_axis_labels list.
@@ -150,7 +150,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
                     "Number of displayed docks does not match number of docks in layout file "
                     f"{self.dock_layout_filename}")
 
-    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+    def new_curve(self, results, color=DEFAULT_COLOR, **kwargs):
         if 'pen' not in kwargs:
             kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
         if 'antialias' not in kwargs:
@@ -160,6 +160,6 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             curves.append(self.plot_frames[i].new_curve(results, color=color, **kwargs))
         return curves
 
-    def clear(self):
+    def clear(self) -> None:
         for i in range(self.num_plots):
             self.plot_frames[i].plot.clear()

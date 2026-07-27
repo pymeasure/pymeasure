@@ -53,7 +53,7 @@ def clist_validator(value, values):
     elif isinstance(value, (list, tuple, np.ndarray, range)):
         clist = [f"{x:d}" for x in value]
     else:
-        raise ValueError(f"Type of value ({type(value)}) not valid")
+        raise TypeError(f"Type of value ({type(value)}) not valid")
 
     # Pad numbers to length (if required)
     clist = [c.rjust(2, "0") for c in clist]
@@ -219,7 +219,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
             raise ValueError(f"No 7709 card installed in slot {slot:g}")
 
         if isinstance(rows, str) and isinstance(columns, str):
-            raise ValueError("Only one parameter can be 'all'")
+            raise TypeError("Only one parameter can be 'all'")
         elif isinstance(rows, str) and rows == "all":
             rows = list(range(1, 7))
         elif isinstance(columns, str) and columns == "all":

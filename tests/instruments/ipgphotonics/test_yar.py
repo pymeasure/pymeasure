@@ -138,13 +138,15 @@ def test_power_setpoint_setter():
 
 
 def test_power_setpoint_setter_out_of_range_driver():
-    with expected_protocol(
+    with (
+        expected_protocol(
             YAR,
             # init_comm is modified
-            [("RNP", "RNP: 0.200"), ("RMP", "RMP: 10.5"), ("RDPT", "RDPT: 0.100")]
-    ) as inst:
-        with pytest.raises(ValueError):
-            inst.power_setpoint = 20
+            [("RNP", "RNP: 0.200"), ("RMP", "RMP: 10.5"), ("RDPT", "RDPT: 0.100")],
+        ) as inst,
+        pytest.raises(ValueError),
+    ):
+        inst.power_setpoint = 20
 
 
 def test_power_setpoint_setter_out_of_range_device():

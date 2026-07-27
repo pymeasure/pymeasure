@@ -1,3 +1,4 @@
+# ruff: file-ignore[TRY004]
 #
 # This file is part of the PyMeasure package.
 #
@@ -33,7 +34,7 @@ from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
-def _normalize_inf_input(value):
+def _normalize_inf_input(value: float | str) -> float | str:
     """Normalize INF-like setter values.
 
     :param value: Input value from user code.

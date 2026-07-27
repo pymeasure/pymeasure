@@ -49,7 +49,7 @@ def force_output_off(generator):
     yield
     try:
         generator.output_enabled = False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log.warning("Failed to disable output for %r during teardown: %s", generator, str(e))
 
 

@@ -132,7 +132,7 @@ class Browser(QtWidgets.QTreeWidget):
 
         for measured_quantity in self.measured_quantities:
             if measured_quantity not in experiment.procedure.DATA_COLUMNS:
-                raise Exception("Procedure does not measure the"
+                raise ValueError("Procedure does not measure the"
                                 f" {measured_quantity} quantity.")
 
         # Set the relevant fields within the BrowserItem if

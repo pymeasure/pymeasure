@@ -29,11 +29,11 @@ import time
 
 import numpy as np
 
-from pymeasure.experiment import Results, Worker
 from pymeasure.log import console_log, setup_logging
 
 from .config import get_config, set_mpl_rcparams
-from .results import unique_filename
+from .results import Results, unique_filename
+from .workers import Worker
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -192,7 +192,7 @@ class Experiment:
         """Update the plots in the plots list with new data from the experiment.data
         pandas dataframe."""
         try:
-            self.data
+            _ = self.data
             for plot in self.plots:
                 ax = plot['ax']
                 if plot['type'] == 'plot':

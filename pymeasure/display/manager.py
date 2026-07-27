@@ -34,6 +34,10 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class ExperimentException(BaseException):
+    pass
+
+
 class Experiment(QtCore.QObject):
     """ The Experiment class helps group the :class:`.Procedure`,
     :class:`.Results`, and their display functionality. Its function
@@ -69,11 +73,11 @@ class ExperimentQueue(QtCore.QObject):
 
     def remove(self, experiment):
         if experiment not in self.queue:
-            raise Exception("Attempting to remove an Experiment that is "
-                            "not in the ExperimentQueue")
+            raise ExperimentException("Attempting to remove an Experiment that is "
+                                      "not in the ExperimentQueue")
         else:
             if experiment.procedure.status == Procedure.RUNNING:
-                raise Exception("Attempting to remove a running experiment")
+                raise ExperimentException("Attempting to remove a running experiment")
             else:
                 self.queue.pop(self.queue.index(experiment))
 
@@ -150,7 +154,7 @@ class BaseManager(QtCore.QObject):
         if self.is_running():
             return self._running_experiment
         else:
-            raise Exception("There is no Experiment running")
+            raise ExperimentException("There is no Experiment running.")
 
     def _update_progress(self, progress):
         if self.is_running():
@@ -194,7 +198,7 @@ class BaseManager(QtCore.QObject):
         in the queue.
         """
         if self.is_running():
-            raise Exception("Another procedure is already running")
+            raise ExperimentException("Another procedure is already running.")
         else:
             if self.experiments.has_next():
                 log.debug("Manager is initiating the next experiment")
@@ -262,8 +266,7 @@ class BaseManager(QtCore.QObject):
         there is no running experiment
         """
         if not self.is_running():
-            raise Exception("Attempting to abort when no experiment "
-                            "is running")
+            raise ExperimentException("Attempting to abort when no experiment is running.")
         else:
             self._start_on_add = False
             self._is_continuous = False

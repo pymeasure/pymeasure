@@ -88,7 +88,7 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
     :param num_pars_finder: function to find the number of expected parameters
     """
     if not isinstance(value, tuple):
-        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) < 3 or len(value) > 5:
         raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
     value = tuple(v.upper() if isinstance(v, str) else v for v in value)
@@ -162,7 +162,7 @@ def _intensity_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 2:
         raise ValueError(f'Number of parameters {len(value)} different from 2')
     for i in range(2):
@@ -194,11 +194,13 @@ class _ChunkResizer:
 
     def __enter__(self):
         """Only resize the chunk size if the adapter support this feature."""
-        if (self.adapter.connection is not None
-                and hasattr(self.adapter.connection, "chunk_size")):
-            if self.new_chunk_size > self.adapter.connection.chunk_size:
-                self.old_chunk_size = self.adapter.connection.chunk_size
-                self.adapter.connection.chunk_size = self.new_chunk_size
+        if (
+            self.adapter.connection is not None
+            and hasattr(self.adapter.connection, "chunk_size")
+            and self.new_chunk_size > self.adapter.connection.chunk_size
+        ):
+            self.old_chunk_size = self.adapter.connection.chunk_size
+            self.adapter.connection.chunk_size = self.new_chunk_size
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.old_chunk_size is not None:

@@ -102,14 +102,17 @@ def test_error_checks():
 
 def test_not_all_communication_used():
     """Test whether unused communication raises an error."""
-    with raises(AssertionError, match="Unprocessed protocol definitions remain"):
-        with expected_protocol(
+    with (
+        raises(AssertionError, match="Unprocessed protocol definitions remain"),
+        expected_protocol(
             BasicTestInstrument,
-            [('VOLT?', 3.14),
-             ('VOLT 4.5 V', None),
-             ]
-        ) as instr:
-            assert instr.simple == 3.14
+            [
+                ("VOLT?", 3.14),
+                ("VOLT 4.5 V", None),
+            ],
+        ) as instr,
+    ):
+        assert instr.simple == 3.14
 
 
 def test_non_empty_write_buffer():

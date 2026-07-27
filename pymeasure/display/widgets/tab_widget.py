@@ -23,12 +23,18 @@
 #
 
 import logging
+from typing import Generic, TypeVar
+
+import pyqtgraph as pg
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+Curve = TypeVar("Curve")
+DEFAULT_COLOR = pg.intColor(0)
 
-class TabWidget:
+
+class TabWidget(Generic[Curve]):
     """ Utility class to define default implementation for some basic methods.
 
         When defining a widget to be used in subclasses of
@@ -41,17 +47,17 @@ class TabWidget:
         super().__init__(*args, **kwargs)
         self.name = name
 
-    def new_curve(self, *args, **kwargs):
+    def new_curve(self, results, color=DEFAULT_COLOR, **kwargs) -> Curve:
         """ Create a new curve """
-        return
+        ...  # noqa: PIE790
 
-    def load(self, curve):
+    def load(self, curve: Curve) -> None:
         """ Add curve to widget """
 
-    def remove(self, curve):
+    def remove(self, curve: Curve) -> None:
         """ Remove curve from widget """
 
-    def set_color(self, curve, color):
+    def set_color(self, curve: Curve, color) -> None:
         """ Set color for widget """
 
     def preview_widget(self, parent=None):
@@ -64,7 +70,7 @@ class TabWidget:
 
         return
 
-    def clear_widget(self):
+    def clear_widget(self) -> None:
         """ Clear widget content
 
         Behaviour is widget specific and it is currently used in preview mode

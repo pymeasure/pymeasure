@@ -128,7 +128,7 @@ class FWBell5080(SCPIMixin, Instrument):
         :param samples: The number of samples to perform
         """
         if samples < 1:
-            raise Exception("F.W. Bell 5080 does not support samples less than 1.")
+            raise ValueError("F.W. Bell 5080 does not support samples less than 1.")
         else:
             data = [self.field for i in range(int(samples))]
             return np.array(data, dtype=np.float64)

@@ -2365,7 +2365,6 @@ class HP856Xx(Instrument):
         values=[["FULL", "ZERO"], [float("-inf"), float("inf")]],
         cast=cast_or_str(float),
         set_process=lambda v: v if isinstance(v, str) else f"{v:.11E} Hz",
-        get_process=lambda v: v if isinstance(v, str) else v,
     )
 
     squelch = Instrument.control(

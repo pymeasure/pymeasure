@@ -80,7 +80,7 @@ class Danfysik8500(Instrument):
         result = super().read()
         search = re.search(r"^\?\x07\s(?P<name>.*)$", result, re.MULTILINE)
         if search:
-            raise Exception(f"Danfysik raised the error: {search.groups()[0]}")
+            raise ValueError(f"Danfysik raised the error: {search.groups()[0]}")
         else:
             return result
 
@@ -139,8 +139,8 @@ class Danfysik8500(Instrument):
         if match is not None:
             return int(match.groupdict()['hex'], 16)
         else:
-            raise Exception("Danfysik status not properly returned. Instead "
-                            f"got '{status}'")
+            raise ValueError("Danfysik status not properly returned. Instead "
+                             f"got '{status}'")
 
     @property
     def current(self):

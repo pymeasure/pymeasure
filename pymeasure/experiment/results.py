@@ -212,7 +212,7 @@ class Results:
 
     def __init__(self, procedure, data_filename):
         if not isinstance(procedure, Procedure):
-            raise ValueError("Results require a Procedure object")
+            raise TypeError("Results require a Procedure object")
         self.procedure = procedure
         self.procedure_class = procedure.__class__
         self.parameters = procedure.parameter_objects()
@@ -372,7 +372,7 @@ class Results:
                 separator = ": "
                 partitioned_line = line[1:].partition(separator)
                 if partitioned_line[1] != separator:
-                    raise Exception(f"Error partitioning header line {line}.")
+                    raise ValueError(f"Error partitioning header line {line}.")
                 else:
                     parameters[partitioned_line[0]] = partitioned_line[2]
 
@@ -443,7 +443,7 @@ class Results:
             # Data has not been read
             try:
                 self.reload()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # Empty dataframe
                 self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
         else:  # Concatenate additional data, if any, to already loaded data
@@ -474,7 +474,7 @@ class Results:
                 if len(tmp_frame) > 0:
                     self._data = pd.concat([self._data, tmp_frame],
                                            ignore_index=True, sort=False)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass  # All data is up to date
             # Update _last_file_size
             self._last_file_size = current_size
@@ -493,7 +493,7 @@ class Results:
         )
         try:
             self._data = pd.concat(chunks, ignore_index=True, sort=False)
-        except Exception:
+        except Exception:  # noqa: BLE001
             self._data = chunks.read()
 
     def __repr__(self):

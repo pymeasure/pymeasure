@@ -155,7 +155,6 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", BANDWIDTHS)
     def test_output_bandwidth(self, instr, channel, case):
-        instr = instr
         assert instr.ch(channel).bandwidth == 'low' if channel == 1 else 'high'
         instr.ch(channel).bandwidth = case
         assert instr.ch(channel).bandwidth == case
@@ -198,7 +197,7 @@ class TestKeithley2306:
         instr.ch(channel).nplc = case
         time.sleep(0.5)
         assert instr.ch(channel).nplc == case
-        instr.ch(channel).nplc == 1
+        _ = instr.ch(channel).nplc == 1
 
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", AVERAGE_COUNTS)

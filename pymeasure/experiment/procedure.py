@@ -74,10 +74,10 @@ class Procedure:
         self.status = Procedure.QUEUED
         self._update_parameters()
         self._update_metadata()
-        for key in kwargs:
+        for key, value in kwargs.items():
             if key in self._parameters:
-                setattr(self, key, kwargs[key])
-                log.info(f'Setting parameter {key} to {kwargs[key]}')
+                setattr(self, key, value)
+                log.info(f'Setting parameter {key} to {value}')
         self.gen_measurement()
 
     @staticmethod

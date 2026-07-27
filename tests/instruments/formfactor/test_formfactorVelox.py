@@ -137,7 +137,7 @@ class TestVelox:
             Velox,
             [("*IDN?", "7: Error Message")]
         ) as inst:
-            inst.id
+            _ = inst.id
 
     def test_expected_error(self):
         with does_not_raise(ConnectionError), expected_protocol(
@@ -151,7 +151,7 @@ class TestVelox:
             Velox,
             [("*OPT?", "Fake options")]
         ) as inst:
-            inst.options
+            _ = inst.options
 
     def test_version(self):
         with expected_protocol(

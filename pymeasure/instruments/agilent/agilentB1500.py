@@ -129,8 +129,8 @@ class AgilentB1500(SCPIMixin, Instrument):
                 try:
                     out[i + 1] = module_names[module[0]]
                     # i+1: channels start at 1 not at 0
-                except Exception:
-                    raise NotImplementedError(f"Module {module[0]} is not implemented yet!")
+                except Exception as e:
+                    raise NotImplementedError(f"Module {module[0]} is not implemented yet!") from e
         return out
 
     def initialize_all_smus(self) -> None:
@@ -359,10 +359,10 @@ class AgilentB1500(SCPIMixin, Instrument):
             sizes = {"FMT1": 16, "FMT11": 17, "FMT21": 19}
             try:
                 self.size = sizes[output_format_str]
-            except Exception:
+            except Exception as e:
                 raise NotImplementedError(
                     f"Data Format {output_format_str} is not implemented so far."
-                )
+                ) from e
             self.format = output_format_str
             data_names_C = {
                 "V": "Voltage (V)",
@@ -1644,16 +1644,16 @@ class Ranging:
         else:
             try:
                 index = self.indizes[input_value.upper()]
-            except Exception:
+            except Exception as e:
                 raise ValueError(
                     f"Specified Range Name {input_value.upper()} is not valid or not supported by"
                     f" this SMU"
-                )
+                ) from e
         # get name
         try:
             name = self.ranges[index]
-        except Exception:
-            raise ValueError(f"Specified Range {index} is not supported by this SMU")
+        except Exception as e:
+            raise ValueError(f"Specified Range {index} is not supported by this SMU") from e
         return self._Range(name=name, index=index)
 
 
@@ -2170,9 +2170,10 @@ def _set_cv_parameters_base(
     comp: float | None = None,
 ) -> str:
     mode = SweepMode.get(mode)
-    if mode in [SweepMode.LOG_SINGLE, SweepMode.LOG_DOUBLE]:
-        if not ((start >= 0 and stop >= 0) or (start <= 0 and stop <= 0)):
-            raise ValueError(f"For {mode=} start and stop values must have the same sign.")
+    if mode in [SweepMode.LOG_SINGLE, SweepMode.LOG_DOUBLE] and not (
+        (start >= 0 and stop >= 0) or (start <= 0 and stop <= 0)
+    ):
+        raise ValueError(f"For {mode=} start and stop values must have the same sign.")
 
     start = strict_range(start, [-100, 100])
     stop = strict_range(stop, [-100, 100])

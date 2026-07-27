@@ -598,7 +598,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
         """
         try:
-            self.complete
+            _ = self.complete
         except VisaIOError:
             if attempt == max_attempts:
                 raise

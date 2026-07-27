@@ -233,13 +233,12 @@ def test_trigger_count(resetted_hp34401a):
     assert resetted_hp34401a.trigger_count == 10
 
 
-def test_read_stored_reading_multiple_readings(resetted_hp34401a):
-    resetted_hp34401a: HP34401A = resetted_hp34401a
+def test_read_stored_reading_multiple_readings(resetted_hp34401a: HP34401A):
     resetted_hp34401a.sample_count = 10
     resetted_hp34401a.trigger_source = "IMM"
     resetted_hp34401a.nplc = 0.02
     resetted_hp34401a.init_trigger()
-    resetted_hp34401a.complete
+    _ = resetted_hp34401a.complete
     readings = resetted_hp34401a.stored_reading
     print(readings)
     assert len(resetted_hp34401a.check_errors()) == 0
