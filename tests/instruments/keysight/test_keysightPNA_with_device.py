@@ -32,10 +32,10 @@
 # This is the default case if Preset is set to Factory Preset.
 
 
-import pytest
 import numpy as np
-from pymeasure.instruments.keysight.keysightPNA import KeysightPNA
+import pytest
 
+from pymeasure.instruments.keysight.keysightPNA import KeysightPNA
 
 ############
 # FIXTURES #

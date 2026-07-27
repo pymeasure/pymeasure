@@ -22,12 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set
 from time import sleep
 
 import numpy as np
+
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments.validators import strict_discrete_set
 
 
 class FWBell5080(SCPIMixin, Instrument):

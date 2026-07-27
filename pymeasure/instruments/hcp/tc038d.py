@@ -23,11 +23,9 @@
 #
 
 import logging
-
 from enum import IntEnum
 
 from pymeasure.instruments import Instrument
-
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -134,7 +132,7 @@ class TC038D(Instrument):
             errors = {0x02: "Wrong start address.",
                       0x03: "Variable data error.",
                       0x04: "Operation error."}
-            if end[0] in errors.keys():
+            if end[0] in errors:
                 raise ValueError(errors[end[0]])
             else:
                 raise ConnectionError(f"Unknown read error. Received: {got} {end}")

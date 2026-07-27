@@ -61,7 +61,7 @@ def write_generic_test(
     if inkwargs is None:
         args_text = "",
     else:
-        args_text = [f'            {key}={repr(value)},\n' for key, value in inkwargs.items()]
+        args_text = [f'            {key}={value!r},\n' for key, value in inkwargs.items()]
     inst = " as inst" if "inst" in test else ""
     # file.writelines([
     #     "\n",

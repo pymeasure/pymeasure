@@ -26,12 +26,12 @@ import logging
 from functools import partial
 
 import numpy as np
-import pyqtgraph as pg
 import pandas as pd
+import pyqtgraph as pg
 
-from ..Qt import QtCore, QtWidgets, QtGui
-from .tab_widget import TabWidget
 from ...experiment import Procedure
+from ..Qt import QtCore, QtGui, QtWidgets
+from .tab_widget import TabWidget
 
 SORT_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
 SORTING_ENABLED = True  # Allow to disable sorting, for debug purpose only

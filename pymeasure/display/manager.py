@@ -23,13 +23,12 @@
 #
 
 import logging
-
 from os.path import basename
 
-from .Qt import QtCore
-from .listeners import Monitor
 from ..experiment import Procedure
 from ..experiment.workers import Worker
+from .listeners import Monitor
+from .Qt import QtCore
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

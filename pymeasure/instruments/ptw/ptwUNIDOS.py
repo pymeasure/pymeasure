@@ -23,16 +23,15 @@
 #
 
 
-import logging
 import json
+import logging
 import warnings
 from typing import Any
 
 from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              strict_range)
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -91,7 +90,7 @@ wrong format of the parameter",
                 "E96": "Timeout"
                 }
 
-            if error_code in errors.keys():
+            if error_code in errors:
                 error_text = f"{error_code}, {errors[error_code]}"
                 raise ValueError(error_text)
             else:

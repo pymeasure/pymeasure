@@ -24,10 +24,11 @@
 
 import logging
 import warnings
-import numpy as np
 from time import sleep, time
 
-from pymeasure.instruments import Instrument, Channel
+import numpy as np
+
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)

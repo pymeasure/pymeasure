@@ -24,11 +24,11 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin, cast_or_str
+from pymeasure.instruments import Channel, Instrument, SCPIMixin, cast_or_str
 from pymeasure.instruments.validators import (
-    truncated_range,
-    truncated_discrete_set,
     strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
 )
 
 log = logging.getLogger(__name__)

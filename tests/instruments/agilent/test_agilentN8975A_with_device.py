@@ -31,6 +31,7 @@
 
 
 import pytest
+
 from pymeasure.instruments.agilent.agilentN8975A import AgilentN8975A
 
 

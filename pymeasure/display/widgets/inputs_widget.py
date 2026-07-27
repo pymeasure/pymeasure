@@ -23,13 +23,18 @@
 #
 
 import logging
-
 from functools import partial
 
-from ..inputs import (BooleanInput, IntegerInput, ListInput, ScientificInput,
-                      StringInput, VectorInput)
-from ..Qt import QtWidgets, QtCore
 from ...experiment import parameters
+from ..inputs import (
+    BooleanInput,
+    IntegerInput,
+    ListInput,
+    ScientificInput,
+    StringInput,
+    VectorInput,
+)
+from ..Qt import QtCore, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

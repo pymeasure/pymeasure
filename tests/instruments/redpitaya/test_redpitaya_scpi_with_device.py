@@ -25,6 +25,7 @@
 import datetime
 
 import pytest
+
 from pymeasure.instruments.redpitaya import RedPitayaScpi
 
 

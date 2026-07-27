@@ -21,8 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.tdk.tdk_base import TDK_Lambda_Base
+from pymeasure.test import expected_protocol
 
 
 def test_init():

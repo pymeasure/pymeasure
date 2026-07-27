@@ -63,9 +63,8 @@ def test_frequency(frequency, expected):
 
 
 def test_frequency_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.frequency = 80e6 + 1
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.frequency = 80e6 + 1
 
 
 @pytest.mark.parametrize("amplitude, expected", [(1e-3, "0.001000"), (10, "10.000000")])
@@ -89,9 +88,8 @@ def test_amplitude_unit(amplitude_unit):
 
 
 def test_amplitude_unit_invalid():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.amplitude_unit = "VPK"
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.amplitude_unit = "VPK"
 
 
 @pytest.mark.parametrize("offset, expected", [(-5, "-5.000000"), (5, "5.000000")])
@@ -170,9 +168,8 @@ def test_output_load_inf_like_response():
 
 
 def test_output_load_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.output_load = 0
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.output_load = 0
 
 
 @pytest.mark.parametrize("polarity", ["NORM", "INV"])
@@ -186,9 +183,8 @@ def test_output_polarity(polarity):
 
 
 def test_output_polarity_invalid():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.output_polarity = "INVALID"
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.output_polarity = "INVALID"
 
 
 @pytest.mark.parametrize("state, as_int", [(True, 1), (False, 0)])
@@ -212,9 +208,8 @@ def test_square_dutycycle(square_dutycycle, expected):
 
 
 def test_square_dutycycle_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.square_dutycycle = 19.999
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.square_dutycycle = 19.999
 
 
 @pytest.mark.parametrize("ramp_symmetry, expected", [(0, "0.000000"), (100, "100.000000")])
@@ -238,9 +233,8 @@ def test_pulse_period(pulse_period, expected):
 
 
 def test_pulse_period_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.pulse_period = 10e-9
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.pulse_period = 10e-9
 
 
 @pytest.mark.parametrize("pulse_width, expected", [(8e-9, "8e-09"), (2000, "2000")])
@@ -254,9 +248,8 @@ def test_pulse_width(pulse_width, expected):
 
 
 def test_pulse_width_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.pulse_width = 7e-9
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.pulse_width = 7e-9
 
 
 @pytest.mark.parametrize("pulse_transition, expected", [(5e-9, "5e-09"), (1e-3, "0.001")])
@@ -270,9 +263,8 @@ def test_pulse_transition(pulse_transition, expected):
 
 
 def test_pulse_transition_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.pulse_transition = 1.1e-3
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.pulse_transition = 1.1e-3
 
 
 @pytest.mark.parametrize("state, as_int", [(True, 1), (False, 0)])
@@ -296,9 +288,8 @@ def test_burst_mode(burst_mode):
 
 
 def test_burst_mode_invalid():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.burst_mode = "UNKNOWN"
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.burst_mode = "UNKNOWN"
 
 
 @pytest.mark.parametrize("value, response, expected_value", [
@@ -334,9 +325,8 @@ def test_burst_ncycles_inf_like_response():
 
 
 def test_burst_ncycles_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.burst_ncycles = 0
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.burst_ncycles = 0
 
 
 @pytest.mark.parametrize("burst_period, expected", [(1e-6, "1e-06"), (500, "500")])
@@ -350,9 +340,8 @@ def test_burst_period(burst_period, expected):
 
 
 def test_burst_period_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.burst_period = 500.001
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.burst_period = 500.001
 
 
 @pytest.mark.parametrize("burst_phase, expected", [(-360, "-360"), (360, "360")])
@@ -366,9 +355,8 @@ def test_burst_phase(burst_phase, expected):
 
 
 def test_burst_phase_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.burst_phase = 360.1
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.burst_phase = 360.1
 
 
 @pytest.mark.parametrize("trigger_source", ["IMM", "EXT", "BUS"])
@@ -392,9 +380,8 @@ def test_trigger_delay(trigger_delay, expected):
 
 
 def test_trigger_delay_out_of_range():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.trigger_delay = -1
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.trigger_delay = -1
 
 
 @pytest.mark.parametrize("trigger_slope", ["POS", "NEG"])
@@ -408,9 +395,8 @@ def test_trigger_slope(trigger_slope):
 
 
 def test_trigger_slope_invalid():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.trigger_slope = "RISING"
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.trigger_slope = "RISING"
 
 
 @pytest.mark.parametrize("state, as_int", [(True, 1), (False, 0)])
@@ -437,9 +423,8 @@ def test_trigger_output_slope(trigger_output_slope):
 
 
 def test_trigger_output_slope_invalid():
-    with expected_protocol(Keysight33250A, []) as inst:
-        with pytest.raises(ValueError):
-            inst.trigger_output_slope = "UP"
+    with expected_protocol(Keysight33250A, []) as inst, pytest.raises(ValueError):
+        inst.trigger_output_slope = "UP"
 
 
 def test_trigger():

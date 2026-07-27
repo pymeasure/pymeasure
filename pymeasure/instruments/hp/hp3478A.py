@@ -26,9 +26,9 @@ import ctypes
 import logging
 import math
 from enum import IntFlag
+
 from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -489,7 +489,7 @@ class HP3478A(HPLegacyInstrument):
 
         """
         cal_data = []
-        for addr in range(0, 256):
+        for addr in range(256):
             # To fetch one nibble: 'W<address>', where address is a raw 8-bit number.
             self.write_binary_values('W', [addr], datatype='B', header_fmt="empty")
             rvalue = self.read_bytes(1)[0]
@@ -524,11 +524,10 @@ class HP3478A(HPLegacyInstrument):
         if verify_calibration_data and not self.verify_calibration_data(cal_data):
             raise ValueError("cal_data verification fail.")
 
-        for addr in range(0, 256):
+        for addr in range(256):
             # To write one nibble: 'X<address><byte>', where address and byte are raw 8-bit numbers.
             cmd = bytes([ord('X'), addr, cal_data[addr]])
             self.write_bytes(cmd)
-        pass
 
     def verify_calibration_entry(self, cal_data, entry_nr):
         """Verify the checksum of one calibration entry.
@@ -544,7 +543,7 @@ class HP3478A(HPLegacyInstrument):
             raise Exception("cal_data must contain 256 values")
 
         sum = 0
-        for idx in range(0, 13):
+        for idx in range(13):
             val = cal_data[entry_nr*13 + idx + 1]
             if idx != 11:
                 sum += val
@@ -561,7 +560,7 @@ class HP3478A(HPLegacyInstrument):
         :rtype calibration_correct: boolean
 
         """
-        for entry_nr in range(0, 19):
+        for entry_nr in range(19):
             if entry_nr in [5, 16, 18]:
                 continue
             if not self.verify_calibration_entry(cal_data, entry_nr):

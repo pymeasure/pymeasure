@@ -28,8 +28,8 @@ import pyqtgraph as pg
 
 from ..curves import ResultsCurve
 from ..Qt import QtCore, QtWidgets
-from .tab_widget import TabWidget
 from .plot_frame import PlotFrame
+from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

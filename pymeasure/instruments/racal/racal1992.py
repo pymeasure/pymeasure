@@ -69,7 +69,7 @@ class Racal1992(Instrument):
             'slope'         : { 'pos'  : 'APS',  'neg'    : 'ANS' },    # noqa
             'filtering'     : { True   : 'AFE',  False    : 'AFD' },    # noqa
             'trigger_level' : None,                                     # noqa
-            },
+        },
         'B' : {                                                         # noqa
             'coupling'      : { 'AC'        : 'BAC',  'DC'     : 'BDC' },    # noqa
             'attenuation'   : { 'X1'        : 'BAD',  'X10'    : 'BAE' },    # noqa

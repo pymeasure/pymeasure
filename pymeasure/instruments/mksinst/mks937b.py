@@ -28,7 +28,6 @@ from pymeasure.instruments.validators import strict_discrete_set
 
 from .mksinst import MKSInstrument, RelayChannel
 
-
 _ion_gauge_status = {"Wait": "W",
                      "Off": "O",
                      "Protect": "P",

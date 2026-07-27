@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.teledyne.teledyneT3AFG import TeledyneT3AFG
+from pymeasure.test import expected_protocol
 
 
 def test_output_enabled():

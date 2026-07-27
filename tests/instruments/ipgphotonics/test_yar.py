@@ -24,10 +24,9 @@
 
 
 import pytest
-from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.ipgphotonics.yar import YAR
-
+from pymeasure.test import expected_protocol
 
 init_comm = [("RNP", "RNP: 0.200"), ("RMP", "RMP: 10.5"), ("RDPT", "RDPT: 0.100")]
 
@@ -152,9 +151,8 @@ def test_power_setpoint_setter_out_of_range_device():
     with expected_protocol(
             YAR,
             init_comm + [("SPS 5", "ERR: Out of Range")]
-    ) as inst:
-        with pytest.raises(ConnectionError):
-            inst.power_setpoint = 5
+    ) as inst, pytest.raises(ConnectionError):
+        inst.power_setpoint = 5
 
 
 def test_current():

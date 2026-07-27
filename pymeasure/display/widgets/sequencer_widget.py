@@ -23,12 +23,12 @@
 #
 import logging
 import os
+from collections import ChainMap
 from functools import partial
 from inspect import signature
-from collections import ChainMap
 
-from ..Qt import QtCore, QtWidgets, QtGui
-from ...experiment.sequencer import SequenceHandler, SequenceEvaluationError
+from ...experiment.sequencer import SequenceEvaluationError, SequenceHandler
+from ..Qt import QtCore, QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -99,10 +99,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             This method is called implicitly by the QTreeView that is
             displaying us, as the way of finding out what to display where.
         """
-        if not index.isValid():
-            return
-
-        elif not role == QtCore.Qt.ItemDataRole.DisplayRole:
+        if not index.isValid() or not role == QtCore.Qt.ItemDataRole.DisplayRole:
             return
 
         data = index.internalPointer()[index.column()]
@@ -435,7 +432,7 @@ class SequencerWidget(QtWidgets.QWidget):
                       if key in self._inputs}
 
         self.names_inv = {name: key for key, name in self.names.items()}
-        self.names_choices = list(sorted(self.names_inv.keys()))
+        self.names_choices = sorted(self.names_inv.keys())
 
     def _setup_ui(self):
         self.tree = SequencerTreeView(self)

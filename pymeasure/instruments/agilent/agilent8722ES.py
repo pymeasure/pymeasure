@@ -22,15 +22,16 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import truncated_discrete_set_positive
-from pymeasure.errors import RangeException
-from pyvisa import VisaIOError
+import re
+import warnings
+from io import BytesIO
 
 import numpy as np
-import re
-from io import BytesIO
-import warnings
+from pyvisa import VisaIOError
+
+from pymeasure.errors import RangeException
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import truncated_discrete_set_positive
 
 
 class Agilent8722ES(SCPIUnknownMixin, Instrument):

@@ -22,21 +22,22 @@
 # THE SOFTWARE.
 #
 
-from decimal import Decimal
+import importlib.util
 import logging
 import os
 import re
 import sys
-from importlib import import_module
-import importlib.util
 from datetime import datetime
+from decimal import Decimal
+from importlib import import_module
 from string import Formatter
 
 import pandas as pd
 import pint
 
-from .procedure import Procedure, UnknownProcedure
 from pymeasure.units import ureg
+
+from .procedure import Procedure, UnknownProcedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

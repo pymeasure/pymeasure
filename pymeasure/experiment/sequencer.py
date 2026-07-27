@@ -34,7 +34,6 @@ log.addHandler(logging.NullHandler())
 
 class SequenceEvaluationError(Exception):
     """Raised when the evaluation of a sequence string goes wrong."""
-    pass
 
 
 class SequenceItem:

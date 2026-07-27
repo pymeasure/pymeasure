@@ -28,13 +28,13 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import (
-    truncated_range,
-    strict_range,
+    joined_validators,
     strict_discrete_set,
-    joined_validators
+    strict_range,
+    truncated_range,
 )
 
 from .buffer import KeithleyBuffer

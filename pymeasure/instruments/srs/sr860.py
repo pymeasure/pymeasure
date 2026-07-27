@@ -22,10 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range
-from pymeasure.instruments import Instrument
 import warnings
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
+)
 
 
 class SR860(Instrument):
@@ -252,7 +256,7 @@ class SR860(Instrument):
         """A integer property that sets the filter slope to 6 dB/oct(i=0), 12 DB/oct(i=1),
         18 dB/oct(i=2), 24 dB/oct(i=3).""",
         validator=strict_discrete_set,
-        values=range(0, 4)
+        values=range(4)
     )
     filter_synchronous = Instrument.control(
         "SYNC?", "SYNC %d",
@@ -564,28 +568,28 @@ class SR860(Instrument):
         f"""A integer property that assigns a parameter to data channel 1(green).
         This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16)
     )
     parameter_DAT2 = Instrument.control(
         "CDSP? 1", "CDSP 1, %i",
         f"""A integer property that assigns a parameter to data channel 2(blue).
         This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16)
     )
     parameter_DAT3 = Instrument.control(
         "CDSP? 2", "CDSP 2, %i",
         f"""A integer property that assigns a parameter to data channel 3(yellow).
         This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16)
     )
     parameter_DAT4 = Instrument.control(
         "CDSP? 3", "CDSP 3, %i",
         f"""A integer property that assigns a parameter to data channel 3(orange).
         This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16)
     )
     strip_chart_dat1 = Instrument.control(
         "CGRF? 0", "CGRF 0, %i",
@@ -624,7 +628,7 @@ class SR860(Instrument):
         "GSPD?", "GSDP %i",
         f"""Control the horizontal time/div according to the following table:{LIST_HORIZONTAL_TIME_DIV}""",  # noqa: E501
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16)
     )
 
     def __init__(self, adapter, name="Stanford Research Systems SR860 Lock-in amplifier",

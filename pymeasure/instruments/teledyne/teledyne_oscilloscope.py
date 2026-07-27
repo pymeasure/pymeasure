@@ -22,16 +22,20 @@
 # THE SOFTWARE.
 #
 
-from abc import ABCMeta
 import re
 import sys
 import time
+from abc import ABCMeta
 from decimal import Decimal
+
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin, cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
-    strict_discrete_range
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin, cast_or_str
+from pymeasure.instruments.validators import (
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+)
 
 
 def sanitize_source(source):

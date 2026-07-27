@@ -24,9 +24,9 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.generic_types import SCPIMixin
+from pymeasure.test import expected_protocol
 
 
 class Test_SCPIMixin:

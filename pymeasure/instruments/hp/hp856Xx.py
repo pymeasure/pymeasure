@@ -23,17 +23,21 @@
 #
 
 import logging
-from math import log10
-from enum import IntFlag
 from datetime import datetime
+from enum import IntFlag
+from math import log10
 
 import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, \
-    joined_validators, strict_range
+from pymeasure.instruments.validators import (
+    joined_validators,
+    strict_discrete_set,
+    strict_range,
+    truncated_discrete_set,
+)
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -2128,14 +2132,14 @@ class HP856Xx(Instrument):
             instr.preset()
             instr.recall_state(7)
         """
-        values = ["LAST", "PWRON"] + [str(f) for f in range(0, 9)]
+        values = ["LAST", "PWRON"] + [str(f) for f in range(9)]
         if not (isinstance(inp, str) or isinstance(inp, int)):
             raise TypeError(f"Should be of type 'str' or 'int' but is '{type(inp)}'")
 
         if str(inp) not in values:
-            raise ValueError(f"Only accepts values of [{values}] but was '{str(inp)}'")
+            raise ValueError(f"Only accepts values of [{values}] but was '{inp!s}'")
 
-        self.write(f"RCLS {str(inp)}")
+        self.write(f"RCLS {inp!s}")
 
     def recall_trace(self, trace, number):
         """Recalls previously saved trace data to the display. See
@@ -2159,7 +2163,7 @@ class HP856Xx(Instrument):
             # reload - at 7 stored trace - to Trace B
             instr.recall_trace(Trace.B, 7)
         """
-        ran = range(0, 7)
+        ran = range(7)
         if not isinstance(trace, str):
             raise TypeError(f"Should be of type str but is '{type(trace)}'")
 
@@ -2286,14 +2290,14 @@ class HP856Xx(Instrument):
             instr.span = 20e6
             instr.save_state("PWRON")
         """
-        values = ["PWRON"] + [str(f) for f in range(0, 9)]
+        values = ["PWRON"] + [str(f) for f in range(9)]
         if not (isinstance(inp, str) or isinstance(inp, int)):
             raise TypeError(f"Should be of type 'str' or 'int' but is '{type(inp)}'")
 
         if str(inp) not in values:
-            raise ValueError(f"Only accepts values of [{values}] but was '{str(inp)}'")
+            raise ValueError(f"Only accepts values of [{values}] but was '{inp!s}'")
 
-        self.write(f"SAVES {str(inp)}")
+        self.write(f"SAVES {inp!s}")
 
     def save_trace(self, trace, number):
         """Saves the selected trace in the specified trace register.
@@ -2316,7 +2320,7 @@ class HP856Xx(Instrument):
             # reload - at 7 stored trace - to Trace B
             instr.recall_trace(Trace.B, 7)
         """
-        ran = range(0, 7)
+        ran = range(7)
         if not isinstance(trace, str):
             raise TypeError(f"Should be of type str but is '{type(trace)}'")
 
@@ -2411,7 +2415,7 @@ class HP856Xx(Instrument):
         :param input: Bits to emulate a service request
         :type input: :class:`StatusRegister`
         """
-        if input not in range(0, 255):
+        if input not in range(255):
             raise ValueError("Bit mask needs to be between 0 ... 255")
 
         self.write(f"SRQ {input}")
@@ -3157,7 +3161,7 @@ class HP8561B(HP856Xx):
         if not isinstance(band, str):
             raise TypeError(f"Frequency band should be of type string but is '{type(band)}'")
 
-        if band not in frequency_mapping.keys():
+        if band not in frequency_mapping:
             raise ValueError(f"Should be one of the available bands but is '{band}'")
 
         self.center_frequency_values = frequency_mapping[band]

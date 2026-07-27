@@ -23,15 +23,12 @@
 #
 import logging
 import math
-
 import re
 import time
+from enum import IntFlag
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
-from pymeasure.instruments.validators import strict_discrete_set
-
-from enum import IntFlag
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

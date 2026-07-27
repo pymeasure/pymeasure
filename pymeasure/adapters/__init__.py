@@ -24,15 +24,14 @@
 import logging
 
 from .adapter import Adapter, FakeAdapter
-
 from .protocol import ProtocolAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    from pymeasure.adapters.visa import VISAAdapter
     from pymeasure.adapters.prologix import PrologixAdapter
+    from pymeasure.adapters.visa import VISAAdapter
 except ImportError:
     log.warning("PyVISA library could not be loaded")
 

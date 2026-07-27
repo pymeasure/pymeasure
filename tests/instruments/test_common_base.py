@@ -26,19 +26,25 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 import pytest
+
 try:
     from typing_extensions import assert_type
     TYPING_EXTENSION = True
 except ImportError:
     TYPING_EXTENSION = False
 
-from pymeasure.units import ureg
-from pymeasure.test import expected_protocol
-from pymeasure.instruments.common_base import (
-    DynamicProperty, CommonBase, IdType, InstrumentProperty, cast_or_str, identity,
-)
 from pymeasure.adapters import Adapter, FakeAdapter, ProtocolAdapter
+from pymeasure.instruments.common_base import (
+    CommonBase,
+    DynamicProperty,
+    IdType,
+    InstrumentProperty,
+    cast_or_str,
+    identity,
+)
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
+from pymeasure.test import expected_protocol
+from pymeasure.units import ureg
 
 
 class CommonBaseTesting(CommonBase):
@@ -198,7 +204,7 @@ class MixChannelParent(CommonBaseTesting):
     channels = CommonBase.MultiChannelCreator(GenericBase, ("A", "B", "C"))
     ch_D = CommonBase.ChannelCreator(GenericBase, "D")
     output_Z = CommonBase.ChannelCreator(GenericBase, "Z")
-    analog = CommonBase.MultiChannelCreator(GenericBase, list(range(0, 10)), prefix="an_",
+    analog = CommonBase.MultiChannelCreator(GenericBase, list(range(10)), prefix="an_",
                                             test=True)
 
 
@@ -537,7 +543,7 @@ def test_control_check_get_errors_multiple_errors(fake, caplog):
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
-        "Error received after trying to get a property with the command 'ge': '15', '(19, 'x')'."  # noqa: E501
+        "Error received after trying to get a property with the command 'ge': '15', '(19, 'x')'."
     )
 
 

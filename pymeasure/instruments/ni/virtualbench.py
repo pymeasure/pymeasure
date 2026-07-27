@@ -27,15 +27,19 @@
 
 import logging
 import re
+
 # ctypes only required for VirtualBench_Direct class
-from ctypes import (c_int, cdll, byref)
-from datetime import datetime, timezone, timedelta
+from ctypes import byref, c_int, cdll
+from datetime import datetime, timedelta, timezone
+
 import numpy as np
 import pandas as pd
 
 from pymeasure.instruments.validators import (
-    strict_discrete_set, strict_discrete_range,
-    truncated_discrete_set, strict_range
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+    truncated_discrete_set,
 )
 
 log = logging.getLogger(__name__)
@@ -387,7 +391,7 @@ class VirtualBench:
                 if (line == 'trig') and (device == self._device_name):
                     single_lines.append('trig')
                     return_lines.append(self._device_name + '/' + line)
-                elif int(line) in range(0, 8):
+                elif int(line) in range(8):
                     line = int(line)
                     single_lines.append(line)
                     # validate device name: either 'dig' or 'device_name/dig'
@@ -1338,7 +1342,7 @@ class VirtualBench:
             pretrigger_samples = int(self.sample_rate * self.pretrigger_time)
             times = (
                 list(range(-pretrigger_samples, 0))
-                + list(range(0, number_of_samples - pretrigger_samples)))
+                + list(range(number_of_samples - pretrigger_samples)))
             times = [list(map(lambda x: x * 1 / self.sample_rate, times))]
 
             np_array = np.array(analog_data_out)

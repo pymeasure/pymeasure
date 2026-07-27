@@ -23,16 +23,16 @@
 #
 import importlib
 import logging
-
-import pytest
 import os
 import tempfile
 from time import sleep
 
-from pymeasure.experiment import Listener, Procedure
-from pymeasure.experiment.workers import Worker
-from pymeasure.experiment.results import Results
+import pytest
 from data.procedure_for_testing import RandomProcedure
+
+from pymeasure.experiment import Listener, Procedure
+from pymeasure.experiment.results import Results
+from pymeasure.experiment.workers import Worker
 
 tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
                           and importlib.util.find_spec('zmq'))

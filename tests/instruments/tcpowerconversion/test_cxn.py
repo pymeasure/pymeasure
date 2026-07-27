@@ -23,8 +23,8 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.tcpowerconversion import CXN
+from pymeasure.test import expected_protocol
 
 
 def test_id():

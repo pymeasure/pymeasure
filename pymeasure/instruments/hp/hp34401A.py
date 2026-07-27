@@ -23,10 +23,10 @@
 #
 
 from warnings import warn
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set
-
 
 deprecated_text = """
 

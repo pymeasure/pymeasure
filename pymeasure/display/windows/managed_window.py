@@ -23,29 +23,28 @@
 #
 
 import logging
-
 import os
 import platform
+import shutil
 import subprocess
 import tempfile
-import shutil
 
 import pyqtgraph as pg
 
+from ...experiment import Procedure, Results, unique_filename
 from ..browser import BrowserItem
-from ..manager import Manager, Experiment
-from ..Qt import QtCore, QtWidgets, QtGui
+from ..manager import Experiment, Manager
+from ..Qt import QtCore, QtGui, QtWidgets
 from ..widgets import (
-    PlotWidget,
     BrowserWidget,
+    EstimatorWidget,
+    FileInputWidget,
     InputsWidget,
     LogWidget,
+    PlotWidget,
     ResultsDialog,
     SequencerWidget,
-    FileInputWidget,
-    EstimatorWidget,
 )
-from ...experiment import Results, Procedure, unique_filename
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

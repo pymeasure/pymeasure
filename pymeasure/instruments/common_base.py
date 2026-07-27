@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 #
 
-from inspect import getmembers
 import logging
-from typing import Any, Generic, Literal, cast, Protocol, TypeVar, overload
 from collections.abc import Callable, Sequence
+from inspect import getmembers
+from typing import Any, Generic, Literal, Protocol, TypeVar, cast, overload
 from warnings import warn
 
 log = logging.getLogger(__name__)
@@ -923,7 +923,7 @@ class CommonBase:
     ) -> InstrumentProperty[Any]: ...
 
     @staticmethod
-    def control(  # noqa: C901 accept that this is a complex method
+    def control(
         get_command: str | None,
         set_command: str | None,
         docs: str,
@@ -1048,7 +1048,7 @@ class CommonBase:
                     error_list = self.check_get_errors()
                 except Exception as exc:
                     log.error("Exception raised while getting a property with the command "
-                              f"""'{get_command}': '{str(exc)}'.""")
+                              f"""'{get_command}': '{exc!s}'.""")
                     raise
                 errors = [str(error) for error in error_list]
                 if errors:
@@ -1105,7 +1105,7 @@ class CommonBase:
                     error_list = self.check_set_errors()
                 except Exception as exc:
                     log.error("Exception raised while setting a property with the command "
-                              f"""'{set_command % val}': '{str(exc)}'.""")
+                              f"""'{set_command % val}': '{exc!s}'.""")
                     raise
                 errors = [str(error) for error in error_list]
                 if errors:

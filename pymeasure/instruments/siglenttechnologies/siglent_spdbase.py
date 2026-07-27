@@ -22,13 +22,15 @@
 # THE SOFTWARE.
 #
 import logging
+from enum import IntFlag
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.channel import Channel
-from pymeasure.instruments.validators import (strict_discrete_range,
-                                              strict_discrete_set,
-                                              truncated_range
-                                              )
-from enum import IntFlag
+from pymeasure.instruments.validators import (
+    strict_discrete_range,
+    strict_discrete_set,
+    truncated_range,
+)
 
 log = logging.getLogger(__name__)  # https://docs.python.org/3/howto/logging.html#library-config
 log.addHandler(logging.NullHandler())

@@ -32,7 +32,8 @@
 # The test does not enable the high voltage output.
 
 import pytest
-from pymeasure.instruments.spellmanhv.spellmanXRV import SpellmanXRV, StatusCode, ErrorCode
+
+from pymeasure.instruments.spellmanhv.spellmanXRV import ErrorCode, SpellmanXRV, StatusCode
 
 
 @pytest.fixture(scope="module")

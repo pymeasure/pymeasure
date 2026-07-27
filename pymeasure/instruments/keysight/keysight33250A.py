@@ -26,10 +26,11 @@ import math
 import time
 from collections.abc import Callable
 
+from pyvisa.errors import VisaIOError
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pyvisa.errors import VisaIOError
 
 
 def _normalize_inf_input(value):

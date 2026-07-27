@@ -21,10 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import math
 import time
 
 import pytest
-import math
+
 from pymeasure.instruments.keithley.keithley2306 import Keithley2306
 
 

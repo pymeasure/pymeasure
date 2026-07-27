@@ -25,7 +25,7 @@
 import logging
 
 from ..log import LogHandler
-from ..Qt import QtWidgets, QtCore, QtGui
+from ..Qt import QtCore, QtGui, QtWidgets
 from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)

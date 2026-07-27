@@ -29,7 +29,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from pymeasure import instruments
-from pymeasure.instruments import Instrument, Channel, generic_types
+from pymeasure.instruments import Channel, Instrument, generic_types
 
 
 # Collect all instruments

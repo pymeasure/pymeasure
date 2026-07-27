@@ -23,12 +23,13 @@
 #
 
 
-from pymeasure.instruments import Instrument
-from pyvisa.errors import VisaIOError
-from pyvisa import constants as vconst
-import re
 import logging
+import re
 
+from pyvisa import constants as vconst
+from pyvisa.errors import VisaIOError
+
+from pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

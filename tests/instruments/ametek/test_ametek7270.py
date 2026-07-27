@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.ametek import Ametek7270
+from pymeasure.test import expected_protocol
 
 
 def test_init():
@@ -106,12 +106,11 @@ def test_theta_getter():
                                              ('y2', 'Y2.')])
 def test_failing_properties(method, command):
     """in standard single reference mode, these tests should raise a ValueError"""
-    with pytest.raises(ValueError):
-        with expected_protocol(
-                Ametek7270,
-                [(f'{command}'.encode(), b'\n')]
-        ) as inst:
-            getattr(inst, method) == 0.0
+    with pytest.raises(ValueError), expected_protocol(
+            Ametek7270,
+            [(f'{command}'.encode(), b'\n')]
+    ) as inst:
+        getattr(inst, method) == 0.0
 
 
 def test_harmonic_getter():

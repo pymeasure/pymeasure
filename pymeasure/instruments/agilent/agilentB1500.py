@@ -578,7 +578,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         # restrict to implemented formats
         output_format = strict_discrete_set(output_format, [1, 11, 21])
         # possible: [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25]
-        mode = strict_range(mode, range(0, 11))
+        mode = strict_range(mode, range(11))
         self.write(f"FMT {output_format}, {mode}")
         self.check_errors()
         if self._smu_names == {}:
@@ -1449,9 +1449,7 @@ class SMU(Channel):
             raise ValueError("Source Type must be Current or Voltage.")
         mode_value = SweepMode.get(mode).value
         if mode_value in [2, 4]:
-            if start >= 0 and stop >= 0:
-                pass
-            elif start <= 0 and stop <= 0:
+            if start >= 0 and stop >= 0 or start <= 0 and stop <= 0:
                 pass
             else:
                 raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
@@ -1809,7 +1807,7 @@ class SPGU(Channel):
     )
 
     def set_output_mode(
-        self, mode: SPGUOutputMode, condition: int | float | None = None
+        self, mode: SPGUOutputMode, condition: float | None = None
     ) -> None:
         """Set the operating mode for SPGU channel outputs. (``SPRM``)
 
@@ -2496,7 +2494,7 @@ class QueryLearn:
             if len(parameters) == 1:
                 parameters = parameters[0]
             # skip second AAD entry for each channel -> contains no information
-            if "AAD" in name and name in response_dict.keys():
+            if "AAD" in name and name in response_dict:
                 continue
             response_dict[name] = parameters
         return response_dict
@@ -2567,7 +2565,7 @@ class QueryLearn:
     def _get_smu(key: str, smu_references: dict[int, SMU]) -> SMU:
         # command without channel
         command = re.findall(r"(?P<command>[A-Z]+)", key)[0]
-        channel = key[len(command) :]  # noqa: E203
+        channel = key[len(command):]
         return smu_references[int(channel)]
 
     # SMU Modes

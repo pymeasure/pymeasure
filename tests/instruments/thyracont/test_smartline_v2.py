@@ -23,13 +23,19 @@
 #
 
 import pytest
+
 from pymeasure.instruments import Instrument
-from pymeasure.test import expected_protocol
 
 # File to test
-from pymeasure.instruments.thyracont.smartline_v2 import (SmartlineV2, HotCathode, Pirani,
-                                                          calculate_checksum, Piezo, Sources)
-
+from pymeasure.instruments.thyracont.smartline_v2 import (
+    HotCathode,
+    Piezo,
+    Pirani,
+    SmartlineV2,
+    Sources,
+    calculate_checksum,
+)
+from pymeasure.test import expected_protocol
 
 SmartlineV2.hot_cathode = Instrument.ChannelCreator(cls=HotCathode)
 SmartlineV2.pirani = Instrument.ChannelCreator(cls=Pirani)
@@ -126,9 +132,8 @@ def test_display_unit_setter():
 
 
 def test_display_unit_setter_wrong():
-    with expected_protocol(SmartlineV2, []) as inst:
-        with pytest.raises(ValueError):
-            inst.display_unit = "abc"
+    with expected_protocol(SmartlineV2, []) as inst, pytest.raises(ValueError):
+        inst.display_unit = "abc"
 
 
 def test_display_orientation_getter():

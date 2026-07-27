@@ -22,9 +22,11 @@
 # THE SOFTWARE.
 #
 
-import pytest
-import time
 import logging
+import time
+
+import pytest
+
 from pymeasure.instruments.hp.hp34401A import HP34401A
 
 log = logging.getLogger(__name__)

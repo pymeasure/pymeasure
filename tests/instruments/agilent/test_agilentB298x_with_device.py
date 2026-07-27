@@ -30,9 +30,11 @@
 # Test was performed with B2987B
 #
 
-import pytest
-from pymeasure.instruments.agilent.agilentB298x import AgilentB2987  # B2987 supports all features
 from time import sleep
+
+import pytest
+
+from pymeasure.instruments.agilent.agilentB298x import AgilentB2987  # B2987 supports all features
 
 TEST_AMMETER = True
 TEST_ELECTROMETER = True

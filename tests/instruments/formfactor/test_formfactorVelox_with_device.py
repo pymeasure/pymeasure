@@ -32,8 +32,9 @@
 # THE TEST MOVES THE CHUCK TO CONTACT HEIGHT!
 #############################################
 
-import pytest
 from time import sleep
+
+import pytest
 
 from pymeasure.instruments.formfactor.velox import Velox
 

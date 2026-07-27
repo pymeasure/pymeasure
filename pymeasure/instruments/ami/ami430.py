@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
+import logging
 from time import sleep, time
 
-import logging
+from pymeasure.instruments import Instrument, SCPIMixin
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 

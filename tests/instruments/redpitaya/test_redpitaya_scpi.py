@@ -26,8 +26,8 @@ import datetime
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.redpitaya import RedPitayaScpi
+from pymeasure.test import expected_protocol
 
 
 def test_init():

@@ -340,7 +340,7 @@ class VectorParameter(Parameter):
             value = [float(ve) for ve in raw_list]
 
         except ValueError:
-            raise ValueError(f"VectorParameter given input '{str(value)}' that could "
+            raise ValueError(f"VectorParameter given input '{value!s}' that could "
                              "not be converted to floats.")
 
         return value
@@ -399,7 +399,7 @@ class ListParameter(Parameter):
             value = self._choices[str(value)]
         else:
             raise ValueError("Invalid choice for parameter. "
-                             f"Must be one of {str(self._choices)}")
+                             f"Must be one of {self._choices!s}")
 
         return value
 
@@ -452,7 +452,7 @@ class PhysicalParameter(VectorParameter):
         try:
             value = [float(ve) for ve in raw_list]
         except ValueError:
-            raise ValueError(f"VectorParameter given input '{str(value)}' that could "
+            raise ValueError(f"VectorParameter given input '{value!s}' that could "
                              "not be converted to floats.")
         # Uncertainty must be non-negative
         value[1] = abs(value[1])

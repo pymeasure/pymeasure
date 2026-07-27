@@ -23,14 +23,14 @@
 #
 
 import logging
+import time
 from warnings import warn
+
+import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 
 from .buffer import KeithleyBuffer
-
-import numpy as np
-import time
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

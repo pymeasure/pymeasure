@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-import re
 import logging
+import re
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set

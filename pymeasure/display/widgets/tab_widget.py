@@ -43,19 +43,16 @@ class TabWidget:
 
     def new_curve(self, *args, **kwargs):
         """ Create a new curve """
-        return None
+        return
 
     def load(self, curve):
         """ Add curve to widget """
-        pass
 
     def remove(self, curve):
         """ Remove curve from widget """
-        pass
 
     def set_color(self, curve, color):
         """ Set color for widget """
-        pass
 
     def preview_widget(self, parent=None):
         """ Return a Qt widget suitable for preview during loading
@@ -65,7 +62,7 @@ class TabWidget:
         attribute `name`.
         """
 
-        return None
+        return
 
     def clear_widget(self):
         """ Clear widget content
@@ -73,4 +70,4 @@ class TabWidget:
         Behaviour is widget specific and it is currently used in preview mode
         """
 
-        return None
+        return

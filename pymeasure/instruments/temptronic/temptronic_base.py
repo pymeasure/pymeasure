@@ -39,13 +39,10 @@ No automatic safety measures are part of this driver implementation.
 """
 import logging
 import time
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_range,
-                                              strict_range
-                                              )
-
 from enum import IntFlag
+
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 log = logging.getLogger(__name__)  # https://docs.python.org/3/howto/logging.html#library-config
 log.addHandler(logging.NullHandler())

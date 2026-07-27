@@ -27,8 +27,7 @@ import logging
 from time import sleep, time
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments.validators import truncated_range
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 from .base import OxfordInstrumentsBase
 
@@ -39,12 +38,10 @@ log.addHandler(logging.NullHandler())
 
 class MagnetError(ValueError):
     """ Exception that is raised for issues regarding the state of the magnet or power supply. """
-    pass
 
 
 class SwitchHeaterError(ValueError):
     """ Exception that is raised for issues regarding the state of the superconducting switch. """
-    pass
 
 
 class IPS120_10(OxfordInstrumentsBase):
@@ -438,7 +435,7 @@ class IPS120_10(OxfordInstrumentsBase):
             return
 
         if self.switch_heater_enabled:
-            pass  # Magnet in demand mode
+            # Magnet in demand mode
             log.debug("Magnet in demand mode, continuing")
         else:
             # Magnet in persistent mode

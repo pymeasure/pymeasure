@@ -23,11 +23,11 @@
 #
 
 import logging
-from time import sleep
 from enum import IntFlag
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
+from time import sleep
 
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

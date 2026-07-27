@@ -22,12 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.experiment import (
-    Procedure, IntegerParameter,
-    Parameter, FloatParameter
-)
 import random
 from time import sleep
+
+from pymeasure.experiment import FloatParameter, IntegerParameter, Parameter, Procedure
 
 
 class RandomProcedure(Procedure):

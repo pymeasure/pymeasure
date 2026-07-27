@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.agilent import Agilent4284A
+from pymeasure.test import expected_protocol
 
 IMPEDANCE_MODES = ("CPD", "CPQ", "CPG", "CPRP", "CSD", "CSQ", "CSRS",
                    "LPQ", "LPD", "LPG", "LPRP", "LSD", "LSQ", "LSRS",
@@ -43,12 +44,11 @@ def test_frequency(frequency):
 
 
 def test_frequency_limit():
-    with pytest.raises(ValueError):
-        with expected_protocol(
-            Agilent4284A,
-            [("FREQ 1", None)],
-        ) as inst:
-            inst.frequency = 1
+    with pytest.raises(ValueError), expected_protocol(
+        Agilent4284A,
+        [("FREQ 1", None)],
+    ) as inst:
+        inst.frequency = 1
 
 
 @pytest.mark.parametrize("power_mode", ["0", "1"])
@@ -83,14 +83,13 @@ def test_enable_high_power():
 
 
 def test_disable_high_power():
-    with pytest.raises(ValueError):
-        with expected_protocol(
-            Agilent4284A,
-            [("OUTP:HPOW 0", None),
-             ("VOLT:LEV 5", None)],
-        ) as inst:
-            inst.high_power_enabled = False
-            inst.ac_voltage = 5
+    with pytest.raises(ValueError), expected_protocol(
+        Agilent4284A,
+        [("OUTP:HPOW 0", None),
+         ("VOLT:LEV 5", None)],
+    ) as inst:
+        inst.high_power_enabled = False
+        inst.ac_voltage = 5
 
 
 @pytest.fixture
@@ -202,12 +201,11 @@ class TestCorrection:
 
     @pytest.mark.parametrize("cable_length", [-1, 1.1, 3, 2e1])
     def test_cable_length_validator(self, cable_length):
-        with pytest.raises(ValueError):
-            with expected_protocol(
-                Agilent4284A,
-                [(f":CORR:LENG {cable_length}", None)],
-            ) as inst:
-                inst.correction.cable_length = cable_length
+        with pytest.raises(ValueError), expected_protocol(
+            Agilent4284A,
+            [(f":CORR:LENG {cable_length}", None)],
+        ) as inst:
+            inst.correction.cable_length = cable_length
 
 
 @pytest.mark.parametrize("spot", [1, 2, 3])

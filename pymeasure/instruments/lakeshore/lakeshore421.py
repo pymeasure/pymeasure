@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set
+from time import sleep, time
 
 import numpy as np
-from time import time, sleep
+
+from pymeasure.instruments import Instrument, cast_or_str
+from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
 
 
 class LakeShore421(Instrument):

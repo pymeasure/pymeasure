@@ -26,9 +26,8 @@
 import pytest
 from pytest import raises
 
+from pymeasure.instruments.ophir.ophir_base import Capabilities, Modes, OphirBase, ScreenModes
 from pymeasure.test import expected_protocol
-
-from pymeasure.instruments.ophir.ophir_base import OphirBase, Modes, ScreenModes, Capabilities
 
 
 def test_read_processes_response():

@@ -22,16 +22,18 @@
 # THE SOFTWARE.
 #
 import logging
+import re
 from time import sleep
+
 import numpy as np
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
+    joined_validators,
     strict_discrete_set,
     truncated_discrete_set,
     truncated_range,
-    joined_validators
 )
-import re
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -76,7 +78,7 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     #  Mappings #
     #############
     ONOFF = ["ON", "OFF"]
-    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF', 'ON': 'ON', 'OFF': 'OFF'}  # noqa: F601,E501
+    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF', 'ON': 'ON', 'OFF': 'OFF'}  # noqa: F601
 
     ######################
     #  Status Registers  #

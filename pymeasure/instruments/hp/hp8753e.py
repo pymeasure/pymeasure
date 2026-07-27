@@ -416,7 +416,6 @@ class HP8753E(Instrument):
             except VisaIOError:
                 sleep(0.1)
                 counter += 1
-                pass
 
             if now() > start + timeout:
                 raise TimeoutError(

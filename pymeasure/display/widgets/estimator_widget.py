@@ -23,12 +23,11 @@
 #
 
 import logging
-
-from inspect import signature
 from datetime import datetime, timedelta
+from inspect import signature
 
-from ..thread import StoppableQThread
 from ..Qt import QtCore, QtWidgets
+from ..thread import StoppableQThread
 from .sequencer_widget import SequenceEvaluationError
 
 log = logging.getLogger(__name__)

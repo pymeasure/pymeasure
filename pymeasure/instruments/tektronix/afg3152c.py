@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 #
 
-from math import sqrt, log10
+from math import log10, sqrt
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class AFG3152CChannel(Channel):

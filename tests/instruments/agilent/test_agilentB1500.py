@@ -420,9 +420,8 @@ class TestCMU:
 
     def test_measure_invalid_range(self):
         """Test that measure rejects a range not in MEASUREMENT_RANGES."""
-        with expected_protocol(AgilentB1500Mock, []) as inst:
-            with pytest.raises(ValueError):
-                inst.cmu.measure(meas_range=500)
+        with expected_protocol(AgilentB1500Mock, []) as inst, pytest.raises(ValueError):
+            inst.cmu.measure(meas_range=500)
 
     def test_set_cv_timings(self):
         """Test set_cv_timings method."""

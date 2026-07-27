@@ -25,8 +25,7 @@
 import time
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, truncated_discrete_set
-
+from pymeasure.instruments.validators import truncated_discrete_set, truncated_range
 
 byteorder = 'big'
 encoding = 'utf-8'

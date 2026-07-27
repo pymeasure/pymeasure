@@ -22,14 +22,18 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from unittest import mock
 
+import pytest
+
+from pymeasure.display.inputs import BooleanInput, ListInput, ScientificInput, VectorInput
 from pymeasure.display.Qt import QtCore
-from pymeasure.display.inputs import (ScientificInput, BooleanInput, ListInput,
-                                      VectorInput)
-from pymeasure.experiment.parameters import (BooleanParameter, ListParameter, FloatParameter,
-                                             VectorParameter)
+from pymeasure.experiment.parameters import (
+    BooleanParameter,
+    FloatParameter,
+    ListParameter,
+    VectorParameter,
+)
 
 
 @pytest.mark.parametrize("default_value", [True, False])

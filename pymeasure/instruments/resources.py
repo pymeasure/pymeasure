@@ -23,8 +23,8 @@
 #
 
 import pyvisa
-from serial.tools import list_ports
 from serial.serialutil import SerialException
+from serial.tools import list_ports
 
 
 def list_resources():

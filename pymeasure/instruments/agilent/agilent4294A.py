@@ -22,11 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
-import pandas as pd
-import numpy as np
 import os
+
+import numpy as np
+import pandas as pd
+
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 # Set of valid arguments for the MEAS? command
 MEASUREMENT_TYPES = [

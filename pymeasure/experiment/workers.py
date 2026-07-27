@@ -26,23 +26,23 @@ from __future__ import annotations
 import logging
 import time
 import traceback
+from collections.abc import Sequence
 from queue import Queue
 from typing import Any
-from collections.abc import Sequence
 
 import numpy as np
 
+from ..thread import StoppableThread
 from .listeners import Recorder
 from .procedure import Procedure
 from .results import Results
-from ..thread import StoppableThread
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    import zmq
     import cloudpickle
+    import zmq
 except ImportError:
     zmq = None
     cloudpickle = None

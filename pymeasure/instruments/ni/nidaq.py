@@ -25,6 +25,7 @@
 # Requires 'instrumental' package: https://github.com/mabuchilab/Instrumental
 
 from instrumental.drivers.daq import ni
+
 from pymeasure.instruments import Instrument
 
 

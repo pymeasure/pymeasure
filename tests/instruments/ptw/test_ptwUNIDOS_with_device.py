@@ -29,10 +29,11 @@
 # tested with a PTW UNIDOS Tango dosemeter
 
 
-import pytest
-from pymeasure.instruments.ptw.ptwUNIDOS import ptwUNIDOS
 from time import sleep
 
+import pytest
+
+from pymeasure.instruments.ptw.ptwUNIDOS import ptwUNIDOS
 
 RANGES = ["VERY_LOW", "LOW", "MEDIUM", "HIGH"]
 LEVELS = ["LOW", "MEDIUM", "HIGH"]

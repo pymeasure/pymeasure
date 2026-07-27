@@ -22,10 +22,9 @@
 # THE SOFTWARE.
 #
 
-import logging
-
-import copy
 import argparse
+import copy
+import logging
 
 try:
     import progressbar
@@ -33,14 +32,13 @@ try:
     progressbar.streams
 except (AttributeError, ImportError):
     progressbar = None
-from .Qt import QtCore
 import signal
-from ..log import console_log
 
+from ..experiment import Procedure, Results, unique_filename
+from ..log import console_log
 from .browser import BaseBrowserItem
 from .manager import BaseManager, Experiment
-
-from ..experiment import Results, Procedure, unique_filename
+from .Qt import QtCore
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

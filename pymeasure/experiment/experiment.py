@@ -22,17 +22,18 @@
 # THE SOFTWARE.
 #
 
-import logging
-import time
-import tempfile
 import gc
+import logging
+import tempfile
+import time
 
 import numpy as np
 
-from .results import unique_filename
-from .config import get_config, set_mpl_rcparams
-from pymeasure.log import setup_logging, console_log
 from pymeasure.experiment import Results, Worker
+from pymeasure.log import console_log, setup_logging
+
+from .config import get_config, set_mpl_rcparams
+from .results import unique_filename
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

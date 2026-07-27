@@ -22,15 +22,16 @@
 # THE SOFTWARE.
 #
 import logging
-from time import sleep
 import re
+from time import sleep
 
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
-    truncated_discrete_set, strict_discrete_set,
-    truncated_range
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
 )
 
 log = logging.getLogger(__name__)

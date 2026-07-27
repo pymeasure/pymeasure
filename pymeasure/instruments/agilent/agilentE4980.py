@@ -23,9 +23,10 @@
 #
 
 
+from pyvisa.errors import VisaIOError
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pyvisa.errors import VisaIOError
 
 
 class AgilentE4980(SCPIUnknownMixin, Instrument):

@@ -21,17 +21,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import logging
-
-from os import path
 import json
+import logging
+from os import path
 
+import pyqtgraph as pg
 from pyqtgraph.dockarea import Dock, DockArea
 from pyqtgraph.dockarea.Dock import DockLabel
-import pyqtgraph as pg
 
-from .plot_widget import PlotWidget, PlotFrame
 from ..Qt import QtWidgets
+from .plot_widget import PlotFrame, PlotWidget
 from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)

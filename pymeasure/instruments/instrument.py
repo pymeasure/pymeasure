@@ -24,13 +24,15 @@
 
 import logging
 import time
-from typing import TypeVar
 from collections.abc import Sequence
+from typing import TypeVar
 from warnings import warn
 
-from .common_base import CommonBase
+from typing_extensions import Self
+
 from ..adapters.adapter import Adapter
 from ..adapters.visa import VISAAdapter
+from .common_base import CommonBase
 
 _Self = TypeVar("_Self", bound="Instrument")  # typing.Self for Python>3.10
 
@@ -78,7 +80,7 @@ class Instrument(CommonBase):
         name: str,
         **kwargs,
     ):
-        if "includeSCPI" in kwargs.keys():
+        if "includeSCPI" in kwargs:
             warn("Defining SCPI base functionality with `includeSCPI` is deprecated, inherit "
                  "the `SCPIMixin` class instead if it supports SCPI.", FutureWarning)
             kwargs.pop("includeSCPI")
@@ -97,7 +99,7 @@ class Instrument(CommonBase):
 
         log.info(f"Initializing {self.name}.")
 
-    def __enter__(self: _Self) -> _Self:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool | None:

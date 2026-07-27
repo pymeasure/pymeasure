@@ -22,9 +22,9 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
 from time import sleep
+
+import pytest
 
 from pymeasure.instruments.teledyne import TeledyneMAUI
 

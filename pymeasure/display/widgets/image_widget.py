@@ -25,10 +25,11 @@
 import logging
 
 import pyqtgraph as pg
+
 from ..curves import ResultsImage
 from ..Qt import QtCore, QtWidgets
-from .tab_widget import TabWidget
 from .image_frame import ImageFrame
+from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

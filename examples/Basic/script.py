@@ -33,15 +33,21 @@ python script.py
 
 """
 
+import logging
 import random
 import tempfile
 from time import sleep
 
+from pymeasure.experiment import (
+    FloatParameter,
+    IntegerParameter,
+    Parameter,
+    Procedure,
+    Results,
+    Worker,
+)
 from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results, Worker
 
-import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 

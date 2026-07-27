@@ -22,16 +22,18 @@
 # THE SOFTWARE.
 #
 
-import logging
-import sys
-import inspect
-from copy import deepcopy
 import importlib.util
+import inspect
+import logging
 import re
+import sys
+from copy import deepcopy
+
 from pint import UndefinedUnitError
 
-from .parameters import Parameter, Measurable, Metadata
 from pymeasure.units import ureg
+
+from .parameters import Measurable, Metadata, Parameter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -210,7 +212,7 @@ class Procedure:
                 setattr(self, name, self._parameters[name].value)
             else:
                 if except_missing:
-                    raise NameError(f"Parameter '{name}' does not belong to '{repr(self)}'")
+                    raise NameError(f"Parameter '{name}' does not belong to '{self!r}'")
 
     def _update_metadata(self):
         """ Collects all the Metadata objects for the procedure and stores
@@ -261,20 +263,17 @@ class Procedure:
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement
         """
-        pass
 
     def execute(self):
         """ Perform the commands needed for the measurement itself. During
         execution the shutdown method will always be run following this method.
         This includes when Exceptions are raised.
         """
-        pass
 
     def shutdown(self):
         """ Executes the commands necessary to shut down the instruments
         and leave them in a safe state. This method is always run at the end.
         """
-        pass
 
     def emit(self, topic, record):
         raise NotImplementedError('should be monkey patched by a worker')

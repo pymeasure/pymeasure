@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.rigol import DG800
+from pymeasure.test import expected_protocol
 
 
 def test_init():

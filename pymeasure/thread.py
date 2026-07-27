@@ -23,8 +23,7 @@
 #
 
 import logging
-
-from threading import Thread, Event
+from threading import Event, Thread
 from time import time
 
 log = logging.getLogger(__name__)
