@@ -44,8 +44,8 @@ def hp8753e(connected_device_address):
         if "PrologixAdapter" not in connected_device_address:
             vna = HP8753E(connected_device_address)
         else:
-            _, prologix_address, gpib_address, *other_address_info = connected_device_address.split(
-                ","
+            _, prologix_address, gpib_address, *_other_address_info = (
+                connected_device_address.split(",")
             )
 
             prologix = PrologixAdapter(

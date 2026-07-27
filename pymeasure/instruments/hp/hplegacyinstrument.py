@@ -23,8 +23,8 @@
 #
 import ctypes
 import logging
-from pymeasure.instruments import Instrument
 
+from pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

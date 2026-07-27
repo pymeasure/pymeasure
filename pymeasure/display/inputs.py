@@ -23,7 +23,6 @@
 #
 
 import logging
-
 import re
 
 from .Qt import QtGui, QtWidgets
@@ -175,7 +174,7 @@ class ListInput(Input, QtWidgets.QComboBox):
 
             self._stringChoices = tuple((str(choice) + suffix) for choice in parameter.choices)
         except TypeError:  # choices is None
-            self._stringChoices = tuple()
+            self._stringChoices = ()
         self.clear()
         self.addItems(self._stringChoices)
 
@@ -187,7 +186,7 @@ class ListInput(Input, QtWidgets.QComboBox):
             self.setCurrentIndex(index)
         except (TypeError, ValueError) as e:  # no choices or choice invalid
             raise ValueError("Invalid choice for parameter. "
-                             f"Must be one of {str(self._parameter.choices)}") from e
+                             f"Must be one of {self._parameter.choices!s}") from e
 
     def setSuffix(self, value):
         pass

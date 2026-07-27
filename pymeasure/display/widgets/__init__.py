@@ -23,8 +23,9 @@
 #
 
 from .browser_widget import BrowserWidget
+from .console_widget import ConsoleWidget
+from .estimator_widget import EstimatorThread, EstimatorWidget
 from .fileinput_widget import FileInputWidget
-from .estimator_widget import EstimatorWidget, EstimatorThread
 from .image_frame import ImageFrame
 from .image_widget import ImageWidget
 from .inputs_widget import InputsWidget
@@ -35,4 +36,3 @@ from .results_dialog import ResultsDialog
 from .sequencer_widget import SequencerWidget
 from .tab_widget import TabWidget
 from .table_widget import TableWidget
-from .console_widget import ConsoleWidget

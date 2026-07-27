@@ -48,16 +48,13 @@ class ProgressBar:
         time to the data, so that a more accurate prediction
         for the ETA can be made
         """
-        pass
 
     def __str__(self):
         """ Returns a string representation of the progress bar
         """
-        pass
 
 
 def display(log, port, level=logging.INFO):
     """ Displays the log to the console with a progress bar
     that always remains at the bottom of the screen and refreshes itself
     """
-    pass

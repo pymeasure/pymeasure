@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from .ophir_base import OphirBase
 from .nova import Nova
 from .novaII import NovaII
+from .ophir_base import OphirBase
 from .vega import Vega

@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
-from serial import Serial
 from time import time
+
+import pytest
+from serial import Serial
+
 from pymeasure.adapters import SerialAdapter
 
 

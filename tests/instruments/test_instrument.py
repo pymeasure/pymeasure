@@ -28,11 +28,11 @@ from unittest import mock
 
 import pytest
 
-from pymeasure.test import expected_protocol
-from pymeasure.instruments import Instrument, Channel
 from pymeasure.adapters import ProtocolAdapter
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import truncated_range
+from pymeasure.test import expected_protocol
 
 
 class GenericInstrument(FakeInstrument):
@@ -107,7 +107,7 @@ def test_fake_instrument():
 @pytest.mark.parametrize("adapter", (("COM1", 87, "USB")))
 def test_init_visa(adapter):
     Instrument(adapter, "def", visa_library="@sim")
-    pass  # Test that no error is raised
+    # Test that no error is raised
 
 
 @pytest.mark.xfail()  # I do not know, when this error is raised

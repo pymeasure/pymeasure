@@ -23,12 +23,11 @@
 #
 
 import logging
-
-from inspect import signature
 from datetime import datetime, timedelta
+from inspect import signature
 
-from ..thread import StoppableQThread
 from ..Qt import QtCore, QtWidgets
+from ..thread import StoppableQThread
 from .sequencer_widget import SequenceEvaluationError
 
 log = logging.getLogger(__name__)
@@ -113,10 +112,12 @@ class EstimatorWidget(QtWidgets.QWidget):
 
         # Check if the output of the function is acceptable
         raise_error = True
-        if isinstance(estimates, (list, tuple)):
-            if all([isinstance(est, (tuple, list)) for est in estimates]):
-                if all([len(est) == 2 for est in estimates]):
-                    raise_error = False
+        if (
+            isinstance(estimates, (list, tuple))
+            and all(isinstance(est, (tuple, list)) for est in estimates)
+            and all(len(est) == 2 for est in estimates)
+        ):
+            raise_error = False
 
         if raise_error:
             raise TypeError(
@@ -131,7 +132,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         self.number_of_estimates = len(estimates)
 
     def _setup_ui(self):
-        self.line_edits = list()
+        self.line_edits = []
         for idx in range(self.number_of_estimates):
             qlb = QtWidgets.QLabel(self)
 
@@ -167,7 +168,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         # Make a procedure
         procedure = self._parent.make_procedure()
 
-        kwargs = dict()
+        kwargs = {}
 
         sequence = None
         sequence_length = None
@@ -217,7 +218,7 @@ class EstimatorWidget(QtWidgets.QWidget):
             self.line_edits[idx][1].setText(estimate[1])
 
     def _estimates_from_duration(self, duration, sequence_length):
-        estimates = list()
+        estimates = []
 
         estimates.append(("Duration", f"{int(duration)} s"))
 

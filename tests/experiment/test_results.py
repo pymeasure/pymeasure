@@ -27,15 +27,15 @@ import pickle
 import tempfile
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pytest
-import numpy as np
-
-from pymeasure.units import ureg
-from pymeasure.experiment.results import Results, CSVFormatter
-from pymeasure.experiment.procedure import Procedure, Parameter
-from pymeasure.experiment import BooleanParameter
 from data.procedure_for_testing import RandomProcedure
+
+from pymeasure.experiment import BooleanParameter
+from pymeasure.experiment.procedure import Parameter, Procedure
+from pymeasure.experiment.results import CSVFormatter, Results
+from pymeasure.units import ureg
 
 
 def test_procedure():

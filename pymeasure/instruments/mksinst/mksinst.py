@@ -152,9 +152,8 @@ class MKSInstrument(Instrument):
         """
         ret = super().read()  # use super read to get raw reply
         reply = self._re_response.search(ret)
-        if reply:
-            if reply.group('ack') == 'ACK':
-                self._check_extra_termination()
-                return []
+        if reply and reply.group('ack') == 'ACK':
+            self._check_extra_termination()
+            return []
         # no valid acknowledgement message found
         raise ValueError(f"invalid reply '{ret}' found in check_errors")

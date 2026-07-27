@@ -23,11 +23,11 @@
 #
 
 from unittest.mock import call
+
 import pytest
+from pytest import fixture, mark, raises, warns
 
-from pymeasure.adapters.protocol import to_bytes, ProtocolAdapter
-
-from pytest import mark, raises, fixture, warns
+from pymeasure.adapters.protocol import ProtocolAdapter, to_bytes
 
 
 @pytest.fixture

@@ -138,7 +138,7 @@ class DCXS(Instrument):
         values_kwargs={'reply_length': 4},
         validator=strict_range,
         map_values=True,
-        values=range(0, 1001),
+        values=range(1001),
     )
 
     regulation_mode = Instrument.control(

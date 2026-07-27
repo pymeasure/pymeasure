@@ -23,11 +23,11 @@
 #
 
 import math
+
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.rigol import DHOBase
-
+from pymeasure.test import expected_protocol
 
 # ======================================================================= #
 #  Status and OPC                                                          #
@@ -117,9 +117,8 @@ class TestChannel:
             assert inst.ch_2.coupling == "DC"
 
     def test_coupling_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.ch_1.coupling = "INVALID"
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.ch_1.coupling = "INVALID"
 
     # -- bandwidth_limit -------------------------------------------------
 
@@ -131,9 +130,8 @@ class TestChannel:
             inst.ch_1.bandwidth_limit = value
 
     def test_bandwidth_limit_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.ch_1.bandwidth_limit = "200M"
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.ch_1.bandwidth_limit = "200M"
 
     # -- scale -----------------------------------------------------------
 
@@ -150,9 +148,8 @@ class TestChannel:
             assert inst.ch_1.scale == pytest.approx(0.5)
 
     def test_scale_out_of_range_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.ch_1.scale = 11.0
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.ch_1.scale = 11.0
 
     # -- offset ----------------------------------------------------------
 
@@ -183,9 +180,8 @@ class TestChannel:
             assert inst.ch_1.probe == pytest.approx(10.0)
 
     def test_probe_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.ch_1.probe = 7
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.ch_1.probe = 7
 
     # -- invert (bool) ---------------------------------------------------
 
@@ -212,9 +208,8 @@ class TestChannel:
             inst.ch_1.units = "AMP"
 
     def test_units_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.ch_1.units = "DBM"
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.ch_1.units = "DBM"
 
     # -- label -----------------------------------------------------------
 
@@ -252,9 +247,8 @@ class TestAcquisition:
             inst.acquisition_type = value
 
     def test_acquisition_type_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.acquisition_type = "NORMal"
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.acquisition_type = "NORMal"
 
     def test_acquisition_averages_set(self):
         with expected_protocol(
@@ -269,9 +263,8 @@ class TestAcquisition:
             assert inst.acquisition_averages == 64
 
     def test_acquisition_averages_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.acquisition_averages = 3  # not a power of 2
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.acquisition_averages = 3  # not a power of 2
 
     def test_memory_depth_set(self):
         with expected_protocol(
@@ -310,9 +303,8 @@ class TestTimebase:
             assert inst.timebase_scale == pytest.approx(1e-3)
 
     def test_timebase_scale_out_of_range_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.timebase_scale = 1001.0
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.timebase_scale = 1001.0
 
     def test_timebase_offset_set(self):
         with expected_protocol(
@@ -334,9 +326,8 @@ class TestTimebase:
             inst.timebase_mode = value
 
     def test_timebase_mode_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.timebase_mode = "ZOOM"
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.timebase_mode = "ZOOM"
 
 
 # ======================================================================= #
@@ -353,9 +344,8 @@ class TestTrigger:
             inst.trigger_mode = "EDGE"
 
     def test_trigger_mode_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.trigger_mode = "INVALID"
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.trigger_mode = "INVALID"
 
     @pytest.mark.parametrize("value", ["AUTO", "NORM", "SING"])
     def test_trigger_sweep_set(self, value):
@@ -379,9 +369,8 @@ class TestTrigger:
             inst.trigger_source = value
 
     def test_trigger_source_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.trigger_source = "CH5"
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.trigger_source = "CH5"
 
     @pytest.mark.parametrize("value", ["POS", "NEG", "RFAL"])
     def test_trigger_slope_set(self, value):
@@ -523,9 +512,8 @@ class TestCursorAndDisplay:
             inst.display_grading_time = "INF"
 
     def test_display_grading_time_invalid_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.display_grading_time = "2"
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.display_grading_time = "2"
 
 # ======================================================================= #
 #  Waveform                                                                #
@@ -560,14 +548,12 @@ class TestWaveform:
             assert pre["xreference"] == 0
 
     def test_get_waveform_invalid_fmt_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.get_waveform(fmt="ASC")
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.get_waveform(fmt="ASC")
 
     def test_get_waveform_invalid_mode_raises(self):
-        with expected_protocol(DHOBase, []) as inst:
-            with pytest.raises(ValueError):
-                inst.get_waveform(mode="INVALID")
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.get_waveform(mode="INVALID")
 
     def test_get_waveform_norm_byte(self):
         raw_samples = bytes([128, 130, 126, 132])  # 4 uint8 samples

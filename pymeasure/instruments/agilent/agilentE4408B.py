@@ -22,12 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import truncated_range
-
 from io import StringIO
+
 import numpy as np
 import pandas as pd
+
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.validators import truncated_range
 
 
 class AgilentE4408B(SCPIMixin, Instrument):

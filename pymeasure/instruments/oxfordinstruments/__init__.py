@@ -23,7 +23,7 @@
 #
 
 
-from .itc503 import ITC503
 from .ips120_10 import IPS120_10
-from .ps120_10 import PS120_10
+from .itc503 import ITC503
 from .mercuryitc import MercuryiTC
+from .ps120_10 import PS120_10

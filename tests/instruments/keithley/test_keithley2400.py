@@ -24,10 +24,8 @@
 
 import math
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.keithley.keithley2400 import Keithley2400
-
+from pymeasure.test import expected_protocol
 
 INIT_COMMS = (":FORMAT:ELEMENTS VOLTAGE, CURRENT, RESISTANCE, TIME, STATUS", None)
 

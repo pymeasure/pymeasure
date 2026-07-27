@@ -23,9 +23,10 @@
 #
 
 import logging
-from pyvisa.errors import VisaIOError
-from pymeasure.instruments import Instrument
 
+from pyvisa.errors import VisaIOError
+
+from pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -91,7 +92,7 @@ class ND287(Instrument):
 
     @units.setter
     def units(self, unit):
-        if unit in self.position_get_process_map.keys():
+        if unit in self.position_get_process_map:
             self._units = unit
             self.position_get_process = self.position_get_process_map[unit]
 

@@ -27,8 +27,8 @@ from typing import Any
 
 from pyvisa.constants import InterfaceType
 
-from pymeasure.instruments import Channel, Instrument
 from pymeasure.adapters import Adapter
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 

@@ -22,16 +22,18 @@
 # THE SOFTWARE.
 #
 
-import logging
-import sys
-import inspect
-from copy import deepcopy
 import importlib.util
+import inspect
+import logging
 import re
+import sys
+from copy import deepcopy
+
 from pint import UndefinedUnitError
 
-from .parameters import Parameter, Measurable, Metadata
 from pymeasure.units import ureg
+
+from .parameters import Measurable, Metadata, Parameter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -72,10 +74,10 @@ class Procedure:
         self.status = Procedure.QUEUED
         self._update_parameters()
         self._update_metadata()
-        for key in kwargs:
-            if key in self._parameters.keys():
-                setattr(self, key, kwargs[key])
-                log.info(f'Setting parameter {key} to {kwargs[key]}')
+        for key, value in kwargs.items():
+            if key in self._parameters:
+                setattr(self, key, value)
+                log.info(f'Setting parameter {key} to {value}')
         self.gen_measurement()
 
     @staticmethod
@@ -111,9 +113,8 @@ class Procedure:
 
         self.MEASURE = {}
         for item, parameter in inspect.getmembers(self.__class__):
-            if isinstance(parameter, Measurable):
-                if parameter.measure:
-                    self.MEASURE.update({parameter.name: item})
+            if isinstance(parameter, Measurable) and parameter.measure:
+                self.MEASURE.update({parameter.name: item})
 
         if not self.DATA_COLUMNS:
             self.DATA_COLUMNS = Measurable.DATA_COLUMNS
@@ -147,7 +148,7 @@ class Procedure:
 
     def parameters_are_set(self):
         """ Returns True if all parameters are set """
-        for name, parameter in self._parameters.items():
+        for name in self._parameters:
             if getattr(self, name) is None:
                 return False
         return True
@@ -210,7 +211,7 @@ class Procedure:
                 setattr(self, name, self._parameters[name].value)
             else:
                 if except_missing:
-                    raise NameError(f"Parameter '{name}' does not belong to '{repr(self)}'")
+                    raise NameError(f"Parameter '{name}' does not belong to '{self!r}'")
 
     def _update_metadata(self):
         """ Collects all the Metadata objects for the procedure and stores
@@ -253,7 +254,7 @@ class Procedure:
         """ Collect the names of all eligible placeholders (parameters & metadata)"""
         placeholders = []
         for _, item in inspect.getmembers(cls):
-            if isinstance(item, Metadata) or isinstance(item, Parameter):
+            if isinstance(item, (Metadata, Parameter)):
                 placeholders.append(item.name)
 
         return list(set(placeholders))
@@ -261,20 +262,17 @@ class Procedure:
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement
         """
-        pass
 
     def execute(self):
         """ Perform the commands needed for the measurement itself. During
         execution the shutdown method will always be run following this method.
         This includes when Exceptions are raised.
         """
-        pass
 
     def shutdown(self):
         """ Executes the commands necessary to shut down the instruments
         and leave them in a safe state. This method is always run at the end.
         """
-        pass
 
     def emit(self, topic, record):
         raise NotImplementedError('should be monkey patched by a worker')

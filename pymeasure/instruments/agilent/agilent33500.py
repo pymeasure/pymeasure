@@ -25,10 +25,12 @@
 # Parts of this code were copied and adapted from the Agilent33220A class.
 
 import logging
-from pymeasure.instruments import Instrument, Channel, SCPIMixin, cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from time import time
+
 from pyvisa.errors import VisaIOError
+
+from pymeasure.instruments import Channel, Instrument, SCPIMixin, cast_or_str
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

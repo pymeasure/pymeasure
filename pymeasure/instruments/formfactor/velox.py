@@ -27,7 +27,7 @@ import logging
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
 from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

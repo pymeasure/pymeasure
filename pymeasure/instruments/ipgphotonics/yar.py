@@ -23,13 +23,13 @@
 #
 
 import logging
+from collections.abc import Callable
 from enum import IntFlag
 from typing import Literal
-from collections.abc import Callable
 
-from pymeasure.instruments import Instrument, cast_or_str, validators
 from pyvisa.constants import Parity, StopBits
 
+from pymeasure.instruments import Instrument, cast_or_str, validators
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -52,7 +52,7 @@ def setpoint_validator(value, values):
 
 def power_get_process_generator(minimum: float) -> Callable[..., float]:
     """Generate a get_process for the power property."""
-    def get_process(value: float | Literal["Off"] | Literal["Low"]) -> float:
+    def get_process(value: Literal["Off", "Low"] | float) -> float:
         if isinstance(value, (float, int)):
             return value
         elif value == "Off":

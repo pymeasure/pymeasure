@@ -22,13 +22,13 @@
 # THE SOFTWARE.
 #
 
-from enum import IntFlag
 import logging
+from enum import IntFlag
 
 from pyvisa import VisaIOError
+
 from pymeasure.adapters import SerialAdapter, VISAAdapter
 from pymeasure.instruments import Instrument
-
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

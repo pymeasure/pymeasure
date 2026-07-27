@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.instruments.agilent.agilent34450A import Agilent34450A
 from pyvisa.errors import VisaIOError
+
+from pymeasure.instruments.agilent.agilent34450A import Agilent34450A
 
 
 @pytest.fixture(scope="module")

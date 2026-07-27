@@ -23,11 +23,12 @@
 #
 
 import logging
+from enum import IntEnum
+
+from pyvisa.constants import Parity
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
-from pyvisa.constants import Parity
-from enum import IntEnum
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
