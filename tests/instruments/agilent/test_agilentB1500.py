@@ -401,8 +401,8 @@ class TestCMU:
                 ("TC 2, 0", "NBC+001.000E-12,NBY+002.000E-06,NBV+000.030E+00,NBV+001.000E+00"),
                 (
                     "TTC 2, 0",
-                    "NBT+000.123E+00,NBC+001.000E-12,NBY+002.000E-06,"
-                    "NBV+000.030E+00,NBV+001.000E+00",
+                    ("NBT+000.123E+00,NBC+001.000E-12,NBY+002.000E-06,"
+                    "NBV+000.030E+00,NBV+001.000E+00"),
                 ),
             ],
         ) as inst:
@@ -420,9 +420,8 @@ class TestCMU:
 
     def test_measure_invalid_range(self):
         """Test that measure rejects a range not in MEASUREMENT_RANGES."""
-        with expected_protocol(AgilentB1500Mock, []) as inst:
-            with pytest.raises(ValueError):
-                inst.cmu.measure(meas_range=500)
+        with expected_protocol(AgilentB1500Mock, []) as inst, pytest.raises(ValueError):
+            inst.cmu.measure(meas_range=500)
 
     def test_set_cv_timings(self):
         """Test set_cv_timings method."""

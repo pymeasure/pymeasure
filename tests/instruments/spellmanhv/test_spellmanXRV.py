@@ -23,8 +23,9 @@
 #
 
 import pytest
+
+from pymeasure.instruments.spellmanhv.spellmanXRV import ErrorCode, SpellmanXRV, StatusCode
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.spellmanhv.spellmanXRV import SpellmanXRV, StatusCode, ErrorCode
 
 STX = chr(2)
 

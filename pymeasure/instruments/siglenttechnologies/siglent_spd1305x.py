@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.siglenttechnologies.siglent_spdbase import (SPDSingleChannelBase,
-                                                                       SPDChannel)
+from pymeasure.instruments.siglenttechnologies.siglent_spdbase import (
+    SPDChannel,
+    SPDSingleChannelBase,
+)
 
 
 class SPD1305X(SPDSingleChannelBase):

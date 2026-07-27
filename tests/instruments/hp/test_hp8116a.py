@@ -23,10 +23,9 @@
 #
 
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.hp import HP8116A
 from pymeasure.instruments.hp.hp8116a import Status
+from pymeasure.test import expected_protocol
 
 
 class HP8116AWithMockStatus(HP8116A):

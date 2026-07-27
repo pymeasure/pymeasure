@@ -24,9 +24,9 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-from pymeasure.instruments.generic_types import IEEE4882Mixin, SCPIMixin
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.generic_types import IEEE4882Mixin, SCPIMixin
+from pymeasure.test import expected_protocol
 
 
 class Test_IEEE4882Mixin:

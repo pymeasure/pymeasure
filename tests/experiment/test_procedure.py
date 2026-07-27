@@ -22,14 +22,14 @@
 # THE SOFTWARE.
 #
 
-import pytest
 import pickle
 
-from pymeasure.experiment.procedure import Procedure, ProcedureWrapper
-from pymeasure.experiment.parameters import Parameter
-from pymeasure.units import ureg
-
+import pytest
 from data.procedure_for_testing import RandomProcedure
+
+from pymeasure.experiment.parameters import Parameter
+from pymeasure.experiment.procedure import Procedure, ProcedureWrapper
+from pymeasure.units import ureg
 
 
 def test_parameters():

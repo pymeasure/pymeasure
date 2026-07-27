@@ -49,7 +49,7 @@ def test_metadata_formatting():
 def test_metadata_notset():
     p = Metadata('Test')
     with pytest.raises(ValueError):
-        p.value
+        _ = p.value
 
 
 def test_metadata_object_replacement():

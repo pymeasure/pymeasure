@@ -25,12 +25,14 @@
 import numpy as np
 import pytest
 
-from pymeasure.experiment.parameters import Parameter
-from pymeasure.experiment.parameters import IntegerParameter
-from pymeasure.experiment.parameters import BooleanParameter
-from pymeasure.experiment.parameters import FloatParameter
-from pymeasure.experiment.parameters import ListParameter
-from pymeasure.experiment.parameters import VectorParameter
+from pymeasure.experiment.parameters import (
+    BooleanParameter,
+    FloatParameter,
+    IntegerParameter,
+    ListParameter,
+    Parameter,
+    VectorParameter,
+)
 
 
 def test_parameter_default():

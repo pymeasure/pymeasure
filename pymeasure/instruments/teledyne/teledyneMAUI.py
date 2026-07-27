@@ -23,9 +23,12 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
-    TeledyneOscilloscopeChannel, _results_list_to_dict
 from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import (
+    TeledyneOscilloscope,
+    TeledyneOscilloscopeChannel,
+    _results_list_to_dict,
+)
 
 
 class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):

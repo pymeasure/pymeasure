@@ -22,9 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.danfysik import Danfysik8500
+from pymeasure.test import expected_protocol
 
 
 def test_init():

@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -32,7 +32,9 @@ class PLChannel(Channel):
     Channels of the power supply. The channels are number from right-to-left, starting at 1.
     """
 
-    def __init__(self, parent, id, voltage_range: list = None, current_range: list = None):
+    def __init__(
+        self, parent, id, voltage_range: list | None = None, current_range: list | None = None
+    ):
         super().__init__(parent, id)
         self.voltage_setpoint_values = voltage_range
         self.current_limit_values = current_range

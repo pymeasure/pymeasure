@@ -61,7 +61,7 @@ def write_generic_test(
     if inkwargs is None:
         args_text = "",
     else:
-        args_text = [f'            {key}={repr(value)},\n' for key, value in inkwargs.items()]
+        args_text = [f'            {key}={value!r},\n' for key, value in inkwargs.items()]
     inst = " as inst" if "inst" in test else ""
     # file.writelines([
     #     "\n",
@@ -450,11 +450,10 @@ class Generator:
 
         :param filename: Name to save the tests to, may contain the path, e.g. "/tests/test_abc.py".
         """
-        file = filename if isinstance(filename, io.StringIO) else open(filename, "w")
-        self.write_init_test(file)
-        self.write_property_tests(file)
-        self.write_method_tests(file)
-        file.close()
+        with (filename if isinstance(filename, io.StringIO) else open(filename, "w")) as file:
+            self.write_init_test(file)
+            self.write_property_tests(file)
+            self.write_method_tests(file)
 
     def parse_stream(self):
         """Parse the stream not yet read."""
@@ -501,8 +500,8 @@ class Generator:
             try:
                 adapter = VISAAdapter(adapter, **adapter_kwargs)
             except ImportError:
-                raise Exception("Invalid Adapter provided for Instrument since"
-                                " PyVISA is not present")
+                raise ValueError("Invalid Adapter provided for Instrument since"
+                                 " PyVISA is not present")
         adapter.log.addHandler(ByteStreamHandler(self._stream))
         adapter.log.setLevel(logging.DEBUG)
         self.inst = instrument_class(adapter, **kwargs)  # type: ignore[reportCallIssue]

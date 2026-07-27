@@ -22,10 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
-
-
 from pymeasure.instruments.parker import ParkerGV6
+from pymeasure.test import expected_protocol
 
 
 def test_init():

@@ -23,11 +23,12 @@
 #
 
 from enum import IntEnum
+
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import (
-    strict_range,
     strict_discrete_range,
     strict_discrete_set,
+    strict_range,
 )
 
 

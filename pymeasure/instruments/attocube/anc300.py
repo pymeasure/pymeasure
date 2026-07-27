@@ -28,11 +28,8 @@ from math import inf, isfinite, isinf
 from warnings import warn
 
 from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import (joined_validators,
-                                              strict_discrete_set,
-                                              strict_range)
-
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.validators import joined_validators, strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -309,7 +306,7 @@ class ANC300Controller(Instrument):
         super().read()  # ignore echo of password
         auth_msg = super().read()
         if auth_msg != 'Authorization success':
-            raise Exception(f"Attocube authorization failed '{auth_msg}'")
+            raise ValueError(f"Attocube authorization failed '{auth_msg}'")
         # switch console echo off
         self.ask('echo off')
 

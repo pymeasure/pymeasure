@@ -27,7 +27,6 @@ import pytest
 from pymeasure.adapters import PrologixAdapter
 from pymeasure.test import expected_protocol
 
-
 init_comm = [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None)]
 
 

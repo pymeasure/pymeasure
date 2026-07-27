@@ -24,8 +24,8 @@
 
 import ctypes
 import logging
-
 from enum import Enum
+
 from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 

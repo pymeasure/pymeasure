@@ -25,13 +25,27 @@ from datetime import datetime
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.hp import HP8560A, HP8561B
-from pymeasure.instruments.hp.hp856Xx import Trace, MixerMode, CouplingMode, DemodulationMode, \
-    DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode, FrequencyReference, PeakSearchMode, \
-    StatusRegister, SourceLevelingControlMode, SweepCoupleMode, SweepOut, TraceDataFormat, \
-    TriggerMode, WindowType
+from pymeasure.instruments.hp.hp856Xx import (
+    AmplitudeUnits,
+    CouplingMode,
+    DemodulationMode,
+    DetectionModes,
+    ErrorCode,
+    FrequencyReference,
+    HP856Xx,
+    MixerMode,
+    PeakSearchMode,
+    SourceLevelingControlMode,
+    StatusRegister,
+    SweepCoupleMode,
+    SweepOut,
+    Trace,
+    TraceDataFormat,
+    TriggerMode,
+    WindowType,
+)
+from pymeasure.test import expected_protocol
 
 
 class TestHP856Xx:
@@ -229,7 +243,7 @@ class TestHP856Xx:
                     ("DL " + string_params, None)
                 ]
         ) as instr:
-            instr.display_line_enabled = True if string_params == "ON" else False
+            instr.display_line_enabled = string_params == "ON"
 
     def test_check_done(self):
         with expected_protocol(

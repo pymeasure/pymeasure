@@ -21,19 +21,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import time
-import os
 import json
+import logging
+import os
+import time
 
 import numpy as np
 import pandas as pd
 
 from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_discrete_set,
-                                              strict_range)
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    strict_range,
+    truncated_discrete_set,
+)
 
-import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 

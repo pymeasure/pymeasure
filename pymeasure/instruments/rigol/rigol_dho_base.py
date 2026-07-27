@@ -22,12 +22,13 @@
 # THE SOFTWARE.
 #
 
-import time
 import logging
-import numpy as np
+import time
 from enum import IntFlag
 
-from pymeasure.instruments import Instrument, Channel
+import numpy as np
+
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import (
     strict_discrete_set,

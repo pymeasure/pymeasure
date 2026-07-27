@@ -24,11 +24,17 @@
 
 import re
 import time
-import numpy as np
 from enum import IntFlag
+
+import numpy as np
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range, truncated_discrete_set_positive
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_discrete_set_positive,
+    truncated_range,
+)
 
 
 class LIAStatus(IntFlag):
@@ -533,8 +539,8 @@ class SR830(Instrument):
                 self.pause_buffer()
                 return ch1, ch2
         self.pause_buffer()
-        ch1[index: count + 1] = self.get_buffer(1, index, count)  # noqa: E203
-        ch2[index: count + 1] = self.get_buffer(2, index, count)  # noqa: E203
+        ch1[index: count + 1] = self.get_buffer(1, index, count)
+        ch2[index: count + 1] = self.get_buffer(2, index, count)
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):

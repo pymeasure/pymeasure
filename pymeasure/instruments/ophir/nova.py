@@ -23,7 +23,8 @@
 #
 
 from pymeasure.adapters import Adapter
-from .ophir_base import KeyMixin, OphirCommunication, OphirBase
+
+from .ophir_base import KeyMixin, OphirBase, OphirCommunication
 
 
 class NovaEnums:

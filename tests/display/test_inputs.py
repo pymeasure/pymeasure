@@ -22,14 +22,18 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from unittest import mock
 
+import pytest
+
+from pymeasure.display.inputs import BooleanInput, ListInput, ScientificInput, VectorInput
 from pymeasure.display.Qt import QtCore
-from pymeasure.display.inputs import (ScientificInput, BooleanInput, ListInput,
-                                      VectorInput)
-from pymeasure.experiment.parameters import (BooleanParameter, ListParameter, FloatParameter,
-                                             VectorParameter)
+from pymeasure.experiment.parameters import (
+    BooleanParameter,
+    FloatParameter,
+    ListParameter,
+    VectorParameter,
+)
 
 
 @pytest.mark.parametrize("default_value", [True, False])
@@ -85,7 +89,7 @@ class TestBooleanInput:
             bool_input.setValue(not default_value)
 
             assert bool_input.value() == (not default_value)
-            bool_input.parameter  # lazy update
+            _ = bool_input.parameter  # lazy update
             p.assert_called_once_with(not default_value)
 
 
@@ -140,7 +144,7 @@ class TestListInput:
                         return_value=123) as p:
             for choice in choices:
                 list_input.setValue(choice)
-                list_input.parameter  # lazy update
+                _ = list_input.parameter  # lazy update
             p.assert_has_calls((mock.call(123), mock.call('abc'), mock.call(0)))
 
     def test_unit_should_append_to_strings(self, qtbot):
@@ -239,7 +243,7 @@ class TestScientificInput:
                         return_value=10.0) as p:
             # test
             sci_input.setValue(5.0)
-            sci_input.parameter  # lazy update
+            _ = sci_input.parameter  # lazy update
             p.assert_called_once_with(5.0)
 
     @pytest.mark.parametrize("locale, decimalSep", [

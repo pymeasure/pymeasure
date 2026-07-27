@@ -22,9 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from time import sleep
 import re
+from time import sleep
+
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 
 
 class ParkerGV6(SCPIUnknownMixin, Instrument):
@@ -206,7 +207,7 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         """ Set the acceleration setpoint in revolutions per second
         squared.
         """
-        pass  # TODO: Implement acceleration return value
+        # TODO: Implement acceleration return value
 
     @acceleration.setter
     def acceleration(self, acceleration):
@@ -217,7 +218,7 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         """ Set the average acceleration setpoint in revolutions
         per second squared.
         """
-        pass  # TODO: Implement average_acceleration return value
+        # TODO: Implement average_acceleration return value
 
     @average_acceleration.setter
     def average_acceleration(self, acceleration):
@@ -226,7 +227,7 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
     @property
     def velocity(self):
         """ Set the velocity setpoint in revolutions per second."""
-        pass  # TODO: Implement velocity return value
+        # TODO: Implement velocity return value
 
     @velocity.setter
     def velocity(self, velocity):  # in revs/s

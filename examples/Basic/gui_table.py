@@ -34,16 +34,23 @@ python gui_table.py
 
 """
 
-import sys
-import random
-from time import sleep
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results, unique_filename
-from pymeasure.display.Qt import QtWidgets
-from pymeasure.display.windows import ManagedWindowBase
-from pymeasure.display.widgets import TableWidget, LogWidget
-
 import logging
+import random
+import sys
+from time import sleep
+
+from pymeasure.display.Qt import QtWidgets
+from pymeasure.display.widgets import LogWidget, TableWidget
+from pymeasure.display.windows import ManagedWindowBase
+from pymeasure.experiment import (
+    FloatParameter,
+    IntegerParameter,
+    Parameter,
+    Procedure,
+    Results,
+    unique_filename,
+)
+
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 

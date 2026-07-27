@@ -23,6 +23,7 @@
 #
 
 import pytest
+
 from pymeasure.instruments.rohdeschwarz.hmp import process_sequence
 
 

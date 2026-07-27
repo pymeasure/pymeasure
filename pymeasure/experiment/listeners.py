@@ -23,7 +23,7 @@
 #
 
 import logging
-from logging import StreamHandler, FileHandler
+from logging import FileHandler, StreamHandler
 
 from ..log import QueueListener
 from ..thread import StoppableThread
@@ -32,8 +32,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    import zmq
     import cloudpickle
+    import zmq
 except ImportError:
     zmq = None
     cloudpickle = None

@@ -23,7 +23,7 @@
 #
 
 import logging
-from typing import cast, Union
+from typing import Union, cast
 
 import pyvisa
 
