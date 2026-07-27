@@ -26,6 +26,7 @@ import logging
 from typing import cast, Union
 
 import pyvisa
+from pyvisa import ResourceManager
 
 from .adapter import Adapter
 from .protocol import ProtocolAdapter
@@ -43,8 +44,12 @@ class VISAAdapter(Adapter):
     :param resource_name: A
         `VISA resource string <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
         or GPIB address integer that identifies the target of the connection
-    :param visa_library: PyVISA VisaLibrary Instance, path of the VISA library or VisaLibrary spec
-        string (``@py`` or ``@ivi``). If not given, the default for the platform will be used.
+    :param visa_library: PyVISA VisaLibrary Instance, an existing
+        :class:`pyvisa.ResourceManager`, a path of the VISA library, or a
+        VisaLibrary spec string (``@py`` or ``@ivi``). If not given, the
+        default for the platform will be used. Passing an already existing
+        :class:`pyvisa.ResourceManager` allows several instruments to share a
+        single resource manager instead of each creating its own.
     :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
 
@@ -91,12 +96,18 @@ class VISAAdapter(Adapter):
             self.resource_name = getattr(resource_name, "resource_name", None)
             self.connection = resource_name.connection
             self.manager = resource_name.manager
+            self._owns_manager = False
             return
         elif isinstance(resource_name, int):
             resource_name = f"GPIB0::{resource_name}::INSTR"
 
         self.resource_name = resource_name
-        self.manager = pyvisa.ResourceManager(visa_library)
+        if isinstance(visa_library, ResourceManager):
+            self.manager = visa_library
+            self._owns_manager = False
+        else:
+            self.manager = pyvisa.ResourceManager(visa_library)
+            self._owns_manager = True
 
         # Clean up kwargs considering the interface type matching resource_name
         if_type = self.manager.resource_info(self.resource_name).interface_type
@@ -123,10 +134,16 @@ class VISAAdapter(Adapter):
 
             This closes the connection to the resource for all adapters using
             it currently (e.g. different adapters using the same GPIB line).
+            The underlying :class:`pyvisa.ResourceManager` is only closed when
+            this adapter created it; a manager passed in via ``visa_library``
+            is left open so that other adapters sharing it remain usable.
         """
         super().close()
         try:
-            if self.manager.visalib.library_path == "unset":
+            if (
+                getattr(self, "_owns_manager", True)
+                and self.manager.visalib.library_path == "unset"
+            ):
                 # if using the pyvisa-sim library the manager has to be also closed.
                 # this works around https://github.com/pyvisa/pyvisa-sim/issues/82
                 self.manager.close()

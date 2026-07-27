@@ -65,6 +65,15 @@ def test_nested_adapter():
     assert a.manager == a0.manager
 
 
+def test_shared_resource_manager():
+    """``visa_library`` accepts an existing ``pyvisa.ResourceManager`` and reuses it."""
+    rm = pyvisa.ResourceManager('@sim')
+    a1 = VISAAdapter(SIM_RESOURCE, visa_library=rm, read_termination="\n")
+    a2 = VISAAdapter(SIM_RESOURCE, visa_library=rm, read_termination="\n")
+    assert a1.manager is rm
+    assert a2.manager is rm
+
+
 def test_ProtocolAdapter():
     with expected_protocol(
             VISAAdapter,
