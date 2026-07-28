@@ -23,7 +23,6 @@
 #
 
 import pytest
-
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, PositionerType
 from pymeasure.test import expected_protocol
 from pymeasure.units import ureg
@@ -48,7 +47,7 @@ def test_close():
     ) as inst:
         inst.close()
         # verify instrument is no longer usable
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             inst.ask(':GID')
 
 
