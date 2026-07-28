@@ -85,14 +85,39 @@ class TestB1500:
         ) as inst:
             inst.set_port_connection(port, status)
 
-    def test_initialize_all_spgus_numbering(self):
-        """Test that SPGUs are numbered consecutively while their id is the slot number."""
+    def test_initialize_all_units(self):
+        """Test that all supported units are initialized with a single module query."""
         with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
-            inst.initialize_all_spgus()
+            inst.initialize_all_units()
+            assert inst.unit_names == {1: "SMU1", 4: "SMU2", 3: "SPGU1", 5: "SPGU2", 6: "CMU"}
+            assert list(inst.smu_references) == [inst.smu1, inst.smu2]
+
+    def test_initialize_all_units_numbering(self):
+        """Test that units are numbered consecutively while their id is the slot number."""
+        with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
+            inst.initialize_all_units()
+            assert inst.smus == {1: inst.smu1, 2: inst.smu2}
+            assert (inst.smu1.id, inst.smu2.id) == (1, 4)
             assert inst.spgus == {1: inst.spgu1, 2: inst.spgu2}
             assert (inst.spgu1.id, inst.spgu2.id) == (3, 5)
             # SPGU channel numbers are derived from the slot, not from the SPGU number
             assert (inst.spgu1.ch1.id, inst.spgu1.ch2.id) == (301, 302)
+            assert inst.cmu.id == 6
+
+    @pytest.mark.parametrize(
+        "method, unit_names",
+        [
+            ("initialize_all_smus", {1: "SMU1", 4: "SMU2"}),
+            ("initialize_all_spgus", {3: "SPGU1", 5: "SPGU2"}),
+            ("initialize_cmu", {6: "CMU"}),
+        ],
+    )
+    def test_deprecated_initialization(self, method, unit_names):
+        """Test that the deprecated per-type initialization methods warn but still work."""
+        with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
+            with pytest.warns(FutureWarning, match=f"`{method}` is deprecated"):
+                getattr(inst, method)()
+            assert inst.unit_names == unit_names
 
     def test_unit_names(self):
         """Test that unit_names covers all initialized units."""

@@ -154,12 +154,56 @@ class AgilentB1500(SCPIMixin, Instrument):
                     raise NotImplementedError(f"Module {module[0]} is not implemented yet!") from e
         return out
 
+    def initialize_all_units(self) -> None:
+        """Initialize all supported units.
+
+        Query available modules once and create a :class:`.SMU`, :class:`.SPGU`
+        or :class:`.CMU` instance for every module that is supported by this driver.
+        The units are numbered consecutively per type and are accessible via
+        attributes such as ``.smu1``, ``.spgu1`` and ``.cmu``.
+        The slot a unit is installed in is available as its ``id``.
+        """
+        modules = self.query_modules()
+        smu_index = 1
+        spgu_index = 1
+        for channel, module_type in modules.items():
+            if "SMU" in module_type:
+                self.add_child(
+                    SMU,
+                    smu_index,
+                    collection="smus",
+                    prefix="smu",
+                    smu_type=module_type,
+                    slot=channel,
+                )
+                self._smu_references[channel] = self.smus[smu_index]
+                smu_index += 1
+            elif "CMU" in module_type:
+                self.add_child(CMU, id=channel, collection="cmu", prefix=None)
+            elif module_type == "SPGU":
+                self.add_child(
+                    SPGU,
+                    spgu_index,
+                    collection="spgus",
+                    prefix="spgu",
+                    slot=channel,
+                )
+                spgu_index += 1
+
     def initialize_all_smus(self) -> None:
         """Initialize all SMUs.
 
         Query available modules and create a :class:`.SMU` instance for each.
         SMUs are accessible via attributes such as ``.smu1``, etc.
+
+        .. deprecated:: 0.17.0
+            Use :meth:`initialize_all_units` instead.
         """
+        warnings.warn(
+            "`initialize_all_smus` is deprecated, use `initialize_all_units` instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
         modules = self.query_modules()
         i = 1
         for channel, module_type in modules.items():
@@ -180,7 +224,15 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         Query available modules and create a :class:`.SPGU` instance for each.
         SPGUs are accessible via attributes such as ``.spgu1``, etc.
+
+        .. deprecated:: 0.17.0
+            Use :meth:`initialize_all_units` instead.
         """
+        warnings.warn(
+            "`initialize_all_spgus` is deprecated, use `initialize_all_units` instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
         modules = self.query_modules()
         i = 1
         for channel, module_type in modules.items():
@@ -199,7 +251,15 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         Query available modules and create a :class:`.CMU` instance for the CMU.
         CMU is accessible via attribute ``.cmu``.
+
+        .. deprecated:: 0.17.0
+            Use :meth:`initialize_all_units` instead.
         """
+        warnings.warn(
+            "`initialize_cmu` is deprecated, use `initialize_all_units` instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
         modules = self.query_modules()
         for channel, module_type in modules.items():
             if "CMU" in module_type:
