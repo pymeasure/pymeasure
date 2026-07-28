@@ -355,7 +355,8 @@ class SmarActSCU_ASCII(Instrument):
 
     model = Instrument.measurement(
         ":I", """Get the device model information. """,
-        get_process=lambda s: s[2:]
+        get_process=lambda s: s[2:],
+        cast=str,
     )
 
     # CHECK AMPLITUDE
