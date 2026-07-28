@@ -22,15 +22,16 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import truncated_discrete_set_positive
-from pymeasure.errors import RangeException
-from pyvisa import VisaIOError
+import re
+import warnings
+from io import BytesIO
 
 import numpy as np
-import re
-from io import BytesIO
-import warnings
+from pyvisa import VisaIOError
+
+from pymeasure.errors import RangeException
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import truncated_discrete_set_positive
 
 
 class Agilent8722ES(SCPIUnknownMixin, Instrument):
@@ -100,8 +101,7 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
         if value in Agilent8722ES.SCATTERING_PARAMETERS:
             self.write(f"{value}")
         else:
-            raise Exception("Invalid scattering parameter requested"
-                            " for Agilent 8722ES")
+            raise ValueError("Invalid scattering parameter requested for Agilent 8722ES")
 
     @property
     def scan_points(self):
@@ -112,8 +112,7 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
         if search:
             return int(float(search.group()))
         else:
-            raise Exception("Improper message returned for the"
-                            " number of points")
+            raise ValueError("Improper message returned for the number of points")
 
     @scan_points.setter
     def scan_points(self, points):
@@ -186,7 +185,7 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
                 self.ask("NOOP?")
             except VisaIOError as e:
                 if e.abbreviation != "VI_ERROR_TMO":
-                    raise e
+                    raise
             else:
                 break
 

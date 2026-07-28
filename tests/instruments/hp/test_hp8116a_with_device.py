@@ -22,9 +22,11 @@
 # THE SOFTWARE.
 #
 
-import pytest
 import math
 import time
+
+import pytest
+
 from pymeasure.instruments.hp import HP8116A, hp8116a
 
 

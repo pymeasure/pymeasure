@@ -25,8 +25,7 @@
 import time
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, truncated_discrete_set
-
+from pymeasure.instruments.validators import truncated_discrete_set, truncated_range
 
 byteorder = 'big'
 encoding = 'utf-8'
@@ -45,9 +44,7 @@ def _err_msg_invalid_termination_character(b):
 def _is_expecting_acknowledgement(command):
     if command in ["v", "5", "8", "6", "7", "T"]:
         return False
-    if command.endswith("?"):
-        return False
-    return True
+    return not command.endswith("?")
 
 
 class Kusg245_250A(Instrument):

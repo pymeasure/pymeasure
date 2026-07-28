@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.tektronix.afg3152c import AFG3152C
+from pymeasure.test import expected_protocol
 
 
 def test_shape():

@@ -46,9 +46,9 @@
 # 100-4
 
 from enum import IntFlag
+
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_range
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 OPERATING_MODES = ['VOLT', 'CURR']
 

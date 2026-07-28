@@ -25,9 +25,9 @@
 import logging
 from enum import IntEnum, IntFlag
 from warnings import warn
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, \
-    strict_range
+
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 # Setup logging
 log = logging.getLogger(__name__)
@@ -1754,7 +1754,7 @@ class AdvantestR624X(Instrument):
         :type: int
         """,
         validator=strict_range,
-        values=range(0, 5),
+        values=range(5),
     )
 
     load_config = Instrument.setting(
@@ -1764,7 +1764,7 @@ class AdvantestR624X(Instrument):
         :type: int
         """,
         validator=strict_range,
-        values=range(0, 5),
+        values=range(5),
     )
 
     def set_lo_common_connection_relay(self, enable, lo_relay=None):
@@ -1934,7 +1934,7 @@ class SMUChannel(Channel):
 
         """,
         validator=strict_range,
-        values=range(0, 63),
+        values=range(63),
         # get_process=lambda v: TriggerOutputSignalTiming(int(v)),
     )
 
@@ -2873,7 +2873,7 @@ class SMUChannel(Channel):
         "coc_0{ch}?",
         """Measure the Channel Operations Register (COR) as
         a :class:`COR` ``IntFlag`` (``COC?``).""",
-        values=range(0, 65535),
+        values=range(65535),
         get_process=lambda v: COR(int(v)),
     )
 
@@ -2883,7 +2883,7 @@ class SMUChannel(Channel):
         """Control the channel operation output enable register (COER) as
         a :class:`COR` ``IntFlag`` (``COE?``).""",
         validator=strict_range,
-        values=range(0, 65535),
+        values=range(65535),
         get_process=lambda v: COR(int(v)),
     )
 

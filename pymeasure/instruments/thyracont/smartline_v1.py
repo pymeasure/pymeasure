@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
 
 
 def calculate_checksum(msg):
@@ -73,7 +73,7 @@ class SmartlineV1(Instrument):
                          name,
                          write_termination="\r",
                          read_termination="\r",
-                         asrl=dict(baud_rate=baud_rate),
+                         asrl={"baud_rate": baud_rate},
                          **kwargs)
         self.address = address
 

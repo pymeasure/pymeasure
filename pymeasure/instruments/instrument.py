@@ -24,15 +24,14 @@
 
 import logging
 import time
-from typing import TypeVar
 from collections.abc import Sequence
 from warnings import warn
 
-from .common_base import CommonBase
+from typing_extensions import Self
+
 from ..adapters.adapter import Adapter
 from ..adapters.visa import VISAAdapter
-
-_Self = TypeVar("_Self", bound="Instrument")  # typing.Self for Python>3.10
+from .common_base import CommonBase
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -78,7 +77,7 @@ class Instrument(CommonBase):
         name: str,
         **kwargs,
     ):
-        if "includeSCPI" in kwargs.keys():
+        if "includeSCPI" in kwargs:
             warn("Defining SCPI base functionality with `includeSCPI` is deprecated, inherit "
                  "the `SCPIMixin` class instead if it supports SCPI.", FutureWarning)
             kwargs.pop("includeSCPI")
@@ -87,8 +86,9 @@ class Instrument(CommonBase):
             try:
                 adapter = VISAAdapter(adapter, **kwargs)
             except ImportError:
-                raise Exception("Invalid Adapter provided for Instrument since"
-                                " PyVISA is not present")
+                raise TypeError(
+                    "Invalid Adapter provided for Instrument sincePyVISA is not present"
+                )
         self.adapter = adapter
         self.isShutdown = False
         self.name = name
@@ -97,7 +97,7 @@ class Instrument(CommonBase):
 
         log.info(f"Initializing {self.name}.")
 
-    def __enter__(self: _Self) -> _Self:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool | None:

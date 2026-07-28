@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.ilxlightwave.ldp3811 import LDP3811, LDP3811Mode
+from pymeasure.test import expected_protocol
 
 
 def test_output_enabled_getter():

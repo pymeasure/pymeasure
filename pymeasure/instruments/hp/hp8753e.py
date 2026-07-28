@@ -394,7 +394,7 @@ class HP8753E(Instrument):
         return np.linspace(self.start_frequency, self.stop_frequency, num=self.scan_points)
 
     @property
-    def data_complex(self, timeout=10):
+    def data_complex(self):
         """
         Get the complex s-parameter measurements from the last scan.
         This function is blocking until it is completed.
@@ -404,6 +404,7 @@ class HP8753E(Instrument):
         :return: An array of s-parameters for the measurement_parameter.
         :rtype: numpy.ndarray
         """
+        timeout = 10
 
         points = 0
         counter = 0
@@ -416,7 +417,6 @@ class HP8753E(Instrument):
             except VisaIOError:
                 sleep(0.1)
                 counter += 1
-                pass
 
             if now() > start + timeout:
                 raise TimeoutError(

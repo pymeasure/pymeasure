@@ -22,10 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
-
-
 from pymeasure.instruments.oxfordinstruments.ips120_10 import IPS120_10
+from pymeasure.test import expected_protocol
 
 
 def test_version():

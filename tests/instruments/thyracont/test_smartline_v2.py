@@ -23,13 +23,19 @@
 #
 
 import pytest
+
 from pymeasure.instruments import Instrument
-from pymeasure.test import expected_protocol
 
 # File to test
-from pymeasure.instruments.thyracont.smartline_v2 import (SmartlineV2, HotCathode, Pirani,
-                                                          calculate_checksum, Piezo, Sources)
-
+from pymeasure.instruments.thyracont.smartline_v2 import (
+    HotCathode,
+    Piezo,
+    Pirani,
+    SmartlineV2,
+    Sources,
+    calculate_checksum,
+)
+from pymeasure.test import expected_protocol
 
 SmartlineV2.hot_cathode = Instrument.ChannelCreator(cls=HotCathode)
 SmartlineV2.pirani = Instrument.ChannelCreator(cls=Pirani)
@@ -77,20 +83,24 @@ def test_calculateChecksum(message, result):
 def test_transmitter_error():
     with expected_protocol(SmartlineV2, [("0010MV00D", "0017MV00ERROR1X")]) as inst:
         with pytest.raises(ConnectionError) as exc:
-            inst.pressure
+            _ = inst.pressure
         assert exc.value.args[0] == "Sensor defect or stacked out."
 
 
 def test_wrong_answer_command():
-    with expected_protocol(SmartlineV2, [("0010MV00D", "0011MX00ERROR1X")]) as inst:
-        with pytest.raises(ConnectionError, match="Wrong response to MV: '0011MX00ERROR1X'."):
-            inst.pressure
+    with (
+        expected_protocol(SmartlineV2, [("0010MV00D", "0011MX00ERROR1X")]) as inst,
+        pytest.raises(ConnectionError, match="Wrong response to MV: '0011MX00ERROR1X'."),
+    ):
+        _ = inst.pressure
 
 
 def test_wrong_answer_checksum():
-    with expected_protocol(SmartlineV2, [("0010MV00D", "0011MV00ERROR1X")]) as inst:
-        with pytest.raises(ConnectionError, match="Response checksum is wrong."):
-            inst.pressure
+    with (
+        expected_protocol(SmartlineV2, [("0010MV00D", "0011MV00ERROR1X")]) as inst,
+        pytest.raises(ConnectionError, match="Response checksum is wrong."),
+    ):
+        _ = inst.pressure
 
 
 # Test properties
@@ -126,9 +136,8 @@ def test_display_unit_setter():
 
 
 def test_display_unit_setter_wrong():
-    with expected_protocol(SmartlineV2, []) as inst:
-        with pytest.raises(ValueError):
-            inst.display_unit = "abc"
+    with expected_protocol(SmartlineV2, []) as inst, pytest.raises(ValueError):
+        inst.display_unit = "abc"
 
 
 def test_display_orientation_getter():

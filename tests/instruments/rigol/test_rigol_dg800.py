@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.rigol import DG800
+from pymeasure.test import expected_protocol
 
 
 def test_init():
@@ -55,8 +55,6 @@ def test_channel_1_duty_cycle_setter():
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b':SOUR1:PULS:DCYC?', b'1.000000E-01\n')],
      0.1),
-    ([(b':SOUR1:PULS:DCYC?', b'5.000000E-01\n')],
-     0.5),
     ([(b':SOUR1:PULS:DCYC?', b'5.000000E-01\n')],
      0.5),
 ))

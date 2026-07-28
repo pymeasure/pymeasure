@@ -61,36 +61,36 @@ class Racal1992(Instrument):
                    'MX', 'MZ', 'LA', 'LB', 'FC', 'RC', 'DT', 'GS']
 
     channel_params = {
-        'A' : {                                                         # noqa
-            'coupling'      : { 'AC'   : 'AAC',  'DC'     : 'ADC' },    # noqa
-            'attenuation'   : { 'X1'   : 'AAD',  'X10'    : 'AAE' },    # noqa
-            'trigger'       : { 'auto' : 'AAU',  'manual' : 'AMN' },    # noqa
-            'impedance'     : { '50'   : 'ALI',  '1M'     : 'AHI' },    # noqa
-            'slope'         : { 'pos'  : 'APS',  'neg'    : 'ANS' },    # noqa
-            'filtering'     : { True   : 'AFE',  False    : 'AFD' },    # noqa
-            'trigger_level' : None,                                     # noqa
-            },
-        'B' : {                                                         # noqa
-            'coupling'      : { 'AC'        : 'BAC',  'DC'     : 'BDC' },    # noqa
-            'attenuation'   : { 'X1'        : 'BAD',  'X10'    : 'BAE' },    # noqa
-            'trigger'       : { 'auto'      : 'BAU',  'manual' : 'BMN' },    # noqa
-            'impedance'     : { '50'        : 'BLI',  '1M'     : 'BHI' },    # noqa
-            'slope'         : { 'pos'       : 'BPS',  'neg'    : 'BNS' },    # noqa
-            'input_select'  : { 'separate'  : 'BCS',  'common' : 'BCC' },    # noqa
-            'trigger_level' : None,                                     # noqa
+        'A' : {                                                         # noqa: E201,E202,E203
+            'coupling'      : { 'AC'   : 'AAC',  'DC'     : 'ADC' },    # noqa: E201,E202,E203
+            'attenuation'   : { 'X1'   : 'AAD',  'X10'    : 'AAE' },    # noqa: E201,E202,E203
+            'trigger'       : { 'auto' : 'AAU',  'manual' : 'AMN' },    # noqa: E201,E202,E203
+            'impedance'     : { '50'   : 'ALI',  '1M'     : 'AHI' },    # noqa: E201,E202,E203
+            'slope'         : { 'pos'  : 'APS',  'neg'    : 'ANS' },    # noqa: E201,E202,E203
+            'filtering'     : { True   : 'AFE',  False    : 'AFD' },    # noqa: E201,E202,E203
+            'trigger_level' : None,                                     # noqa: E201,E202,E203
+        },
+        'B' : {                                                         # noqa: E201,E202,E203
+            'coupling'      : { 'AC'        : 'BAC',  'DC'     : 'BDC' },    # noqa: E201,E202,E203
+            'attenuation'   : { 'X1'        : 'BAD',  'X10'    : 'BAE' },    # noqa: E201,E202,E203
+            'trigger'       : { 'auto'      : 'BAU',  'manual' : 'BMN' },    # noqa: E201,E202,E203
+            'impedance'     : { '50'        : 'BLI',  '1M'     : 'BHI' },    # noqa: E201,E202,E203
+            'slope'         : { 'pos'       : 'BPS',  'neg'    : 'BNS' },    # noqa: E201,E202,E203
+            'input_select'  : { 'separate'  : 'BCS',  'common' : 'BCC' },    # noqa: E201,E202,E203
+            'trigger_level' : None,                                     # noqa: E201,E202,E203
             },
     }
 
     operating_modes = {
-        'self_check'      : 'CK',    # noqa
-        'frequency_a'     : 'FA',    # noqa
-        'period_a'        : 'PA',    # noqa
-        'phase_a_rel_b'   : 'PH',    # noqa
-        'ratio_a_to_b'    : 'RA',    # noqa
-        'ratio_c_to_b'    : 'RC',    # noqa
-        'interval_a_to_b' : 'TI',    # noqa
-        'total_a_by_b'    : 'TA',    # noqa
-        'frequency_c'     : 'FC',    # noqa
+        'self_check'      : 'CK',    # noqa: E201,E202,E203
+        'frequency_a'     : 'FA',    # noqa: E201,E202,E203
+        'period_a'        : 'PA',    # noqa: E201,E202,E203
+        'phase_a_rel_b'   : 'PH',    # noqa: E201,E202,E203
+        'ratio_a_to_b'    : 'RA',    # noqa: E201,E202,E203
+        'ratio_c_to_b'    : 'RC',    # noqa: E201,E202,E203
+        'interval_a_to_b' : 'TI',    # noqa: E201,E202,E203
+        'total_a_by_b'    : 'TA',    # noqa: E201,E202,E203
+        'frequency_c'     : 'FC',    # noqa: E201,E202,E203
     }
 
     @staticmethod
@@ -347,7 +347,7 @@ class Racal1992(Instrument):
                 break
 
             if time.time() > end_time:
-                raise Exception("Timeout while waiting for measurement")
+                raise TimeoutError("Timeout while waiting for measurement")
 
         return stb
 

@@ -24,8 +24,9 @@
 
 from enum import IntEnum
 
-from pymeasure.instruments import Instrument, Channel, validators
 from pyvisa.constants import Parity, StopBits
+
+from pymeasure.instruments import Channel, Instrument, validators
 
 from .smartline_v1 import calculate_checksum
 

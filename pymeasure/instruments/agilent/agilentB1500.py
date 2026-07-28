@@ -143,12 +143,12 @@ class AgilentB1500(SCPIMixin, Instrument):
         out: dict[int, str] = {}
         for i, module in enumerate(modules):
             module = module.split(",")
-            if not module[0] == "0":
+            if module[0] != "0":
                 try:
                     out[i + 1] = module_names[module[0]]
                     # i+1: channels start at 1 not at 0
-                except Exception:
-                    raise NotImplementedError(f"Module {module[0]} is not implemented yet!")
+                except Exception as e:
+                    raise NotImplementedError(f"Module {module[0]} is not implemented yet!") from e
         return out
 
     def initialize_all_smus(self) -> None:
@@ -375,10 +375,10 @@ class AgilentB1500(SCPIMixin, Instrument):
             sizes = {"FMT1": 16, "FMT11": 17, "FMT21": 19}
             try:
                 self.size = sizes[output_format_str]
-            except Exception:
+            except Exception as e:
                 raise NotImplementedError(
                     f"Data Format {output_format_str} is not implemented so far."
-                )
+                ) from e
             self.format = output_format_str
             data_names_C = {
                 "V": "Voltage (V)",
@@ -504,7 +504,9 @@ class AgilentB1500(SCPIMixin, Instrument):
     class _data_formatting_FMT1(_data_formatting_generic):
         """Data formatting for FMT1 format."""
 
-        def __init__(self, unit_names: dict[IdType, str] = {}, output_format_string: str = "FMT1"):
+        def __init__(
+            self, unit_names: dict[IdType, str], output_format_string: str = "FMT1"
+        ):
             super().__init__(unit_names, output_format_string)
 
         def format_single(self, element: str) -> tuple[str, str | int, str, float]:
@@ -528,13 +530,13 @@ class AgilentB1500(SCPIMixin, Instrument):
     class _data_formatting_FMT11(_data_formatting_FMT1):
         """Data formatting for FMT11 format (based on FMT1)."""
 
-        def __init__(self, unit_names: dict[IdType, str] = {}):
+        def __init__(self, unit_names: dict[IdType, str]):
             super().__init__(unit_names, "FMT11")
 
     class _data_formatting_FMT21(_data_formatting_generic):
         """Data formatting for FMT21 format."""
 
-        def __init__(self, unit_names: dict[IdType, str] = {}):
+        def __init__(self, unit_names: dict[IdType, str]):
             super().__init__(unit_names, "FMT21")
 
         def format_single(self, element: str) -> tuple[str, str | int, str, float]:
@@ -556,7 +558,7 @@ class AgilentB1500(SCPIMixin, Instrument):
             return (status, channel, data_name, value)
 
     def _data_formatting(
-        self, output_format_str: str, unit_names: dict[IdType, str] = {}
+        self, output_format_str: str, unit_names: dict[IdType, str] | None = None
     ) -> AgilentB1500._data_formatting_generic | None:
         """Return data formatting class for given data format string.
 
@@ -564,6 +566,8 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param unit_names: Dictionary of channels and unit names, defaults to {}
         :return: Corresponding formatting class
         """
+        if unit_names is None:
+            unit_names = {}
         classes: dict[str, type[AgilentB1500._data_formatting_generic]] = {
             "FMT1": self._data_formatting_FMT1,
             "FMT11": self._data_formatting_FMT11,
@@ -594,7 +598,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         # restrict to implemented formats
         output_format = strict_discrete_set(output_format, [1, 11, 21])
         # possible: [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25]
-        mode = strict_range(mode, range(0, 11))
+        mode = strict_range(mode, range(11))
         self.write(f"FMT {output_format}, {mode}")
         self.check_errors()
         if not self.unit_names:
@@ -685,7 +689,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         if (adc_type_enum == ADCType["HRADC"]) and (mode_enum == ADCMode["TIME"]):
             raise ValueError("Time ADC mode is not available for HRADC")
         command = f"AIT {adc_type_enum.value}, {mode_enum.value}"
-        if not N == "":
+        if N != "":
             if mode_enum == ADCMode["TIME"]:
                 command += f", {N}"
             else:
@@ -1097,7 +1101,7 @@ class SMU(Channel):
         # different than other SMU specific settings (grouped by setting)
         # read via raw command
         response = self.parent.query_learn(30)
-        if "FL" in response.keys():
+        if "FL" in response:
             # only present if filters of all channels are off
             return False
         else:
@@ -1186,12 +1190,12 @@ class SMU(Channel):
         if source_type.upper() == "VOLTAGE":
             cmd = "DV"
             source_range = self.voltage_ranging.output(source_range).index
-            if not comp_range == "":
+            if comp_range != "":
                 comp_range = self.current_ranging.meas(comp_range).index
         elif source_type.upper() == "CURRENT":
             cmd = "DI"
             source_range = self.current_ranging.output(source_range).index
-            if not comp_range == "":
+            if comp_range != "":
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
@@ -1199,10 +1203,10 @@ class SMU(Channel):
         cmd += f" {{ch}}, {source_range}, {output}"
         if comp is not None:
             cmd += f", {comp}"
-            if not comp_polarity == "":
+            if comp_polarity != "":
                 comp_polarity_value = CompliancePolarity.get(comp_polarity).value
                 cmd += f", {comp_polarity_value}"
-                if not comp_range == "":
+                if comp_range != "":
                     cmd += f", {comp_range}"
         self.write(cmd)
         self.check_errors()
@@ -1239,14 +1243,14 @@ class SMU(Channel):
             cmd = f"DI{self.id}"
             source_range = self.voltage_ranging.output(source_range).index
             unit = "V"
-            if not comp_range == "":
+            if comp_range != "":
                 comp_range = self.current_ranging.meas(comp_range).index
         elif source_type.upper() == "CURRENT":
             source_type = "CURRENT"
             cmd = f"DI{self.id}"
             source_range = self.current_ranging.output(source_range).index
             unit = "A"
-            if not comp_range == "":
+            if comp_range != "":
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
@@ -1466,9 +1470,7 @@ class SMU(Channel):
             raise ValueError("Source Type must be Current or Voltage.")
         mode_value = SweepMode.get(mode).value
         if mode_value in [2, 4]:
-            if start >= 0 and stop >= 0:
-                pass
-            elif start <= 0 and stop <= 0:
+            if start >= 0 and stop >= 0 or start <= 0 and stop <= 0:
                 pass
             else:
                 raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
@@ -1653,16 +1655,16 @@ class Ranging:
         else:
             try:
                 index = self.indizes[input_value.upper()]
-            except Exception:
+            except Exception as e:
                 raise ValueError(
                     f"Specified Range Name {input_value.upper()} is not valid or not supported by"
                     f" this SMU"
-                )
+                ) from e
         # get name
         try:
             name = self.ranges[index]
-        except Exception:
-            raise ValueError(f"Specified Range {index} is not supported by this SMU")
+        except Exception as e:
+            raise ValueError(f"Specified Range {index} is not supported by this SMU") from e
         return self._Range(name=name, index=index)
 
 
@@ -1826,7 +1828,7 @@ class SPGU(Channel):
     )
 
     def set_output_mode(
-        self, mode: SPGUOutputMode, condition: int | float | None = None
+        self, mode: SPGUOutputMode, condition: float | None = None
     ) -> None:
         """Set the operating mode for SPGU channel outputs. (``SPRM``)
 
@@ -1850,12 +1852,11 @@ class SPGU(Channel):
             if not (1 <= condition <= 1_000_000):
                 raise ValueError("Condition must be between 1 and 1,000,000 when mode is COUNT.")
 
-        elif mode_enum == SPGUOutputMode.DURATION:
-            if not (1e-6 <= condition <= 31_556_926):
-                raise ValueError(
-                    "Condition must be between 0.000001 and 31,556,926 seconds (1 year) "
-                    "when mode is DURATION."
-                )
+        elif mode_enum == SPGUOutputMode.DURATION and not (1e-6 <= condition <= 31_556_926):
+            raise ValueError(
+                "Condition must be between 0.000001 and 31,556,926 seconds (1 year) "
+                "when mode is DURATION."
+            )
 
         self.write(f"SPRM {mode_enum.value}, {int(condition)}")
 
@@ -2180,9 +2181,10 @@ def _set_cv_parameters_base(
     comp: float | None = None,
 ) -> str:
     mode = SweepMode.get(mode)
-    if mode in [SweepMode.LOG_SINGLE, SweepMode.LOG_DOUBLE]:
-        if not ((start >= 0 and stop >= 0) or (start <= 0 and stop <= 0)):
-            raise ValueError(f"For {mode=} start and stop values must have the same sign.")
+    if mode in [SweepMode.LOG_SINGLE, SweepMode.LOG_DOUBLE] and not (
+        (start >= 0 and stop >= 0) or (start <= 0 and stop <= 0)
+    ):
+        raise ValueError(f"For {mode=} start and stop values must have the same sign.")
 
     start = strict_range(start, [-100, 100])
     stop = strict_range(stop, [-100, 100])
@@ -2513,7 +2515,7 @@ class QueryLearn:
             if len(parameters) == 1:
                 parameters = parameters[0]
             # skip second AAD entry for each channel -> contains no information
-            if "AAD" in name and name in response_dict.keys():
+            if "AAD" in name and name in response_dict:
                 continue
             response_dict[name] = parameters
         return response_dict
@@ -2584,14 +2586,16 @@ class QueryLearn:
     def _get_smu(key: str, smu_references: dict[int, SMU]) -> SMU:
         # command without channel
         command = re.findall(r"(?P<command>[A-Z]+)", key)[0]
-        channel = key[len(command) :]  # noqa: E203
+        channel = key[len(command):]
         return smu_references[int(channel)]
 
     # SMU Modes
     @classmethod
     def DI(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> dict[str, OrderedDict[str, str | bool]]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             ("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
@@ -2610,8 +2614,10 @@ class QueryLearn:
 
     @classmethod
     def DV(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> dict[str, OrderedDict[str, str | bool]]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             ("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
@@ -2630,8 +2636,10 @@ class QueryLearn:
 
     @classmethod
     def CL(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> dict[str, str]:
+        if smu_references is None:
+            smu_references = {}
         if isinstance(parameters, str):
             key += parameters
         smu = cls._get_smu(key, smu_references)
@@ -2640,15 +2648,19 @@ class QueryLearn:
     # Instrument Settings: 31
     @classmethod
     def TM(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = ["Trigger Mode"]  # enum + setting not implemented yet
         return cls.to_dict(parameters, names)
 
     @classmethod
     def AV(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [
             "ADC Averaging Number",
             ("ADC Averaging Mode", lambda parameter: str(AutoManual(int(parameter)))),
@@ -2657,23 +2669,29 @@ class QueryLearn:
 
     @classmethod
     def CM(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [("Auto Calibration Mode", lambda parameter: bool(int(parameter)))]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def FMT(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = ["Output Data Format", "Output Data Mode"]
         # enum + setting not implemented yet
         return cls.to_dict(parameters, names)
 
     @classmethod
     def MM(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [("Measurement Mode", lambda parameter: str(MeasMode(int(parameter))))]
         ret = cls.to_dict(parameters[0], names)
         smu_names = []
@@ -2685,8 +2703,10 @@ class QueryLearn:
     # Measurement Ranging: 32
     @classmethod
     def RI(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             (
@@ -2698,8 +2718,10 @@ class QueryLearn:
 
     @classmethod
     def RV(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             (
@@ -2712,8 +2734,10 @@ class QueryLearn:
     # Sweep: 33
     @classmethod
     def WM(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [
             ("Auto Abort Status", lambda parameter: {2: True, 1: False}[int(parameter)]),
             (
@@ -2725,8 +2749,10 @@ class QueryLearn:
 
     @classmethod
     def WT(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [
             "Hold Time (s)",
             "Delay Time (s)",
@@ -2738,8 +2764,10 @@ class QueryLearn:
 
     @classmethod
     def WV(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> dict[str, OrderedDict[str, str | bool]]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             ("Sweep Mode", lambda parameter: str(SweepMode(int(parameter)))),
@@ -2757,8 +2785,10 @@ class QueryLearn:
 
     @classmethod
     def WI(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> dict[str, OrderedDict[str, str | bool]]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             ("Sweep Mode", lambda parameter: str(SweepMode(int(parameter)))),
@@ -2776,8 +2806,10 @@ class QueryLearn:
 
     @classmethod
     def WSV(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> dict[str, OrderedDict[str, str | bool]]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             ("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
@@ -2793,8 +2825,10 @@ class QueryLearn:
 
     @classmethod
     def WSI(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> dict[str, OrderedDict[str, str | bool]]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             ("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
@@ -2811,8 +2845,10 @@ class QueryLearn:
     # SMU Measurement Operation Mode: 46
     @classmethod
     def CMM(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             (
@@ -2825,8 +2861,10 @@ class QueryLearn:
     # Sampling: 47
     @classmethod
     def MSC(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [
             ("Auto Abort Status", lambda parameter: {2: True, 1: False}[int(parameter)]),
             ("Output after Measurement", lambda parameter: str(SamplingPostOutput(int(parameter)))),
@@ -2835,8 +2873,10 @@ class QueryLearn:
 
     @classmethod
     def MT(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [
             "Hold Bias Time (s)",
             "Sampling Interval (s)",
@@ -2847,15 +2887,19 @@ class QueryLearn:
 
     @classmethod
     def ML(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [("Sampling Mode", lambda parameter: str(SamplingMode(int(parameter))))]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def MV(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> dict[str, OrderedDict[str, str | bool]]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             ("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
@@ -2870,8 +2914,10 @@ class QueryLearn:
 
     @classmethod
     def MI(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> dict[str, OrderedDict[str, str | bool]]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [
             ("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
@@ -2887,8 +2933,10 @@ class QueryLearn:
     # SMU Series Resistor: 53
     @classmethod
     def SSR(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [(smu.name + " Series Resistor", lambda parameter: bool(int(parameter)))]
         return cls.to_dict(parameters, names)
@@ -2896,8 +2944,10 @@ class QueryLearn:
     # Auto Ranging Mode: 54
     @classmethod
     def RM(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [smu.name + " Ranging Mode", smu.name + " Ranging Mode Parameter"]
         return cls.to_dict(parameters, names)
@@ -2905,16 +2955,20 @@ class QueryLearn:
     # ADC: 55, 56
     @classmethod
     def AAD(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         smu = cls._get_smu(key, smu_references)
         names = [(smu.name + " ADC", lambda parameter: str(ADCType(int(parameter))))]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def AIT(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         adc_type = key[3:]
         adc_name = str(ADCType(int(adc_type)))
         names = [
@@ -2925,15 +2979,19 @@ class QueryLearn:
 
     @classmethod
     def AZ(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [("ADC Auto Zero", lambda parameter: str(bool(int(parameter))))]
         return cls.to_dict(parameters, names)
 
     # Time Stamp: 60
     @classmethod
     def TSC(
-        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] = {}
+        cls, key: str, parameters: str | list[str], smu_references: dict[int, SMU] | None = None
     ) -> OrderedDict[str, str | bool]:
+        if smu_references is None:
+            smu_references = {}
         names = [("Time Stamp", lambda parameter: str(bool(int(parameter))))]
         return cls.to_dict(parameters, names)

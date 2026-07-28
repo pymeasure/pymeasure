@@ -23,9 +23,12 @@
 #
 
 import logging
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
-    strict_discrete_set, truncated_discrete_set, truncated_range
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
 )
 
 log = logging.getLogger(__name__)
