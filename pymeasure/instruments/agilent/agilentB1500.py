@@ -38,7 +38,7 @@ import pandas as pd
 
 from pymeasure.instruments import AdapterType, Instrument, SCPIMixin
 from pymeasure.instruments.channel import Channel
-from pymeasure.instruments.common_base import IdType, InstrumentProperty
+from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.validators import (
     strict_discrete_range,
     strict_discrete_set,
@@ -58,7 +58,8 @@ class AgilentB1500(SCPIMixin, Instrument):
     and provide a high-level interface for taking different kinds of
     measurements.
     """
-    smus: dict[IdType, SMU]
+
+    smus: dict[int, SMU]
 
     def __init__(
         self,
@@ -76,23 +77,25 @@ class AgilentB1500(SCPIMixin, Instrument):
         return self.smus.values()
 
     @property
-    def unit_names(self) -> dict[IdType, str]:
+    def unit_names(self) -> dict[int, str]:
         """Get the channel number to unit name mapping for all initialized units.
 
         Built from the uppercased pymeasure channel name (``_name``) of every
         initialized SMU, CMU and SPGU.
         """
-        names: dict[IdType, str] = {
-            smu.id: smu._name.upper() for smu in getattr(self, "smus", {}).values()
+        names: dict[int, str] = {
+            cast(int, smu.id): smu._name.upper() for smu in getattr(self, "smus", {}).values()
         }
-        names.update((spgu.id, spgu._name.upper()) for spgu in getattr(self, "spgus", {}).values())
+        names.update(
+            (cast(int, spgu.id), spgu._name.upper()) for spgu in getattr(self, "spgus", {}).values()
+        )
         cmu = getattr(self, "cmu", None)
         if isinstance(cmu, CMU):
-            names[cmu.id] = cmu._name.upper()
+            names[cast(int, cmu.id)] = cmu._name.upper()
         return names
 
     @property
-    def smu_names(self) -> dict[IdType, str]:
+    def smu_names(self) -> dict[int, str]:
         """Get the channel number to SMU name mapping for all initialized SMUs.
 
         SMU-only subset of :attr:`unit_names`.
@@ -367,7 +370,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         }
         data_names_int = {"Sampling index"}  # convert to int instead of float
 
-        def __init__(self, unit_names: dict[IdType, str], output_format_str: str = ""):
+        def __init__(self, unit_names: dict[int, str], output_format_str: str = ""):
             """Store parameters of the chosen output format for later usage in data processing.
 
             Data Names: e.g. "Voltage (V)" or "Current Measurement (A)"
@@ -504,9 +507,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     class _data_formatting_FMT1(_data_formatting_generic):
         """Data formatting for FMT1 format."""
 
-        def __init__(
-            self, unit_names: dict[IdType, str], output_format_string: str = "FMT1"
-        ):
+        def __init__(self, unit_names: dict[int, str], output_format_string: str = "FMT1"):
             super().__init__(unit_names, output_format_string)
 
         def format_single(self, element: str) -> tuple[str, str | int, str, float]:
@@ -530,13 +531,13 @@ class AgilentB1500(SCPIMixin, Instrument):
     class _data_formatting_FMT11(_data_formatting_FMT1):
         """Data formatting for FMT11 format (based on FMT1)."""
 
-        def __init__(self, unit_names: dict[IdType, str]):
+        def __init__(self, unit_names: dict[int, str]):
             super().__init__(unit_names, "FMT11")
 
     class _data_formatting_FMT21(_data_formatting_generic):
         """Data formatting for FMT21 format."""
 
-        def __init__(self, unit_names: dict[IdType, str]):
+        def __init__(self, unit_names: dict[int, str]):
             super().__init__(unit_names, "FMT21")
 
         def format_single(self, element: str) -> tuple[str, str | int, str, float]:
@@ -558,7 +559,7 @@ class AgilentB1500(SCPIMixin, Instrument):
             return (status, channel, data_name, value)
 
     def _data_formatting(
-        self, output_format_str: str, unit_names: dict[IdType, str] | None = None
+        self, output_format_str: str, unit_names: dict[int, str] | None = None
     ) -> AgilentB1500._data_formatting_generic | None:
         """Return data formatting class for given data format string.
 
@@ -1566,7 +1567,7 @@ class SMU(Channel):
         :param steps: Number of steps for staircase sweep
         :param comp: Compliance current in A. The previous value is used if not set.
         """
-        cmd = _set_cv_parameters_base(self.id, mode, start, stop, steps, comp)
+        cmd = _set_cv_parameters_base(cast(int, self.id), mode, start, stop, steps, comp)
         self.write(cmd)
 
 
@@ -2134,7 +2135,7 @@ class CMU(Channel):
         :param stop: Sweep stop voltage in V
         :param steps: Number of steps for staircase sweep
         """
-        cmd = _set_cv_parameters_base(self.id, mode, start, stop, steps)
+        cmd = _set_cv_parameters_base(cast(int, self.id), mode, start, stop, steps)
         self.write(cmd)
 
     def force_dc_bias(self, voltage: float) -> None:
@@ -2173,7 +2174,7 @@ class CMU(Channel):
 
 
 def _set_cv_parameters_base(
-    id: IdType,
+    id: int,
     mode: SweepMode | int | str,
     start: float,
     stop: float,
