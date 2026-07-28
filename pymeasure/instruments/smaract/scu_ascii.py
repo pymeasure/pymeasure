@@ -172,8 +172,8 @@ class SCUChannel(Channel):
         self.write(f":U{self.id}F{f_val}A{a_val}S{steps}")
 
     def move_steps_down(self, steps: int,
-                        freq: int| Q_| None = None,
-                        ampl: int| Q_| None = None):
+                        freq: int | Q_ | None = None,
+                        ampl: int | Q_ | None = None):
         """Move down.
 
         :param steps: Number of steps, an int in range [1;30000]
@@ -276,7 +276,7 @@ class SCUChannelStepper(SCUChannel):
         """ Get the current estimated position in steps."""
         return self._current_steps
 
-    def move_rel(self, steps: int| Q_):
+    def move_rel(self, steps: int | Q_):
         """Move to the relative position given in steps from the current position.
 
         :param steps : A quantity with the step as unit, given as integer,
@@ -360,7 +360,7 @@ class SmarActSCU_ASCII(Instrument):
     )
 
     # CHECK AMPLITUDE
-    def check_amplitude(self, ampl: int| str| Q_ = None) -> Q_:
+    def check_amplitude(self, ampl: int | str | Q_ = None) -> Q_:
         """Check if voltage amplitude is present and if it is inside the given boundary.
 
         :param ampl : a quantity with voltage amplitude units dV, if int then given in dV.
@@ -384,12 +384,12 @@ class SmarActSCU_ASCII(Instrument):
         return self._amplitude
 
     @amplitude.setter
-    def amplitude(self, value: int| Q_):
+    def amplitude(self, value: int | Q_):
         self._amplitude = self.check_amplitude(value)
 
     # CHECK FREQUENCY
 
-    def check_frequency(self, frequency: int| str| Q_ = None) -> Q_:
+    def check_frequency(self, frequency: int | str | Q_ = None) -> Q_:
         """ Check if closed-loop frequency is present and if it is inside the given boundary.
 
         :param frequency: a quantity with frequency units in Hz, if int, then given in Hz.
@@ -415,7 +415,7 @@ class SmarActSCU_ASCII(Instrument):
         return self._freq
 
     @frequency.setter
-    def frequency(self, value: int| Q_):
+    def frequency(self, value: int | Q_):
         self._freq = self.check_frequency(value)
 
     # CHECK STEPS
@@ -433,14 +433,14 @@ class SmarActSCU_ASCII(Instrument):
 
     # MOVEMENT
 
-    def move_abs(self, position: Q_| int):
+    def move_abs(self, position: Q_ | int):
         """Move to the absolute position given in µm from the reference position.
 
         :param position : A quantity with length units (µm), if integer, then given in µm.
         """
         raise NotImplementedError
 
-    def move_rel(self, position: Q_| int, channel: int = 0):
+    def move_rel(self, position: Q_ | int, channel: int = 0):
         """Move the relative distance given in µm from current position.
 
         :param position: A quantity with length units (µm).
