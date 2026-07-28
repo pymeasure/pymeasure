@@ -56,7 +56,7 @@ def test_close():
 def test_channel_frequency_max_setter(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':SCLF{channel}F500'.encode(), None)],
+            [(f':SCLF{channel}F500', None)],
     ) as inst:
         inst.channels[channel].frequency_max = Q_(500, 'Hz')
 
@@ -65,15 +65,15 @@ def test_channel_frequency_max_setter(channel):
 def test_frequency_max_getter(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':GCLF{channel}'.encode(), b':CLF0F500')],
+            [(f':GCLF{channel}', b':CLF0F500')],
     ) as inst:
         assert inst.channels[channel].frequency_max.magnitude == 500
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_safe_direction_setter(channel):
-    for comm_pairs, value in ((((f':SSD{channel}D1'.encode(), None),), True),
-                              (((f':SSD{channel}D0'.encode(), None),), False)):
+    for comm_pairs, value in ((((f':SSD{channel}D1', None),), True),
+                              (((f':SSD{channel}D0', None),), False)):
         with expected_protocol(
                 SmarActSCULinear,
                 comm_pairs,
@@ -84,8 +84,8 @@ def test_safe_direction_setter(channel):
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_safe_direction_getter(channel):
     for comm_pairs, value in (
-            (((f':GSD{channel}'.encode(), f':SD{channel}D1'.encode()),), True),
-            (((f':GSD{channel}'.encode(), f':SD{channel}D0'.encode()),),  False),
+            (((f':GSD{channel}', f':SD{channel}D1'),), True),
+            (((f':GSD{channel}', f':SD{channel}D0'),),  False),
     ):
         with expected_protocol(
                 SmarActSCULinear,
@@ -114,7 +114,7 @@ def test_serial_nb_getter():
 def test_ask(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':M{channel}'.encode(), f':M{channel}S'.encode())],
+            [(f':M{channel}', f':M{channel}S')],
     ) as inst:
         assert inst.ask(*(f':M{channel}',), ) == f':M{channel}S'
 
@@ -123,8 +123,8 @@ def test_ask(channel):
 def test_channel_calibrate_sensor(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':CS{channel}'.encode(), None),
-             (f':M{channel}'.encode(), f':M{channel}C'.encode())],
+            [(f':CS{channel}', None),
+             (f':M{channel}', f':M{channel}C')],
     ) as inst:
         assert inst.channels[channel].calibrate_sensor() is True
 
@@ -133,7 +133,7 @@ def test_channel_calibrate_sensor(channel):
 def test_channel_check_sensor_present(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':GSP{channel}'.encode(), f':SP{channel}P'.encode())],
+            [(f':GSP{channel}', f':SP{channel}P')],
     ) as inst:
         assert inst.channels[channel].check_sensor_present() is True
 
@@ -142,7 +142,7 @@ def test_channel_check_sensor_present(channel):
 def test_channel_get_position(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':GP{channel}'.encode(), f':P{channel}P-0.5'.encode())],
+            [(f':GP{channel}', f':P{channel}P-0.5')],
     ) as inst:
         assert inst.channels[channel].position == Q_(-0.5, 'um')
 
@@ -151,7 +151,7 @@ def test_channel_get_position(channel):
 def test_channel_get_positioner_type(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':GST{channel}'.encode(), f':ST{channel}T21'.encode())],
+            [(f':GST{channel}', f':ST{channel}T21')],
     ) as inst:
         assert inst.channels[channel].positioner_type == f':ST{channel}T21'
 
@@ -164,7 +164,7 @@ def test_channel_get_positioner_type(channel):
 def test_channel_positioner_type_setter(channel, enum_value, expected_code):
     with expected_protocol(
         SmarActSCULinear,
-        [(f':SST{channel}T{expected_code}'.encode(), None)],
+        [(f':SST{channel}T{expected_code}', None)],
     ) as inst:
 
         inst.channels[channel].positioner_type = enum_value
@@ -174,7 +174,7 @@ def test_channel_positioner_type_setter(channel, enum_value, expected_code):
 def test_channel_move_abs(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':MPA{channel}P100'.encode(), None)],
+            [(f':MPA{channel}P100', None)],
     ) as inst:
         inst.channels[channel].move_abs(Q_(100, 'um'))
 
@@ -183,7 +183,7 @@ def test_channel_move_abs(channel):
 def test_channel_move_rel(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':MPR{channel}P50'.encode(), None)],
+            [(f':MPR{channel}P50', None)],
     ) as inst:
         inst.channels[channel].move_rel(Q_(50, 'um'))
 
@@ -192,7 +192,7 @@ def test_channel_move_rel(channel):
 def test_channel_move_steps_down(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':D{channel}F3000A400S100'.encode(), None)],
+            [(f':D{channel}F3000A400S100', None)],
     ) as inst:
         assert inst.channels[channel].move_steps_down(*(100,), ) is None
 
@@ -201,7 +201,7 @@ def test_channel_move_steps_down(channel):
 def test_channel_move_steps_up(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':U{channel}F3000A400S100'.encode(), None)],
+            [(f':U{channel}F3000A400S100', None)],
     ) as inst:
         assert inst.channels[channel].move_steps_up(*(100,), ) is None
 
@@ -210,7 +210,7 @@ def test_channel_move_steps_up(channel):
 def test_channel_move_down_to_end(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':MES{channel}DD'.encode(), None)],
+            [(f':MES{channel}DD', None)],
     ) as inst:
         assert inst.channels[channel].move_down_to_end() is None
 
@@ -219,7 +219,7 @@ def test_channel_move_down_to_end(channel):
 def test_channel_move_up_to_end(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':MES{channel}DU'.encode(), None)],
+            [(f':MES{channel}DU', None)],
     ) as inst:
         assert inst.channels[channel].move_up_to_end() is None
 
@@ -228,7 +228,7 @@ def test_channel_move_up_to_end(channel):
 def test_channel_move_to_ref(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':MTR{channel}H0Z1'.encode(), None)],
+            [(f':MTR{channel}H0Z1', None)],
     ) as inst:
         assert inst.channels[channel].move_to_ref() is None
 
@@ -237,7 +237,7 @@ def test_channel_move_to_ref(channel):
 def test_channel_stop(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':S{channel}'.encode(), None)],
+            [(f':S{channel}', None)],
     ) as inst:
         assert inst.channels[channel].stop() is None
 
