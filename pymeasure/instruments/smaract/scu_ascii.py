@@ -110,6 +110,7 @@ class SCUChannel(Channel):
         map_values=True,
         values={True: 1, False: 0},
         get_process=lambda x: int(x[-1]),
+        cast=str,
     )
 
     def calibrate_sensor(self) -> bool:
