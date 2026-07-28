@@ -98,6 +98,7 @@ class SCUChannel(Channel):
         """,
         set_process=lambda v: convert_quantity_to_magnitude(v, 'Hz'),
         get_process=lambda s: Q_(int(s[6:]), 'Hz'),
+        cast=str,
     )
 
     safe_direction_up_enabled = Channel.control(
