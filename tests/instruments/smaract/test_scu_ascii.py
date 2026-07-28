@@ -23,7 +23,8 @@
 #
 
 import pytest
-from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, PositionerType
+
+from pymeasure.instruments.smaract.scu_ascii import PositionerType, SmarActSCULinear
 from pymeasure.test import expected_protocol
 from pymeasure.units import ureg
 
