@@ -23,9 +23,10 @@
 #
 
 import logging
+from typing import ClassVar
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -107,9 +108,9 @@ class KeysightE364XASingleOutput(SCPIMixin, Instrument):
     """
 
     _default_name = "KeysightE364XASingleOutput"
-    _max_voltage = {"LOW": 35.0, "HIGH": 60.0}
-    _max_current = {"LOW": 1.4, "HIGH": 0.8}
-    _range_map = {"LOW": "P35V", "HIGH": "P60V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 35.0, "HIGH": 60.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 1.4, "HIGH": 0.8}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P35V", "HIGH": "P60V"}
 
     def __init__(self, adapter, name=None, voltage_range="LOW", **kwargs):
         super().__init__(
@@ -200,9 +201,9 @@ class KeysightE364XADualOutput(SCPIMixin, Instrument):
     :type voltage_range: tuple(str, str) with any combination of "LOW" or "HIGH"
     """
     _default_name = "KeysightE364XADualOutput"
-    _max_voltage = {"LOW": 35.0, "HIGH": 60.0}
-    _max_current = {"LOW": 1.4, "HIGH": 0.8}
-    _range_map = {"LOW": "P35V", "HIGH": "P60V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 35.0, "HIGH": 60.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 1.4, "HIGH": 0.8}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P35V", "HIGH": "P60V"}
 
     ch_1 = Instrument.ChannelCreator(KeysightE364XAChannel, 1)
     ch_2 = Instrument.ChannelCreator(KeysightE364XAChannel, 2)
@@ -244,9 +245,9 @@ class KeysightE3640A(KeysightE364XASingleOutput):
     For documentation refer to the :class:`~.KeysightE364XASingleOutput` base class.
     """
     _default_name = "KeysightE3640A"
-    _max_voltage = {"LOW": 8.0, "HIGH": 20.0}
-    _max_current = {"LOW": 3.0, "HIGH": 1.5}
-    _range_map = {"LOW": "P8V", "HIGH": "P20V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 8.0, "HIGH": 20.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 3.0, "HIGH": 1.5}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P8V", "HIGH": "P20V"}
 
 
 class KeysightE3641A(KeysightE364XASingleOutput):
@@ -255,9 +256,9 @@ class KeysightE3641A(KeysightE364XASingleOutput):
     For documentation refer to the :class:`~.KeysightE364XASingleOutput` base class.
     """
     _default_name = "KeysightE3641A"
-    _max_voltage = {"LOW": 35.0, "HIGH": 60.0}
-    _max_current = {"LOW": 0.8, "HIGH": 0.5}
-    _range_map = {"LOW": "P35V", "HIGH": "P60V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 35.0, "HIGH": 60.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 0.8, "HIGH": 0.5}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P35V", "HIGH": "P60V"}
 
 
 class KeysightE3642A(KeysightE364XASingleOutput):
@@ -266,9 +267,9 @@ class KeysightE3642A(KeysightE364XASingleOutput):
     For documentation refer to the :class:`~.KeysightE364XASingleOutput` base class.
     """
     _default_name = "KeysightE3642A"
-    _max_voltage = {"LOW": 8.0, "HIGH": 20.0}
-    _max_current = {"LOW": 5.0, "HIGH": 2.5}
-    _range_map = {"LOW": "P8V", "HIGH": "P20V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 8.0, "HIGH": 20.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 5.0, "HIGH": 2.5}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P8V", "HIGH": "P20V"}
 
 
 class KeysightE3643A(KeysightE364XASingleOutput):
@@ -277,9 +278,9 @@ class KeysightE3643A(KeysightE364XASingleOutput):
     For documentation refer to the :class:`~.KeysightE364XASingleOutput` base class.
     """
     _default_name = "KeysightE3643A"
-    _max_voltage = {"LOW": 35.0, "HIGH": 60.0}
-    _max_current = {"LOW": 1.4, "HIGH": 0.8}
-    _range_map = {"LOW": "P35V", "HIGH": "P60V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 35.0, "HIGH": 60.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 1.4, "HIGH": 0.8}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P35V", "HIGH": "P60V"}
 
 
 class KeysightE3644A(KeysightE364XASingleOutput):
@@ -288,9 +289,9 @@ class KeysightE3644A(KeysightE364XASingleOutput):
     For documentation refer to the :class:`~.KeysightE364XASingleOutput` base class.
     """
     _default_name = "KeysightE3644A"
-    _max_voltage = {"LOW": 8.0, "HIGH": 20.0}
-    _max_current = {"LOW": 8.0, "HIGH": 4.0}
-    _range_map = {"LOW": "P8V", "HIGH": "P20V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 8.0, "HIGH": 20.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 8.0, "HIGH": 4.0}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P8V", "HIGH": "P20V"}
 
 
 class KeysightE3645A(KeysightE364XASingleOutput):
@@ -299,9 +300,9 @@ class KeysightE3645A(KeysightE364XASingleOutput):
     For documentation refer to the :class:`~.KeysightE364XASingleOutput` base class.
     """
     _default_name = "KeysightE3645A"
-    _max_voltage = {"LOW": 35.0, "HIGH": 60.0}
-    _max_current = {"LOW": 2.2, "HIGH": 1.3}
-    _range_map = {"LOW": "P35V", "HIGH": "P60V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 35.0, "HIGH": 60.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 2.2, "HIGH": 1.3}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P35V", "HIGH": "P60V"}
 
 
 class KeysightE3646A(KeysightE364XADualOutput):
@@ -310,9 +311,9 @@ class KeysightE3646A(KeysightE364XADualOutput):
     For documentation refer to the :class:`~.KeysightE364XADualOutput` base class.
     """
     _default_name = "KeysightE3646A"
-    _max_voltage = {"LOW": 8.0, "HIGH": 20.0}
-    _max_current = {"LOW": 3.0, "HIGH": 1.5}
-    _range_map = {"LOW": "P8V", "HIGH": "P20V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 8.0, "HIGH": 20.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 3.0, "HIGH": 1.5}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P8V", "HIGH": "P20V"}
 
 
 class KeysightE3647A(KeysightE364XADualOutput):
@@ -321,9 +322,9 @@ class KeysightE3647A(KeysightE364XADualOutput):
     For documentation refer to the :class:`~.KeysightE364XADualOutput` base class.
     """
     _default_name = "KeysightE3647A"
-    _max_voltage = {"LOW": 35.0, "HIGH": 60.0}
-    _max_current = {"LOW": 0.8, "HIGH": 0.5}
-    _range_map = {"LOW": "P35V", "HIGH": "P60V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 35.0, "HIGH": 60.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 0.8, "HIGH": 0.5}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P35V", "HIGH": "P60V"}
 
 
 class KeysightE3648A(KeysightE364XADualOutput):
@@ -332,9 +333,9 @@ class KeysightE3648A(KeysightE364XADualOutput):
     For documentation refer to the :class:`~.KeysightE364XADualOutput` base class.
     """
     _default_name = "KeysightE3648A"
-    _max_voltage = {"LOW": 8.0, "HIGH": 20.0}
-    _max_current = {"LOW": 5.0, "HIGH": 2.5}
-    _range_map = {"LOW": "P8V", "HIGH": "P20V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 8.0, "HIGH": 20.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 5.0, "HIGH": 2.5}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P8V", "HIGH": "P20V"}
 
 
 class KeysightE3649A(KeysightE364XADualOutput):
@@ -343,6 +344,6 @@ class KeysightE3649A(KeysightE364XADualOutput):
     For documentation refer to the :class:`~.KeysightE364XADualOutput` base class.
     """
     _default_name = "KeysightE3649A"
-    _max_voltage = {"LOW": 35.0, "HIGH": 60.0}
-    _max_current = {"LOW": 1.4, "HIGH": 0.8}
-    _range_map = {"LOW": "P35V", "HIGH": "P60V"}
+    _max_voltage: ClassVar[dict[str, float]] = {"LOW": 35.0, "HIGH": 60.0}
+    _max_current: ClassVar[dict[str, float]] = {"LOW": 1.4, "HIGH": 0.8}
+    _range_map: ClassVar[dict[str, str]] = {"LOW": "P35V", "HIGH": "P60V"}

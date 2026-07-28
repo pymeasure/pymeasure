@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.keysight import KeysightE3640A, KeysightE3643A, KeysightE3649A
+from pymeasure.test import expected_protocol
 
 
 # Protocol tests for single channel devices
