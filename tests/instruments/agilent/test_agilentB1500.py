@@ -81,22 +81,35 @@ class TestB1500:
         ) as inst:
             inst.set_port_connection(port, status)
 
+    def test_unit_names(self):
+        """Test that unit_names covers all initialized units."""
+        with expected_protocol(AgilentB1500Mock, []) as inst:
+            assert inst.unit_names == {
+                inst.spgu1.id: "SPGU1",
+                inst.cmu.id: "CMU",
+                inst.smu1.id: "SMU1",
+            }
+
+    def test_smu_names(self):
+        """Test that smu_names is the SMU-only subset of unit_names."""
+        with expected_protocol(AgilentB1500Mock, []) as inst:
+            assert inst.smu_names == {inst.smu1.id: "SMU1"}
+
 
 class AgilentB1500Mock(AgilentB1500):
+    """B1500 with one unit per slot: SPGU in slot 1, CMU in slot 2, SMU in slot 3."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.spgu1 = SPGU(self, 1)
-        self.spgu1._name = "spgu1"
-        self.cmu = CMU(self, 2)
-        self.cmu._name = "cmu"
-        self.smu1 = SMU(self, index=1, smu_type="HRSMU", slot=1)
-        self.smu1._name = "smu1"
+        self.add_child(SPGU, id=1, collection="spgus", prefix="spgu")
+        self.add_child(CMU, id=2, collection="cmu", prefix=None)
+        self.add_child(SMU, id=1, collection="smus", prefix="smu", smu_type="HRSMU", slot=3)
 
 
 class TestSMU:
     """Tests for SMU module functionality."""
 
-    channel = 1
+    channel = 3
 
     def test_enable(self):
         """Test enable method."""
@@ -425,12 +438,6 @@ class TestCMU:
         """Test that measure rejects a range not in MEASUREMENT_RANGES."""
         with expected_protocol(AgilentB1500Mock, []) as inst, pytest.raises(ValueError):
             inst.cmu.measure(meas_range=500)
-
-    def test_smu_names_excludes_cmu(self):
-        """Test that smu_names is the SMU-only subset of unit_names."""
-        with expected_protocol(AgilentB1500Mock, []) as inst:
-            assert inst.cmu.id in inst.unit_names
-            assert inst.cmu.id not in inst.smu_names
 
     def test_read_data_cmu(self):
         """Test read_data labels MFCMU data with the CMU unit name."""
