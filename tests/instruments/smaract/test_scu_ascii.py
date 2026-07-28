@@ -65,7 +65,7 @@ def test_channel_frequency_max_setter(channel):
 def test_frequency_max_getter(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':GCLF{channel}', b':CLF0F500')],
+            [(f':GCLF{channel}', ':CLF0F500')],
     ) as inst:
         assert inst.channels[channel].frequency_max.magnitude == 500
 
@@ -97,7 +97,7 @@ def test_channel_safe_direction_getter(channel):
 def test_model_getter():
     with expected_protocol(
             SmarActSCULinear,
-            [(b':I', b':ISmarAct CU-1D')],
+            [(':I', ':ISmarAct CU-1D')],
     ) as inst:
         assert inst.model == 'SmarAct CU-1D'
 
@@ -105,7 +105,7 @@ def test_model_getter():
 def test_serial_nb_getter():
     with expected_protocol(
             SmarActSCULinear,
-            [(b':GID', b':ID722998302')],
+            [(':GID', ':ID722998302')],
     ) as inst:
         assert inst.serial_nb == '722998302'
 
@@ -245,6 +245,6 @@ def test_channel_stop(channel):
 def test_reset():
     with expected_protocol(
             SmarActSCULinear,
-            [(b':R', None)],
+            [(':R', None)],
     ) as inst:
         assert inst.reset() is None
