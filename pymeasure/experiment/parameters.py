@@ -46,6 +46,7 @@ class _InstanceValueDescriptor(Generic[T]):
     _container_attr: str = "_parameters"
 
     def __set_name__(self, owner: type, name: str) -> None:
+        """Record the attribute name under which the descriptor is installed."""
         self._attr_name = name
 
     @overload
@@ -55,17 +56,27 @@ class _InstanceValueDescriptor(Generic[T]):
     def __get__(self, obj: object, objtype: type) -> T | None: ...
 
     def __get__(self, obj, objtype=None):
+        """Return the parameter value, or ``self`` for class-level access.
+
+        When no parameter container (or no matching entry) is present, fall
+        back to the raw value stored on the instance to mirror ``__set__``.
+        """
         if obj is None:
             return self
         container = getattr(obj, self._container_attr, None)
         if container is None or self._attr_name not in container:
-            return None
+            return obj.__dict__.get(self._attr_name)
         param = container[self._attr_name]
         if param.is_set():
             return param.value
         return None
 
     def __set__(self, obj: object, value: T | None) -> None:
+        """Assign the value to the backing parameter or raw instance storage.
+
+        When no parameter container (or no matching entry) is present, the
+        value is stored directly on the instance ``__dict__``.
+        """
         container = getattr(obj, self._container_attr, None)
         if container is None or self._attr_name not in container:
             # UnknownProcedure path: fall back to plain attribute storage.

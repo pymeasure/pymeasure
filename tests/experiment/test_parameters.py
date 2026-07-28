@@ -285,4 +285,41 @@ def test_descriptor_get_returns_live_value_or_none():
     p._parameters['x']._value = None
     assert p.x is None
 
+
+def test_descriptor_fallback_round_trip_without_container_entry():
+    """Setting then getting via the descriptor returns the stored value
+    when the parameter name is absent from the backing container.
+
+    This exercises the UnknownProcedure fallback path where ``__set__``
+    stores the raw value in ``obj.__dict__`` and ``__get__`` must read it
+    back rather than returning ``None``.
+    """
+
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X')
+
+    p = TestProcedure()
+    # simulate the missing-container-entry fallback (e.g. UnknownProcedure)
+    del p._parameters['x']
+    p.x = 42
+    assert p.x == 42
+    assert p.__dict__['x'] == 42
+
+
+def test_descriptor_fallback_round_trip_without_container():
+    """Setting then getting via the descriptor returns the stored value
+    when there is no backing container attribute at all.
+    """
+
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X')
+
+    p = TestProcedure()
+    # simulate the missing-container fallback entirely
+    del p._parameters
+    p.x = 13
+    assert p.x == 13
+    assert p.__dict__['x'] == 13
+
+
 # TODO: Add tests for Measurable
