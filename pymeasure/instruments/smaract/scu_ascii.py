@@ -333,7 +333,7 @@ class SmarActSCU_ASCII(Instrument):
 
     def __init__(self, adapter, name='SCUController',
                  **kwargs):
-        super().__init__(adapter, name, includeSCPI=False,
+        super().__init__(adapter, name,
                          read_termination='\n',
                          write_termination='\n',
                          **kwargs)
