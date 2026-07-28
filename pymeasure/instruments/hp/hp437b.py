@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+import logging
 from enum import IntEnum, IntFlag
 
-import logging
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -745,7 +745,7 @@ class HP437B(Instrument):
         values = [0, 9]
         strict_range(sensor_id, values)
 
-        if sensor_id in range(0, 7) and (len(cal_fac_table) > 40 or len(frequency_table)) > 40:
+        if sensor_id in range(7) and (len(cal_fac_table) > 40 or len(frequency_table)) > 40:
             raise ValueError(f"For sensor id {sensor_id} there aren't more than 40 frequency "
                              f"pairs allowed")
         if sensor_id in range(8, 9) and (len(cal_fac_table) > 80 or len(frequency_table)) > 80:
@@ -788,7 +788,7 @@ class HP437B(Instrument):
         cal_fac_data = []
         self.write(f"ET{sensor_id}")
         self.check_errors()
-        for i in range(0, pairs):
+        for i in range(pairs):
             # outputs something like 38.00GZ 100.2%
             display_content = self.display_output
 

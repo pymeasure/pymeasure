@@ -29,7 +29,8 @@ from warnings import warn
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+
 from .buffer import KeithleyBuffer
 
 # Setup logging

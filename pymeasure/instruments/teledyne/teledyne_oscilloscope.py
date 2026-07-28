@@ -22,16 +22,20 @@
 # THE SOFTWARE.
 #
 
-from abc import ABCMeta
 import re
 import sys
 import time
+from abc import ABCMeta
 from decimal import Decimal
+
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin, cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
-    strict_discrete_range
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin, cast_or_str
+from pymeasure.instruments.validators import (
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+)
 
 
 def sanitize_source(source):
@@ -60,7 +64,7 @@ def _trigger_select_num_pars(value):
 
     :param value: input parameters as a tuple
     """
-    value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+    value = tuple(v.upper() if isinstance(v, str) else v for v in value)
     num_expected_pars = 0
     if 3 <= len(value) <= 5:
         if value[0] == "EDGE":
@@ -84,14 +88,14 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
     :param num_pars_finder: function to find the number of expected parameters
     """
     if not isinstance(value, tuple):
-        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) < 3 or len(value) > 5:
         raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
-    value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+    value = tuple(v.upper() if isinstance(v, str) else v for v in value)
     value = list(value)
     value[1] = sanitize_source(value[1])
     value = tuple(value)
-    if value[0] not in values.keys():
+    if value[0] not in values:
         raise ValueError(f'Value {value[0]} not in the discrete set {values.keys()}')
     num_expected_pars = num_pars_finder(value)
     if len(value) != num_expected_pars:
@@ -158,7 +162,7 @@ def _intensity_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 2:
         raise ValueError(f'Number of parameters {len(value)} different from 2')
     for i in range(2):
@@ -190,11 +194,13 @@ class _ChunkResizer:
 
     def __enter__(self):
         """Only resize the chunk size if the adapter support this feature."""
-        if (self.adapter.connection is not None
-                and hasattr(self.adapter.connection, "chunk_size")):
-            if self.new_chunk_size > self.adapter.connection.chunk_size:
-                self.old_chunk_size = self.adapter.connection.chunk_size
-                self.adapter.connection.chunk_size = self.new_chunk_size
+        if (
+            self.adapter.connection is not None
+            and hasattr(self.adapter.connection, "chunk_size")
+            and self.new_chunk_size > self.adapter.connection.chunk_size
+        ):
+            self.old_chunk_size = self.adapter.connection.chunk_size
+            self.adapter.connection.chunk_size = self.new_chunk_size
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.old_chunk_size is not None:

@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set
+from time import sleep, time
 
 import numpy as np
-from time import time, sleep
+
+from pymeasure.instruments import Instrument, cast_or_str
+from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
 
 
 class LakeShore421(Instrument):
@@ -69,7 +69,7 @@ class LakeShore421(Instrument):
         self.last_write_time = time()
 
     def _raw_to_field(self, field_raw, multiplier_name):
-        if not field_raw == "OL":
+        if field_raw != "OL":
             multiplier = getattr(self, multiplier_name)
             field = multiplier * field_raw
         else:

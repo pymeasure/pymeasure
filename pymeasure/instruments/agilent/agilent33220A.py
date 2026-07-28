@@ -22,14 +22,14 @@
 # THE SOFTWARE.
 #
 
-from collections.abc import Callable
 import logging
+from collections.abc import Callable
 from time import time
 
-from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_discrete_set, \
-    strict_range, joined_validators
 from pyvisa.errors import VisaIOError
+
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.validators import joined_validators, strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

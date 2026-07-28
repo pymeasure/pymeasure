@@ -22,26 +22,24 @@
 # THE SOFTWARE.
 #
 
-import logging
-
-import copy
 import argparse
+import copy
+import logging
 
 try:
     import progressbar
     # Check that progressbar is progressbar2
-    progressbar.streams
+    _ = progressbar.streams
 except (AttributeError, ImportError):
     progressbar = None
-from .Qt import QtCore
 import signal
-from ..log import console_log
 
+from ..experiment import Procedure, Results, unique_filename
+from ..experiment.procedure import STATUS_STRINGS, ProcedureStatus
+from ..log import console_log
 from .browser import BaseBrowserItem
 from .manager import BaseManager, Experiment
-
-from ..experiment import Results, Procedure, unique_filename
-from ..experiment.procedure import STATUS_STRINGS, ProcedureStatus
+from .Qt import QtCore
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -111,8 +109,8 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
         experiment_opts_group = self.add_argument_group("Experiment options")
         for name in parameter_objects:
             if name in special_options:
-                raise Exception(f"Experiment option {name} " +
-                                "is already defined as common options")
+                raise ValueError(f"Experiment option {name} " +
+                                 "is already defined as common options")
             kwargs = {}
             parameter = parameter_objects[name]
             default, _, _type = parameter.cli_args
@@ -125,7 +123,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
     @staticmethod
     def _cli_help_fields(description, kwargs, help_fields):
         if not isinstance(kwargs, dict):
-            raise ValueError("kwargs must be a dictionary")
+            raise TypeError("kwargs must be a dictionary")
 
         message = ""
         if isinstance(description, str):
@@ -178,7 +176,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         self.log.setLevel(log_level)
 
         # Check if the get_estimates function is reimplemented
-        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
+        self.use_estimator = self.procedure_class.get_estimates != Procedure.get_estimates
         if self.use_estimator:
             log.warning("Estimator not yet implemented")
 

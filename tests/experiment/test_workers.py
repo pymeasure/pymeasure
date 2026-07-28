@@ -23,17 +23,17 @@
 #
 import importlib
 import logging
-
-import pytest
 import os
 import tempfile
 from time import sleep
 
+import pytest
+from data.procedure_for_testing import RandomProcedure
+
 from pymeasure.experiment import Listener, Procedure
 from pymeasure.experiment.procedure import ProcedureStatus
-from pymeasure.experiment.workers import Worker
 from pymeasure.experiment.results import Results
-from data.procedure_for_testing import RandomProcedure
+from pymeasure.experiment.workers import Worker
 
 tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
                           and importlib.util.find_spec('zmq'))
@@ -129,4 +129,4 @@ def test_zmq_topic_filtering_works(caplog):
     worker.join(timeout=20.0)  # give it enough time to finish the procedure
     assert procedure.status == ProcedureStatus.FINISHED
     assert len(received) == 3
-    assert all([item[0] == 'results' for item in received])
+    assert all(item[0] == 'results' for item in received)

@@ -23,8 +23,8 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.srs.sr830 import SR830
+from pymeasure.test import expected_protocol
 
 
 def test_id():

@@ -26,23 +26,23 @@ from __future__ import annotations
 import logging
 import time
 import traceback
+from collections.abc import Sequence
 from queue import Queue
 from typing import Any
-from collections.abc import Sequence
 
 import numpy as np
 
+from ..thread import StoppableThread
 from .listeners import Recorder
 from .procedure import ProcedureStatus
 from .results import Results
-from ..thread import StoppableThread
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    import zmq
     import cloudpickle
+    import zmq
 except ImportError:
     zmq = None
     cloudpickle = None
@@ -63,7 +63,7 @@ class Worker(StoppableThread):
 
         self.port = port
         if not isinstance(results, Results):
-            raise ValueError("Invalid Results object during Worker construction")
+            raise TypeError("Invalid Results object during Worker construction")
         self.results = results
         self.results.procedure.check_parameters()
         self.results.procedure.status = ProcedureStatus.QUEUED
@@ -131,7 +131,7 @@ class Worker(StoppableThread):
 
     def handle_batch_record(self, record: Any):
         if self._is_dictionary_of_sequences(record):
-            lengths = list(len(value) for value in record.values())
+            lengths = [len(value) for value in record.values()]
             if not all(length == lengths[0] for length in lengths):
                 log.error(
                     'Data loss detected: not all sequences in the batch have the same length.'
@@ -227,7 +227,7 @@ class Worker(StoppableThread):
             self.procedure.execute()
         except (KeyboardInterrupt, SystemExit):
             self.handle_abort()
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.handle_error()
         finally:
             self.shutdown()

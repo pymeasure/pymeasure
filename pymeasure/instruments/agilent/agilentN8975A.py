@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class AgilentN8975AFrequency(Channel):
@@ -145,7 +145,7 @@ class AgilentN8975A(SCPIMixin, Instrument):
         self.continuous_mode_enabled = False
         self.abort()
         self.initiate()
-        self.complete
+        _ = self.complete
 
     average = Instrument.control(
         "AVER:COUN?",

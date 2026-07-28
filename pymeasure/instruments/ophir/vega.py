@@ -25,6 +25,7 @@
 from enum import IntEnum
 
 from pymeasure.adapters import Adapter
+
 from .ophir_base import AverageMixin, KeyMixin, OphirBase
 
 

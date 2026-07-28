@@ -27,13 +27,11 @@ for the Arbitrary Waveform Generator (AWG) mode and the Arbitrary Function
 Generator (AFG) mode. The module has been developed from the official
 documentation available on https://www.activetechnologies.it"""
 
+import pprint
 from collections import abc, namedtuple
 
-import pprint
-
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
-from pymeasure.instruments.validators import strict_discrete_set, \
-    strict_range
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class ChannelBase(Channel):
@@ -786,14 +784,12 @@ class AWG401x_AWG(AWG401x_base):
             self.parent.remove_file(f"{key}.txt")
 
             self._data[key] = None
-            return
 
         def __delitem__(self, key):
             """When removing an element this method removes also the
             corresponding waveform in the instrument"""
             del self._data[key]
             self.parent.write(f'WLISt:WAVeform:DELete "{key}"')
-            return
 
         def __iter__(self):
             try:

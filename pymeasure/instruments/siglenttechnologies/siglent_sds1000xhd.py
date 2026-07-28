@@ -22,14 +22,13 @@
 # THE SOFTWARE.
 #
 
-import struct
 import math
+import struct
+
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.generic_types import SCPIMixin
-from pymeasure.instruments.validators import (
-    strict_range, strict_discrete_set
-)
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class AnalogChannel(Channel):
@@ -332,7 +331,7 @@ class WaveformChannel(Channel):
 
         # Get the waveform data for each slice
         recv_byte = b''
-        for i in range(0, read_times):
+        for i in range(read_times):
             start = i * one_piece_num
             # Set the starting point of each slice
             self.start_point = start
@@ -364,7 +363,7 @@ class WaveformChannel(Channel):
         # Calculate the voltage value and time value
         time_value = []
         volt_value = []
-        for idx in range(0, len(convert_data)):
+        for idx in range(len(convert_data)):
             volt_value.append(convert_data[idx] / vcode_per * float(vdiv) - float(offset))
             time_data = -(float(tdiv) * HORI_NUM / 2) + idx * interval + float(trdl)
             time_value.append(time_data)

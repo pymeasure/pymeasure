@@ -28,11 +28,15 @@
 
 import logging
 from time import sleep, time
+
 import numpy as np
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import modular_range_bidirectional
-from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments.validators import strict_range
+from pymeasure.instruments.validators import (
+    modular_range_bidirectional,
+    strict_discrete_set,
+    strict_range,
+)
 
 # =============================================================================
 # Logging
@@ -262,7 +266,7 @@ class DSPBase(Instrument):
 
     @gain.setter
     def gain(self, value):
-        value = strict_discrete_set(int(value / 10), list(range(0, 10)))
+        value = strict_discrete_set(int(value / 10), list(range(10)))
         self.write(f"ACGAIN {value}")
 
     @property

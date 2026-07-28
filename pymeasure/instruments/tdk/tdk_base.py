@@ -26,13 +26,17 @@
 # Libraries / modules
 # =============================================================================
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
-from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments.validators import strict_discrete_range
 import logging
 from time import sleep
+
 import numpy as np
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import (
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+)
 
 # =============================================================================
 # Logging
@@ -97,7 +101,7 @@ class TDK_Lambda_Base(Instrument):
         Valid values are integers between 0 - 30 (inclusive).""",
         check_set_errors=True,
         validator=strict_discrete_set,
-        values=range(0, 31)
+        values=range(31)
     )
 
     remote = Instrument.control(

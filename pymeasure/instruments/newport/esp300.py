@@ -23,10 +23,10 @@
 #
 
 from time import sleep
+from warnings import warn
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
-from warnings import warn
 
 
 class AxisError(Exception):

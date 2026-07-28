@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.agilent.agilent34450A import Agilent34450A
+from pymeasure.test import expected_protocol
 
 INITIALIZATION = ("SYST:ERR?", "+0, No Error")
 

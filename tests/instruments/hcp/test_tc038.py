@@ -24,10 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
-
 from pymeasure.instruments.hcp import TC038
+from pymeasure.test import expected_protocol
 
 
 def test_setpoint():
@@ -54,9 +52,8 @@ def test_setpoint_error():
         TC038,
         [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03"),
          (b"\x0201010WWRD0120,01,00C8\x03", b"\x020101ER0401\x03")]
-    ) as inst:
-        with pytest.raises(ConnectionError, match="Out of setpoint range"):
-            inst.setpoint = 20
+    ) as inst, pytest.raises(ConnectionError, match="Out of setpoint range"):
+        inst.setpoint = 20
 
 
 def test_temperature():
@@ -84,9 +81,8 @@ def test_monitored_error():
         TC038,
         [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03"),
          (b"\x0201010WRM\x03", b"\x020101ER0600\x03")]
-    ) as inst:
-        with pytest.raises(ConnectionError, match="monitor"):
-            inst.monitored_value
+    ) as inst, pytest.raises(ConnectionError, match="monitor"):
+        _ = inst.monitored_value
 
 
 def test_set_monitored():
@@ -102,9 +98,8 @@ def test_set_monitored_wrong_input():
     with expected_protocol(
         TC038,
         [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")]
-    ) as inst:
-        with pytest.raises(KeyError):
-            inst.set_monitored_quantity("temper")
+    ) as inst, pytest.raises(KeyError):
+        inst.set_monitored_quantity("temper")
 
 
 def test_information():

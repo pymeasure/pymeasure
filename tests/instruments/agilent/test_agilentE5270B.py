@@ -23,20 +23,20 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.agilent.agilentE5270B import AgilentE5270B
+from pymeasure.test import expected_protocol
 
 INITIALIZATION = ("UNT?", "E5281B,0;E5281B,0;E5281B,0;E5281B,0;0,0;E5280B,0;0,0;E5280B,0")
 
 
 class TestMain:
     def test_clear(self):
-        with pytest.raises(NotImplementedError):
-            with expected_protocol(
-                AgilentE5270B,
-                [INITIALIZATION]
-            ) as inst:
-                inst.clear()
+        with pytest.raises(NotImplementedError), expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION]
+        ) as inst:
+            inst.clear()
 
     def test_get_error_message(self):
         with expected_protocol(
@@ -70,18 +70,17 @@ class TestMain:
             assert ["E5281B,0", "0,0", "E5280B,0"] == options
 
     def test_smu_naming(self):
-        with pytest.raises(AttributeError):
-            with expected_protocol(
-                AgilentE5270B,
-                [INITIALIZATION,
-                 ("CN5", None),
-                 ("ERR?", "0,0,0,0"),
-                 ("CN7", None),
-                 ("ERR?", "0,0,0,0"),
-                 ]
-            ) as inst:
-                inst.smu5.enabled = True
-                inst.smu7.enabled = True
+        with pytest.raises(AttributeError), expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             ("CN5", None),
+             ("ERR?", "0,0,0,0"),
+             ("CN7", None),
+             ("ERR?", "0,0,0,0"),
+             ]
+        ) as inst:
+            inst.smu5.enabled = True
+            inst.smu7.enabled = True
 
 
 class TestSMU:
@@ -169,14 +168,13 @@ class TestDisplay:
             inst.display.measurement_smu = 1
 
     def test_measurement_smu_validator(self):
-        with pytest.raises(ValueError):
-            with expected_protocol(
-                AgilentE5270B,
-                [INITIALIZATION,
-                 ("MCH 9", None),
-                 ]
-            ) as inst:
-                inst.display.measurement_smu = 9
+        with pytest.raises(ValueError), expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             ("MCH 9", None),
+             ]
+        ) as inst:
+            inst.display.measurement_smu = 9
 
     @pytest.mark.parametrize("measurement_parameter, mapping",
                              [("result", 1),
@@ -204,14 +202,13 @@ class TestDisplay:
             inst.display.source_smu = 1
 
     def test_source_smu_validator(self):
-        with pytest.raises(ValueError):
-            with expected_protocol(
-                AgilentE5270B,
-                [INITIALIZATION,
-                 ("SCH 9", None),
-                 ]
-            ) as inst:
-                inst.display.source_smu = 9
+        with pytest.raises(ValueError), expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             ("SCH 9", None),
+             ]
+        ) as inst:
+            inst.display.source_smu = 9
 
     @pytest.mark.parametrize("source_parameter, mapping",
                              [("set_point", 1),

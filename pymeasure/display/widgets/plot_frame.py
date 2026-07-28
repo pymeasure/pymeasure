@@ -23,13 +23,13 @@
 #
 
 import logging
-
 import re
+
 import pyqtgraph as pg
 
-from ..curves import ResultsCurve, Crosshairs
-from ..Qt import QtCore, QtWidgets
 from ...experiment.procedure import ProcedureStatus
+from ..curves import Crosshairs, ResultsCurve
+from ..Qt import QtCore, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

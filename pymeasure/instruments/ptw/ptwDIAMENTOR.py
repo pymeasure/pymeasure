@@ -24,14 +24,12 @@
 
 
 import logging
-
 from typing import Any
 
 from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              strict_range)
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -75,7 +73,7 @@ class ptwDIAMENTOR(Instrument):
                 "E26": "Firmware malfunction"
                 }
 
-            if got in errors.keys():
+            if got in errors:
                 error_text = f"{got}, {errors[got]}"
                 raise ValueError(error_text)
             else:

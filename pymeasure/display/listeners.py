@@ -25,16 +25,16 @@
 import logging
 from queue import Queue
 
+from ..experiment.procedure import ProcedureStatus
 from .Qt import QtCore
 from .thread import StoppableQThread
-from ..experiment.procedure import ProcedureStatus
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    import zmq
     import cloudpickle
+    import zmq
 except ImportError:
     zmq = None
     cloudpickle = None

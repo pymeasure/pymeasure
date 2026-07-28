@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.koheron import CTL200, KoheronError
+from pymeasure.test import expected_protocol
 
 # The device replies to every command, settings included, with the echo of the
 # command followed by a single value line. Its prompt (">>") terminates neither
@@ -82,9 +83,8 @@ def test_laser_current_limit():
 def test_laser_current_limit_validator():
     """Verify that strict_range validator blocks current limits outside [0, 1]
     A."""
-    with expected_protocol(CTL200, []) as inst:
-        with pytest.raises(ValueError):
-            inst.laser_current_limit = 1.5
+    with expected_protocol(CTL200, []) as inst, pytest.raises(ValueError):
+        inst.laser_current_limit = 1.5
 
 
 def test_laser_voltage():
@@ -115,9 +115,8 @@ def test_laser_delay():
 
 def test_laser_delay_validator():
     """Verify strict_range validator bounds for laser delay ([0.01, 100] s)."""
-    with expected_protocol(CTL200, []) as inst:
-        with pytest.raises(ValueError):
-            inst.laser_delay = 0.005
+    with expected_protocol(CTL200, []) as inst, pytest.raises(ValueError):
+        inst.laser_delay = 0.005
 
 
 # =============================================================================
@@ -313,9 +312,8 @@ def test_laser_modulation_gain():
 def test_laser_modulation_gain_validator():
     """Verify strict_range validator limits for laser modulation gain
     ([-100, 100])."""
-    with expected_protocol(CTL200, []) as inst:
-        with pytest.raises(ValueError):
-            inst.laser_modulation_gain = 150
+    with expected_protocol(CTL200, []) as inst, pytest.raises(ValueError):
+        inst.laser_modulation_gain = 150
 
 
 def test_tec_modulation_gain():
@@ -333,9 +331,8 @@ def test_tec_modulation_gain():
 def test_tec_modulation_gain_validator():
     """Verify strict_range validator bounds for TEC modulation gain
     ([-100000, 100000])."""
-    with expected_protocol(CTL200, []) as inst:
-        with pytest.raises(ValueError):
-            inst.tec_modulation_gain = 200000
+    with expected_protocol(CTL200, []) as inst, pytest.raises(ValueError):
+        inst.tec_modulation_gain = 200000
 
 
 # =============================================================================
@@ -376,9 +373,8 @@ def test_baud_rate_setting():
 def test_baud_rate_setting_validator(invalid_value):
     """Verify strict_range validator bounds for the baud rate
     ([9600, 460800])."""
-    with expected_protocol(CTL200, []) as inst:
-        with pytest.raises(ValueError):
-            inst.baud_rate_setting = invalid_value
+    with expected_protocol(CTL200, []) as inst, pytest.raises(ValueError):
+        inst.baud_rate_setting = invalid_value
 
 
 def test_user_data():

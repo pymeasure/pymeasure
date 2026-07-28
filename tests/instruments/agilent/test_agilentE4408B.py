@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.agilent.agilentE4408B import AgilentE4408B
+from pymeasure.test import expected_protocol
 
 
 def test_start_frequency_get():

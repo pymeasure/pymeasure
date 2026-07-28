@@ -22,18 +22,20 @@
 # THE SOFTWARE.
 #
 
-from enum import IntEnum
-import logging
-import sys
-import inspect
-from copy import deepcopy
 import importlib.util
+import inspect
+import logging
 import re
+import sys
+from copy import deepcopy
+from enum import IntEnum
 from typing import Any
-from pint import facets, UndefinedUnitError
 
-from .parameters import Parameter, Measurable, Metadata
+from pint import UndefinedUnitError, facets
+
 from pymeasure.units import ureg
+
+from .parameters import Measurable, Metadata, Parameter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -93,10 +95,10 @@ class Procedure:
         self.status = ProcedureStatus.QUEUED
         self._update_parameters()
         self._update_metadata()
-        for key in kwargs:
-            if key in self._parameters.keys():
-                setattr(self, key, kwargs[key])
-                log.info(f'Setting parameter {key} to {kwargs[key]}')
+        for key, value in kwargs.items():
+            if key in self._parameters:
+                setattr(self, key, value)
+                log.info(f'Setting parameter {key} to {value}')
         self.gen_measurement()
 
     @staticmethod
@@ -132,9 +134,8 @@ class Procedure:
 
         self.MEASURE = {}
         for item, parameter in inspect.getmembers(self.__class__):
-            if isinstance(parameter, Measurable):
-                if parameter.measure:
-                    self.MEASURE.update({parameter.name: item})
+            if isinstance(parameter, Measurable) and parameter.measure:
+                self.MEASURE.update({parameter.name: item})
 
         if not self.DATA_COLUMNS:
             self.DATA_COLUMNS = Measurable.DATA_COLUMNS
@@ -164,7 +165,7 @@ class Procedure:
 
     def parameters_are_set(self) -> bool:
         """ Returns True if all parameters are set """
-        for name, parameter in self._parameters.items():
+        for name in self._parameters:
             if getattr(self, name) is None:
                 return False
         return True
@@ -202,7 +203,7 @@ class Procedure:
         compatibility since ``__set__`` eagerly converts values at assignment
         time.
         """
-        return None
+        return
 
     def set_parameters(self, parameters: dict[str, Any], except_missing: bool = True) -> None:
         """ Sets a dictionary of parameters and raises an exception if additional
@@ -213,7 +214,7 @@ class Procedure:
                 setattr(self, name, value)
             else:
                 if except_missing:
-                    raise NameError(f"Parameter '{name}' does not belong to '{repr(self)}'")
+                    raise NameError(f"Parameter '{name}' does not belong to '{self!r}'")
 
     def _update_metadata(self) -> None:
         """ Collects all the Metadata objects for the procedure and stores
@@ -251,7 +252,7 @@ class Procedure:
         """ Collect the names of all eligible placeholders (parameters & metadata)"""
         placeholders: list[str] = []
         for _, item in inspect.getmembers(cls):
-            if isinstance(item, Metadata) or isinstance(item, Parameter):
+            if isinstance(item, (Metadata, Parameter)):
                 placeholders.append(item.name)
 
         return list(set(placeholders))
@@ -259,20 +260,17 @@ class Procedure:
     def startup(self) -> None:
         """ Executes the commands needed at the start-up of the measurement
         """
-        pass
 
     def execute(self) -> None:
         """ Perform the commands needed for the measurement itself. During
         execution the shutdown method will always be run following this method.
         This includes when Exceptions are raised.
         """
-        pass
 
     def shutdown(self) -> None:
         """ Executes the commands necessary to shut down the instruments
         and leave them in a safe state. This method is always run at the end.
         """
-        pass
 
     def emit(self, topic, record) -> None:
         raise NotImplementedError('should be monkey patched by a worker')
@@ -353,7 +351,7 @@ class ProcedureWrapper:
 
         # Restore the procedure
         spec = importlib.util.spec_from_file_location(self._module, self._file)
-        module = importlib.util.module_from_spec(spec) # type: ignore[reportArgumentType]
+        module = importlib.util.module_from_spec(spec)  # type: ignore[reportArgumentType]
         sys.modules[self._module] = module
         spec.loader.exec_module(module)
         cls = getattr(module, self._class)

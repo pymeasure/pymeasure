@@ -250,7 +250,7 @@ class IntegerParameter(Parameter[int]):
         self._help_fields.append('minimum')
         self._help_fields.append('maximum')
 
-    def convert(self, value: int | float | bool | str) -> int:
+    def convert(self, value: float | bool | str) -> int:
         if isinstance(value, str):
             value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
@@ -296,7 +296,7 @@ class BooleanParameter(Parameter[bool]):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    def convert(self, value: bool | int | float | str | np.bool_) -> bool:
+    def convert(self, value: bool | float | str | np.bool_) -> bool:
         if isinstance(value, str):
             if value.lower() == "true":
                 value = True
@@ -307,7 +307,7 @@ class BooleanParameter(Parameter[bool]):
         elif isinstance(value, (int, float)) and value in [0, 1]:
             value = bool(value)
         elif isinstance(value, bool):
-            value = value
+            pass  # already bool
         elif isinstance(value, np.bool_):
             value = bool(value)
         else:
@@ -350,7 +350,7 @@ class FloatParameter(Parameter[float]):
         self.step: float | None = step
         self._help_fields.append(('decimals are', 'decimals'))
 
-    def convert(self, value: float | int | bool | str) -> float:
+    def convert(self, value: float | bool | str) -> float:
         if isinstance(value, str):
             value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
@@ -419,8 +419,8 @@ class VectorParameter(Parameter[list[float]]):
         elif isinstance(value, (list, tuple, np.ndarray)):
             raw_list = value
         else:
-            raise ValueError("VectorParameter given undesired value of "
-                             f"type '{type(value)}'")
+            raise TypeError("VectorParameter given undesired value of "
+                            f"type '{type(value)}'")
         if len(raw_list) != self._length:
             raise ValueError("VectorParameter given value of length "
                              f"{len(raw_list)} instead of {self._length}")
@@ -428,7 +428,7 @@ class VectorParameter(Parameter[list[float]]):
             value = [float(ve) for ve in raw_list]
 
         except ValueError:
-            raise ValueError(f"VectorParameter given input '{str(value)}' that could "
+            raise ValueError(f"VectorParameter given input '{value!s}' that could "
                              "not be converted to floats.")
 
         return value
@@ -485,15 +485,14 @@ class ListParameter(Parameter[object]):
                              "allowed choices are set to None.")
 
         # strip units if included
-        if isinstance(value, str):
-            if self.units is not None and value.endswith(" " + self.units):
-                value = value[:-len(self.units)].strip()
+        if isinstance(value, str) and self.units is not None and value.endswith(" " + self.units):
+            value = value[: -len(self.units)].strip()
 
-        if str(value) in self._choices.keys():
+        if str(value) in self._choices:
             value = self._choices[str(value)]
         else:
             raise ValueError("Invalid choice for parameter. "
-                             f"Must be one of {str(self._choices)}")
+                             f"Must be one of {self._choices!s}")
 
         return value
 
@@ -540,7 +539,7 @@ class PhysicalParameter(VectorParameter):
         elif isinstance(value, (list, tuple, np.ndarray)):
             raw_list = value
         else:
-            raise ValueError("VectorParameter given undesired value of "
+            raise TypeError("VectorParameter given undesired value of "
                              f"type '{type(value)}'")
         if len(raw_list) != self._length:
             raise ValueError("VectorParameter given value of length "
@@ -548,7 +547,7 @@ class PhysicalParameter(VectorParameter):
         try:
             value = [float(ve) for ve in raw_list]
         except ValueError:
-            raise ValueError(f"VectorParameter given input '{str(value)}' that could "
+            raise ValueError(f"VectorParameter given input '{value!s}' that could "
                              "not be converted to floats.")
         # Uncertainty must be non-negative
         value[1] = abs(value[1])

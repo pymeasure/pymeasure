@@ -25,7 +25,7 @@
 import logging
 from warnings import warn
 
-from .common_base import cast_or_str, CommonBase, identity
+from .common_base import CommonBase, cast_or_str, identity
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

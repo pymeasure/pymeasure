@@ -22,9 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.common_base import cast_or_str
 from enum import IntFlag
+
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.common_base import cast_or_str
 
 
 class StatusCode(IntFlag):

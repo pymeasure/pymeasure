@@ -26,6 +26,7 @@ import logging
 
 import numpy as np
 import pyqtgraph as pg
+
 from .Qt import QtCore, QtGui
 
 log = logging.getLogger(__name__)
@@ -159,9 +160,9 @@ class BufferCurve(pg.PlotDataItem):
     def append(self, x, y):
         """ Appends data to the curve with optional errors """
         if self._buffer is None:
-            raise Exception("BufferCurve buffer must be prepared")
+            raise ValueError("BufferCurve buffer must be prepared")
         if len(self._buffer) <= self._ptr:
-            raise Exception("BufferCurve overflow")
+            raise OverflowError("BufferCurve overflow")
 
         # Set x-y data
         self._buffer[self._ptr, :2] = [x, y]
@@ -221,4 +222,4 @@ class Crosshairs(QtCore.QObject):
             self.position = event[0]
             self.update()
         else:
-            raise Exception("Mouse location not known")
+            raise ValueError("Mouse location not known")
