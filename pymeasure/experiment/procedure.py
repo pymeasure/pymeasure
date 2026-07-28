@@ -28,11 +28,11 @@ import logging
 import re
 import sys
 from copy import deepcopy
-from enum import IntEnum
 from typing import Any
 
 from pint import UndefinedUnitError, facets
 
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.units import ureg
 
 from .parameters import Measurable, Metadata, Parameter
@@ -41,21 +41,12 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class ProcedureStatus(IntEnum):
-    FINISHED = 0
-    FAILED = 1
-    ABORTED = 2
-    QUEUED = 3
-    RUNNING = 4
-
-
-STATUS_STRINGS = {
-    ProcedureStatus.FINISHED: "Finished",
-    ProcedureStatus.FAILED: "Failed",
-    ProcedureStatus.ABORTED: "Aborted",
-    ProcedureStatus.QUEUED: "Queued",
-    ProcedureStatus.RUNNING: "Running",
-}
+class ProcedureStatus(StrEnum):
+    FINISHED = "Finished"
+    FAILED = "Failed"
+    ABORTED = "Aborted"
+    QUEUED = "Queued"
+    RUNNING = "Running"
 
 
 class Procedure:
@@ -80,13 +71,6 @@ class Procedure:
 
     DATA_COLUMNS = []
     MEASURE = {}
-    FINISHED = ProcedureStatus.FINISHED
-    FAILED = ProcedureStatus.FAILED
-    ABORTED = ProcedureStatus.ABORTED
-    QUEUED = ProcedureStatus.QUEUED
-    RUNNING = ProcedureStatus.RUNNING
-
-    STATUS_STRINGS = STATUS_STRINGS
 
     status: ProcedureStatus
     _parameters: dict[str, Parameter] = {}
@@ -305,7 +289,7 @@ class Procedure:
         return result
 
     def __repr__(self) -> str:
-        return (f"<{self.__class__.__name__}(status={STATUS_STRINGS[self.status]},"
+        return (f"<{self.__class__.__name__}(status={self.status!s},"
                 f"parameters_are_set={self.parameters_are_set()})>")
 
 

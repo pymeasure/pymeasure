@@ -35,7 +35,7 @@ except (AttributeError, ImportError):
 import signal
 
 from ..experiment import Procedure, Results, unique_filename
-from ..experiment.procedure import STATUS_STRINGS, ProcedureStatus
+from ..experiment.procedure import ProcedureStatus
 from ..log import console_log
 from .browser import BaseBrowserItem
 from .manager import BaseManager, Experiment
@@ -52,7 +52,7 @@ class ConsoleBrowserItem(BaseBrowserItem):
 
     def setStatus(self, status: ProcedureStatus) -> None:
         if self.bar:
-            self.bar.update(status=STATUS_STRINGS[status])
+            self.bar.update(status=status)
 
     def setProgress(self, progress: float) -> None:
         if self.bar:

@@ -25,7 +25,7 @@
 import logging
 from os.path import basename
 
-from ..experiment.procedure import STATUS_STRINGS, ProcedureStatus
+from ..experiment.procedure import ProcedureStatus
 from .Qt import QtCore, QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
         self.progressbar.setValue(0)
 
     def setStatus(self, status: ProcedureStatus) -> None:
-        self.setText(3, STATUS_STRINGS[status])
+        self.setText(3, status)
 
         if status == ProcedureStatus.FAILED or status == ProcedureStatus.ABORTED:
             # Set progress bar color to red
