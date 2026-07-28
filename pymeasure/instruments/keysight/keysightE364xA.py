@@ -213,10 +213,10 @@ class KeysightE364XADualOutput(SCPIMixin, Instrument):
             name if name is not None else self._default_name,
             **kwargs,
         )
-        for i, ch in enumerate(self.channels.values()):
+        for ident, ch in self.channels.items():
             ch.range_set_process = ch.update_validator_range
             ch.range_values = self._range_map
-            ch.range = voltage_range[i]
+            ch.range = voltage_range[ident-1]
 
     output_enabled = Instrument.control(
         "OUTP?",
