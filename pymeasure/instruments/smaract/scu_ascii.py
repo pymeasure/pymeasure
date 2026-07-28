@@ -350,7 +350,8 @@ class SmarActSCU_ASCII(Instrument):
 
     serial_nb = Instrument.measurement(
         ":GID", """Get the serial number. """,
-        get_process=lambda s: s[3:]
+        get_process=lambda s: s[3:],
+        cast=str,
     )
 
     model = Instrument.measurement(
