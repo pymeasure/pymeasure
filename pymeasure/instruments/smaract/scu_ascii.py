@@ -98,6 +98,7 @@ class SCUChannel(Channel):
         """,
         set_process=lambda v: convert_quantity_to_magnitude(v, 'Hz'),
         get_process=lambda s: Q_(int(s[6:]), 'Hz'),
+        cast=str,
     )
 
     safe_direction_up_enabled = Channel.control(
@@ -109,6 +110,7 @@ class SCUChannel(Channel):
         map_values=True,
         values={True: 1, False: 0},
         get_process=lambda x: int(x[-1]),
+        cast=str,
     )
 
     def calibrate_sensor(self) -> bool:
@@ -348,12 +350,14 @@ class SmarActSCU_ASCII(Instrument):
 
     serial_nb = Instrument.measurement(
         ":GID", """Get the serial number. """,
-        get_process=lambda s: s[3:]
+        get_process=lambda s: s[3:],
+        cast=str,
     )
 
     model = Instrument.measurement(
         ":I", """Get the device model information. """,
-        get_process=lambda s: s[2:]
+        get_process=lambda s: s[2:],
+        cast=str,
     )
 
     # CHECK AMPLITUDE
