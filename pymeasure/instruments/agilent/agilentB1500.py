@@ -182,9 +182,17 @@ class AgilentB1500(SCPIMixin, Instrument):
         SPGUs are accessible via attributes such as ``.spgu1``, etc.
         """
         modules = self.query_modules()
+        i = 1
         for channel, module_type in modules.items():
             if module_type == "SPGU":
-                self.add_child(SPGU, channel, collection="spgus", prefix="spgu")
+                self.add_child(
+                    SPGU,
+                    i,
+                    collection="spgus",
+                    prefix="spgu",
+                    slot=channel,
+                )
+                i += 1
 
     def initialize_cmu(self) -> None:
         """Initialize CMU.
@@ -1791,11 +1799,13 @@ class SPGU(Channel):
     """Provide specific methods for the SPGU module of the Agilent B1500 mainframe.
 
     :param parent: Instance of the B1500 mainframe class
-    :param channel: Channel number of the SPGU
+    :param index: Index of the SPGU
+    :param slot: Slot number of the SPGU
     """
 
-    def __init__(self, parent: AgilentB1500, channel: int, **kwargs):
-        super().__init__(parent, channel, **kwargs)
+    def __init__(self, parent: AgilentB1500, index: int, slot: int, **kwargs):
+        slot = strict_discrete_set(slot, range(1, 11))
+        super().__init__(parent, slot, **kwargs)
         self.ch1 = self.add_child(SPGUChannel, int(f"{self.id}01"), prefix="ch")
         self.ch2 = self.add_child(SPGUChannel, int(f"{self.id}02"), prefix="ch")
 

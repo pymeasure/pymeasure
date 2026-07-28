@@ -49,6 +49,10 @@ from pymeasure.instruments.agilent.agilentB1500 import (
 )
 from pymeasure.test import expected_protocol
 
+#: ``UNT?`` response of a mainframe with SMUs in slot 1 and 4, SPGUs in slot 3 and 5,
+#: a CMU in slot 6 and an empty slot 2.
+MODULES = "B1517A,0;0,0;B1525A,0;B1511A,0;B1525A,0;B1520A,0"
+
 
 class TestB1500:
     """Tests for B1500 functionality."""
@@ -81,6 +85,15 @@ class TestB1500:
         ) as inst:
             inst.set_port_connection(port, status)
 
+    def test_initialize_all_spgus_numbering(self):
+        """Test that SPGUs are numbered consecutively while their id is the slot number."""
+        with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
+            inst.initialize_all_spgus()
+            assert inst.spgus == {1: inst.spgu1, 2: inst.spgu2}
+            assert (inst.spgu1.id, inst.spgu2.id) == (3, 5)
+            # SPGU channel numbers are derived from the slot, not from the SPGU number
+            assert (inst.spgu1.ch1.id, inst.spgu1.ch2.id) == (301, 302)
+
     def test_unit_names(self):
         """Test that unit_names covers all initialized units."""
         with expected_protocol(AgilentB1500Mock, []) as inst:
@@ -101,7 +114,7 @@ class AgilentB1500Mock(AgilentB1500):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.add_child(SPGU, id=1, collection="spgus", prefix="spgu")
+        self.add_child(SPGU, id=1, collection="spgus", prefix="spgu", slot=1)
         self.add_child(CMU, id=2, collection="cmu", prefix=None)
         self.add_child(SMU, id=1, collection="smus", prefix="smu", smu_type="HRSMU", slot=3)
 
