@@ -23,11 +23,11 @@
 #
 
 import pytest
-from pymeasure.units import ureg
 import pyvisa
 
 # Importing driver classes
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, SmarActSCUStepper
+from pymeasure.units import ureg
 
 Q_ = ureg.Quantity
 

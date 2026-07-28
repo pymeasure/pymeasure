@@ -23,12 +23,12 @@
 #
 
 from enum import Enum
-from pymeasure.units import ureg
 
 from pymeasure.instruments import Instrument, Channel
-
 from pymeasure.instruments.smaract.utils import convert_quantity_to_magnitude
 from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.units import ureg
+
 
 Q_ = ureg.Quantity
 
@@ -149,7 +149,7 @@ class SCUChannel(Channel):
 
         """
         if not isinstance(t, PositionerType):
-            raise ValueError("positioner_type must be a PositionerType Enum")
+            raise TypeError("positioner_type must be a PositionerType Enum")
 
         self.write(f":SST{self.id}T{t.value}")
 

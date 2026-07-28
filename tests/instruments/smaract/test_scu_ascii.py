@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, PositionerType
+from pymeasure.test import expected_protocol
 from pymeasure.units import ureg
 
 Q_ = ureg.Quantity
@@ -48,7 +48,7 @@ def test_close():
     ) as inst:
         inst.close()
         # verify instrument is no longer usable
-        with pytest.raises(Exception):
+        with pytest.raises(TypeError):
             inst.ask(':GID')
 
 
