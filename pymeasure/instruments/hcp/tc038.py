@@ -26,8 +26,7 @@ import logging
 
 from pyvisa.constants import Parity
 
-from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import AdapterType, Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -90,7 +89,7 @@ class TC038(Instrument):
 
     def __init__(
         self,
-        adapter: Adapter | int | str,
+        adapter: AdapterType,
         name: str = "TC038",
         address: int = 1,
         timeout: int = 1000,

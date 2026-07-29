@@ -132,15 +132,16 @@ def test_output_enabled(state, as_int):
         inst.output_enabled = state
 
 
-@pytest.mark.parametrize("value, response, expected_value", [
-    (50, 50, 50.0),
-    (10000, 10000, 10000.0),
-    ("INF", "INF", float("inf")),
+@pytest.mark.parametrize("value, response, expected_value, request_message", [
+    (50, 50, 50.0, "50"),
+    (10000, 10000, 10000.0, "10000"),
+    ("INF", "INF", float("inf"), "INF"),
+    (float("inf"), "INF", float("inf"), "INF"),
 ])
-def test_output_load(value, response, expected_value):
+def test_output_load(value, response, expected_value, request_message):
     with expected_protocol(
         Keysight33250A,
-        [("OUTP:LOAD?", response), (f"OUTP:LOAD {('INF' if value == 'INF' else value)}", None)],
+        [("OUTP:LOAD?", response), (f"OUTP:LOAD {request_message}", None)],
     ) as inst:
         measured = inst.output_load
         if math.isinf(expected_value):

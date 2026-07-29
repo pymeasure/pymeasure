@@ -54,7 +54,7 @@ def _normalize_inf_input(value: float | str) -> float | str:
     return numeric
 
 
-def _normalize_inf_response(value):
+def _normalize_inf_response(value: float | str) -> str | float:
     """Normalize INF-like instrument responses.
 
     :param value: Raw value returned by the instrument.
@@ -68,7 +68,7 @@ def _normalize_inf_response(value):
     return normalized
 
 
-def _set_inf_or_numeric(value):
+def _set_inf_or_numeric(value: float | str) -> str:
     """Format a value for SCPI setters accepting finite values and INF.
 
     :param value: Input load value.
@@ -83,7 +83,7 @@ def _set_inf_or_numeric(value):
     return f"{numeric:g}"
 
 
-def _validate_output_load(value, values):
+def _validate_output_load(value: float | str, values) -> float:
     """Validate finite output load or INF-like values.
 
     :param value: Requested output load value.
@@ -99,7 +99,7 @@ def _validate_output_load(value, values):
     return strict_range(normalized, values)
 
 
-def _get_output_load(value):
+def _get_output_load(value: float | str) -> float:
     """Parse output load response to float or infinity.
 
     :param value: Raw ``OUTP:LOAD?`` response.

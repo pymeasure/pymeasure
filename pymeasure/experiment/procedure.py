@@ -347,7 +347,7 @@ class ProcedureWrapper:
 
         # Restore the procedure
         spec = importlib.util.spec_from_file_location(self._module, self._file)
-        module = importlib.util.module_from_spec(spec)
+        module = importlib.util.module_from_spec(spec)  # type: ignore[reportArgumentType]
         sys.modules[self._module] = module
         spec.loader.exec_module(module)
         cls = getattr(module, self._class)

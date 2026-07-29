@@ -77,6 +77,7 @@ class AH2500A(Instrument):
         # typical replies: "VOLTAGE    HIGHEST= 15.0    V" or
         # "VOLTAGE HIGHEST 1.00    V"
         get_process=lambda v: float(AH2500A._renumeric.search(v).group(0)),
+        cast=str,
     )
 
     @classmethod

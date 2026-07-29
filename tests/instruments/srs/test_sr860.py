@@ -22,21 +22,29 @@
 # THE SOFTWARE.
 #
 
-import logging
-from warnings import warn
+import pytest
 
-from pymeasure.instruments.rohdeschwarz.fsseries import FSL as _FSLSeries
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from pymeasure.instruments.srs.sr860 import SR860
+from pymeasure.test import expected_protocol
 
 
-class FSL(_FSLSeries):
-    def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
-        warn(
-            "Import `FSL` from `pymeasure.instruments.rohdeschwarz.fsl` is "
-            "deprecated since version 0.15. Import `FSL` from "
-            "`pymeasure.instruments.rohdeschwarz` instead.",
-            FutureWarning,
-        )
-        super().__init__(adapter, name, **kwargs)
+@pytest.mark.parametrize("value", (0, 1))
+def test_timebase_getter(value):
+    with expected_protocol(SR860, [("TBMODE?", f"{value}")]) as inst:
+        assert inst.timebase == value
+
+
+@pytest.mark.parametrize("value", (0, 1))
+def test_timebase_setter(value):
+    with expected_protocol(SR860, [(f"TBMODE {value}", None)]) as inst:
+        inst.timebase = value
+
+
+def test_front_panel_getter():
+    with expected_protocol(SR860, [("DBLK?", "1")]) as inst:
+        assert inst.front_panel == "1"
+
+
+def test_front_panel_setter():
+    with expected_protocol(SR860, [("DBLK 1", None)]) as inst:
+        inst.front_panel = "1"

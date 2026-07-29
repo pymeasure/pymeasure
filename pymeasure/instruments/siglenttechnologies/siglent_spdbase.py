@@ -23,6 +23,7 @@
 #
 import logging
 from enum import IntFlag
+from typing import cast
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.channel import Channel
@@ -66,7 +67,7 @@ class SPDChannel(Channel):
     """ The channel class for Siglent SPDxxxxX instruments.
     """
 
-    def __init__(self, parent, id,
+    def __init__(self, parent: "SPDBase", id,
                  voltage_range: list | None = None,
                  current_range: list | None = None):
         if current_range is None:
@@ -130,7 +131,7 @@ class SPDChannel(Channel):
             ``True``: enables the output
             ``False``: disables it
         """
-        self.parent.selected_channel = self.id
+        cast(SPDBase, self.parent).selected_channel = self.id
         self.write('OUTP CH{ch},' + ("ON" if enable else "OFF"))
 
     def enable_timer(self, enable: bool = True):
@@ -198,6 +199,7 @@ class SPDBase(SCPIUnknownMixin, Instrument):
 
         :type: :class:`.SystemStatusCode`
         """,
+        cast=str,
         get_process=lambda v: SystemStatusCode(int(v, base=16)),
     )
 
