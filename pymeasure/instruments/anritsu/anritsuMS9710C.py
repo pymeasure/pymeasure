@@ -46,6 +46,7 @@ truncated_range_or_off = joined_validators(strict_discrete_set, truncated_range)
 
 
 def _int_or_neg_one(v: str) -> int:
+    """Convert str to integer if possible, otherwise return '-1'."""
     try:
         return int(v)
     except ValueError:

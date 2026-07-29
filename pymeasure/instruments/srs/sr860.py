@@ -602,7 +602,7 @@ class SR860(Instrument):
         values=range(16),
         cast=int,
     )
-    strip_chart_dat1: InstrumentProperty[int] = Instrument.control(
+    strip_chart_dat1 = Instrument.control(
         "CGRF? 0", "CGRF 0, %i",
         """A integer property that turns the strip chart graph of data channel 1 off(i=0) or on(i=1).
         """,  # noqa: E501

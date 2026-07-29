@@ -107,7 +107,7 @@ def _trigger_select_validator(
         raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
 
     value_list = [v.upper() if isinstance(v, str) else v for v in value]
-    value_list[1] = sanitize_source(value_list[1])
+    value_list[1] = sanitize_source(cast(str, value_list[1]))
 
     if value_list[0] not in values:
         raise ValueError(f'Value {value_list[0]} not in the discrete set {values.keys()}')
@@ -678,6 +678,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
 
     @staticmethod
     def _extract_value_generator(key: str) -> Callable[[list[str | int]], int]:
+        """Generate a method to extract a certain member of a list as int."""
         def extract_value(values: list[str | int]) -> int:
             index = values.index(key) + 1
             return cast(int, values[index])
@@ -1003,7 +1004,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     _trigger_select_normal_command = "TRSE %s,SR,%s,HT,%s,HV,%.2E"
     _trigger_select_extended_command = "TRSE %s,SR,%s,HT,%s,HV,%.2E,HV2,%.2E"
 
-    _trigger_select = Instrument.control(
+    _trigger_select: InstrumentProperty[list[str | float]] = Instrument.control(
         "TRSE?", _trigger_select_normal_command,
         """Control the trigger, see :meth:`~trigger_select()` documentation.""",
         get_process_list=_trigger_select_get_process,
@@ -1018,7 +1019,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         self.write("SET50")
 
     @property
-    def trigger_select(self):
+    def trigger_select(self) -> list[str | float]:
         """Control the condition that will trigger the acquisition of waveforms (string).
 
         Depending on the trigger type, additional parameters must be specified. These additional
@@ -1055,7 +1056,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
 
     # noinspection PyAttributeOutsideInit
     @trigger_select.setter
-    def trigger_select(self, value) -> None:
+    def trigger_select(self, value: list[str | float] | tuple[float | str, ...]) -> None:
         num_expected_pars = _trigger_select_num_pars(value)
         if num_expected_pars == 3:
             self._trigger_select_set_command = self._trigger_select_short_command
@@ -1140,7 +1141,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
 
         """
         trigger_select = self.trigger_select
-        ch = self.ch(trigger_select[1])  # type: ignore[reportArgumentType]
+        ch = self.ch(cast((int | str), trigger_select[1]))
         tb_setup = {
             "mode": self.trigger_mode,
             "trigger_type": trigger_select[0],
@@ -1167,7 +1168,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """Same as the display_parameter method in the Channel subclass."""
         self.ch(channel).display_parameter = parameter  # type: ignore
 
-    def measure_parameter(self, parameter: str, channel: str) -> float:
+    def measure_parameter(self, parameter: str, channel: int | str) -> float:
         """
         Same as the measure_parameter method in the Channel subclass
         """

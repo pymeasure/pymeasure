@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from typing import cast
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.teledyne.teledyne_oscilloscope import (
@@ -178,7 +180,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
         """
         trigger_select = self.trigger_select
-        ch = self.ch(trigger_select[1])
+        ch = self.ch(cast(str | int, trigger_select[1]))
         tb_setup = {
             "mode": self.trigger_mode,
             "trigger_type": trigger_select[0],

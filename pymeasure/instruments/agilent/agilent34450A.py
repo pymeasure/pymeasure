@@ -59,7 +59,7 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
              'capacitance': 'CAP'}
 
     @property
-    def mode(self):
+    def mode(self) -> str:
         """ Control the measurement mode of the multimeter. Can be "current",
         "ac current", "voltage", "ac voltage", "resistance", "4w resistance", "current frequency",
         "voltage frequency", "continuity", "diode", "temperature", or "capacitance"."""
@@ -67,11 +67,11 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         vals = self._conf_parser(self.values(get_command, cast=str))
         # Return only the mode parameter
         inv_modes = {v: k for k, v in self.MODES.items()}
-        mode = inv_modes[vals[0]]
+        mode = inv_modes[str(vals[0])]
         return mode
 
     @mode.setter
-    def mode(self, value):
+    def mode(self, value: str) -> None:
         if value in self.MODES:
             if value not in ['current frequency', 'voltage frequency']:
                 self.write(':configure:' + self.MODES[value])
@@ -553,7 +553,7 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         """
         self.write(":SYST:LOC")
 
-    def _conf_parser(self, conf_values: list[str] | str) -> list[str]:
+    def _conf_parser(self, conf_values: list[str] | str) -> list[str | float]:
         """
         Parse the string of configuration parameters read from Agilent34450A with
         command ":configure?" and returns a list of parameters.

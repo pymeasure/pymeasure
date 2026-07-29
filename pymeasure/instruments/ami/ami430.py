@@ -119,7 +119,7 @@ class AMI430(SCPIMixin, Instrument):
 
     state = Instrument.measurement(
         "STATE?",
-        """Get the field in kGauss of the magnet.
+        """Get the magnet status value (int).
         """,
         cast=int,
     )
