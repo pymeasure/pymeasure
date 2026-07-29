@@ -29,6 +29,7 @@ import re
 import sys
 from copy import deepcopy
 from typing import Any
+from warnings import warn
 
 from pint import UndefinedUnitError, facets
 
@@ -181,13 +182,18 @@ class Procedure:
         return dict(self._parameters)
 
     def refresh_parameters(self) -> None:
-        """ No-op retained for API compatibility.
+        """No-op retained for API compatibility.
 
-        Historically re-cast parameter values; now a no-op retained for API
-        compatibility since ``__set__`` eagerly converts values at assignment
-        time.
+        .. deprecated:: 0.17.0
+            Historically re-cast parameter values; now a no-op retained for API
+            compatibility since ``__set__`` eagerly converts values at assignment
+            time.
+
         """
-        return
+        warn(
+            "`refresh_parameters` is deprecated as it does nothing, just remove the call.",
+            FutureWarning,
+        )
 
     def set_parameters(self, parameters: dict[str, Any], except_missing: bool = True) -> None:
         """ Sets a dictionary of parameters and raises an exception if additional
@@ -340,9 +346,8 @@ class ProcedureWrapper:
         spec.loader.exec_module(module)
         cls = getattr(module, self._class)
 
-        self.procedure = cls()
+        self.procedure: Procedure = cls()
         self.procedure.set_parameters(self._parameters)
-        self.procedure.refresh_parameters()
 
         del self._parameters
         del self._class

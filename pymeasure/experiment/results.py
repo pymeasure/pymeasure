@@ -265,9 +265,8 @@ class Results:
         spec.loader.exec_module(module)
         cls = getattr(module, self._class)
 
-        self.procedure = cls()
+        self.procedure: Procedure = cls()
         self.procedure.set_parameters(self._parameters)
-        self.procedure.refresh_parameters()
 
         self.procedure_class = cls
 
@@ -397,8 +396,6 @@ class Results:
                     f"Parameter \"{parameter.name}\" not found when loading " +
                     f"'{procedure_class}', setting default value")
                 setattr(procedure, name, parameter.default)
-
-        procedure.refresh_parameters()  # Enforce update of meta data
 
         # Fill the procedure with the metadata found
         for name, metadata in procedure.metadata_objects().items():

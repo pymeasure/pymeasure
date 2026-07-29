@@ -171,17 +171,6 @@ def test_parameter_objects_does_not_double_convert():
     assert p._parameters['x'].convert_calls == [7]
 
 
-def test_refresh_parameters_no_raise_on_unset_parameter():
-    """`refresh_parameters()` must not raise when a Parameter has no value (None)."""
-
-    class TestProcedure(Procedure):
-        x = Parameter('X', default=None)
-
-    p = TestProcedure()
-    assert p.x is None
-    p.refresh_parameters()  # must not raise
-
-
 def test_param_values_not_populated():
     """`_param_values` is no longer created by `_update_parameters`."""
 
