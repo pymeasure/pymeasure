@@ -49,9 +49,9 @@ from pymeasure.instruments.agilent.agilentB1500 import (
 )
 from pymeasure.test import expected_protocol
 
-#: ``UNT?`` response of a mainframe with SMUs in slot 1 and 4, SPGUs in slot 3 and 5,
-#: a CMU in slot 6 and an empty slot 2.
-MODULES = "B1517A,0;0,0;B1525A,0;B1511A,0;B1525A,0;B1520A,0"
+#: ``UNT?`` response of a mainframe with SPGUs in slot 1, an unsupported WGFMU in slot 2,
+#: SMUs in slots 3, 5, 6 and 7, a CMU in slot 8 and empty slots 4 and 10.
+MODULES = "B1525A,0;B1530A,0;B1510A,0;0,0;B1517A,0;B1517A,0;B1511B,1;B1520A/N1301A,0;0,0;0,0"
 
 
 class TestB1500:
@@ -89,27 +89,33 @@ class TestB1500:
         """Test that all supported units are initialized with a single module query."""
         with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
             inst.initialize_units()
-            assert inst.unit_names == {1: "SMU1", 4: "SMU2", 3: "SPGU1", 5: "SPGU2", 6: "CMU"}
-            assert list(inst.smu_references) == [inst.smu1, inst.smu2]
+            assert inst.unit_names == {
+                3: "SMU1",
+                5: "SMU2",
+                6: "SMU3",
+                7: "SMU4",
+                1: "SPGU1",
+                8: "CMU",
+            }
+            assert list(inst.smu_references) == [inst.smu1, inst.smu2, inst.smu3, inst.smu4]
 
     def test_initialize_units_numbering(self):
         """Test that units are numbered consecutively while their id is the slot number."""
         with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
             inst.initialize_units()
-            assert inst.smus == {1: inst.smu1, 2: inst.smu2}
-            assert (inst.smu1.id, inst.smu2.id) == (1, 4)
-            assert inst.spgus == {1: inst.spgu1, 2: inst.spgu2}
-            assert (inst.spgu1.id, inst.spgu2.id) == (3, 5)
-            # SPGU channel numbers are derived from the slot, not from the SPGU number
-            assert (inst.spgu1.ch1.id, inst.spgu1.ch2.id) == (301, 302)
-            assert inst.cmu.id == 6
+            assert inst.smus == {1: inst.smu1, 2: inst.smu2, 3: inst.smu3, 4: inst.smu4}
+            assert (inst.smu1.id, inst.smu2.id, inst.smu3.id, inst.smu4.id) == (3, 5, 6, 7)
+            assert inst.spgus == {1: inst.spgu1}
+            assert (inst.spgu1.id) == (1)
+            assert (inst.spgu1.ch1.id, inst.spgu1.ch2.id) == (101, 102)
+            assert inst.cmu.id == 8
 
     @pytest.mark.parametrize(
         "method, unit_names",
         [
-            ("initialize_all_smus", {1: "SMU1", 4: "SMU2"}),
-            ("initialize_all_spgus", {3: "SPGU1", 5: "SPGU2"}),
-            ("initialize_cmu", {6: "CMU"}),
+            ("initialize_all_smus", {3: "SMU1", 5: "SMU2", 6: "SMU3", 7: "SMU4"}),
+            ("initialize_all_spgus", {1: "SPGU1"}),
+            ("initialize_cmu", {8: "CMU"}),
         ],
     )
     def test_deprecated_initialization(self, method, unit_names):
