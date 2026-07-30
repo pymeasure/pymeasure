@@ -154,7 +154,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                     raise NotImplementedError(f"Module {module[0]} is not implemented yet!") from e
         return out
 
-    def initialize_all_units(self) -> None:
+    def initialize_units(self) -> None:
         """Initialize all supported units.
 
         Query available modules once and create a :class:`.SMU`, :class:`.SPGU`
@@ -197,10 +197,10 @@ class AgilentB1500(SCPIMixin, Instrument):
         SMUs are accessible via attributes such as ``.smu1``, etc.
 
         .. deprecated:: 0.17.0
-            Use :meth:`initialize_all_units` instead.
+            Use :meth:`initialize_units` instead.
         """
         warnings.warn(
-            "`initialize_all_smus` is deprecated, use `initialize_all_units` instead.",
+            "`initialize_all_smus` is deprecated, use `initialize_units` instead.",
             FutureWarning,
             stacklevel=2,
         )
@@ -226,10 +226,10 @@ class AgilentB1500(SCPIMixin, Instrument):
         SPGUs are accessible via attributes such as ``.spgu1``, etc.
 
         .. deprecated:: 0.17.0
-            Use :meth:`initialize_all_units` instead.
+            Use :meth:`initialize_units` instead.
         """
         warnings.warn(
-            "`initialize_all_spgus` is deprecated, use `initialize_all_units` instead.",
+            "`initialize_all_spgus` is deprecated, use `initialize_units` instead.",
             FutureWarning,
             stacklevel=2,
         )
@@ -253,10 +253,10 @@ class AgilentB1500(SCPIMixin, Instrument):
         CMU is accessible via attribute ``.cmu``.
 
         .. deprecated:: 0.17.0
-            Use :meth:`initialize_all_units` instead.
+            Use :meth:`initialize_units` instead.
         """
         warnings.warn(
-            "`initialize_cmu` is deprecated, use `initialize_all_units` instead.",
+            "`initialize_cmu` is deprecated, use `initialize_units` instead.",
             FutureWarning,
             stacklevel=2,
         )

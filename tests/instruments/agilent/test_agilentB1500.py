@@ -85,17 +85,17 @@ class TestB1500:
         ) as inst:
             inst.set_port_connection(port, status)
 
-    def test_initialize_all_units(self):
+    def test_initialize_units(self):
         """Test that all supported units are initialized with a single module query."""
         with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
-            inst.initialize_all_units()
+            inst.initialize_units()
             assert inst.unit_names == {1: "SMU1", 4: "SMU2", 3: "SPGU1", 5: "SPGU2", 6: "CMU"}
             assert list(inst.smu_references) == [inst.smu1, inst.smu2]
 
-    def test_initialize_all_units_numbering(self):
+    def test_initialize_units_numbering(self):
         """Test that units are numbered consecutively while their id is the slot number."""
         with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
-            inst.initialize_all_units()
+            inst.initialize_units()
             assert inst.smus == {1: inst.smu1, 2: inst.smu2}
             assert (inst.smu1.id, inst.smu2.id) == (1, 4)
             assert inst.spgus == {1: inst.spgu1, 2: inst.spgu2}

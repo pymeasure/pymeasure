@@ -91,7 +91,7 @@ Initialization of the Instrument
     # explicitly define r/w terminations; set sufficiently large timeout in milliseconds or None.
     b1500=AgilentB1500("GPIB0::17::INSTR", read_termination='\r\n', write_termination='\r\n', timeout=600000)
     # query module config from instrument and initialize all unit instances (SMU, SPGU, CMU)
-    b1500.initialize_all_units()
+    b1500.initialize_units()
     # set data output format (required!)
     b1500.data_format(21, mode=1) # call after units are initialized to get names for the channels
 
