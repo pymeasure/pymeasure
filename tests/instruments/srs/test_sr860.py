@@ -54,6 +54,7 @@ def test_front_panel_setter():
     (1e-9, "AUXV 0, 1e-09"),
     (1e-7, "AUXV 0, 1e-07"),
     (-1e-7, "AUXV 0, -1e-07"),
+    (10.0, "AUXV 0, 10"),
 ))
 def test_aux_out_small_values(value, command):
     """Verify that aux outputs transmit sub-microvolt values without truncation.

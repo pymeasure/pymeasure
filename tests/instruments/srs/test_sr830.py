@@ -99,6 +99,7 @@ def test_output_conversion():
     (1e-9, "AUXV1,1e-09;"),
     (1e-7, "AUXV1,1e-07;"),
     (-1e-7, "AUXV1,-1e-07;"),
+    (10.0, "AUXV1,10;"),
 ))
 def test_aux_out_small_values(value, command):
     """Verify that aux outputs transmit sub-microvolt values without truncation.
