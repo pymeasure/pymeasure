@@ -125,7 +125,7 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
     @property
     def is_energy_sensor(self):
         """Get whether the sensor can measure energy, i.e. is a pyroelectric sensor, bool."""
-        return self.sensor_type in {SensorTypes.PYROELECTRIC}
+        return self.sensor_type == SensorTypes.PYROELECTRIC
 
     @property
     def energy(self):
@@ -148,7 +148,7 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
     @property
     def is_current_sensor(self):
         """Get whether the sensor can measure current, i.e. is a photodiode sensor, bool."""
-        return self.sensor_type in {SensorTypes.PHOTODIODE}
+        return self.sensor_type == SensorTypes.PHOTODIODE
 
     @property
     def current(self):

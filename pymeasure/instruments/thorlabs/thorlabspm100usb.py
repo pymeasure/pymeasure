@@ -23,4 +23,4 @@
 #
 
 # Included for backwards compatibility
-from pymeasure.instruments.thorlabs.thorlabspm100series import ThorlabsPM100USB
+from pymeasure.instruments.thorlabs.thorlabspm100series import ThorlabsPM100USB  # noqa: F401
