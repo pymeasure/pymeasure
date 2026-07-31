@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 #
 
-from inspect import getmembers
 import logging
-from typing import Any, Generic, Literal, cast, Protocol, TypeVar, overload
 from collections.abc import Callable, Sequence
+from inspect import getmembers
+from typing import Any, Generic, Literal, Protocol, TypeVar, cast, overload
 from warnings import warn
 
 log = logging.getLogger(__name__)
@@ -161,7 +161,7 @@ class DynamicProperty(InstrumentProperty[T]):
 
         kwargs = {}
         for attr in self.fget_params_list:
-            attr_instance_name = self.prefix + "_".join([self.name, attr])
+            attr_instance_name = self.prefix + f"{self.name}_{attr}"
             if hasattr(obj, attr_instance_name):
                 kwargs[attr] = getattr(obj, attr_instance_name)
         return self.fget(obj, **kwargs)
@@ -171,7 +171,7 @@ class DynamicProperty(InstrumentProperty[T]):
             raise AttributeError(f"Can't set attribute {self.name}")
         kwargs = {}
         for attr in self.fset_params_list:
-            attr_instance_name = self.prefix + "_".join([self.name, attr])
+            attr_instance_name = self.prefix + f"{self.name}_{attr}"
             if hasattr(obj, attr_instance_name):
                 kwargs[attr] = getattr(obj, attr_instance_name)
         self.fset(obj, value, **kwargs)
@@ -397,8 +397,7 @@ class CommonBase:
         """Return a list of all the Instrument's channel pairs"""
         channel_pairs: list[tuple[type[Child], IdType]] = []
         for name, creator in cls.get_channels():
-            for pair in creator.pairs:
-                channel_pairs.append(pair)
+            channel_pairs += list(creator.pairs)
         return channel_pairs
 
     def _create_channels(self) -> None:
@@ -414,14 +413,13 @@ class CommonBase:
                 elif isinstance(creator, CommonBase.ChannelCreator):
                     child = self.add_child(cls, id, attr_name=name, **creator.kwargs)
                 else:
-                    raise ValueError(f"Invalid class '{creator}' for channel creation.")
+                    raise TypeError(f"Invalid class '{creator}' for channel creation.")
                 child._protected = True
 
     def __setattr__(self, name: str, value: Any) -> None:
         """ Add reserved_prefix in front of special variables."""
-        if hasattr(self, '_special_names'):
-            if name in self._special_names:
-                name = self.__reserved_prefix + name
+        if hasattr(self, '_special_names') and name in self._special_names:
+            name = self.__reserved_prefix + name
         super().__setattr__(name, value)
 
     def __getattribute__(self, name: str) -> Any:
@@ -429,9 +427,8 @@ class CommonBase:
         support dynamic property behaviour."""
         if name in ('_special_names', '__dict__'):
             return super().__getattribute__(name)
-        if hasattr(self, '_special_names'):
-            if name in self._special_names:
-                raise AttributeError(f"{name} is a reserved variable name and it cannot be read")
+        if hasattr(self, '_special_names') and name in self._special_names:
+            raise AttributeError(f"{name} is a reserved variable name and it cannot be read")
         return super().__getattribute__(name)
 
     # Channel management
@@ -574,7 +571,7 @@ class CommonBase:
                     results.append(bool(float(result)))  # type: ignore[arg-type]
                 else:
                     results.append(cast(result))  # type: ignore[call-arg]
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # Keep as string
                 warn(
                     f"Cannot cast '{result}' with '{cast}' for command '{command}'. "
@@ -923,7 +920,7 @@ class CommonBase:
     ) -> InstrumentProperty[Any]: ...
 
     @staticmethod
-    def control(  # noqa: C901 accept that this is a complex method
+    def control(
         get_command: str | None,
         set_command: str | None,
         docs: str,
@@ -1048,7 +1045,7 @@ class CommonBase:
                     error_list = self.check_get_errors()
                 except Exception as exc:
                     log.error("Exception raised while getting a property with the command "
-                              f"""'{get_command}': '{str(exc)}'.""")
+                              f"""'{get_command}': '{exc!s}'.""")
                     raise
                 errors = [str(error) for error in error_list]
                 if errors:
@@ -1105,7 +1102,7 @@ class CommonBase:
                     error_list = self.check_set_errors()
                 except Exception as exc:
                     log.error("Exception raised while setting a property with the command "
-                              f"""'{set_command % val}': '{str(exc)}'.""")
+                              f"""'{set_command % val}': '{exc!s}'.""")
                     raise
                 errors = [str(error) for error in error_list]
                 if errors:

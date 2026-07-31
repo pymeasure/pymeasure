@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 #
 
-import pytest
 import numpy as np
+import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.keysight import KeysightPNA
+from pymeasure.test import expected_protocol
 
 # communication during class initialization:
 # - set the data format to real64
@@ -57,24 +57,22 @@ REAL64_DATA = b"\x00\x00\x00\x00\xd0\x12\x63\x41"
 
 class TestAttributeError:
     def test_undefined_channel(self):
-        with pytest.raises(AttributeError):
-            with expected_protocol(
-                KeysightPNA,
-                INITIALIZATION + [
-                 ("SYST:MEAS:CAT? 3", "6,8"),
-                 ],
-            ) as inst:
-                assert [6, 8] == inst.ch_3.measurements
+        with pytest.raises(AttributeError), expected_protocol(
+            KeysightPNA,
+            INITIALIZATION + [
+             ("SYST:MEAS:CAT? 3", "6,8"),
+             ],
+        ) as inst:
+            assert [6, 8] == inst.ch_3.measurements
 
     def test_undefined_trace(self):
-        with pytest.raises(AttributeError):
-            with expected_protocol(
-                KeysightPNA,
-                INITIALIZATION + [
-                 ("CALC1:MEAS3:X:AXIS:UNIT?", "FREQ"),
-                 ],
-            ) as inst:
-                assert "FREQ" == inst.ch_1.tr_3.x_unit
+        with pytest.raises(AttributeError), expected_protocol(
+            KeysightPNA,
+            INITIALIZATION + [
+             ("CALC1:MEAS3:X:AXIS:UNIT?", "FREQ"),
+             ],
+        ) as inst:
+            assert "FREQ" == inst.ch_1.tr_3.x_unit
 
 
 class TestMarker:

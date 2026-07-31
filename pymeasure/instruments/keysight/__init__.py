@@ -25,6 +25,18 @@
 from .keysight33250A import Keysight33250A
 from .keysight81160A import Keysight81160A
 from .keysightDSOX1102G import KeysightDSOX1102G
+from .keysightE364xA import (
+    KeysightE3640A,
+    KeysightE3641A,
+    KeysightE3642A,
+    KeysightE3643A,
+    KeysightE3644A,
+    KeysightE3645A,
+    KeysightE3646A,
+    KeysightE3647A,
+    KeysightE3648A,
+    KeysightE3649A,
+)
 from .keysightE3631A import KeysightE3631A
 from .keysightE36312A import KeysightE36312A
 from .keysightN5767A import KeysightN5767A

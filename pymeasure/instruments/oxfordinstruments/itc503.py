@@ -24,14 +24,13 @@
 
 
 import logging
-from time import sleep, time
 from enum import IntFlag
+from time import sleep, time
 
 import numpy as np
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_range, strict_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 from .base import OxfordInstrumentsBase
 

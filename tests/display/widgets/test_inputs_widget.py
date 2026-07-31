@@ -25,9 +25,15 @@
 import pytest
 
 from pymeasure.display.Qt import QtCore
-from pymeasure.experiment import Procedure, BooleanParameter, Parameter, FloatParameter, \
-    IntegerParameter, ListParameter
 from pymeasure.display.widgets import InputsWidget
+from pymeasure.experiment import (
+    BooleanParameter,
+    FloatParameter,
+    IntegerParameter,
+    ListParameter,
+    Parameter,
+    Procedure,
+)
 
 
 @pytest.mark.parametrize(

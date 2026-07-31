@@ -28,13 +28,13 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import (
-    truncated_range,
-    strict_range,
+    joined_validators,
     strict_discrete_set,
-    joined_validators
+    strict_range,
+    truncated_range,
 )
 
 from .buffer import KeithleyBuffer
@@ -391,10 +391,10 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
         # Check validity of parameters
         if not isinstance(datapoints, (list, np.ndarray)):
-            raise ValueError("datapoints must be a list or numpy array")
+            raise TypeError("datapoints must be a list or numpy array")
         elif len(datapoints) > 100:
             raise ValueError("datapoints cannot be longer than 100 points")
-        elif not all([x >= -1 and x <= 1 for x in datapoints]):
+        elif not all(x >= -1 and x <= 1 for x in datapoints):
             raise ValueError("all data points must be between -1 and 1")
 
         if location not in [1, 2, 3, 4]:

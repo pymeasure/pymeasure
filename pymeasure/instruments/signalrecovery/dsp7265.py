@@ -26,11 +26,13 @@
 # Libraries / modules
 # =============================================================================
 
-from .dsp_base import DSPBase
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
 import logging
 from time import sleep
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range
+
+from .dsp_base import DSPBase
 
 # =============================================================================
 # Logging

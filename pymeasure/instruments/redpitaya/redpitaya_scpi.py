@@ -24,12 +24,13 @@
 
 
 import datetime
+import logging
+
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
-import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -218,7 +219,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
                               """Control the time on board
                               time should be given as a datetime.time object""",
                               get_process_list=lambda _tstr:
-                              datetime.time(*[int(split) for split in _tstr]),
+                              datetime.time(*[int(split) for split in _tstr]),  # type: ignore
                               set_process=lambda _time:
                               _time.strftime('%H,%M,%S'),
                               )

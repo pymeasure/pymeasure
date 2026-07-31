@@ -23,8 +23,8 @@
 #
 import pytest
 
+from pymeasure.instruments.inficon.sqm160 import SQM160, calculate_checksum
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.inficon.sqm160 import calculate_checksum, SQM160
 
 
 def test_checksum():

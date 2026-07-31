@@ -25,19 +25,21 @@
 import logging
 from warnings import warn
 
-from .common_base import cast_or_str, CommonBase, identity
+from .common_base import CommonBase, cast_or_str, identity
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class SCPIMixin(CommonBase):
-    """Mixin class for SCPI instruments with the default implementation of base SCPI commands."""
+class IEEE4882Mixin(CommonBase):
+    """Mixin class for IEEE 488.2 protocol instruments with
+    the default implementation of base commands.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    # SCPI default properties
+    # IEEE 488.2 default properties
     complete = CommonBase.measurement(
         "*OPC?",
         """Get the synchronization bit.
@@ -68,6 +70,20 @@ class SCPIMixin(CommonBase):
         maxsplit=0,
     )
 
+    # IEEE 488.2 default method
+    def clear(self) -> None:
+        """Clear the instrument status byte."""
+        self.write("*CLS")
+
+    def reset(self) -> None:
+        """Reset the instrument."""
+        self.write("*RST")
+
+
+class SCPIMixin(IEEE4882Mixin):
+    """Mixin class for SCPI instruments with the default implementation of base SCPI commands."""
+
+    # SCPI default properties
     next_error = CommonBase.measurement(
         "SYST:ERR?",
         """Get the next error in the queue.
@@ -78,14 +94,6 @@ class SCPIMixin(CommonBase):
     )
 
     # SCPI default methods
-    def clear(self) -> None:
-        """Clear the instrument status byte."""
-        self.write("*CLS")
-
-    def reset(self) -> None:
-        """Reset the instrument."""
-        self.write("*RST")
-
     def check_errors(self) -> list[list[float | str]]:
         """Read all errors from the instrument.
 

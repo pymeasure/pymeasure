@@ -32,8 +32,9 @@
 # THE TEST MOVES THE CHUCK TO CONTACT HEIGHT!
 #############################################
 
-import pytest
 from time import sleep
+
+import pytest
 
 from pymeasure.instruments.formfactor.velox import Velox
 
@@ -121,4 +122,4 @@ class TestVelox:
 
     def test_options(self, prober):
         with pytest.raises(NotImplementedError):
-            prober.options
+            _ = prober.options

@@ -22,6 +22,6 @@
 # THE SOFTWARE.
 #
 
-from .plotter_window import PlotterWindow
-from .managed_window import ManagedWindowBase, ManagedWindow
 from .managed_image_window import ManagedImageWindow
+from .managed_window import ManagedWindow, ManagedWindowBase
+from .plotter_window import PlotterWindow

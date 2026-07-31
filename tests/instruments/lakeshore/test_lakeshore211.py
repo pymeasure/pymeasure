@@ -22,9 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.lakeshore.lakeshore211 import LakeShore211
+from pymeasure.test import expected_protocol
 
 
 def test_init():

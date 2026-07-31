@@ -29,5 +29,5 @@ from .thorlabspm100series import (
     ThorlabsPM100D2,
     ThorlabsPM100D3,
 )
-from .thorlabspro8000 import ThorlabsPro8000
 from .thorlabsmbxseries import ThorlabsMBXSeries
+from .thorlabspro8000 import ThorlabsPro8000

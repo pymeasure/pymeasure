@@ -26,9 +26,10 @@ import ctypes
 import logging
 import math
 from enum import IntFlag
-import numpy as np
-from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 
+import numpy as np
+
+from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)

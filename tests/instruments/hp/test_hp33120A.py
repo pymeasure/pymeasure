@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.hp import HP33120A
+from pymeasure.test import expected_protocol
 
 
 def test_init():
@@ -203,9 +203,6 @@ def test_frequency_setter():
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'SOUR:VOLT:UNIT VPP', None),
-      (b'SOUR:FREQ?', b'+2.00000000000E+03')],
-     2000.0),
     ([(b'SOUR:VOLT:UNIT VPP', None),
       (b'SOUR:FREQ?', b'+2.00000000000E+03')],
      2000.0),

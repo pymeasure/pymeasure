@@ -25,8 +25,8 @@
 import logging
 
 from ..Qt import QtCore, QtWidgets
-from .filename_widget import FilenameLineEdit
 from .directory_widget import DirectoryLineEdit
+from .filename_widget import FilenameLineEdit
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

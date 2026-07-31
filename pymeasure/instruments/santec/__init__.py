@@ -23,5 +23,5 @@
 #
 
 from .tsl500series import TSL500Series
-from .tsl570 import TSL570
 from .tsl550 import TSL550
+from .tsl570 import TSL570

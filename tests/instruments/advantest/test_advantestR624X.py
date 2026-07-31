@@ -24,29 +24,59 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.advantest import AdvantestR6245, AdvantestR6246
 from pymeasure.instruments.advantest.advantestR624X import (
-    SearchMode, OccurrenceAfterStop, HighSpeedTriggerMode,
-    JumpCondition, ProgramClearMode, ComparisonMode,
-    ComparisonValueType, SequenceInterruptionType, SequenceWaitMode,
-    VoltageRange, CurrentRange, SweepMode, SampleHold, SampleMode,
-    OutputType, MeasurementType, DOR, COR, SRER, SESR,
-    seq_voltage_source, seq_current_source,
-    seq_voltage_pulsed_source, seq_current_pulsed_source,
-    seq_measure_voltage, seq_measure_current,
-    seq_timing_parameters, seq_sample_hold_mode, seq_comparison_limits,
-    seq_enable_source, seq_standby, seq_relay_mode, seq_fast_mode,
-    seq_voltage_fixed_level_sweep, seq_current_fixed_level_sweep,
-    seq_voltage_fixed_pulsed_sweep, seq_current_fixed_pulsed_sweep,
-    seq_voltage_sweep, seq_current_sweep,
-    seq_voltage_pulsed_sweep, seq_current_pulsed_sweep,
-    seq_sample_mode, seq_lo_common_relay,
-    seq_digital_output, seq_digital_output_enable,
-    seq_conditional_jump, seq_clear_program,
-    seq_wait, seq_join,
+    COR,
+    DOR,
+    SESR,
+    SRER,
+    ComparisonMode,
+    ComparisonValueType,
+    CurrentRange,
+    HighSpeedTriggerMode,
+    JumpCondition,
+    MeasurementType,
+    OccurrenceAfterStop,
+    OutputType,
+    ProgramClearMode,
+    SampleHold,
+    SampleMode,
+    SearchMode,
+    SequenceInterruptionType,
+    SequenceWaitMode,
+    SweepMode,
+    VoltageRange,
+    seq_clear_program,
+    seq_comparison_limits,
+    seq_conditional_jump,
+    seq_current_fixed_level_sweep,
+    seq_current_fixed_pulsed_sweep,
+    seq_current_pulsed_source,
+    seq_current_pulsed_sweep,
+    seq_current_source,
+    seq_current_sweep,
+    seq_digital_output,
+    seq_digital_output_enable,
+    seq_enable_source,
+    seq_fast_mode,
+    seq_join,
+    seq_lo_common_relay,
+    seq_measure_current,
+    seq_measure_voltage,
+    seq_relay_mode,
+    seq_sample_hold_mode,
+    seq_sample_mode,
+    seq_standby,
+    seq_timing_parameters,
+    seq_voltage_fixed_level_sweep,
+    seq_voltage_fixed_pulsed_sweep,
+    seq_voltage_pulsed_source,
+    seq_voltage_pulsed_sweep,
+    seq_voltage_source,
+    seq_voltage_sweep,
+    seq_wait,
 )
+from pymeasure.test import expected_protocol
 
 
 def test_init():
@@ -64,7 +94,7 @@ def test_set_current():
          ("spot 1,2.3120e-03", None),
          (None, "ABCD 7.311e-4")]
     ) as inst:
-        inst.ch_A.current_source(0, 0.000211, 2.13e-4)
+        inst.ch_A.current_source(CurrentRange.AUTO, 0.000211, 2.13e-4)
         inst.ch_A.change_source_current = 23.12e-4
         assert inst.read_measurement() == 0.0007311
 
@@ -183,9 +213,8 @@ def test_search_measurement_setup_invalid_command():
     with expected_protocol(
         AdvantestR6246,
         []
-    ) as inst:
-        with pytest.raises(ValueError):
-            inst.search_measurement_setup(1, 1, 'DV 1,20,5,0.1')
+    ) as inst, pytest.raises(ValueError):
+        inst.search_measurement_setup(1, 1, 'DV 1,20,5,0.1')
 
 
 def test_search_comparison_setup():
@@ -204,9 +233,8 @@ def test_search_comparison_setup_invalid_limits():
     with expected_protocol(
         AdvantestR6246,
         []
-    ) as inst:
-        with pytest.raises(ValueError):
-            inst.search_comparison_setup(1, 1, 1, 2, 1, -1.0, 5.0)
+    ) as inst, pytest.raises(ValueError):
+        inst.search_comparison_setup(1, 1, 1, 2, 1, -1.0, 5.0)
 
 
 # High-speed sequence tests
@@ -263,9 +291,8 @@ def test_store_highspeed_sequence_invalid_command():
     with expected_protocol(
         AdvantestR6246,
         []
-    ) as inst:
-        with pytest.raises(ValueError):
-            inst.store_highspeed_sequence(1, 'RU 1')
+    ) as inst, pytest.raises(ValueError):
+        inst.store_highspeed_sequence(1, 'RU 1')
 
 
 def test_interrupt_sequence():
@@ -634,9 +661,8 @@ def test_check_errors_undefined_command():
     with expected_protocol(
         AdvantestR6246,
         [("err?", "00200")]
-    ) as inst:
-        with pytest.raises(OSError, match="Error 00200"):
-            inst.check_errors()
+    ) as inst, pytest.raises(OSError, match="Error 00200"):
+        inst.check_errors()
 
 
 # AdvantestR624X settings/controls/measurements tests
@@ -976,8 +1002,8 @@ def test_ch_voltage_fixed_pulsed_sweep():
 def test_ch_voltage_sweep():
     with expected_protocol(
         AdvantestR6246,
-        [("wv 1,1,1,20,0.0000e+00,5.0000e+00,100,"
-          "1.0000e-01,0.0000e+00", None)]
+        [(("wv 1,1,1,20,0.0000e+00,5.0000e+00,100,"
+          "1.0000e-01,0.0000e+00"), None)]
     ) as inst:
         inst.ch_A.voltage_sweep(
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1,
@@ -987,8 +1013,8 @@ def test_ch_voltage_sweep():
 def test_ch_voltage_pulsed_sweep():
     with expected_protocol(
         AdvantestR6246,
-        [("pwv 1,1,1,20,0.0000e+00,0.0000e+00,5.0000e+00,100,"
-          "1.0000e-01,0.0000e+00", None)]
+        [(("pwv 1,1,1,20,0.0000e+00,0.0000e+00,5.0000e+00,100,"
+          "1.0000e-01,0.0000e+00"), None)]
     ) as inst:
         inst.ch_A.voltage_pulsed_sweep(
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1,
@@ -1044,8 +1070,8 @@ def test_ch_current_fixed_pulsed_sweep():
 def test_ch_current_sweep():
     with expected_protocol(
         AdvantestR6246,
-        [("wi 1,1,1,20,0.0000e+00,1.0000e-03,100,"
-          "1.0000e+01,0.0000e+00", None)]
+        [(("wi 1,1,1,20,0.0000e+00,1.0000e-03,100,"
+          "1.0000e+01,0.0000e+00"), None)]
     ) as inst:
         inst.ch_A.current_sweep(
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1,
@@ -1055,8 +1081,8 @@ def test_ch_current_sweep():
 def test_ch_current_pulsed_sweep():
     with expected_protocol(
         AdvantestR6246,
-        [("pwi 1,1,1,20,0.0000e+00,0.0000e+00,1.0000e-03,100,"
-          "1.0000e+01,0.0000e+00", None)]
+        [(("pwi 1,1,1,20,0.0000e+00,0.0000e+00,1.0000e-03,100,"
+          "1.0000e+01,0.0000e+00"), None)]
     ) as inst:
         inst.ch_A.current_pulsed_sweep(
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1,

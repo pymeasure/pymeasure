@@ -22,10 +22,15 @@
 # THE SOFTWARE.
 #
 
+from typing import cast
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
-    TeledyneOscilloscopeChannel, _results_list_to_dict
 from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import (
+    TeledyneOscilloscope,
+    TeledyneOscilloscopeChannel,
+    _results_list_to_dict,
+)
 
 
 class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
@@ -81,7 +86,7 @@ class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
         ch_setup = {
             "channel": self.id,
             "attenuation": self.probe_attenuation,
-            "bandwidth_limit": self.bwlimit[f"C{self.id}"],
+            "bandwidth_limit": self.bwlimit[f"C{self.id}"],  # pyright: ignore[reportArgumentType]
             "coupling": self.coupling,
             "offset": self.offset,
             "display": self.display,
@@ -175,7 +180,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
         """
         trigger_select = self.trigger_select
-        ch = self.ch(trigger_select[1])
+        ch = self.ch(cast(str | int, trigger_select[1]))
         tb_setup = {
             "mode": self.trigger_mode,
             "trigger_type": trigger_select[0],

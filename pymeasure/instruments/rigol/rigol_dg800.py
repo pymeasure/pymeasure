@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import truncated_discrete_set
 

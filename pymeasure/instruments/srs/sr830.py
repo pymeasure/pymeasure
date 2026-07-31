@@ -24,11 +24,21 @@
 
 import re
 import time
-import numpy as np
+from collections.abc import Callable
 from enum import IntFlag
+from threading import Event
+from typing import Literal
+
+import numpy as np
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range, truncated_discrete_set_positive
+from pymeasure.instruments.common_base import InstrumentProperty
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_discrete_set_positive,
+    truncated_range,
+)
 
 
 class LIAStatus(IntFlag):
@@ -58,17 +68,17 @@ class ERRStatus(IntFlag):
 
 
 class SR830(Instrument):
-    SAMPLE_FREQUENCIES = [
+    SAMPLE_FREQUENCIES: list[float] = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
         32, 64, 128, 256, 512
     ]
-    SENSITIVITIES = [
+    SENSITIVITIES: list[float] = [
         2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
         500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6,
         200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
         50e-3, 100e-3, 200e-3, 500e-3, 1
     ]
-    TIME_CONSTANTS = [
+    TIME_CONSTANTS: list[float] = [
         10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
         30e-3, 100e-3, 300e-3, 1, 3, 10, 30, 100, 300, 1e3,
         3e3, 10e3, 30e3
@@ -87,6 +97,20 @@ class SR830(Instrument):
                         "frequency": 9, "ch1": 10, "ch2": 11}
     REFERENCE_SOURCE_TRIGGER = ['SINE', 'POS EDGE', 'NEG EDGE']
     INPUT_FILTER = ['Off', 'On']
+
+    PARAMETERS = Literal[
+        "X",
+        "Y",
+        "R",
+        "Theta",
+        "Aux In 1",
+        "Aux In 2",
+        "Aux In 3",
+        "Aux In 4",
+        "Frequency",
+        "CH1",
+        "CH2",
+    ]
 
     status = Instrument.measurement(
         "*STB?",
@@ -194,7 +218,7 @@ class SR830(Instrument):
     )
 
     @property
-    def xy(self):
+    def xy(self) -> list[float]:
         """ Reads the X and Y values in Volts. """
         return self.snap()
 
@@ -222,7 +246,7 @@ class SR830(Instrument):
         values=['Y', 'Theta', 'Y Noise', 'Aux In 3', 'Aux In 4'],
         map_values=True
     )
-    sensitivity = Instrument.control(
+    sensitivity: InstrumentProperty[float] = Instrument.control(
         "SENS?", "SENS%d",
         """ A floating point property that controls the sensitivity in Volts,
         which can take discrete values from 2 nV to 1 V. Values are truncated
@@ -394,33 +418,35 @@ class SR830(Instrument):
             **kwargs
         )
 
-    def auto_gain(self):
+    def auto_gain(self) -> None:
         self.write("AGAN")
 
-    def auto_reserve(self):
+    def auto_reserve(self) -> None:
         self.write("ARSV")
 
-    def auto_phase(self):
+    def auto_phase(self) -> None:
         self.write("APHS")
 
-    def auto_offset(self, channel):
+    def auto_offset(self, channel: str) -> None:
         """ Offsets the channel (X, Y, or R) to zero """
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
-        channel = self.CHANNELS.index(channel) + 1
-        self.write(f"AOFF {channel}")
+        ch_num = self.CHANNELS.index(channel) + 1
+        self.write(f"AOFF {ch_num}")
 
-    def get_scaling(self, channel):
+    def get_scaling(self, channel: str) -> tuple[float, int]:
         """ Returns the offset percent and the expansion term
         that are used to scale the channel in question
         """
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
-        channel = self.CHANNELS.index(channel) + 1
-        offset, expand = self.ask(f"OEXP? {channel}").split(',')
+        ch_num = self.CHANNELS.index(channel) + 1
+        offset, expand = self.ask(f"OEXP? {ch_num}").split(',')
         return float(offset), self.EXPANSION_VALUES[int(expand)]
 
-    def set_scaling(self, channel, percent, expand=0, precent=None) -> None:
+    def set_scaling(
+        self, channel: str, percent: float, expand: Literal[0, 10, 100] = 0, precent=None
+    ) -> None:
         """ Sets the offset of a channel (X=1, Y=2, R=3) to a
         certain percent (-105% to 105%) of the signal, with
         an optional expansion term (0, 10=1, 100=2)
@@ -433,14 +459,14 @@ class SR830(Instrument):
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
         ch_num = self.CHANNELS.index(channel) + 1
-        expand = truncated_discrete_set_positive(expand, self.EXPANSION_VALUES)
-        if expand is False:
+        expand_tr = truncated_discrete_set_positive(expand, self.EXPANSION_VALUES)
+        if expand_tr is False:
             raise ValueError(
                 f"Expand argument is '{expand}', but should be one of '{self.EXPANSION_VALUES}'."
             )
-        self.write(f"OEXP {ch_num},{percent:.2f},{expand}")
+        self.write(f"OEXP {ch_num},{percent:.2f},{expand_tr}")
 
-    def output_conversion(self, channel):
+    def output_conversion(self, channel: str) -> Callable[[float], float]:
         """ Returns a function that can be used to determine
         the signal from the channel output (X, Y, or R)
         """
@@ -449,7 +475,7 @@ class SR830(Instrument):
         return lambda x: x + offset / 100 * sensitivity
 
     @property
-    def sample_frequency(self):
+    def sample_frequency(self) -> None | float:
         """ Gets the sample frequency in Hz """
         index = int(self.ask("SRAT?"))
         if index == 14:
@@ -458,7 +484,7 @@ class SR830(Instrument):
             return SR830.SAMPLE_FREQUENCIES[index]
 
     @sample_frequency.setter
-    def sample_frequency(self, frequency):
+    def sample_frequency(self, frequency: float | None) -> None:
         """Sets the sample frequency in Hz (None is Trigger)"""
         assert type(frequency) in [float, int, type(None)]
         if frequency is None:
@@ -470,27 +496,27 @@ class SR830(Instrument):
             index = SR830.SAMPLE_FREQUENCIES.index(frequency)
         self.write(f"SRAT{index:f}")
 
-    def aquireOnTrigger(self, enable=True):
+    def aquireOnTrigger(self, enable=True) -> None:
         self.write(f"TSTR{int(enable)}")
 
     @property
-    def reserve(self):
+    def reserve(self) -> str:
         return SR830.RESERVE_VALUES[int(self.ask("RMOD?"))]
 
     @reserve.setter
-    def reserve(self, reserve):
+    def reserve(self, reserve: str) -> None:
         if reserve not in SR830.RESERVE_VALUES:
             index = 1
         else:
             index = SR830.RESERVE_VALUES.index(reserve)
         self.write(f"RMOD{index}")
 
-    def is_out_of_range(self):
+    def is_out_of_range(self) -> bool:
         """ Returns True if the magnitude is out of range
         """
         return int(self.ask("LIAS?2")) == 1
 
-    def quick_range(self):
+    def quick_range(self) -> None:
         """ While the magnitude is out of range, increase
         the sensitivity by one setting
         """
@@ -506,7 +532,7 @@ class SR830(Instrument):
         self.sensitivity = newsensitivity
 
     @property
-    def buffer_count(self):
+    def buffer_count(self) -> int:
         query = self.ask("SPTS?")
         if query.count("\n") > 1:
             return int(re.match(r"\d+\n$", query, re.MULTILINE).group(0))
@@ -533,12 +559,14 @@ class SR830(Instrument):
                 self.pause_buffer()
                 return ch1, ch2
         self.pause_buffer()
-        ch1[index: count + 1] = self.get_buffer(1, index, count)  # noqa: E203
-        ch2[index: count + 1] = self.get_buffer(2, index, count)  # noqa: E203
+        ch1[index: count + 1] = self.get_buffer(1, index, count)
+        ch2[index: count + 1] = self.get_buffer(2, index, count)
         return ch1, ch2
 
-    def buffer_measure(self, count, stopRequest=None, delay=1e-3):
-        """ Start a fast measurement mode and transfers data from buffer to extract mean
+    def buffer_measure(
+        self, count: int, stopRequest: Event | None = None, delay: float = 1e-3
+    ) -> tuple[float, float, float, float]:
+        """Start a fast measurement mode and transfers data from buffer to extract mean
         and std measurements
 
         Return the mean and std from both channels
@@ -555,7 +583,7 @@ class SR830(Instrument):
                 index = currentCount
                 time.sleep(delay)
             currentCount = self.buffer_count
-            if stopRequest is not None and stopRequest.isSet():
+            if stopRequest is not None and stopRequest.is_set():
                 self.pause_buffer()
                 return (0, 0, 0, 0)
         self.pause_buffer()
@@ -563,19 +591,23 @@ class SR830(Instrument):
         ch2[index:count] = self.get_buffer(2, index, count)
         return (ch1.mean(), ch1.std(), ch2.mean(), ch2.std())
 
-    def pause_buffer(self):
+    def pause_buffer(self) -> None:
         self.write("PAUS")
 
-    def start_buffer(self, fast=True):
+    def start_buffer(self, fast: bool = True) -> None:
         if fast:
             self.write("FAST2;STRD")
         else:
             self.write("FAST0")
 
-    def wait_for_buffer(self, count, has_aborted=lambda: False,
-                        timeout=60, timestep=0.01):
-        """ Wait for the buffer to fill a certain count
-        """
+    def wait_for_buffer(
+        self,
+        count: int,
+        has_aborted: Callable[..., bool] = lambda: False,
+        timeout: float = 60,
+        timestep: float = 0.01,
+    ) -> None | Literal[False]:
+        """Wait for the buffer to fill a certain count"""
         i = 0
         while not self.buffer_count >= count and i < (timeout / timestep):
             time.sleep(timestep)
@@ -584,21 +616,26 @@ class SR830(Instrument):
                 return False
         self.pause_buffer()
 
-    def get_buffer(self, channel=1, start=0, end=None):
+    def get_buffer(self, channel: int = 1, start: int = 0, end: int | None = None):
         """ Acquires the 32 bit floating point data through binary transfer
         """
         if end is None:
             end = self.buffer_count
         return self.binary_values(f"TRCB?{channel},{start},{end - start}")
 
-    def reset_buffer(self):
+    def reset_buffer(self) -> None:
         self.write("REST")
 
-    def trigger(self):
+    def trigger(self) -> None:
         self.write("TRIG")
 
-    def snap(self, val1="X", val2="Y", *vals):
-        """ Method that records and retrieves 2 to 6 parameters at a single
+    def snap(
+        self,
+        val1: PARAMETERS = "X",
+        val2: PARAMETERS = "Y",
+        *vals: PARAMETERS | tuple[PARAMETERS, ...],
+    ) -> list[float]:
+        """Method that records and retrieves 2 to 6 parameters at a single
         instant. The parameters can be one of: X, Y, R, Theta, Aux In 1,
         Aux In 2, Aux In 3, Aux In 4, Frequency, CH1, CH2.
         Default is "X" and "Y".
@@ -616,14 +653,14 @@ class SR830(Instrument):
             vals = vals[0]
 
         # make a list of all vals
-        vals = [val1, val2] + list(vals)
+        val_list = [val1, val2] + list(vals)
 
-        vals_idx = [str(self.SNAP_ENUMERATION[val.lower()]) for val in vals]
+        vals_idx = [str(self.SNAP_ENUMERATION[val.lower()]) for val in val_list]
 
         command = "SNAP? " + ",".join(vals_idx)
         return self.values(command)
 
-    def save_setup(self, setup_number: int):
+    def save_setup(self, setup_number: int) -> None:
         """Save the current instrument configuration (all parameters) in a memory
         referred to by an integer
 
@@ -632,7 +669,7 @@ class SR830(Instrument):
         if 1 <= setup_number <= 9:
             self.write(f'SSET{setup_number:d};')
 
-    def load_setup(self, setup_number: int):
+    def load_setup(self, setup_number: int) -> None:
         """ Load a previously saved instrument configuration from the memory referred
         to by an integer
 
@@ -641,12 +678,12 @@ class SR830(Instrument):
         if 1 <= setup_number <= 9:
             self.write(f'RSET{setup_number:d};')
 
-    def start_scan(self):
+    def start_scan(self) -> None:
         """ Start the data recording into the buffer
         """
         self.write('STRT')
 
-    def pause_scan(self):
+    def pause_scan(self) -> None:
         """ Pause the data recording
         """
         self.write('PAUS')

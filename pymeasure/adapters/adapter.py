@@ -23,12 +23,12 @@
 #
 
 import logging
-from typing import Protocol, runtime_checkable
 from collections.abc import Sequence
+from copy import copy
+from typing import Protocol, runtime_checkable
 
 import numpy as np
-from copy import copy
-from pyvisa.util import to_ieee_block, to_hp_block, to_binary_block, BINARY_DATATYPES
+from pyvisa.util import BINARY_DATATYPES, to_binary_block, to_hp_block, to_ieee_block
 
 
 @runtime_checkable
