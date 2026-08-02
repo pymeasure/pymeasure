@@ -353,11 +353,11 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
 
     current_autozero = Instrument.control(
         ":SENS:CURR:AZER?",
-        ":SENS:CURR:AZER %s",
-        """ Control (string) the auto-zero state for current measurements.
-        Valid values are 'ON' and 'OFF'. """,
-        validator=strict_discrete_set,
-        values=["ON", "OFF"],
+        ":SENS:CURR:AZER %d",
+        """ Control (bool) whether the internal reference measurements (auto-zero) are
+        updated automatically for current measurements. Valid values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
     )
 
     current_autorange = Instrument.control(
@@ -385,11 +385,11 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
 
     source_voltage_readback = Instrument.control(
         ":SOUR:VOLT:READ:BACK?",
-        ":SOUR:VOLT:READ:BACK %s",
-        """ Control (string) whether the source voltage is measured and
-        returned as the source reading. Valid values are 'ON' and 'OFF'. """,
-        validator=strict_discrete_set,
-        values=["ON", "OFF"],
+        ":SOUR:VOLT:READ:BACK %d",
+        """ Control (bool) whether the source voltage is measured and returned as the
+        source reading, instead of the programmed value. Valid values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
     )
 
     ###########

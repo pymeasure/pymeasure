@@ -245,11 +245,10 @@ def test_measure_resistance(keithley2450):
     assert True
 
 
-@pytest.mark.parametrize("state", ["ON", "OFF"])
+@pytest.mark.parametrize("state", BOOLEANS)
 def test_current_autozero(keithley2450, state):
-    responses = {"ON": 1.0, "OFF": 0.0}
     keithley2450.current_autozero = state
-    assert keithley2450.current_autozero == responses[state]
+    assert keithley2450.current_autozero == state
 
 
 @pytest.mark.parametrize("autorange", BOOLEANS)
@@ -264,11 +263,10 @@ def test_sense_count(keithley2450, count):
     assert keithley2450.sense_count == count
 
 
-@pytest.mark.parametrize("state", ["ON", "OFF"])
+@pytest.mark.parametrize("state", BOOLEANS)
 def test_source_voltage_readback(keithley2450, state):
-    responses = {"ON": 1.0, "OFF": 0.0}
     keithley2450.source_voltage_readback = state
-    assert keithley2450.source_voltage_readback == responses[state]
+    assert keithley2450.source_voltage_readback == state
 
 
 @pytest.mark.parametrize("state", ["BLAC", "ON25", "ON75", "ON100", "ON50"])
