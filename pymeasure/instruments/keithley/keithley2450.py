@@ -28,18 +28,17 @@ from warnings import warn
 
 import numpy as np
 
+from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.common_base import identity
 from pymeasure.instruments.validators import strict_discrete_set, truncated_range
-
-from .buffer import KeithleyBuffer
 
 # Setup logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
+class Keithley2450(SCPIMixin, Instrument):
     """ Represents the Keithley 2450 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
@@ -47,17 +46,10 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     set the instrument ships with.
 
     .. note::
-        The buffer methods inherited from ``KeithleyBuffer`` are the exception:
-        :meth:`~.Keithley2450.config_buffer`, :meth:`~.Keithley2450.reset_buffer` and
-        :meth:`~.Keithley2450.disable_buffer` are built on the Series 2400 commands
-        ``:TRACe:FEED`` and ``:TRACe:FEED:CONTrol``, which the 2450 does not provide
-        (reference manual, Appendix E). Use :attr:`~.Keithley2450.trace_actual_end` and
-        :meth:`~.Keithley2450.get_trace_data` to read the trace buffer instead.
-
-        Switching the instrument to the "SCPI 2400" command set is not a workaround for
-        this. That mode drops the new trigger model along with the extended ranges
-        (reference manual, Appendix D), so the sweep and trace buffer members of this
-        class do not work there either.
+        Selecting the "SCPI 2400" command set in the instrument's system settings is
+        not supported. That mode drops the new trigger model along with the extended
+        ranges (reference manual, Appendix D), which the sweep, trace buffer and
+        compliance members of this class rely on.
 
     .. code-block:: python
 
@@ -767,6 +759,19 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         return self.ask(
             f':TRAce:DATA? 1, {ending_index}, "{buffer_name}", RELative, SOURce, READing'
         )
+
+    def start_buffer(self):
+        """ Starts the trigger model, which fills the trace buffer. """
+        self.write(":INIT")
+
+    def stop_buffer(self):
+        """ Abort the buffering measurement, by stopping the measurement
+        arming and triggering sequence. If possible, a Selected Device
+        Clear (SDC) is used. """
+        if type(self.adapter) is PrologixAdapter:
+            self.write("++clr")
+        else:
+            self.write(":ABOR")
 
     def use_rear_terminals(self):
         """ Enables the rear terminals for measurement, and
