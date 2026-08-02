@@ -282,7 +282,7 @@ def test_error_count(keithley2450):
 
 
 def test_next_error(keithley2450):
-    assert isinstance(keithley2450.next_error, list)
+    assert keithley2450.next_error[0] == 0  # queue is empty after the reset fixture
 
 
 def test_trace_actual_end(keithley2450):
@@ -305,10 +305,6 @@ def test_use_rear_terminals(keithley2450):
 
 def test_use_front_terminals(keithley2450):
     keithley2450.use_front_terminals()
-
-
-def test_clear_status(keithley2450):
-    keithley2450.clear_status()
 
 
 def test_autozero_once(keithley2450):

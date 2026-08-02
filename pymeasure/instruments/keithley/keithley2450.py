@@ -415,11 +415,6 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         cast=int,
     )
 
-    next_error = Instrument.measurement(
-        ":SYST:ERR:NEXT?",
-        """ Get and remove the next error from the error queue as a string. """,
-    )
-
     ################
     # Trace buffer #
     ################
@@ -703,17 +698,9 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         """ Get the resistance standard deviation from the buffer """
         return self.standard_devs[2]
 
-    def clear_status(self):
-        """Clears the event registers and error queue (*CLS)."""
-        self.write("*CLS")
-
     def autozero_once(self):
         """Performs a single auto-zero correction on the sense subsystem."""
         self.write(":SENS:AZER:ONCE")
-
-    def initiate(self):
-        """Initiates the trigger model to start a measurement or sweep."""
-        self.write("INIT")
 
     def staircase_sweep_voltage(self, v_from, v_to, n_steps, delay=1e-4):
         """Configures a linear staircase voltage sweep.
