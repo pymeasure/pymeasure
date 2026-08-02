@@ -28,17 +28,18 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.common_base import identity
 from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+
+from .buffer import KeithleyBufferBase
 
 # Setup logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2450(SCPIMixin, Instrument):
+class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
     """ Represents the Keithley 2450 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
@@ -759,19 +760,6 @@ class Keithley2450(SCPIMixin, Instrument):
         return self.ask(
             f':TRAce:DATA? 1, {ending_index}, "{buffer_name}", RELative, SOURce, READing'
         )
-
-    def start_buffer(self):
-        """ Starts the trigger model, which fills the trace buffer. """
-        self.write(":INIT")
-
-    def stop_buffer(self):
-        """ Abort the buffering measurement, by stopping the measurement
-        arming and triggering sequence. If possible, a Selected Device
-        Clear (SDC) is used. """
-        if type(self.adapter) is PrologixAdapter:
-            self.write("++clr")
-        else:
-            self.write(":ABOR")
 
     def use_rear_terminals(self):
         """ Enables the rear terminals for measurement, and
