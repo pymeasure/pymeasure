@@ -22,21 +22,23 @@
 # THE SOFTWARE.
 #
 
-from decimal import Decimal
+import importlib.util
 import logging
 import os
 import re
 import sys
-from importlib import import_module
-import importlib.util
 from datetime import datetime
+from decimal import Decimal
+from importlib import import_module
 from string import Formatter
+from typing import Any
 
 import pandas as pd
 import pint
 
-from .procedure import Procedure, UnknownProcedure
 from pymeasure.units import ureg
+
+from .procedure import Procedure, UnknownProcedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -134,7 +136,7 @@ class CSVFormatter(logging.Formatter):
         self.units = Procedure.parse_columns(columns)
         self.delimiter = delimiter
 
-    def format(self, record):
+    def format(self, record: dict[str, Any]) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Formats a record as csv.
 
         :param record: record to format.
@@ -211,7 +213,7 @@ class Results:
 
     def __init__(self, procedure, data_filename):
         if not isinstance(procedure, Procedure):
-            raise ValueError("Results require a Procedure object")
+            raise TypeError("Results require a Procedure object")
         self.procedure = procedure
         self.procedure_class = procedure.__class__
         self.parameters = procedure.parameter_objects()
@@ -285,7 +287,7 @@ class Results:
                               repr(self.procedure_class)).group("name")
         h.append(f"Procedure: <{procedure}>")
         h.append("Parameters:")
-        for name, parameter in self.parameters.items():
+        for parameter in self.parameters.values():
             h.append("\t{}: {}".format(parameter.name, str(
                 parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
@@ -319,7 +321,7 @@ class Results:
             return
 
         m = ["Metadata:"]
-        for _, metadata in self.procedure.metadata_objects().items():
+        for metadata in self.procedure.metadata_objects().values():
             value = str(metadata).encode("unicode_escape").decode("utf-8")
             m.append(f"\t{metadata.name}: {value}")
 
@@ -371,7 +373,7 @@ class Results:
                 separator = ": "
                 partitioned_line = line[1:].partition(separator)
                 if partitioned_line[1] != separator:
-                    raise Exception(f"Error partitioning header line {line}.")
+                    raise ValueError(f"Error partitioning header line {line}.")
                 else:
                     parameters[partitioned_line[0]] = partitioned_line[2]
 
@@ -442,7 +444,7 @@ class Results:
             # Data has not been read
             try:
                 self.reload()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # Empty dataframe
                 self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
         else:  # Concatenate additional data, if any, to already loaded data
@@ -473,14 +475,14 @@ class Results:
                 if len(tmp_frame) > 0:
                     self._data = pd.concat([self._data, tmp_frame],
                                            ignore_index=True, sort=False)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass  # All data is up to date
             # Update _last_file_size
             self._last_file_size = current_size
         return self._data
 
     def reload(self):
-        """ Preforms a full reloading of the file data, neglecting
+        """ Perform a full reload of the file data, neglecting
         any changes in the comments
         """
         chunks = pd.read_csv(
@@ -492,7 +494,7 @@ class Results:
         )
         try:
             self._data = pd.concat(chunks, ignore_index=True, sort=False)
-        except Exception:
+        except Exception:  # noqa: BLE001
             self._data = chunks.read()
 
     def __repr__(self):

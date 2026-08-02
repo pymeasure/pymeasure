@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 
-import pytest
-from pymeasure.instruments.agilent.agilent33500 import Agilent33500
 from math import pi, sin
 
+import pytest
+
+from pymeasure.instruments.agilent.agilent33500 import Agilent33500
 
 # from pyvisa.errors import VisaIOError
 

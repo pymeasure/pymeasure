@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 
-import pytest
 import logging
+
+import pytest
+
 from pymeasure.instruments.keithley import KeithleyDAQ6510
 
 log = logging.getLogger(__name__)

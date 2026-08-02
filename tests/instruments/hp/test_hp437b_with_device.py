@@ -22,12 +22,18 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from time import sleep
-from pymeasure.instruments.hp import HP437B
-from pymeasure.instruments.hp.hp437b import MeasurementUnit, OperatingMode, TriggerMode, \
-    GroupTriggerMode
+
 import numpy as np
+import pytest
+
+from pymeasure.instruments.hp import HP437B
+from pymeasure.instruments.hp.hp437b import (
+    GroupTriggerMode,
+    MeasurementUnit,
+    OperatingMode,
+    TriggerMode,
+)
 
 
 class TestHP437B:
@@ -210,7 +216,7 @@ class TestHP437B:
     def test_sensor_data_read_cal_factor_table(self, make_resetted_instr):
         instr = make_resetted_instr
         frequencies = np.arange(1e9, 81e9, 1e9)
-        cal_factors = [100.0 for _ in range(0, 80)]
+        cal_factors = [100.0 for _ in range(80)]
         instr.sensor_data_write_cal_factor_table(9, frequencies, cal_factors)
         freq_data, cal_fac_data = instr.sensor_data_read_cal_factor_table(9)
 

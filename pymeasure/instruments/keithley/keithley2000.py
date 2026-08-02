@@ -24,18 +24,20 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import (
-    truncated_range, truncated_discrete_set,
-    strict_discrete_set
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
 )
+
 from .buffer import KeithleyBuffer
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
+class Keithley2000(KeithleyBuffer, SCPIMixin, Instrument):
     """ Represents the Keithley 2000 Multimeter and provides a high-level
     interface for interacting with the instrument.
 
@@ -337,7 +339,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     frequency_aperature = Instrument.control(
         ":SENS:FREQ:APER?", ":SENS:FREQ:APER %g",
-        """ Control (floating) the frequency aperature in seconds,
+        """ Control (floating) the frequency aperture in seconds,
         which sets the integration period and measurement speed. Takes values
         from 0.01 to 1.0 s. """,
         validator=truncated_range,
@@ -378,7 +380,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     period_aperature = Instrument.control(
         ":SENS:PER:APER?", ":SENS:PER:APER %g",
-        """ Control (floating) the period aperature in seconds,
+        """ Control (floating) the period aperture in seconds,
         which sets the integration period and measurement speed. Takes values
         from 0.01 to 1.0 s. """,
         validator=truncated_range,

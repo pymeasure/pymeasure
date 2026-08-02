@@ -24,15 +24,25 @@
 
 from pytest import raises
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
+from pymeasure.test import expected_protocol
 
 
 class BasicTestInstrument(Instrument):
     def __init__(self, adapter, name="Basic Test Instrument", **kwargs):
         super().__init__(adapter, name)
         self.kwargs = kwargs
+
+    def check_errors(self) -> list:
+        errors = []
+        while True:
+            err = self.values("SYST:ERR?")
+            if int(err[0]) != 0:
+                errors.append(err)
+            else:
+                break
+        return errors
 
     simple = Instrument.control(
         "VOLT?", "VOLT %s V",
@@ -92,33 +102,34 @@ def test_error_checks():
 
 def test_not_all_communication_used():
     """Test whether unused communication raises an error."""
-    with raises(AssertionError, match="Unprocessed protocol definitions remain"):
-        with expected_protocol(
+    with (
+        raises(AssertionError, match="Unprocessed protocol definitions remain"),
+        expected_protocol(
             BasicTestInstrument,
-            [('VOLT?', 3.14),
-             ('VOLT 4.5 V', None),
-             ]
-        ) as instr:
-            assert instr.simple == 3.14
+            [
+                ("VOLT?", 3.14),
+                ("VOLT 4.5 V", None),
+            ],
+        ) as instr,
+    ):
+        assert instr.simple == 3.14
 
 
 def test_non_empty_write_buffer():
-    with raises(AssertionError, match="Non-empty write buffer remains"):
-        with expected_protocol(
-            BasicTestInstrument,
-            [('VOLT?', 3.14)]
-        ) as instr:
-            instr.adapter.write_bytes(b"VOLT")
-            instr.adapter._index = 1  # type: ignore
+    with raises(AssertionError, match="Non-empty write buffer remains"), expected_protocol(
+        BasicTestInstrument,
+        [('VOLT?', 3.14)]
+    ) as instr:
+        instr.adapter.write_bytes(b"VOLT")
+        instr.adapter._index = 1  # type: ignore
 
 
 def test_non_empty_read_buffer():
-    with raises(AssertionError, match="Non-empty read buffer remains"):
-        with expected_protocol(
-            BasicTestInstrument,
-            [('VOLT?', 3.14)]
-        ) as instr:
-            instr.write("VOLT?")
+    with raises(AssertionError, match="Non-empty read buffer remains"), expected_protocol(
+        BasicTestInstrument,
+        [('VOLT?', 3.14)]
+    ) as instr:
+        instr.write("VOLT?")
 
 
 def test_preprocess_reply_on_values():
@@ -160,6 +171,5 @@ def test_limited_control_raises_validator_exception():
     with expected_protocol(
             BasicTestInstrument,
             [],
-    ) as inst:
-        with raises(ValueError, match="not in range"):
-            inst.limited_control = 20
+    ) as inst, raises(ValueError, match="not in range"):
+        inst.limited_control = 20

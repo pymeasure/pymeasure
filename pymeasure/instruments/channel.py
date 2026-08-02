@@ -48,9 +48,18 @@ class Channel(CommonBase):
 
     placeholder: str = "ch"
 
+    parent: CommonBase
+
+    _name: str
+    _protected: bool
+    _collection: str
+
     def __init__(self, parent: CommonBase, id: IdType, **kwargs):
         self.parent = parent
         self.id = id
+        self._name: str = ""
+        self._protected: bool = False
+        self._collection: str = ""
         super().__init__(**kwargs)
 
     def insert_id(self, command: str) -> str:

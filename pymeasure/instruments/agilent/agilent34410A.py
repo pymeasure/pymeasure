@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 
 
-class Agilent34410A(SCPIUnknownMixin, Instrument):
+class Agilent34410A(SCPIMixin, Instrument):
     """
     Represent the HP/Agilent/Keysight 34410A and related multimeters.
 

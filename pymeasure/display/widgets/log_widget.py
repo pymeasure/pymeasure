@@ -25,7 +25,7 @@
 import logging
 
 from ..log import LogHandler
-from ..Qt import QtWidgets, QtCore, QtGui
+from ..Qt import QtCore, QtGui, QtWidgets
 from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
     tab_widget = None
     tab_index = None
 
-    _blink_qtimer = QtCore.QTimer()
+    _blink_qtimer = None
     _blink_color = None
     _blink_state = False
 
@@ -94,6 +94,9 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
         self._layout()
 
         # Setup blinking
+        if self._blink_qtimer is None:
+            self._blink_qtimer = QtCore.QTimer()
+
         self._blink_qtimer.timeout.connect(self._blink)
         self.handler.connect(self._blinking_start)
 
@@ -139,7 +142,7 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
             self.tab_widget.tabBar().setIconSize(QtCore.QSize(12, 12))
             self.tab_widget.tabBar().currentChanged.connect(self._blinking_stop)
 
-        if message.startswith("<!--ERROR-->") or message.startswith("<!--CRITICAL-->"):
+        if message.startswith(("<!--ERROR-->", "<!--CRITICAL-->")):
             error = True
         elif message.startswith("<!--WARNING-->"):
             error = False
@@ -153,7 +156,7 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
 
         # Define color and icon based on severity
         # If already red, this should not be updated
-        if not self._blink_color == "red":
+        if self._blink_color != "red":
             self._blink_color = "red" if error else "darkorange"
 
             pixmapi = QtWidgets.QStyle.StandardPixmap.SP_MessageBoxCritical if \

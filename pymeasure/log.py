@@ -25,7 +25,6 @@
 import logging
 import logging.handlers
 from logging.handlers import QueueHandler
-
 from queue import Queue
 
 log = logging.getLogger(__name__)

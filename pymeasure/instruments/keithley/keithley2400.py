@@ -28,12 +28,13 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIMixin, cast_or_str
 from pymeasure.errors import RangeException
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.common_base import cast_or_str, identity
 from pymeasure.instruments.validators import (
-    strict_range,
     strict_discrete_range,
     strict_discrete_set,
+    strict_range,
 )
 
 from .buffer import KeithleyBuffer
@@ -479,7 +480,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     source_current_range_auto_enabled = Instrument.control(
         ":SOURCE:CURRENT:RANGE:AUTO?",
         ":SOURCE:CURRENT:RANGE:AUTO %d",
-        """Control whether souce current auto-range is enabled (bool).""",
+        """Control whether source current auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -780,24 +781,28 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":CALCULATE3:FORMAT MEAN;:CALCULATE3:DATA?;",
         """Get the calculated means for voltage, current, and resistance from the buffer data
         (list of floats).""",
+        get_process_list=identity,
     )
 
     maximums = Instrument.measurement(
         ":CALCULATE3:FORMAT MAX;:CALCULATE3:DATA?;",
         """Get the calculated maximums for voltage, current, and resistance from the buffer data
         (list of floats).""",
+        get_process_list=identity,
     )
 
     minimums = Instrument.measurement(
         ":CALCULATE3:FORMAT MIN;:CALCULATE3:DATA?;",
         """Get the calculated minimums for voltage, current, and resistance from the buffer data
         (list of floats).""",
+        get_process_list=identity,
     )
 
     standard_devs = Instrument.measurement(
         ":CALCULATE3:FORMAT SDEVIATION;:CALCULATE3:DATA?;",
         """Get the calculated standard deviations for voltage, current, and resistance from the
         buffer data (list of floats).""",
+        get_process_list=identity,
     )
 
     @property

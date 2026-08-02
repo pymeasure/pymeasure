@@ -24,11 +24,12 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin, cast_or_str
+from pymeasure.instruments import Channel, Instrument, SCPIMixin, cast_or_str
+from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.validators import (
-    truncated_range,
-    truncated_discrete_set,
     strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
 )
 
 log = logging.getLogger(__name__)
@@ -146,12 +147,14 @@ class ScannerCard2000Channel(Channel):
         self.write(f":SENS:{mode_cmd}:AVER:STAT 0, (@{self.id})")
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT? (@{self.id})")
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Write a command to the instrument."""
         if "{function}" in command:
-            super().write(command.format(function=ScannerCard2000Channel.MODES[self.mode]))
+            super().write(
+                command.format(function=ScannerCard2000Channel.MODES[self.mode]), **kwargs
+            )
         else:
-            super().write(command)
+            super().write(command, **kwargs)
 
 
 class KeithleyDMM6500(SCPIMixin, Instrument):
@@ -258,7 +261,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         values=["TSP", "SCPI", "SCPI2000", "SCPI34401"],
         cast=str,
     )
-    mode = Instrument.control(
+    mode: InstrumentProperty[str] = Instrument.control(
         ":SENS:FUNC?",
         ':SENS:FUNC "%s"',
         """ Control the active measure function. Available values are:
@@ -1108,7 +1111,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         """ Control the number of buffer points.
         This does not represent actual points in the buffer, but the configuration
         value instead. `0` means the largest buffer possible based on the available
-        memory when the bufer is created.""",
+        memory when the buffer is created.""",
         validator=truncated_range,
         values=[0, 6_000_000],
         cast=int,
@@ -1182,6 +1185,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         """,
         get_process_list=lambda x: x[-1].replace(")", ""),
         separator="@",
+        cast=str,
     )
 
     @property
@@ -1194,7 +1198,8 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         """
         chan_str = self.scan_channels
         # Trans string to list of int, ex. "1,3:5,7:8,10" -> [1,3,4,5,7,8,10]
-        chn_list = chan_str.split(",")
+        chn_list: list[str | int]
+        chn_list = chan_str.split(",")  # type: ignore[reportAssignmentType]
         for idx, ch in enumerate(chn_list):
             try:
                 chn_list[idx] = int(ch)
@@ -1258,26 +1263,23 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
     @property
     def scan_modes(self):
         """Get a dictionary of every channel's mode."""
-        res = dict()
+        res = {}
         for i in range(self.scan_vch_start, self.scan_vch_end + 1):
             res[i] = self.channels[i].mode
         return res
 
     @scan_modes.setter
-    def scan_modes(self, new_mode):
+    def scan_modes(self, new_mode: str) -> None:
         """Set all channels to the new mode. Ex: ``scan_modes = "voltage"``"""
         self.write(f':SENS:FUNC "{self._mode_command(new_mode)}", (@1:10)')
 
     @property
-    def scan_iscomplete(self):
+    def scan_iscomplete(self) -> bool:
         """Get Event Status Register (ESR) bit 0 to determine if previous works were
         completed.
         This property is used while running time-consuming scanning operation."""
         res = int(self.ask("*ESR?")) & 1
-        if res == 1:
-            return True
-        else:
-            return False
+        return res == 1
 
     def scan_start(self, block_communication=True, count=None, interval=None):
         """Start the scanner card to close each channel of :attr:`scan_channels` sequentially
@@ -1310,7 +1312,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
             log.info("Enable non-blocking communication.")
             log.info("Use `scan_iscomplete` to know the status.")
 
-    def scan_stop(self):
+    def scan_stop(self) -> None:
         """Abort the scanning measurement by stopping the measurement arming and
         triggering sequence.
 
@@ -1322,13 +1324,13 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
     # Common #
     ##########
 
-    def _mode_command(self, mode=None):
+    def _mode_command(self, mode: str | None = None) -> str:
         """Get SCPI's function name from mode."""
         if mode is None:
             mode = self.mode
         return self.MODES[mode]
 
-    def auto_range_status(self, mode=None):
+    def auto_range_status(self, mode: str | None = None) -> bool:
         """Get the status of auto-range of active mode or another mode by its name.
         Only ``current`` (DC), ``current ac``, ``voltage`` (DC),  ``voltage ac``,
         ``resistance`` (2-wire), ``resistance 4W`` (4-wire), ``capacitance``,
@@ -1344,14 +1346,11 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
             mode = self.mode
         if mode in self.MODES_HAVE_AUTORANGE:
             value = self.ask(f":SENS:{self._mode_command(mode)}:RANG:AUTO?")
-            if value == "1":
-                return True
-            else:
-                return False
+            return value == "1"
         else:
             return False
 
-    def auto_range(self, mode=None):
+    def auto_range(self, mode: str | None = None) -> None:
         """Set the active mode to use auto-range, or can set another mode by its name.
 
         Only ``current`` (DC), ``current ac``, ``voltage`` (DC),  ``voltage ac``,
@@ -1367,7 +1366,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         if mode in self.MODES_HAVE_AUTORANGE:
             self.write(f":SENS:{self._mode_command(mode)}:RANG:AUTO 1")
 
-    def enable_relative(self, mode=None):
+    def enable_relative(self, mode: str | None = None) -> None:
         """Enable the application of a relative offset value to the measurement
         for the active mode, or can set another mode by its name.
 
@@ -1375,7 +1374,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         """
         self.write(f":SENS:{self._mode_command(mode)}:REL:STAT 1")
 
-    def disable_relative(self, mode=None):
+    def disable_relative(self, mode: str | None = None):
         """Disable the application of a relative offset value to the measurement
         for the active mode, or can set another mode by its name.
 
@@ -1383,7 +1382,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         """
         self.write(f":SENS:{self._mode_command(mode)}:REL:STAT 0")
 
-    def acquire_relative(self, mode=None):
+    def acquire_relative(self, mode: str | None = None) -> float:
         """Set the active value as the relative for the active mode,
         or can set another mode by its name.
 
@@ -1397,7 +1396,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         rel = float(self.ask(f":SENS:{mode_cmd}:REL?"))
         return rel
 
-    def enable_filter(self, mode=None, type="repeat", count=1):
+    def enable_filter(self, mode: str | None = None, type: str = "repeat", count: int = 1):
         """Enable the averaging filter for the active mode,
         or can set another mode by its name.
 
@@ -1413,7 +1412,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         self.write(f":SENS:{mode_cmd}:AVER:COUN {count}")
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT?")
 
-    def disable_filter(self, mode=None):
+    def disable_filter(self, mode: str | None = None):
         """Disable the averaging filter for the active mode,
         or can set another mode by its name.
 
@@ -1425,7 +1424,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         self.write(f":SENS:{mode_cmd}:AVER:STAT 0")
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT?")
 
-    def beep(self, frequency, duration):
+    def beep(self, frequency: float, duration: float) -> None:
         """Sound a system beep.
 
         :param frequency: A frequency in Hz between 20 Hz and 8000 Hz
@@ -1434,7 +1433,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         """
         self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Write a command to the instrument.
 
         :param command: A command
@@ -1444,6 +1443,6 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         # Using if statement can prevent RecursionError because `self.mode`
         # will query instrument and call `write()` function again.
         if "{function}" in command:
-            super().write(command.format(function=KeithleyDMM6500.MODES[self.mode]))
+            super().write(command.format(function=KeithleyDMM6500.MODES[self.mode]), **kwargs)
         else:
-            super().write(command)
+            super().write(command, **kwargs)

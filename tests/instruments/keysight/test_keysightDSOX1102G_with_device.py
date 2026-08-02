@@ -22,13 +22,14 @@
 # THE SOFTWARE.
 #
 
-from time import sleep
 import logging
+from time import sleep
 
-import pytest
 import numpy as np
-from pymeasure.instruments.keysight.keysightDSOX1102G import KeysightDSOX1102G
+import pytest
 from pyvisa.errors import VisaIOError
+
+from pymeasure.instruments.keysight.keysightDSOX1102G import KeysightDSOX1102G
 
 
 @pytest.fixture(scope="module")

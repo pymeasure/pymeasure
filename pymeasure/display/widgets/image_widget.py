@@ -24,17 +24,16 @@
 
 import logging
 
-import pyqtgraph as pg
 from ..curves import ResultsImage
 from ..Qt import QtCore, QtWidgets
-from .tab_widget import TabWidget
 from .image_frame import ImageFrame
+from .tab_widget import DEFAULT_COLOR, TabWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class ImageWidget(TabWidget, QtWidgets.QWidget):
+class ImageWidget(TabWidget[ResultsImage], QtWidgets.QWidget):
     """ Extends the :class:`ImageFrame<pymeasure.display.widgets.image_frame.ImageFrame>`
     to allow different columns of the data to be dynamically chosen
     """
@@ -91,7 +90,7 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 600)
 
-    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+    def new_curve(self, results, color=DEFAULT_COLOR, **kwargs) -> ResultsImage:
         """ Creates a new image """
         image = ResultsImage(results,
                              wdg=self,
@@ -106,10 +105,10 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
         axis = self.columns_z.itemText(index)
         self.image_frame.change_z_axis(axis)
 
-    def load(self, curve):
+    def load(self, curve: ResultsImage) -> None:
         curve.z = self.columns_z.currentText()
         curve.update_data()
         self.plot.addItem(curve)
 
-    def remove(self, curve):
+    def remove(self, curve: ResultsImage) -> None:
         self.plot.removeItem(curve)

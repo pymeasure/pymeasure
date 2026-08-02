@@ -26,9 +26,9 @@ from unittest import mock
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import truncated_range
+from pymeasure.test import expected_protocol
 
 
 class GenericChannel(Channel):
@@ -73,10 +73,12 @@ class ChannelWithPlaceholder(Channel):
 
 
 class ChannelInstrument(Instrument):
+
+    ch_A = Instrument.ChannelCreator(GenericChannel, "A")
+
     def __init__(self, adapter, name="ChannelInstrument", **kwargs):
         super().__init__(adapter, name, **kwargs)
         self.errors = []
-        self.add_child(GenericChannel, "A")
         self.add_child(GenericChannel, "B")
 
     def check_errors(self) -> list[str]:
@@ -130,7 +132,7 @@ class TestChannelCommunication:
 
 
 def test_channel_with_different_prefix():
-    c = ChannelWithPlaceholder(None, "A")
+    c = ChannelWithPlaceholder(None, "A")  # type: ignore
     assert c.insert_id("id:{fn}") == "id:A"
 
 

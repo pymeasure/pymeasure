@@ -23,11 +23,11 @@
 #
 
 import logging
-from time import sleep
 from enum import IntFlag
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
+from time import sleep
 
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -180,7 +180,7 @@ class DPSeriesMotorController(Instrument):
         """
         current_errors = self.error_reg
         if current_errors != 0:
-            logging.error(f"DP-Series motor controller error detected: {current_errors}")
+            log.error(f"DP-Series motor controller error detected: {current_errors}")
         return current_errors
 
     def __init__(self, adapter, name="Anaheim Automation Stepper Motor Controller",
@@ -191,7 +191,7 @@ class DPSeriesMotorController(Instrument):
         In addition to the keyword arguments that can be set for the Instrument base class, this
         class has the following kwargs:
 
-        :param address: (int) Address that the motor controller uses for serial communiation.
+        :param address: (int) Address that the motor controller uses for serial communication.
         :param encoder_enabled: (bool) Flag to indicate if the driver should use an encoder input
             to set its position property.
         """
@@ -204,7 +204,6 @@ class DPSeriesMotorController(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             asrl={'baud_rate': 38400},
             **kwargs
         )

@@ -27,20 +27,19 @@ for the Arbitrary Waveform Generator (AWG) mode and the Arbitrary Function
 Generator (AFG) mode. The module has been developed from the official
 documentation available on https://www.activetechnologies.it"""
 
+import pprint
 from collections import abc, namedtuple
 
-import pprint
-
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
-from pymeasure.instruments.validators import strict_discrete_set, \
-    strict_range
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
+from pymeasure.instruments.common_base import CommonBase, IdType
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class ChannelBase(Channel):
     """Implementation of a base Active Technologies AWG-4000 channel."""
 
-    def __init__(self, instrument, id):
-        super().__init__(instrument, id)
+    def __init__(self, parent: CommonBase, id: IdType, **kwargs):
+        super().__init__(parent, id, **kwargs)
 
         self.delay_values = [self.delay_min, self.delay_max]
 
@@ -69,23 +68,25 @@ class ChannelBase(Channel):
     )
 
     delay_max = Instrument.measurement(
-        None,
+        "",
         """Get maximum delay (int).""",
-        dynamic=True
+        dynamic=True,
+        cast=int,
     )
 
     delay_min = Instrument.measurement(
-        None,
+        "",
         """Get minimum delay (int).""",
-        dynamic=True
+        dynamic=True,
+        cast=int,
     )
 
 
 class ChannelAFG(ChannelBase):
     """Implementation of a Active Technologies AWG-4000 channel in AFG mode."""
 
-    def __init__(self, instrument, id):
-        super().__init__(instrument, id)
+    def __init__(self, parent: CommonBase, id: IdType, **kwargs):
+        super().__init__(parent, id, **kwargs)
 
         self.calculate_voltage_range()
         self.frequency_values = [self.frequency_min, self.frequency_max]
@@ -114,7 +115,7 @@ class ChannelAFG(ChannelBase):
     shape = Instrument.control(
         "SOURce{ch}:FUNCtion:SHAPe?", "SOURce{ch}:FUNCtion:SHAPe %s",
         """Control the shape of the carrier waveform.
-        Allowed choices depends on the choosen modality, please refer on
+        Allowed choices depends on the chosen modality, please refer on
         instrument manual. When you set this property with a different value,
         if the instrument is running it will be stopped.
         Can be set to: SIN<USOID>, SQU<ARE>, PULS<E>, RAMP, PRN<OISE>, DC,
@@ -670,7 +671,7 @@ class AWG401x_AWG(AWG401x_base):
         values, delete them or create new waveforms""")
 
     def trigger(self):
-        """Force a trigger event to occour."""
+        """Force a trigger event to occur."""
         self.write("TRIGger:SEQuence:IMMediate")
 
     def save_file(self,
@@ -762,12 +763,12 @@ class AWG401x_AWG(AWG401x_base):
                 raise VoltageOutOfRangeError(
                     f"{max(value)}V is higher than maximum possible voltage, "
                     f"which is "
-                    f"{self.instrument.entries[1].channels[1].voltage_high_max}V")
+                    f"{self.parent.entries[1].channels[1].voltage_high_max}V")
             if min(value) < self.parent.entries[1].channels[1].voltage_low_min:
                 raise VoltageOutOfRangeError(
                     f"{min(value)}V is lower than minimum possible voltage, "
                     f"which is "
-                    f"{self.instrument.entries[1].channels[1].voltage_low_min}V")
+                    f"{self.parent.entries[1].channels[1].voltage_low_min}V")
 
             self.parent.save_file(f"{key}.txt",
                                   "\n".join(map(str, value)),
@@ -786,14 +787,12 @@ class AWG401x_AWG(AWG401x_base):
             self.parent.remove_file(f"{key}.txt")
 
             self._data[key] = None
-            return
 
         def __delitem__(self, key):
             """When removing an element this method removes also the
             corresponding waveform in the instrument"""
             del self._data[key]
             self.parent.write(f'WLISt:WAVeform:DELete "{key}"')
-            return
 
         def __iter__(self):
             try:
@@ -911,8 +910,8 @@ class SequenceEntry(Channel):
     class AnalogChannel(Channel):
         """Implementation of an analog channel for a single sequencer entry."""
 
-        def __init__(self, parent, id, sequence_number):
-            super().__init__(parent, id)
+        def __init__(self, parent: CommonBase, id: IdType, sequence_number, **kwargs):
+            super().__init__(parent, id, **kwargs)
             self.seq_num = sequence_number
 
             self.waveform_values = list(self.parent.parent.waveforms.keys())

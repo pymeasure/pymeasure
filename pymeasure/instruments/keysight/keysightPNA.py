@@ -184,7 +184,7 @@ class MeasurementChannel(Channel):
         self.update_traces()
 
     def initiate(self):
-        """Initiate an immidiate trigger.
+        """Initiate an immediate trigger.
 
         .. note::
             The trigger source has to be set to `MANUAL` for this command.

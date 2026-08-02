@@ -22,11 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from enum import IntEnum, IntFlag
-
 import logging
+from collections.abc import Callable, Sequence
+from enum import Enum, IntEnum, IntFlag
+from typing import Any
+
+from pymeasure.instruments import AdapterType, Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -150,7 +152,7 @@ Errors = {
 }
 
 
-class StatusMessage:
+class StatusMessage(Enum):
     MeasurementErrorCode = (0, 1)
     EntryErrorCode = (2, 2)
     OperatingMode = (4, 2)
@@ -174,8 +176,8 @@ class StatusMessage:
     MeasurementUnits = (25, 1)
 
 
-def _getstatus(status_type, modifier=lambda v: v):
-    start_index, stop_offset = status_type
+def _getstatus(status_type: StatusMessage, modifier=lambda v: v) -> Callable[..., Any]:
+    start_index, stop_offset = status_type.value
     return lambda v: modifier(int(v[start_index:start_index + stop_offset]))
 
 
@@ -187,22 +189,23 @@ class HP437B(Instrument):
         'Operating Manual 437B Power Meter'
     """
 
-    def __init__(self, adapter, name="Hewlett-Packard HP437B", **kwargs):
+    def __init__(
+        self, adapter: AdapterType, name: str = "Hewlett-Packard HP437B", **kwargs
+    ):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             send_end=True,
             **kwargs,
         )
 
-    def check_errors(self):
+    def check_errors(self) -> list:
         errors = []
         while True:
             err = self.values("ERR?", cast=int)
             # exclude upper limit and lower limit hit from real errors
             if int(err[0]) != 0 and int(err[0]) != 21 and int(err[0]) != 23:
-                log.error(f"{self.name}: {err[0]}, {Errors[err[0]]}")
+                log.error(f"{self.name}: {err[0]}, {Errors[int(err[0])]}")
                 errors.append(err)
             else:
                 break
@@ -222,7 +225,7 @@ class HP437B(Instrument):
         get_process=lambda v: EventStatusRegister(v)
     )
 
-    def activate_auto_range(self):
+    def activate_auto_range(self) -> None:
         """
         The power meter divides each sensor’s power range into 5 ranges of
         10 dB each. Range 1 is the most sensitive (lowest power levels), and
@@ -234,14 +237,14 @@ class HP437B(Instrument):
         """
         self.write("RA")
 
-    def calibrate(self, calibration_factor):
+    def calibrate(self, calibration_factor: float) -> None:
         """
         Calibrate a sensor to the power meter with a 'calibration_factor' in percent.
         """
         self.write(f"CL{calibration_factor:.1f}PCT")
 
     @property
-    def calibration_factor(self):
+    def calibration_factor(self) -> float:
         """
         Control the calibration factor of a specific power sensor at a specific input frequency.
         (A chart or table of CAL FACTOR % versus Frequency is printed on each sensor and an
@@ -256,7 +259,7 @@ class HP437B(Instrument):
         return float(display_content[7:12])
 
     @calibration_factor.setter
-    def calibration_factor(self, calibration_factor):
+    def calibration_factor(self, calibration_factor: float) -> None:
         values = [1.0, 150.0]
         strict_range(float(calibration_factor), values)
 
@@ -318,7 +321,7 @@ class HP437B(Instrument):
     )
 
     @property
-    def duty_cycle(self):
+    def duty_cycle(self) -> float:
         """
         Control the duty cycle for calculation of a pulsed input signal. This function will cause
         the power meter to report the pulse power of a rectangular pulsed input signal. The
@@ -338,7 +341,7 @@ class HP437B(Instrument):
         return float(display_content[6:12]) / 100.0
 
     @duty_cycle.setter
-    def duty_cycle(self, duty_cycle):
+    def duty_cycle(self, duty_cycle: float) -> None:
         values = [0.00001, 0.99999]
         strict_range(float(duty_cycle), values)
 
@@ -371,7 +374,7 @@ class HP437B(Instrument):
     )
 
     @property
-    def frequency(self):
+    def frequency(self) -> float:
         """
         Control the frequency of the input signal. Entering a frequency causes the power meter to
         select a sensor-specific calibration factor. The allowed range of 'frequency'
@@ -392,7 +395,7 @@ class HP437B(Instrument):
         return return_value
 
     @frequency.setter
-    def frequency(self, frequency):
+    def frequency(self, frequency: float) -> None:
         self.write("FR%08.4fGZ" % (float(frequency) / 1e9))
         self.check_errors()
 
@@ -411,7 +414,7 @@ class HP437B(Instrument):
     )
 
     @property
-    def limit_high(self):
+    def limit_high(self) -> float:
         """
         Control the upper limit for the builtin limit checking.
         """
@@ -423,7 +426,7 @@ class HP437B(Instrument):
         return float(display_content[3:11])
 
     @limit_high.setter
-    def limit_high(self, limit):
+    def limit_high(self, limit: float) -> None:
         """
         Control the upper limit for the builtin limit checking.
         """
@@ -434,7 +437,7 @@ class HP437B(Instrument):
         self.check_errors()
 
     @property
-    def limit_low(self):
+    def limit_low(self) -> float:
         """
         Control the lower limit for the builtin limit checking.
         """
@@ -446,7 +449,7 @@ class HP437B(Instrument):
         return float(display_content[3:11])
 
     @limit_low.setter
-    def limit_low(self, limit):
+    def limit_low(self, limit: float) -> None:
         """
         Control the lower limit for the builtin limit checking.
         """
@@ -515,7 +518,7 @@ class HP437B(Instrument):
     )
 
     @property
-    def offset(self):
+    def offset(self) -> float:
         """
         Control the offset applied to the measured value to compensate for
         signal gain or loss (for example, to compensate for the loss of a 10 dB
@@ -533,18 +536,18 @@ class HP437B(Instrument):
             return 0.0
 
     @offset.setter
-    def offset(self, offset):
+    def offset(self, offset: float) -> None:
         values = [-99.99, 99.99]
         strict_range(offset, values)
         self.write(f"OS{offset:5.2f}EN")
 
-    def reset(self):
+    def reset(self) -> None:
         self.write("*RST")
 
-    def clear_status_registers(self):
+    def clear_status_registers(self) -> None:
         self.write("*CLS")
 
-    def preset(self):
+    def preset(self) -> None:
         """
         Sets the power meter to a known state. Preset
         conditions are shown in the following table.
@@ -559,7 +562,7 @@ class HP437B(Instrument):
               - 50 MHz
             * - Resolution
               - 0.01 dB
-            * - Duty Cylce
+            * - Duty Cycle
               - 1.000%, Off
             * - Relative
               - 0 dB, Off
@@ -639,7 +642,7 @@ class HP437B(Instrument):
     )
 
     @property
-    def resolution(self):
+    def resolution(self) -> float:
         """
         Control the resolution of the power meter's measured value. Three levels of resolution
         can be
@@ -648,7 +651,7 @@ class HP437B(Instrument):
         linear_display_enabled = self.linear_display_enabled
         mapping = {}
         if not linear_display_enabled:
-            mapping = {1: 0.1, 2: 0.01, 3: 0.001}
+            mapping: dict[int, float] = {1: 0.1, 2: 0.01, 3: 0.001}
         else:
             mapping = {1: 1, 2: 0.1, 3: 0.01}
 
@@ -662,7 +665,7 @@ class HP437B(Instrument):
         return mapping[int(display_content[3])]
 
     @resolution.setter
-    def resolution(self, resolution):
+    def resolution(self, resolution: float) -> None:
         """
         Control the resolution of the power meter's measured value. Three levels of resolution can
         be set: 0.1 dB, 0.01 dB and 0.001 dB or if the selected unit is Watts 1%, 0.1% and 0.001%.
@@ -698,7 +701,7 @@ class HP437B(Instrument):
         check_set_errors=True
     )
 
-    def sensor_data_clear(self, sensor_id):
+    def sensor_data_clear(self, sensor_id: int) -> None:
         """
         Clear the Sensor Data table of 'sensor_id' previous to entering new values.
         """
@@ -707,7 +710,7 @@ class HP437B(Instrument):
 
         self.write(f"CT{sensor_id}")
 
-    def sensor_data_ref_cal_factor(self, sensor_id, ref_cal_factor):
+    def sensor_data_ref_cal_factor(self, sensor_id: int, ref_cal_factor: float) -> None:
         """
         Set the power sensor's reference calibration factor to the Sensor Data table.
         """
@@ -717,7 +720,9 @@ class HP437B(Instrument):
         self.write(f"RF{sensor_id}{ref_cal_factor:4.1f}")
         self.check_errors()
 
-    def sensor_data_write_cal_factor_table(self, sensor_id, frequency_table, cal_fac_table):
+    def sensor_data_write_cal_factor_table(
+        self, sensor_id: int, frequency_table: Sequence[float], cal_fac_table: Sequence[float]
+    ) -> None:
         """
         Write the 'calibration_table' for 'sensor_id' to the Sensor Data
         table. And write the reference calibration factor for the 'sensor_id'.
@@ -746,7 +751,7 @@ class HP437B(Instrument):
         values = [0, 9]
         strict_range(sensor_id, values)
 
-        if sensor_id in range(0, 7) and (len(cal_fac_table) > 40 or len(frequency_table)) > 40:
+        if sensor_id in range(7) and (len(cal_fac_table) > 40 or len(frequency_table)) > 40:
             raise ValueError(f"For sensor id {sensor_id} there aren't more than 40 frequency "
                              f"pairs allowed")
         if sensor_id in range(8, 9) and (len(cal_fac_table) > 80 or len(frequency_table)) > 80:
@@ -773,7 +778,7 @@ class HP437B(Instrument):
         self.write("EX")
         self.check_errors()
 
-    def sensor_data_read_cal_factor_table(self, sensor_id):
+    def sensor_data_read_cal_factor_table(self, sensor_id: int) -> tuple[list[float], list[float]]:
         """
         Read the Sensor Data calibration table. See :meth:`sensor_data_write_cal_factor_table`
         Returns a tuple of frequencies as list and calibration factors as list.
@@ -789,7 +794,7 @@ class HP437B(Instrument):
         cal_fac_data = []
         self.write(f"ET{sensor_id}")
         self.check_errors()
-        for i in range(0, pairs):
+        for i in range(pairs):
             # outputs something like 38.00GZ 100.2%
             display_content = self.display_output
 
@@ -811,7 +816,7 @@ class HP437B(Instrument):
         self.write("EX")
         return frequency_data, cal_fac_data
 
-    def sensor_data_write_id_label(self, sensor_id, label):
+    def sensor_data_write_id_label(self, sensor_id: int, label: str) -> None:
         """
         Set a particular power sensor’s ID label table to be modified. The sensor ID label must not
         exceed 7 characters. For example, to identify Sensor Data table #2
@@ -859,7 +864,7 @@ class HP437B(Instrument):
         get_process=_getstatus(StatusMessage.Range)
     )
 
-    def store(self, register):
+    def store(self, register: int) -> None:
         """
         The power meter can store instrument configurations for recall at a
         later time. The following information can be stored in the power
@@ -895,7 +900,7 @@ class HP437B(Instrument):
         get_process=_getstatus(StatusMessage.OperatingMode, lambda v: OperatingMode(v))
     )
 
-    def zero(self):
+    def zero(self) -> None:
         """
         Adjust the power meter’s internal circuitry for a zero power indication when no power is
         applied to the sensor.
@@ -926,7 +931,7 @@ class HP437B(Instrument):
         set_process=lambda v: int(v)
     )
 
-    def trigger_immediate(self):
+    def trigger_immediate(self) -> None:
         """
         Trigger immediate.
 
@@ -944,7 +949,7 @@ class HP437B(Instrument):
         """
         self.write("TR1")
 
-    def trigger_delay(self):
+    def trigger_delay(self) -> None:
         """
         Trigger with delay.
 

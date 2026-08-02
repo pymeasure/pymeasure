@@ -26,9 +26,9 @@ import ctypes
 import logging
 import math
 from enum import IntFlag
+
 from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -156,7 +156,7 @@ class HP3478A(HPLegacyInstrument):
     }
 
     class ERRORS(IntFlag):
-        """Enum element for errror bit decoding
+        """Enum element for error bit decoding
         """
         AD_LINK = 32  # AD link error
         AD_SELFCHK = 16  # AD self check error
@@ -258,12 +258,16 @@ class HP3478A(HPLegacyInstrument):
         """
         self.write("D1")
 
+    @staticmethod
+    def _configure_display_text(raw: str) -> str:
+        return str.upper(raw[0:12])
+
     display_text = HPLegacyInstrument.setting(
         "D2%s",
         """Displays up to 12 upper-case ASCII characters on the display.
 
         """,
-        set_process=(lambda x: str.upper(x[0:12])),
+        set_process=_configure_display_text,
     )
 
     display_text_no_symbol = HPLegacyInstrument.setting(
@@ -272,7 +276,7 @@ class HP3478A(HPLegacyInstrument):
         disables all symbols on the display.
 
         """,
-        set_process=(lambda x: str.upper(x[0:12])),
+        set_process=_configure_display_text,
     )
 
     measure_ACI = HPLegacyInstrument.measurement(
@@ -333,7 +337,7 @@ class HP3478A(HPLegacyInstrument):
 
     @property
     def mode(self):
-        """Return current selected measurement mode, this propery can be set.
+        """Return current selected measurement mode, this property can be set.
         Allowed values are
 
         ====  ==============================================================
@@ -410,7 +414,7 @@ class HP3478A(HPLegacyInstrument):
     def SRQ_mask(self):
         """Return current SRQ mask, this property can be set,
 
-        bit assigment for SRQ:
+        bit assignment for SRQ:
 
         =========  ==========================
         Bit (dec)  Description
@@ -434,7 +438,7 @@ class HP3478A(HPLegacyInstrument):
     def trigger(self):
         """Return current selected trigger mode, this property can be set
 
-        Possibe values are:
+        Possible values are:
 
         ========  ===========================================
         Value     Meaning
@@ -489,14 +493,14 @@ class HP3478A(HPLegacyInstrument):
 
         """
         cal_data = []
-        for addr in range(0, 256):
+        for addr in range(256):
             # To fetch one nibble: 'W<address>', where address is a raw 8-bit number.
             self.write_binary_values('W', [addr], datatype='B', header_fmt="empty")
             rvalue = self.read_bytes(1)[0]
             # 'W' command reads a nibble from the SRAM, but then adds a value of 64 to return
             # it as an ASCII value.
             if rvalue < 64 or rvalue >= 80:
-                raise Exception("calibration nibble out of range")
+                raise ValueError("calibration nibble out of range")
             cal_data.append(rvalue-64)
 
         return cal_data
@@ -508,7 +512,7 @@ class HP3478A(HPLegacyInstrument):
         """
 
         if not self.calibration_enabled:
-            raise Exception("CAL ENABLE switch not set to ON")
+            raise ValueError("CAL ENABLE switch not set to ON")
 
         self.write_calibration_data(cal_data, True)
 
@@ -524,11 +528,10 @@ class HP3478A(HPLegacyInstrument):
         if verify_calibration_data and not self.verify_calibration_data(cal_data):
             raise ValueError("cal_data verification fail.")
 
-        for addr in range(0, 256):
+        for addr in range(256):
             # To write one nibble: 'X<address><byte>', where address and byte are raw 8-bit numbers.
             cmd = bytes([ord('X'), addr, cal_data[addr]])
             self.write_bytes(cmd)
-        pass
 
     def verify_calibration_entry(self, cal_data, entry_nr):
         """Verify the checksum of one calibration entry.
@@ -541,10 +544,10 @@ class HP3478A(HPLegacyInstrument):
 
         """
         if len(cal_data) != 256:
-            raise Exception("cal_data must contain 256 values")
+            raise ValueError("cal_data must contain 256 values")
 
         sum = 0
-        for idx in range(0, 13):
+        for idx in range(13):
             val = cal_data[entry_nr*13 + idx + 1]
             if idx != 11:
                 sum += val
@@ -561,7 +564,7 @@ class HP3478A(HPLegacyInstrument):
         :rtype calibration_correct: boolean
 
         """
-        for entry_nr in range(0, 19):
+        for entry_nr in range(19):
             if entry_nr in [5, 16, 18]:
                 continue
             if not self.verify_calibration_entry(cal_data, entry_nr):

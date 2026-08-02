@@ -22,13 +22,16 @@
 # THE SOFTWARE.
 #
 import logging
+from enum import IntFlag
+from typing import cast
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.channel import Channel
-from pymeasure.instruments.validators import (strict_discrete_range,
-                                              strict_discrete_set,
-                                              truncated_range
-                                              )
-from enum import IntFlag
+from pymeasure.instruments.validators import (
+    strict_discrete_range,
+    strict_discrete_set,
+    truncated_range,
+)
 
 log = logging.getLogger(__name__)  # https://docs.python.org/3/howto/logging.html#library-config
 log.addHandler(logging.NullHandler())
@@ -64,9 +67,13 @@ class SPDChannel(Channel):
     """ The channel class for Siglent SPDxxxxX instruments.
     """
 
-    def __init__(self, parent, id,
-                 voltage_range: list = [0, 16],
-                 current_range: list = [0, 8]):
+    def __init__(self, parent: "SPDBase", id,
+                 voltage_range: list | None = None,
+                 current_range: list | None = None):
+        if current_range is None:
+            current_range = [0, 8]
+        if voltage_range is None:
+            voltage_range = [0, 16]
         super().__init__(parent, id)
         self.voltage_range = voltage_range
         self.current_range = current_range
@@ -124,7 +131,7 @@ class SPDChannel(Channel):
             ``True``: enables the output
             ``False``: disables it
         """
-        self.parent.selected_channel = self.id
+        cast(SPDBase, self.parent).selected_channel = self.id
         self.write('OUTP CH{ch},' + ("ON" if enable else "OFF"))
 
     def enable_timer(self, enable: bool = True):
@@ -165,11 +172,9 @@ class SPDBase(SCPIUnknownMixin, Instrument):
         super().__init__(
             adapter,
             name,
-            usb=dict(write_termination='\n',
-                     read_termination='\n'),
-            tcpip=dict(write_termination='\n',
-                       read_termination='\n'),
-            **kwargs
+            usb={"write_termination": "\n", "read_termination": "\n"},
+            tcpip={"write_termination": "\n", "read_termination": "\n"},
+            **kwargs,
         )
 
     error = Instrument.measurement(
@@ -194,6 +199,7 @@ class SPDBase(SCPIUnknownMixin, Instrument):
 
         :type: :class:`.SystemStatusCode`
         """,
+        cast=str,
         get_process=lambda v: SystemStatusCode(int(v, base=16)),
     )
 

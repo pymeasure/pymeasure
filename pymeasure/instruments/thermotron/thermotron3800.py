@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
 from enum import IntFlag
 from time import sleep
 from warnings import warn
@@ -39,12 +40,11 @@ class Thermotron3800(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
 
-    def write(self, command):
-        super().write(command)
+    def write(self, command: str, **kwargs) -> None:
+        super().write(command, **kwargs)
         # Insert wait time after sending command.
         # This wait time should be >1000ms for consistent results.
         sleep(1)
@@ -86,7 +86,7 @@ class Thermotron3800(Instrument):
         values=[-55, 150]
     )
 
-    def run(self):
+    def run(self) -> None:
         '''
         Starts temperature forcing. The oven will ramp to the setpoint.
 
@@ -94,7 +94,7 @@ class Thermotron3800(Instrument):
         '''
         self.write("RUNM")
 
-    def stop(self):
+    def stop(self) -> None:
         '''
         Stops temperature forcing on the oven.
 
@@ -159,7 +159,7 @@ class Thermotron3800(Instrument):
         CALIBRATION_MODE = 128
 
     @staticmethod
-    def __translate_mode(mode_coded_integer):
+    def __translate_mode(mode_coded_integer) -> "Thermotron3800.Thermotron3800Mode":
 
         mode = Thermotron3800.Thermotron3800Mode(int(mode_coded_integer))
 

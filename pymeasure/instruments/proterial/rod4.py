@@ -24,10 +24,8 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import (truncated_range,
-                                              strict_discrete_set)
-
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -106,10 +104,7 @@ class ROD4(Instrument):
     """
 
     def __init__(self, adapter, name="ROD-4 MFC Controller", **kwargs):
-        super().__init__(
-            adapter, name, read_termination='\r', write_termination='\r',
-            includeSCPI=False, **kwargs
-        )
+        super().__init__(adapter, name, read_termination="\r", write_termination="\r", **kwargs)
 
     ch_1 = Instrument.ChannelCreator(ROD4Channel, 1)
     ch_2 = Instrument.ChannelCreator(ROD4Channel, 2)
@@ -130,7 +125,7 @@ class ROD4(Instrument):
         check_set_errors=True
         )
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list[str]:
         """Read 'OK' from ROD-4 after setting."""
         response = self.read()
         if response != 'OK':

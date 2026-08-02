@@ -21,7 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
 import logging
+from collections.abc import Mapping
 
 import numpy as np
 
@@ -205,15 +207,15 @@ class Channel:
         to_bool = ["DISP", "BWL", "INV"]
         to_float = ["OFFS", "PROB", "PROB:SKEW", "RANG"]
         to_int = ["CHAN"]
-        for key in ch_setup_dict:
+        for key, value in ch_setup_dict.items():
             if key in to_str:
-                ch_setup_dict[key] = str(ch_setup_dict[key])
+                ch_setup_dict[key] = str(value)
             elif key in to_bool:
-                ch_setup_dict[key] = (ch_setup_dict[key] == "1")
+                ch_setup_dict[key] = (value == "1")
             elif key in to_float:
-                ch_setup_dict[key] = float(ch_setup_dict[key])
+                ch_setup_dict[key] = float(value)
             elif key in to_int:
-                ch_setup_dict[key] = int(ch_setup_dict[key])
+                ch_setup_dict[key] = int(value)
         return ch_setup_dict
 
 
@@ -521,16 +523,16 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         tb_setup_splitted = tb_setup_raw[5:].split(";")
 
         # Create dict of setup parameters
-        tb_setup = dict(map(lambda v: v.split(" "), tb_setup_splitted))
+        tb_setup: Mapping[str, str | float] = dict(map(lambda v: v.split(" "), tb_setup_splitted))
 
         # Convert values to specific type
         to_str = ["MODE", "REF"]
         to_float = ["MAIN:RANG", "POS"]
-        for key in tb_setup:
+        for key, value in tb_setup.items():
             if key in to_str:
-                tb_setup[key] = str(tb_setup[key])
+                tb_setup[key] = str(value)
             elif key in to_float:
-                tb_setup[key] = float(tb_setup[key])
+                tb_setup[key] = float(value)
 
         return tb_setup
 
@@ -540,8 +542,23 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         """
         vals = self.values(":waveform:preamble?")
         # Get values to dict
-        vals_dict = dict(zip(["format", "type", "points", "count", "xincrement", "xorigin",
-                              "xreference", "yincrement", "yorigin", "yreference"], vals))
+        vals_dict: Mapping[str, str | float] = dict(
+            zip(
+                [
+                    "format",
+                    "type",
+                    "points",
+                    "count",
+                    "xincrement",
+                    "xorigin",
+                    "xreference",
+                    "yincrement",
+                    "yorigin",
+                    "yreference",
+                ],
+                vals,
+            )
+        )
         # Map element values
         format_map = {0: "BYTE", 1: "WORD", 4: "ASCII"}
         type_map = {0: "NORMAL", 1: "PEAK DETECT", 2: "AVERAGE", 3: "HRES"}
@@ -551,10 +568,10 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         # Correct types
         to_int = ["points", "count", "xreference", "yreference"]
         to_float = ["xincrement", "xorigin", "yincrement", "yorigin"]
-        for key in vals_dict:
+        for key, value in vals_dict.items():
             if key in to_int:
-                vals_dict[key] = int(vals_dict[key])
+                vals_dict[key] = int(value)
             elif key in to_float:
-                vals_dict[key] = float(vals_dict[key])
+                vals_dict[key] = float(value)
 
         return vals_dict

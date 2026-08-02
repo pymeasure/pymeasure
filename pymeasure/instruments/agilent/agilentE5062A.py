@@ -22,15 +22,17 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin, Channel
-from pymeasure.instruments.validators import strict_range, strict_discrete_range, \
-    strict_discrete_set
-
-from pyvisa.errors import VisaIOError
-import numpy as np
-
 import functools
 
+import numpy as np
+from pyvisa.errors import VisaIOError
+
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.validators import (
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+)
 
 DISPLAY_LAYOUT_OPTIONS = [
         "D1",
@@ -154,7 +156,7 @@ class VNAChannel(Channel):
         =======  ===========
 
         Defaults to linear. Note that the API for configuring segment type
-        sweeps is not implememented in this class.""",
+        sweeps is not implemented in this class.""",
         validator=strict_discrete_set,
         values=['LIN', 'LOG', 'SEGM', 'POW'],
         cast=str,
@@ -263,9 +265,9 @@ class VNAChannel(Channel):
         - D1_2_3_4
         - D12_34
 
-        In general, an occurance of a number denotes the associated trace
-        having it's own subplot and an occurence of '_' denotes a vertical
-        split. Multiple occurences of the same number denote the trace
+        In general, an occurrence of a number denotes the associated trace
+        having its own subplot and an occurrence of '_' denotes a vertical
+        split. Multiple occurrences of the same number denote the trace
         having a larger window than the other traces. Refer to Figure 3-1
         in the the programmer's manual for details. If a trace is active
         but it's associated number is not present in the ``display_layout``
@@ -335,7 +337,7 @@ class VNAChannel(Channel):
         """Internal method that reads and interprents binary data arrays as
         floats. Assumes the query has already been sent.
 
-        Uses the IEEE 64-bit fp transer format (little-endian).
+        Uses the IEEE 64-bit fp transfer format (little-endian).
 
         """
         header = self.read_bytes(8)  # 2 start bytes + 6 <nbytes> bytes
@@ -512,15 +514,15 @@ class AgilentE5062A(SCPIMixin, Instrument):
         - D1_2_3_4
         - D12_34
 
-        In general, an occurance of a number denotes the associated channel
-        being visible and an occurence of '_' denotes a vertical
-        split. Multiple occurences of the same number denote the channel having
+        In general, an occurrence of a number denotes the associated channel
+        being visible and an occurrence of '_' denotes a vertical
+        split. Multiple occurrences of the same number denote the channel having
         a larger window than the other channels. Refer to Figure 3-1 in the the
         programmer's manual for details.
 
         Note that this splits windows for multiple *channels*, not
         traces. Basic S-param measurements most likely want to use only a
-        single channel, but with multuple *traces* instead. See
+        single channel, but with multiple *traces* instead. See
         e.g. ``AgilentE5062A.channels[1].visible_traces``
         """,
         validator=strict_discrete_set,
@@ -596,7 +598,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
         """
         try:
-            self.complete
+            _ = self.complete
         except VisaIOError:
             if attempt == max_attempts:
                 raise

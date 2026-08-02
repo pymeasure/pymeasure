@@ -22,7 +22,8 @@
 # THE SOFTWARE.
 #
 import logging
-from pymeasure.instruments import Instrument, Channel
+
+from pymeasure.instruments import Channel, Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -123,19 +124,18 @@ class HP11713A(Instrument):
     ATTENUATOR_X = {}
     ATTENUATOR_Y = {}
 
-    channels = Instrument.MultiChannelCreator(SwitchDriverChannel, list(range(0, 9)))
+    channels = Instrument.MultiChannelCreator(SwitchDriverChannel, list(range(9)))
 
     def __init__(self, adapter, name="Hewlett-Packard HP11713A",
                  **kwargs):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             send_end=True,
             **kwargs,
         )
 
-    def attenuation_x(self, attenuation):
+    def attenuation_x(self, attenuation) -> None:
         """ Set switches according to the attenuation in dB for X
 
         The set attenuation will be rounded to the next available step.
@@ -155,7 +155,7 @@ class HP11713A(Instrument):
         self.ch_1.enabled, self.ch_2.enabled, self.ch_3.enabled, self.ch_4.enabled = \
             self.ATTENUATOR_X[int(round(attenuation, rounding))]
 
-    def attenuation_y(self, attenuation):
+    def attenuation_y(self, attenuation) -> None:
         """ Set switches according to the attenuation in dB for Y
 
         The set attenuation will be rounded to the next available step.
@@ -175,7 +175,7 @@ class HP11713A(Instrument):
         self.ch_5.enabled, self.ch_6.enabled, self.ch_7.enabled, self.ch_8.enabled = \
             self.ATTENUATOR_Y[int(round(attenuation, rounding))]
 
-    def deactivate_all(self):
+    def deactivate_all(self) -> None:
         """
         Deactivate all switches to polarity 'B'.
         """

@@ -24,15 +24,17 @@
 
 import pytest
 
-from pymeasure.experiment.parameters import (BooleanParameter,
-                                             ListParameter,
-                                             FloatParameter,
-                                             IntegerParameter,
-                                             Parameter,
-                                             VectorParameter,
-                                             PhysicalParameter)
-from pymeasure.experiment.procedure import Procedure
 from pymeasure.display.console import ConsoleArgumentParser
+from pymeasure.experiment.parameters import (
+    BooleanParameter,
+    FloatParameter,
+    IntegerParameter,
+    ListParameter,
+    Parameter,
+    PhysicalParameter,
+    VectorParameter,
+)
+from pymeasure.experiment.procedure import Procedure
 
 
 class TestArgParsing:

@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.keysight.keysightE3631A import KeysightE3631A
+from pymeasure.test import expected_protocol
 
 
 def test_voltage_setpoint():
@@ -54,9 +55,8 @@ def test_current_limit_validator():
     with expected_protocol(
         KeysightE3631A,
         [],
-    ) as inst:
-        with pytest.raises(ValueError, match="not in range"):
-            inst.ch_1.current_limit = 7
+    ) as inst, pytest.raises(ValueError, match="not in range"):
+        inst.ch_1.current_limit = 7
 
 
 def test_output_enabled():

@@ -22,12 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set
 from time import sleep
 
 import numpy as np
+
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments.validators import strict_discrete_set
 
 
 class FWBell5080(SCPIMixin, Instrument):
@@ -124,10 +125,10 @@ class FWBell5080(SCPIMixin, Instrument):
     def fields(self, samples=1):
         """ Returns a numpy array of field samples for a given sample number.
 
-        :param samples: The number of samples to preform
+        :param samples: The number of samples to perform
         """
         if samples < 1:
-            raise Exception("F.W. Bell 5080 does not support samples less than 1.")
+            raise ValueError("F.W. Bell 5080 does not support samples less than 1.")
         else:
             data = [self.field for i in range(int(samples))]
             return np.array(data, dtype=np.float64)

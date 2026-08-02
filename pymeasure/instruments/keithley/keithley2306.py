@@ -23,8 +23,9 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -602,7 +603,7 @@ class Keithley2306(SCPIUnknownMixin, Instrument):
     display_brightness = Instrument.control(
         ":DISP:BRIG?", ":DISP:BRIG %g",
         """Control (floating) the display brightness,
-        takes values beteween 0.0 and 1.0. A blank display is 0.0,
+        takes values between 0.0 and 1.0. A blank display is 0.0,
         1/4 brightness is for values less or equal to 0.25, otherwise 1/2
         brightness for values less than or equal to 0.5, otherwise 3/4
         brightness for values less than or equal to 0.75, otherwise full

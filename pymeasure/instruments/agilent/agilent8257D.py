@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 
 class Agilent8257D(SCPIUnknownMixin, Instrument):
