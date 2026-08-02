@@ -236,6 +236,7 @@ def test_measure_voltage(keithley2450):
 
 
 def test_measure_voltage_fixed_range(keithley2450):
+    keithley2450.apply_current()  # a voltage measure range only applies when sourcing current
     keithley2450.measure_voltage(nplc=1, voltage=20, auto_range=False)
     assert keithley2450.voltage_nplc == 1
     assert keithley2450.voltage_range == 20
