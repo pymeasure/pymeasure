@@ -43,9 +43,21 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     """ Represents the Keithley 2450 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
-    NOTE: The default buffer handling SCPI command set of the Keithley 2450 model
-    is currently unsupported. The instrument works if made to emulate a 2400 model
-    by setting its command set to "SCPI 2400" through the instrument's system settings.
+    This driver targets the native Model 2450 SCPI command set, which is the command
+    set the instrument ships with.
+
+    .. note::
+        The buffer methods inherited from ``KeithleyBuffer`` are the exception:
+        :meth:`~.Keithley2450.config_buffer`, :meth:`~.Keithley2450.reset_buffer` and
+        :meth:`~.Keithley2450.disable_buffer` are built on the Series 2400 commands
+        ``:TRACe:FEED`` and ``:TRACe:FEED:CONTrol``, which the 2450 does not provide
+        (reference manual, Appendix E). Use :attr:`~.Keithley2450.trace_actual_end` and
+        :meth:`~.Keithley2450.get_trace_data` to read the trace buffer instead.
+
+        Switching the instrument to the "SCPI 2400" command set is not a workaround for
+        this. That mode drops the new trigger model along with the extended ranges
+        (reference manual, Appendix D), so the sweep and trace buffer members of this
+        class do not work there either.
 
     .. code-block:: python
 
@@ -709,6 +721,8 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     def sweep_voltage_linear(self, v_from, v_to, n_steps, delay=1e-4):
         """Configures a linear staircase voltage sweep.
 
+        Use :meth:`~.Keithley2450.start_buffer` to initiate the configured sweep.
+
         :param v_from: Start voltage in Volts
         :param v_to: Stop voltage in Volts
         :param n_steps: Number of steps
@@ -721,6 +735,8 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
 
         Waveforms longer than 100 points are automatically sent in chunks
         using the append command.
+
+        Use :meth:`~.Keithley2450.start_buffer` to initiate the configured sweep.
 
         :param waveform: A sequence of voltage values in Volts
         :param n_times: Number of times to repeat the sweep
