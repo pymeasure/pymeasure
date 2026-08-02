@@ -399,10 +399,14 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     display_light_state = Instrument.control(
         ":DISP:LIGH:STAT?",
         ":DISP:LIGH:STAT %s",
-        """ Control (string) the front-panel backlight brightness.
-        Valid values are 'ON100', 'ON75', 'ON50', 'ON25', and 'BLAC' (off). """,
+        """ Control (string) the light output level of the front-panel display.
+        Valid values are 'ON100', 'ON75', 'ON50' and 'ON25' for full to quarter
+        brightness, 'OFF' to switch the display off, and 'BLAC' to switch the display,
+        the key lights and all indicators off. The change is temporary; the normal
+        backlight setting is restored after a power cycle. """,
         validator=strict_discrete_set,
-        values=["ON100", "ON75", "ON50", "ON25", "BLAC"],
+        values=["ON100", "ON75", "ON50", "ON25", "OFF", "BLAC"],
+        cast=str,
     )
 
     ######################

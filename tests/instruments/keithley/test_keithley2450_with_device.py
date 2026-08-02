@@ -269,7 +269,8 @@ def test_source_voltage_readback(keithley2450, state):
     assert keithley2450.source_voltage_readback == state
 
 
-@pytest.mark.parametrize("state", ["BLAC", "ON25", "ON75", "ON100", "ON50"])
+# "ON50" is tested last so the display is left at its default brightness
+@pytest.mark.parametrize("state", ["BLAC", "OFF", "ON25", "ON75", "ON100", "ON50"])
 def test_display_light_state(keithley2450, state):
     keithley2450.display_light_state = state
     assert keithley2450.display_light_state == state
