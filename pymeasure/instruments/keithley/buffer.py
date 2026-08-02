@@ -36,12 +36,7 @@ log.addHandler(logging.NullHandler())
 
 
 class KeithleyBufferBase:
-    """ Implements the buffer capability that is available on Keithley instruments
-    regardless of which SCPI command set they use.
-
-    Instruments that support the Series 2400 style of buffer handling should inherit
-    :class:`KeithleyBuffer` instead, which builds on this class.
-    """
+    """Implements the subset of buffer capability that is available in :class:`Keithley2450`"""
 
     buffer_points = Instrument.control(
         ":TRAC:POIN?", ":TRAC:POIN %d",
@@ -67,14 +62,8 @@ class KeithleyBufferBase:
 
 
 class KeithleyBuffer(KeithleyBufferBase):
-    """ Implements the basic buffering capability found in
-    many Keithley instruments.
-
-    This adds the Series 2400 style of buffer handling, which is built on the
-    ``:TRACe:FEED`` and ``:TRACe:FEED:CONTrol`` commands, to
-    :class:`KeithleyBufferBase`. Instruments that do not provide those commands
-    should inherit :class:`KeithleyBufferBase` directly.
-    """
+    """Implements the basic buffering capability found in
+    many Keithley instruments."""
 
     def config_buffer(self, points=64, delay=0):
         """ Configure the measurement buffer for a number of points, to be

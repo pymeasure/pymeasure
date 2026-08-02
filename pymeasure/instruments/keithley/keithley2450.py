@@ -40,16 +40,15 @@ log.addHandler(logging.NullHandler())
 
 
 class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
-    """ Represents the Keithley 2450 SourceMeter and provides a
+    """Represents the Keithley 2450 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
     This driver targets the native Model 2450 SCPI command set, which is the command
     set the instrument ships with.
 
     .. note::
-        Selecting the "SCPI 2400" command set in the instrument's system settings is
-        not supported. That mode drops the new trigger model along with the extended
-        ranges (reference manual, Appendix D), which the sweep, trace buffer and
+        Selecting the "SCPI 2400" command set in the instrument's system settings drops
+        the trigger model along with the extended ranges which the sweep, trace buffer and
         compliance members of this class rely on.
 
     .. code-block:: python
@@ -710,9 +709,6 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
                              range_type="BEST", fail_abort=True, dual=False,
                              buffer_name="defbuffer1"):
         """Configures a linear staircase voltage sweep.
-
-        The optional arguments default to the values documented for
-        ``:SOURce:SWEep:VOLTage:LINear``.
 
         Use :meth:`~.Keithley2450.start_buffer` to initiate the configured sweep.
 
