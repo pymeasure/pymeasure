@@ -231,18 +231,38 @@ def test_disable_source(keithley2450):
 
 
 def test_measure_voltage(keithley2450):
-    keithley2450.measure_voltage(nplc=1, auto_range=True)
-    assert True
+    keithley2450.measure_voltage(nplc=0.1, auto_range=True)
+    assert keithley2450.voltage_nplc == 0.1
+
+
+def test_measure_voltage_fixed_range(keithley2450):
+    keithley2450.measure_voltage(nplc=1, voltage=20, auto_range=False)
+    assert keithley2450.voltage_nplc == 1
+    assert keithley2450.voltage_range == 20
 
 
 def test_measure_current(keithley2450):
-    keithley2450.measure_current(nplc=1, auto_range=True)
-    assert True
+    keithley2450.measure_current(nplc=0.1, auto_range=True)
+    assert keithley2450.current_nplc == 0.1
+    assert keithley2450.current_autorange is True
+
+
+def test_measure_current_fixed_range(keithley2450):
+    keithley2450.measure_current(nplc=1, current=1e-3, auto_range=False)
+    assert keithley2450.current_nplc == 1
+    assert keithley2450.current_range == 1e-3
+    assert keithley2450.current_autorange is False
 
 
 def test_measure_resistance(keithley2450):
-    keithley2450.measure_resistance(nplc=1, auto_range=True)
-    assert True
+    keithley2450.measure_resistance(nplc=0.1, auto_range=True)
+    assert keithley2450.resistance_nplc == 0.1
+
+
+def test_measure_resistance_fixed_range(keithley2450):
+    keithley2450.measure_resistance(nplc=1, resistance=2e5, auto_range=False)
+    assert keithley2450.resistance_nplc == 1
+    assert keithley2450.resistance_range == 2e5
 
 
 @pytest.mark.parametrize("state", BOOLEANS)
