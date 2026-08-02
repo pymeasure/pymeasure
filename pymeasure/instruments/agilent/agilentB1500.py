@@ -68,7 +68,6 @@ class AgilentB1500(SCPIMixin, Instrument):
         **kwargs,
     ):
         super().__init__(adapter, name, read_termination="\r\n", write_termination="\r\n", **kwargs)
-        self._smu_references: dict[int, SMU] = {}
         self._data_format: AgilentB1500._data_formatting_generic | None = None
 
     @property
@@ -121,7 +120,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         :param query_type: Query type (number according to manual)
         """
-        return QueryLearn.query_learn_header(self.ask, query_type, self._smu_references, **kwargs)
+        smu_references = {cast(int, smu.id): smu for smu in getattr(self, "smus", {}).values()}
+        return QueryLearn.query_learn_header(self.ask, query_type, smu_references, **kwargs)
 
     def query_modules(self) -> dict[int, str]:
         """Query module models from the instrument.
@@ -176,7 +176,6 @@ class AgilentB1500(SCPIMixin, Instrument):
                     smu_type=module_type,
                     slot=channel,
                 )
-                self._smu_references[channel] = self.smus[smu_index]
                 smu_index += 1
             elif "CMU" in module_type:
                 self.add_child(CMU, id=channel, collection="cmu", prefix=None)
@@ -216,7 +215,6 @@ class AgilentB1500(SCPIMixin, Instrument):
                     smu_type=module_type,
                     slot=channel,
                 )
-                self._smu_references[channel] = self.smus[i]
                 i += 1
 
     def initialize_all_spgus(self) -> None:
