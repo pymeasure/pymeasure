@@ -706,7 +706,7 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         """Performs a single auto-zero correction on the sense subsystem."""
         self.write(":SENS:AZER:ONCE")
 
-    def staircase_sweep_voltage(self, v_from, v_to, n_steps, delay=1e-4):
+    def sweep_voltage_linear(self, v_from, v_to, n_steps, delay=1e-4):
         """Configures a linear staircase voltage sweep.
 
         :param v_from: Start voltage in Volts
@@ -716,7 +716,7 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         """
         self.write(f":SOUR:SWE:VOLT:LIN {v_from}, {v_to}, {n_steps}, {delay}, 1, BEST, OFF, OFF")
 
-    def voltage_list_sweep(self, waveform, n_times, delay=0):
+    def sweep_voltage_list(self, waveform, n_times, delay=0):
         """Configures a voltage list sweep from an arbitrary waveform.
 
         Waveforms longer than 100 points are automatically sent in chunks
