@@ -774,11 +774,13 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
                              :meth:`~.Keithley2450.get_trace_actual_end`)
         :param buffer_name: Name of the buffer to read from, defaulting to the buffer the
                             instrument uses when none is specified
-        :returns: Raw comma-separated string of (time, source, reading) triplets
+        :returns: A numpy array holding one (time, source, reading) row per reading
         """
-        return self.ask(
+        self.write(":FORM:DATA ASCII")
+        values = self.values(
             f':TRAce:DATA? 1, {ending_index}, "{buffer_name}", RELative, SOURce, READing'
         )
+        return np.reshape(values, (-1, 3))
 
     def use_rear_terminals(self):
         """ Enables the rear terminals for measurement, and
