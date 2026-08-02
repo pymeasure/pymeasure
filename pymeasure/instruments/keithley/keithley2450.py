@@ -86,7 +86,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         can also be used. """,
         validator=strict_discrete_set,
         values={'current': 'CURR', 'voltage': 'VOLT'},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     source_enabled = Instrument.measurement(
@@ -318,7 +319,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         MOV : Moving filter""",
         validator=strict_discrete_set,
         values=['REP', 'MOV'],
-        map_values=False)
+        map_values=False,
+        cast=str)
 
     current_filter_count = Instrument.control(
         ":SENS:CURR:AVER:COUNT?", ":SENS:CURR:AVER:COUNT %d",
@@ -342,7 +344,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         MOV : Moving filter""",
         validator=strict_discrete_set,
         values=['REP', 'MOV'],
-        map_values=False)
+        map_values=False,
+        cast=str)
 
     voltage_filter_count = Instrument.control(
         ":SENS:VOLT:AVER:COUNT?", ":SENS:VOLT:AVER:COUNT %d",
@@ -440,7 +443,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         GUAR : I-Source is selected and set to 0A""",
         validator=strict_discrete_set,
         values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
-        map_values=False)
+        map_values=False,
+        cast=str)
 
     voltage_output_off_state = Instrument.control(
         ":OUTP:VOLT:SMOD?", ":OUTP:VOLT:SMOD %s",
@@ -454,7 +458,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         GUAR : I-Source is selected and set to 0A""",
         validator=strict_discrete_set,
         values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
-        map_values=False)
+        map_values=False,
+        cast=str)
 
     ####################
     # Methods        #
