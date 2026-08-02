@@ -424,16 +424,6 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         cast=int,
     )
 
-    ################
-    # Trace buffer #
-    ################
-
-    trace_actual_end = Instrument.measurement(
-        ":TRACe:ACTual:END?",
-        """ Get the index of the last populated reading in the default trace buffer. """,
-        cast=int,
-    )
-
     #####################
     # Output subsystem #
     #####################
@@ -711,17 +701,35 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         """Performs a single auto-zero correction on the sense subsystem."""
         self.write(":SENS:AZER:ONCE")
 
-    def sweep_voltage_linear(self, v_from, v_to, n_steps, delay=1e-4):
+    def sweep_voltage_linear(self, v_from, v_to, n_steps, delay=1e-4, count=1,
+                             range_type="BEST", fail_abort=True, dual=False,
+                             buffer_name="defbuffer1"):
         """Configures a linear staircase voltage sweep.
+
+        The optional arguments default to the values documented for
+        ``:SOURce:SWEep:VOLTage:LINear``.
 
         Use :meth:`~.Keithley2450.start_buffer` to initiate the configured sweep.
 
         :param v_from: Start voltage in Volts
         :param v_to: Stop voltage in Volts
-        :param n_steps: Number of steps
-        :param delay: Delay in seconds between voltage step and measurement
+        :param n_steps: Number of source-measure points, from 2 to 1e6
+        :param delay: Delay in seconds between voltage step and measurement, either -1
+                      for the auto delay, 0 for no delay, or 50e-6 to 10000
+        :param count: Number of times to run the sweep, 0 for an infinite loop
+        :param range_type: Source range used for the sweep, 'AUTO' for the most sensitive
+                           range per step, 'BEST' for a single fixed range covering the
+                           whole sweep, or 'FIXED' for the present range
+        :param fail_abort: Abort the sweep if the source limit is exceeded
+        :param dual: Sweep from start to stop and then back from stop to start
+        :param buffer_name: Name of the buffer to store the readings in
         """
-        self.write(f":SOUR:SWE:VOLT:LIN {v_from}, {v_to}, {n_steps}, {delay}, 1, BEST, OFF, OFF")
+        range_type = strict_discrete_set(range_type, ["AUTO", "BEST", "FIXED"])
+        self.write(
+            f":SOUR:SWE:VOLT:LIN {v_from}, {v_to}, {n_steps}, {delay}, {count}, "
+            f"{range_type}, {'ON' if fail_abort else 'OFF'}, {'ON' if dual else 'OFF'}, "
+            f'"{buffer_name}"'
+        )
 
     def sweep_voltage_list(self, waveform, n_times, delay=0):
         """Configures a voltage list sweep from an arbitrary waveform.
@@ -750,11 +758,22 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
             self.write(f":SOUR:LIST:VOLT {fmt(waveform)}")
         self.write(f":SOUR:SWE:VOLT:LIST 1, {delay}, {n_times}")
 
+    def get_trace_actual_end(self, buffer_name="defbuffer1"):
+        """Get the index of the last populated reading in a trace buffer.
+
+        :param buffer_name: Name of the buffer to query, defaulting to the buffer the
+                            instrument uses when none is specified
+        :returns: Index of the last reading as an integer
+        """
+        return int(self.ask(f':TRACe:ACTual:END? "{buffer_name}"'))
+
     def get_trace_data(self, ending_index, buffer_name="defbuffer1"):
         """Retrieves relative time, source, and reading columns from a trace buffer.
 
-        :param ending_index: Last reading index to retrieve (from :attr:`trace_actual_end`)
-        :param buffer_name: Name of the buffer to read from (default: 'defbuffer1')
+        :param ending_index: Last reading index to retrieve (from
+                             :meth:`~.Keithley2450.get_trace_actual_end`)
+        :param buffer_name: Name of the buffer to read from, defaulting to the buffer the
+                            instrument uses when none is specified
         :returns: Raw comma-separated string of (time, source, reading) triplets
         """
         return self.ask(

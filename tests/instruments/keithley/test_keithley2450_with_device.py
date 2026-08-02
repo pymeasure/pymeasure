@@ -304,8 +304,8 @@ def test_next_error(keithley2450):
     assert keithley2450.next_error[0] == 0  # queue is empty after the reset fixture
 
 
-def test_trace_actual_end(keithley2450):
-    assert isinstance(keithley2450.trace_actual_end, int)
+def test_get_trace_actual_end(keithley2450):
+    assert isinstance(keithley2450.get_trace_actual_end(), int)
 
 
 def test_auto_range_source_current(keithley2450):
