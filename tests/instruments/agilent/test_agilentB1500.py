@@ -51,6 +51,10 @@ from pymeasure.instruments.agilent.agilentB1500 import (
 )
 from pymeasure.test import expected_protocol
 
+#: ``UNT?`` response of a mainframe with SPGUs in slot 1, an unsupported WGFMU in slot 2,
+#: SMUs in slots 3, 5, 6 and 7, a CMU in slot 8 and empty slots 4 and 10.
+MODULES = "B1525A,0;B1530A,0;B1510A,0;0,0;B1517A,0;B1517A,0;B1511B,1;B1520A/N1301A,0;0,0;0,0"
+
 
 class TestB1500:
     """Tests for B1500 functionality."""
@@ -83,6 +87,46 @@ class TestB1500:
         ) as inst:
             inst.set_port_connection(port, status)
 
+    def test_initialize_units(self):
+        """Test that all supported units are initialized with a single module query."""
+        with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
+            inst.initialize_units()
+            assert inst.unit_names == {
+                3: "SMU1",
+                5: "SMU2",
+                6: "SMU3",
+                7: "SMU4",
+                1: "SPGU1",
+                8: "CMU",
+            }
+            assert list(inst.smu_references) == [inst.smu1, inst.smu2, inst.smu3, inst.smu4]
+
+    def test_initialize_units_numbering(self):
+        """Test that units are numbered consecutively while their id is the slot number."""
+        with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
+            inst.initialize_units()
+            assert inst.smus == {1: inst.smu1, 2: inst.smu2, 3: inst.smu3, 4: inst.smu4}
+            assert (inst.smu1.id, inst.smu2.id, inst.smu3.id, inst.smu4.id) == (3, 5, 6, 7)
+            assert inst.spgus == {1: inst.spgu1}
+            assert (inst.spgu1.id) == (1)
+            assert (inst.spgu1.ch1.id, inst.spgu1.ch2.id) == (101, 102)
+            assert inst.cmu.id == 8
+
+    @pytest.mark.parametrize(
+        "method, unit_names",
+        [
+            ("initialize_all_smus", {3: "SMU1", 5: "SMU2", 6: "SMU3", 7: "SMU4"}),
+            ("initialize_all_spgus", {1: "SPGU1"}),
+            ("initialize_cmu", {8: "CMU"}),
+        ],
+    )
+    def test_deprecated_initialization(self, method, unit_names):
+        """Test that the deprecated per-type initialization methods warn but still work."""
+        with expected_protocol(AgilentB1500, [("UNT?", MODULES)]) as inst:
+            with pytest.warns(FutureWarning, match=f"`{method}` is deprecated"):
+                getattr(inst, method)()
+            assert inst.unit_names == unit_names
+
     def test_unit_names(self):
         """Test that unit_names covers all initialized units."""
         with expected_protocol(AgilentB1500Mock, []) as inst:
@@ -110,7 +154,7 @@ class AgilentB1500Mock(AgilentB1500):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.add_child(SPGU, id=1, collection="spgus", prefix="spgu")
+        self.add_child(SPGU, id=1, collection="spgus", prefix="spgu", slot=1)
         self.add_child(CMU, id=2, collection="cmu", prefix=None)
         self.add_child(SMU, id=1, collection="smus", prefix="smu", smu_type="HRSMU", slot=3)
 
