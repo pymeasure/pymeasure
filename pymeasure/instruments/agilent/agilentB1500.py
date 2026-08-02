@@ -59,7 +59,10 @@ class AgilentB1500(SCPIMixin, Instrument):
     measurements.
     """
 
+    # Created dynamically by :meth:`initialize_units`
     smus: dict[int, SMU]
+    spgus: dict[int, SPGU]
+    cmu: CMU
 
     def __init__(
         self,
