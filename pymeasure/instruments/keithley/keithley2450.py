@@ -24,12 +24,13 @@
 
 import logging
 import time
+from collections.abc import Iterable, Sequence
 from warnings import warn
 
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.common_base import identity
+from pymeasure.instruments.common_base import InstrumentProperty, identity
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range,
@@ -43,7 +44,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def _validated_sweep_delay(delay, allow_auto):
+def _validated_sweep_delay(delay: float, allow_auto: bool) -> float:
     """Validate a sweep delay in seconds against the values the instrument accepts.
 
     :param delay: Delay in seconds, either 0 for no delay, a value from 50e-6 to 10000,
@@ -89,14 +90,14 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
 
     """
 
-    def __init__(self, adapter, name="Keithley 2450 SourceMeter", **kwargs):
+    def __init__(self, adapter, name: str = "Keithley 2450 SourceMeter", **kwargs):
         super().__init__(
             adapter,
             name,
             **kwargs
         )
 
-    source_mode = Instrument.control(
+    source_mode: InstrumentProperty[str] = Instrument.control(
         ":SOUR:FUNC?", ":SOUR:FUNC %s",
         """ Control (string) the source mode, which can
         take the values 'current' or 'voltage'. The convenience methods
@@ -175,7 +176,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         values=[0, 999.9999],
     )
 
-    source_current_delay_auto = Instrument.control(
+    source_current_delay_auto: InstrumentProperty[bool] = Instrument.control(
         ":SOUR:CURR:DEL:AUTO?", ":SOUR:CURR:DEL:AUTO %d",
         """ Control (bool) auto delay. Valid
         values are True and False. """,
@@ -243,7 +244,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         values=[0, 999.9999],
     )
 
-    source_voltage_delay_auto = Instrument.control(
+    source_voltage_delay_auto: InstrumentProperty[bool] = Instrument.control(
         ":SOUR:VOLT:DEL:AUTO?", ":SOUR:VOLT:DEL:AUTO %d",
         """ Control (bool) auto delay. Valid
         values are True and False. """,
@@ -277,7 +278,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         Fast, Medium, and Slow respectively. """
     )
 
-    wires = Instrument.control(
+    wires: InstrumentProperty[int] = Instrument.control(
         ":SENS:RES:RSENSE?", ":SENS:RES:RSENSE %d",
         """ Control (integer) the number of wires in
         use for resistance measurements, which can take the value of
@@ -377,7 +378,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
     # Auto-zero and Sense Count #
     ############################
 
-    current_autozero = Instrument.control(
+    current_autozero: InstrumentProperty[bool] = Instrument.control(
         ":SENS:CURR:AZER?",
         ":SENS:CURR:AZER %d",
         """ Control (bool) whether the internal reference measurements (auto-zero) are
@@ -386,7 +387,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         map_values=True,
     )
 
-    current_autorange = Instrument.control(
+    current_autorange: InstrumentProperty[bool] = Instrument.control(
         ":SENS:CURR:RANG:AUTO?",
         ":SENS:CURR:RANG:AUTO %d",
         """ Control (bool) whether the current measurement range is selected
@@ -409,7 +410,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
     # Source readback #
     ###################
 
-    source_voltage_readback = Instrument.control(
+    source_voltage_readback: InstrumentProperty[bool] = Instrument.control(
         ":SOUR:VOLT:READ:BACK?",
         ":SOUR:VOLT:READ:BACK %d",
         """ Control (bool) whether the source voltage is measured and returned as the
@@ -483,17 +484,18 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
     # Methods        #
     ####################
 
-    def enable_source(self):
+    def enable_source(self) -> None:
         """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT ON")
 
-    def disable_source(self):
+    def disable_source(self) -> None:
         """ Disables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT OFF")
 
-    def measure_resistance(self, nplc=1, resistance=2.1e5, auto_range=True):
+    def measure_resistance(self, nplc: float = 1, resistance: float = 2.1e5,
+                           auto_range: bool = True) -> None:
         """ Configures the measurement of resistance.
 
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
@@ -509,7 +511,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
             self.resistance_range = resistance
         self.check_errors()
 
-    def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
+    def measure_voltage(self, nplc: float = 1, voltage: float = 21.0,
+                        auto_range: bool = True) -> None:
         """ Configures the measurement of voltage.
 
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
@@ -525,7 +528,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
             self.voltage_range = voltage
         self.check_errors()
 
-    def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
+    def measure_current(self, nplc: float = 1, current: float = 1.05e-4,
+                        auto_range: bool = True) -> None:
         """ Configures the measurement of current.
 
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
@@ -541,7 +545,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
             self.current_range = current
         self.check_errors()
 
-    def auto_range_source(self):
+    def auto_range_source(self) -> None:
         """ Configures the source to use an automatic range.
         """
         if self.source_mode == 'current':
@@ -549,8 +553,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         else:
             self.write(":SOUR:VOLT:RANG:AUTO 1")
 
-    def apply_current(self, current_range=None,
-                      compliance_voltage=0.1):
+    def apply_current(self, current_range: float | None = None,
+                      compliance_voltage: float = 0.1) -> None:
         """ Configures the instrument to apply a source current, and
         uses an auto range unless a current range is specified.
         The compliance voltage is also set.
@@ -568,8 +572,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         self.compliance_voltage = compliance_voltage
         self.check_errors()
 
-    def apply_voltage(self, voltage_range=None,
-                      compliance_current=0.1):
+    def apply_voltage(self, voltage_range: float | None = None,
+                      compliance_current: float = 0.1) -> None:
         """ Configures the instrument to apply a source voltage, and
         uses an auto range unless a voltage range is specified.
         The compliance current is also set.
@@ -587,7 +591,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         self.compliance_current = compliance_current
         self.check_errors()
 
-    def beep(self, frequency, duration):
+    def beep(self, frequency: float, duration: float) -> None:
         """ Sounds a system beep.
 
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
@@ -595,7 +599,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         """
         self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
-    def triad(self, base_frequency, duration):
+    def triad(self, base_frequency: float, duration: float) -> None:
         """ Sounds a musical triad using the system beep.
 
         :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
@@ -608,7 +612,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         self.beep(base_frequency * 6.0 / 4.0, duration)
 
     @property
-    def error(self):
+    def error(self) -> list[float | str]:
         """Get the next error from the queue.
 
         .. deprecated:: 0.15
@@ -617,11 +621,12 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
         return self.next_error
 
-    def reset(self):
+    def reset(self) -> None:
         """ Resets the instrument and clears the queue.  """
         self.write("*RST;:stat:pres;:*CLS;")
 
-    def ramp_to_current(self, target_current, steps=30, pause=20e-3):
+    def ramp_to_current(self, target_current: float, steps: int = 30,
+                        pause: float = 20e-3) -> None:
         """ Ramps to a target current from the set current value over
         a certain number of linear steps, each separated by a pause duration.
 
@@ -638,7 +643,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
             self.source_current = current
             time.sleep(pause)
 
-    def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
+    def ramp_to_voltage(self, target_voltage: float, steps: int = 30,
+                        pause: float = 20e-3) -> None:
         """ Ramps to a target voltage from the set voltage value over
         a certain number of linear steps, each separated by a pause duration.
 
@@ -655,78 +661,79 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
             self.source_voltage = voltage
             time.sleep(pause)
 
-    def trigger(self):
+    def trigger(self) -> None:
         """ Executes a bus trigger.
         """
         return self.write("*TRG")
 
     @property
-    def mean_voltage(self):
+    def mean_voltage(self) -> float:
         """ Get the mean voltage from the buffer """
         return self.means[0]
 
     @property
-    def max_voltage(self):
+    def max_voltage(self) -> float:
         """ Get the maximum voltage from the buffer """
         return self.maximums[0]
 
     @property
-    def min_voltage(self):
+    def min_voltage(self) -> float:
         """ Get the minimum voltage from the buffer """
         return self.minimums[0]
 
     @property
-    def std_voltage(self):
+    def std_voltage(self) -> float:
         """ Get the voltage standard deviation from the buffer """
         return self.standard_devs[0]
 
     @property
-    def mean_current(self):
+    def mean_current(self) -> float:
         """ Get the mean current from the buffer """
         return self.means[1]
 
     @property
-    def max_current(self):
+    def max_current(self) -> float:
         """ Get the maximum current from the buffer """
         return self.maximums[1]
 
     @property
-    def min_current(self):
+    def min_current(self) -> float:
         """ Get the minimum current from the buffer """
         return self.minimums[1]
 
     @property
-    def std_current(self):
+    def std_current(self) -> float:
         """ Get the current standard deviation from the buffer """
         return self.standard_devs[1]
 
     @property
-    def mean_resistance(self):
+    def mean_resistance(self) -> float:
         """ Get the mean resistance from the buffer """
         return self.means[2]
 
     @property
-    def max_resistance(self):
+    def max_resistance(self) -> float:
         """ Get the maximum resistance from the buffer """
         return self.maximums[2]
 
     @property
-    def min_resistance(self):
+    def min_resistance(self) -> float:
         """ Get the minimum resistance from the buffer """
         return self.minimums[2]
 
     @property
-    def std_resistance(self):
+    def std_resistance(self) -> float:
         """ Get the resistance standard deviation from the buffer """
         return self.standard_devs[2]
 
-    def autozero_once(self):
+    def autozero_once(self) -> None:
         """Perform a single auto-zero correction on the sense subsystem."""
         self.write(":SENS:AZER:ONCE")
 
-    def sweep_voltage_linear(self, v_from, v_to, n_steps, delay=1e-4, count=1,
-                             range_type="BEST", fail_abort=True, dual=False,
-                             buffer_name="defbuffer1"):
+    def sweep_voltage_linear(self, v_from: float, v_to: float, n_steps: int,
+                             delay: float = 1e-4, count: int = 1, range_type: str = "BEST",
+                             fail_abort: bool = True, dual: bool = False,
+                             buffer_name: str = "defbuffer1") -> None:
         """Configure a linear staircase voltage sweep.
 
         Use :meth:`~.Keithley2450.start_buffer` to initiate the configured sweep.
@@ -758,7 +765,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
             f'"{buffer_name}"'
         )
 
-    def sweep_voltage_list(self, waveform, n_times, delay=0):
+    def sweep_voltage_list(self, waveform: Sequence[float] | np.ndarray, n_times: int,
+                           delay: float = 0) -> None:
         """Configure a voltage list sweep from an arbitrary waveform.
 
         Waveforms longer than 100 points are automatically sent in chunks
@@ -784,7 +792,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         n_times = strict_range(n_times, [0, 268435455])
         delay = _validated_sweep_delay(delay, allow_auto=False)
 
-        def fmt(values):
+        def fmt(values: Iterable[float]) -> str:
             """Format a sequence of voltages as a comma-separated command argument.
 
             :param values: A sequence of voltage values in Volts
@@ -802,7 +810,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
             self.write(f":SOUR:LIST:VOLT {fmt(waveform)}")
         self.write(f":SOUR:SWE:VOLT:LIST 1, {delay}, {n_times}")
 
-    def get_trace_actual_end(self, buffer_name="defbuffer1"):
+    def get_trace_actual_end(self, buffer_name: str = "defbuffer1") -> int:
         """Get the index of the last populated reading in a trace buffer.
 
         :param buffer_name: Name of the buffer to query, defaulting to the buffer the
@@ -811,7 +819,8 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         """
         return int(self.ask(f':TRACe:ACTual:END? "{buffer_name}"'))
 
-    def get_trace_data(self, ending_index, buffer_name="defbuffer1"):
+    def get_trace_data(self, ending_index: int,
+                       buffer_name: str = "defbuffer1") -> np.ndarray:
         """Retrieve relative time, source, and reading columns from a trace buffer.
 
         :param ending_index: Last reading index to retrieve (from
@@ -826,17 +835,17 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         )
         return np.reshape(values, (-1, 3))
 
-    def use_rear_terminals(self):
+    def use_rear_terminals(self) -> None:
         """ Enables the rear terminals for measurement, and
         disables the front terminals. """
         self.write(":ROUT:TERM REAR")
 
-    def use_front_terminals(self):
+    def use_front_terminals(self) -> None:
         """ Enables the front terminals for measurement, and
         disables the rear terminals. """
         self.write(":ROUT:TERM FRON")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """ Ensures that the current or voltage is turned to zero
         and disables the output. """
         log.info("Shutting down %s.", self.name)

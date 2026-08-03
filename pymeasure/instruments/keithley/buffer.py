@@ -47,11 +47,11 @@ class KeithleyBufferBase:
         cast=int
     )
 
-    def start_buffer(self):
+    def start_buffer(self) -> None:
         """Start the buffer."""
         self.write(":INIT")
 
-    def stop_buffer(self):
+    def stop_buffer(self) -> None:
         """ Abort the buffering measurement, by stopping the measurement
         arming and triggering sequence. If possible, a Selected Device
         Clear (SDC) is used. """
