@@ -30,13 +30,32 @@ import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.common_base import identity
-from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    strict_range,
+    truncated_range,
+)
 
 from .buffer import KeithleyBufferBase
 
 # Setup logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+def _validated_sweep_delay(delay, allow_auto):
+    """Validate a sweep delay in seconds against the values the instrument accepts.
+
+    :param delay: Delay in seconds, either 0 for no delay, a value from 50e-6 to 10000,
+                  or -1 for the auto delay when ``allow_auto`` is set
+    :param allow_auto: Whether -1, selecting the auto delay, is accepted
+    :returns: The validated delay
+    :raises ValueError: If the delay is none of the accepted values
+    """
+    if delay == 0 or 50e-6 <= delay <= 10000 or (allow_auto and delay == -1):
+        return delay
+    accepted = "-1 for the auto delay, 0 for no delay, " if allow_auto else "0 for no delay, "
+    raise ValueError(f"Sweep delay is {delay}, but must be {accepted}or 50e-6 to 10000 seconds.")
 
 
 class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
@@ -712,20 +731,27 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
 
         Use :meth:`~.Keithley2450.start_buffer` to initiate the configured sweep.
 
-        :param v_from: Start voltage in Volts
-        :param v_to: Stop voltage in Volts
+        :param v_from: Start voltage in Volts, from -210 to 210
+        :param v_to: Stop voltage in Volts, from -210 to 210
         :param n_steps: Number of source-measure points, from 2 to 1e6
         :param delay: Delay in seconds between voltage step and measurement, either -1
                       for the auto delay, 0 for no delay, or 50e-6 to 10000
-        :param count: Number of times to run the sweep, 0 for an infinite loop
+        :param count: Number of times to run the sweep, from 1 to 268435455, or 0 for an
+                      infinite loop
         :param range_type: Source range used for the sweep, 'AUTO' for the most sensitive
                            range per step, 'BEST' for a single fixed range covering the
                            whole sweep, or 'FIXED' for the present range
         :param fail_abort: Abort the sweep if the source limit is exceeded
         :param dual: Sweep from start to stop and then back from stop to start
         :param buffer_name: Name of the buffer to store the readings in
+        :raises ValueError: If any argument lies outside the accepted values
         """
+        v_from = strict_range(v_from, [-210, 210])
+        v_to = strict_range(v_to, [-210, 210])
+        n_steps = strict_range(n_steps, [2, 1000000])
+        count = strict_range(count, [0, 268435455])
         range_type = strict_discrete_set(range_type, ["AUTO", "BEST", "FIXED"])
+        delay = _validated_sweep_delay(delay, allow_auto=True)
         self.write(
             f":SOUR:SWE:VOLT:LIN {v_from}, {v_to}, {n_steps}, {delay}, {count}, "
             f"{range_type}, {'ON' if fail_abort else 'OFF'}, {'ON' if dual else 'OFF'}, "
@@ -740,10 +766,23 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
 
         Use :meth:`~.Keithley2450.start_buffer` to initiate the configured sweep.
 
-        :param waveform: A sequence of voltage values in Volts
-        :param n_times: Number of times to repeat the sweep
-        :param delay: Delay in seconds between each voltage step and measurement
+        :param waveform: A sequence of 1 to 2500 voltage values in Volts, each from
+                         -210 to 210
+        :param n_times: Number of times to repeat the sweep, from 1 to 268435455, or 0
+                        for an infinite loop
+        :param delay: Delay in seconds between each voltage step and measurement, either
+                      0 for no delay or a value from 50e-6 to 10000
+        :raises ValueError: If any argument lies outside the accepted values
         """
+        n_points = len(waveform)
+        if not 1 <= n_points <= 2500:
+            raise ValueError(
+                f"A voltage list sweep takes 1 to 2500 points, but {n_points} were given."
+            )
+        for voltage in waveform:
+            strict_range(voltage, [-210, 210])
+        n_times = strict_range(n_times, [0, 268435455])
+        delay = _validated_sweep_delay(delay, allow_auto=False)
 
         def fmt(values):
             """Format a sequence of voltages as a comma-separated command argument.
@@ -754,7 +793,6 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
             return ", ".join(f"{v:.3g}" for v in values)
 
         self.write(":SOUR:FUNC VOLT")
-        n_points = len(waveform)
         if n_points > 100:
             chunks = np.array_split(np.array(waveform), int(np.ceil(n_points / 100)))
             self.write(f":SOUR:LIST:VOLT {fmt(chunks[0])}")
