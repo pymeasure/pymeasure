@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 
 class KeithleyBufferBase:
-    """Implements the subset of buffer capability that is available in :class:`Keithley2450`"""
+    """Implement the subset of buffer capability that is available in :class:`Keithley2450`."""
 
     buffer_points = Instrument.control(
         ":TRAC:POIN?", ":TRAC:POIN %d",
@@ -48,7 +48,7 @@ class KeithleyBufferBase:
     )
 
     def start_buffer(self):
-        """ Starts the buffer. """
+        """Start the buffer."""
         self.write(":INIT")
 
     def stop_buffer(self):

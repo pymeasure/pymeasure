@@ -40,8 +40,8 @@ log.addHandler(logging.NullHandler())
 
 
 class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
-    """Represents the Keithley 2450 SourceMeter and provides a
-    high-level interface for interacting with the instrument.
+    """Represent the Keithley 2450 SourceMeter and provide a high-level interface for
+    interacting with the instrument.
 
     This driver targets the native Model 2450 SCPI command set, which is the command
     set the instrument ships with.
@@ -422,7 +422,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
 
     error_count = Instrument.measurement(
         ":SYST:ERR:COUN?",
-        """ Get the number of errors currently in the error queue. """,
+        """Get the number of errors currently in the error queue (int).""",
         cast=int,
     )
 
@@ -702,13 +702,13 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         return self.standard_devs[2]
 
     def autozero_once(self):
-        """Performs a single auto-zero correction on the sense subsystem."""
+        """Perform a single auto-zero correction on the sense subsystem."""
         self.write(":SENS:AZER:ONCE")
 
     def sweep_voltage_linear(self, v_from, v_to, n_steps, delay=1e-4, count=1,
                              range_type="BEST", fail_abort=True, dual=False,
                              buffer_name="defbuffer1"):
-        """Configures a linear staircase voltage sweep.
+        """Configure a linear staircase voltage sweep.
 
         Use :meth:`~.Keithley2450.start_buffer` to initiate the configured sweep.
 
@@ -733,7 +733,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         )
 
     def sweep_voltage_list(self, waveform, n_times, delay=0):
-        """Configures a voltage list sweep from an arbitrary waveform.
+        """Configure a voltage list sweep from an arbitrary waveform.
 
         Waveforms longer than 100 points are automatically sent in chunks
         using the append command.
@@ -746,6 +746,11 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         """
 
         def fmt(values):
+            """Format a sequence of voltages as a comma-separated command argument.
+
+            :param values: A sequence of voltage values in Volts
+            :returns: The values as a comma-separated string
+            """
             return ", ".join(f"{v:.3g}" for v in values)
 
         self.write(":SOUR:FUNC VOLT")
@@ -769,7 +774,7 @@ class Keithley2450(KeithleyBufferBase, SCPIMixin, Instrument):
         return int(self.ask(f':TRACe:ACTual:END? "{buffer_name}"'))
 
     def get_trace_data(self, ending_index, buffer_name="defbuffer1"):
-        """Retrieves relative time, source, and reading columns from a trace buffer.
+        """Retrieve relative time, source, and reading columns from a trace buffer.
 
         :param ending_index: Last reading index to retrieve (from
                              :meth:`~.Keithley2450.get_trace_actual_end`)
