@@ -24,8 +24,7 @@
 
 from typing import Any
 
-from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument, SCPIMixin, cast_or_str
+from pymeasure.instruments import AdapterType, Instrument, SCPIMixin, cast_or_str
 from pymeasure.instruments.validators import joined_validators, strict_discrete_set, strict_range
 
 
@@ -58,7 +57,7 @@ class AgilentB2981(SCPIMixin, Instrument):
     The B2981 is a Femto/Picoammeter."""
 
     def __init__(self,
-                 adapter: Adapter | int | str,
+                 adapter: AdapterType,
                  name: str = "Agilent/Keysight B2980A/B series",
                  **kwargs: Any):
         super().__init__(

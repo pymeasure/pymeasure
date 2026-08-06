@@ -31,6 +31,7 @@ from datetime import datetime
 from decimal import Decimal
 from importlib import import_module
 from string import Formatter
+from typing import Any
 
 import pandas as pd
 import pint
@@ -135,7 +136,7 @@ class CSVFormatter(logging.Formatter):
         self.units = Procedure.parse_columns(columns)
         self.delimiter = delimiter
 
-    def format(self, record):
+    def format(self, record: dict[str, Any]) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Formats a record as csv.
 
         :param record: record to format.

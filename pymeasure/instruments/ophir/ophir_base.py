@@ -26,8 +26,7 @@ from collections.abc import Callable, Sequence
 from enum import Enum, IntEnum, IntFlag
 from typing import Any, TypedDict, TypeVar
 
-from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import AdapterType, Instrument
 from pymeasure.instruments.common_base import CommonBase, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -106,7 +105,7 @@ class OphirCommunication(Instrument):
     For USB exists a COM (win32) object as well, which can be used as an alternative to this driver.
     """
 
-    def __init__(self, adapter: Adapter | str | int, name: str = "Ophir", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Ophir", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -181,7 +180,7 @@ class OphirBase(OphirCommunication):
     Modes = Modes
     ScreenModes = ScreenModes
 
-    def __init__(self, adapter: Adapter | str | int, name: str = "Ophir", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Ophir", **kwargs):
         super().__init__(adapter, name, **kwargs)
         self.wavelength_get_process_list = self._wavelength_get_process
 

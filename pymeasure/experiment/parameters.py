@@ -25,7 +25,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Generic, TypeVar, overload
+from typing import Any, Generic, Literal, TypeVar, overload
 
 import numpy as np
 
@@ -341,24 +341,37 @@ class FloatParameter(Parameter[float]):
     :param default: The default floating point value
     :param ui_class: A Qt class to use for the UI of this parameter
     :param step: step size for parameter's UI spinbox. If None, spinbox will have step disabled
+    :param step_type: type of stepping used by the UI spinbox arrows, either ``"linear"``
+        (default) or ``"log"``. For ``"linear"``, each click adds or subtracts ``step``.
+        For ``"log"``, each click multiplies or divides the current value by ``step``.
     """
 
     def __init__(
         self,
         name: str,
         units: str | None = None,
-        minimum: float = -1e9,
-        maximum: float = 1e9,
-        decimals: int = 15,
+        minimum: float = -1e30,
+        maximum: float = 1e30,
+        decimals: int = 30,
         step: float | None = None,
+        step_type: Literal["linear", "log"] = "linear",
         **kwargs,
     ):
-        self.units: str | None = units
-        self.minimum: float = minimum
-        self.maximum: float = maximum
+        if step_type not in ("linear", "log"):
+            raise ValueError(
+                f"FloatParameter step_type must be 'linear' or 'log', not '{step_type}'"
+            )
+        if step_type == "log" and step is not None and step <= 1:
+            raise ValueError(
+                f"FloatParameter step must be larger than 1 when step_type is 'log', not {step}"
+            )
+        self.units = units
+        self.minimum = minimum
+        self.maximum = maximum
         super().__init__(name, **kwargs)
-        self.decimals: int = decimals
-        self.step: float | None = step
+        self.decimals = decimals
+        self.step = step
+        self.step_type = step_type
         self._help_fields.append(('decimals are', 'decimals'))
 
     def convert(self, value: float | bool | str) -> float:

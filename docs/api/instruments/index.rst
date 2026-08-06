@@ -73,6 +73,7 @@ Instruments by manufacturer:
    santec/index
    siglenttechnologies/index
    signalrecovery/index
+   smaract/index
    spellmanhv/index
    srs/index
    tcpowerconversion/index
