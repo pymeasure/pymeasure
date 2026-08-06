@@ -25,7 +25,7 @@
 import logging
 from os.path import basename
 
-from ..experiment import Procedure
+from ..experiment.procedure import ProcedureStatus
 from .Qt import QtCore, QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
@@ -37,15 +37,10 @@ class BaseBrowserItem:
     for displaying progress of an experiment to the user.
     """
 
-    status_label = {
-        Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
-        Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted',
-        Procedure.FINISHED: 'Finished'}
-
-    def setStatus(self, status):
+    def setStatus(self, status: ProcedureStatus) -> None:
         raise NotImplementedError('Must be reimplemented by subclasses')
 
-    def setProgress(self, status):
+    def setProgress(self, progress: float) -> None:
         raise NotImplementedError('Must be reimplemented by subclasses')
 
 
@@ -68,10 +63,10 @@ class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
         self.progressbar.setRange(0, 100)
         self.progressbar.setValue(0)
 
-    def setStatus(self, status):
-        self.setText(3, self.status_label[status])
+    def setStatus(self, status: ProcedureStatus) -> None:
+        self.setText(3, status)
 
-        if status == Procedure.FAILED or status == Procedure.ABORTED:
+        if status == ProcedureStatus.FAILED or status == ProcedureStatus.ABORTED:
             # Set progress bar color to red
             return  # Commented this out
             self.progressbar.setStyleSheet("""
@@ -85,7 +80,7 @@ class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
             }
             """)
 
-    def setProgress(self, progress):
+    def setProgress(self, progress: float) -> None:
         self.progressbar.setValue(int(progress))
 
 

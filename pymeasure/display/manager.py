@@ -25,7 +25,7 @@
 import logging
 from os.path import basename
 
-from ..experiment import Procedure
+from ..experiment.procedure import ProcedureStatus
 from ..experiment.workers import Worker
 from .listeners import Monitor
 from .Qt import QtCore
@@ -76,7 +76,7 @@ class ExperimentQueue(QtCore.QObject):
             raise ExperimentException("Attempting to remove an Experiment that is "
                                       "not in the ExperimentQueue")
         else:
-            if experiment.procedure.status == Procedure.RUNNING:
+            if experiment.procedure.status == ProcedureStatus.RUNNING:
                 raise ExperimentException("Attempting to remove a running experiment")
             else:
                 self.queue.pop(self.queue.index(experiment))
@@ -98,7 +98,7 @@ class ExperimentQueue(QtCore.QObject):
         """ Returns the next experiment on the queue
         """
         for experiment in self.queue:
-            if experiment.procedure.status == Procedure.QUEUED:
+            if experiment.procedure.status == ProcedureStatus.QUEUED:
                 return experiment
         raise StopIteration("There are no queued experiments")
 
@@ -156,11 +156,11 @@ class BaseManager(QtCore.QObject):
         else:
             raise ExperimentException("There is no Experiment running.")
 
-    def _update_progress(self, progress):
+    def _update_progress(self, progress: float) -> None:
         if self.is_running():
             self._running_experiment.browser_item.setProgress(progress)
 
-    def _update_status(self, status):
+    def _update_status(self, status: ProcedureStatus) -> None:
         if self.is_running():
             self._running_experiment.procedure.status = status
             self._running_experiment.browser_item.setStatus(status)

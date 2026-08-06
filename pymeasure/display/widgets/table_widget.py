@@ -28,7 +28,7 @@ from functools import partial
 import numpy as np
 import pandas as pd
 
-from ...experiment import Procedure
+from ...experiment.procedure import ProcedureStatus
 from ..Qt import QtCore, QtGui, QtWidgets
 from .tab_widget import DEFAULT_COLOR, TabWidget
 
@@ -565,7 +565,7 @@ class Table(QtWidgets.QTableView):
             if not self.check_status or force:
                 item.update_data()
             else:
-                if item.results.procedure.status == Procedure.RUNNING:
+                if item.results.procedure.status == ProcedureStatus.RUNNING:
                     item.update_data()
 
         if model.columnCount() != current_col_count:
