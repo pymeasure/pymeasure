@@ -143,3 +143,35 @@ class TestLoggingForTestGenerator:
         record = caplog.records[0]
         assert record.msg == "READ:%s"
         assert record.args == (read,)
+
+
+def test_flush_read_buffer_not_implemented(adapter):
+    with pytest.raises(NotImplementedError):
+        adapter.flush_read_buffer()
+
+
+@pytest.mark.parametrize("values, datatype, is_big_endian, expected", [
+    ([1, 2], "h", False, b"#A\x04\x00\x01\x00\x02\x00"),
+])
+def test_format_binary_values_hp_header(values, datatype, is_big_endian, expected):
+    assert Adapter()._format_binary_values(
+        values, datatype, is_big_endian, "hp") == expected
+
+
+def test_format_binary_values_empty_header():
+    assert Adapter()._format_binary_values([1, 2], "h", False, "empty") == b"\x01\x00\x02\x00"
+
+
+def test_format_binary_values_invalid_header_raises(adapter):
+    with pytest.raises(ValueError):
+        adapter._format_binary_values([1, 2], header_fmt="bad")
+
+
+def test_fake_adapter_repr(fake):
+    assert repr(fake) == "<FakeAdapter>"
+
+
+def test_fake_adapter_read_bytes_truncates(fake):
+    fake._buffer = "abcdef"
+    assert fake._read_bytes(3, False) == b"abc"
+    assert fake._buffer == ""
