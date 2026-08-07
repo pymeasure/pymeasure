@@ -379,7 +379,7 @@ class SR860(Instrument):
     )
 
     aux_out_1 = Instrument.control(
-        "AUXV? 0", "AUXV 0, %f",
+        "AUXV? 0", "AUXV 0, %g",
         """ A floating point property that controls the output of Aux output 1 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -390,7 +390,7 @@ class SR860(Instrument):
     dac1 = aux_out_1
 
     aux_out_2 = Instrument.control(
-        "AUXV? 1", "AUXV 1, %f",
+        "AUXV? 1", "AUXV 1, %g",
         """ A floating point property that controls the output of Aux output 2 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -401,7 +401,7 @@ class SR860(Instrument):
     dac2 = aux_out_2
 
     aux_out_3 = Instrument.control(
-        "AUXV? 2", "AUXV 2, %f",
+        "AUXV? 2", "AUXV 2, %g",
         """ A floating point property that controls the output of Aux output 3 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -412,7 +412,7 @@ class SR860(Instrument):
     dac3 = aux_out_3
 
     aux_out_4 = Instrument.control(
-        "AUXV? 3", "AUXV 3, %f",
+        "AUXV? 3", "AUXV 3, %g",
         """ A floating point property that controls the output of Aux output 4 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
