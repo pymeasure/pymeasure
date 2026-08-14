@@ -33,8 +33,8 @@ def test_bwlimit():
         T3DSO3024HD,
         [
             (":CHANnel1:BWLimit 20M", None),  # (send CMD, answer=None )
-            (":CHANnel1:BWLimit?", "20M"),
-        ],  # (query, simulated answer)
+            (":CHANnel1:BWLimit?", "20M"),  # (query, simulated answer)
+        ],
     ) as instr:
         instr.channel_1.bwlimit = "20M"
         assert instr.channel_1.bwlimit == "20M"
@@ -134,3 +134,81 @@ def test_label_too_long_rejected():
         pytest.raises(ValueError),
     ):
         instr.channel_1.label = label_21_chars
+
+
+def test_offset_set():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:OFFSet -3.800E+00", None)],
+    ) as instr:
+        instr.channel_1.offset = -3.8
+
+
+def test_offset_get():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:OFFSet?", "-3.8E+00")],
+    ) as instr:
+        assert instr.channel_1.offset == -3.8
+
+
+def test_probe_set():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:PROBe VALue,1.00E+02", None)],
+    ) as instr:
+        instr.channel_1.probe = 100
+
+
+def test_probe_get():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:PROBe?", "1.00E+02")],
+    ) as instr:
+        assert instr.channel_1.probe == 100.0
+
+
+def test_probe_out_of_range_rejected():
+    with (
+        expected_protocol(
+            T3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.channel_1.probe = 2e6
+
+
+def test_unit_set_voltage():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:UNIT V", None)],
+    ) as instr:
+        instr.channel_1.unit = "V"
+
+
+def test_unit_set_current():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:UNIT A", None)],
+    ) as instr:
+        instr.channel_1.unit = "A"
+
+
+def test_unit_get():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:UNIT?", "A")],
+    ) as instr:
+        assert instr.channel_1.unit == "A"
+
+
+def test_unit_invalid_value_rejected():
+    with (
+            expected_protocol(
+                T3DSO3024HD,
+                [],
+            ) as instr,
+            pytest.raises(ValueError),
+        ):
+            instr.channel_1.unit = "OHM"

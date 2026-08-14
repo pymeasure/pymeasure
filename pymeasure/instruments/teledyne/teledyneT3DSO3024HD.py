@@ -90,6 +90,35 @@ class T3DSO3024HDChannel(Channel):
         cast=str,
     )
 
+    offset = Channel.control(
+        ":CHANnel{ch}:OFFSet?", ":CHANnel{ch}:OFFSet %.3E",
+        """Control the vertical offset of the channel in Volts (float).
+
+        Note: the range of legal values depends on the current
+        :attr:`scale` setting of the channel.""",
+        cast=float,
+    )
+
+    unit = Channel.control(
+        ":CHANnel{ch}:UNIT?", ":CHANnel{ch}:UNIT %s",
+        """Control the unit of the input signal of the channel (str), strictly 'V' or 'A'.""",
+        validator=strict_discrete_set,
+        values=["V", "A"],
+        cast=str,
+    )
+
+    probe = Channel.control(
+        ":CHANnel{ch}:PROBe?", ":CHANnel{ch}:PROBe VALue,%.2E",
+        """Control the probe attenuation factor of the channel (float), strictly in
+        range [1e-6, 1e6].
+
+        Note: the instrument also supports setting this to 'DEFault' (1x) via
+        the raw SCPI command, which is not exposed through this property.""",
+        validator=strict_range,
+        values=[1e-6, 1e6],
+        cast=float,
+    )
+
 
 class T3DSO3024HD(SCPIMixin, Instrument):
     """Represents the Teledyne T3DSO3024HD oscilloscope."""
