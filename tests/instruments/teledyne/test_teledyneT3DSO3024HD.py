@@ -97,3 +97,40 @@ def test_invert_invalid_value_rejected():
         pytest.raises(ValueError),
     ):
         instr.channel_1.invert = "YES"  # type: ignore
+
+
+def test_label_set():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:LABel:TEXT MyLabel", None)],
+    ) as instr:
+        instr.channel_1.label = "MyLabel"
+
+
+def test_label_get():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:LABel:TEXT?", "MyLabel")],
+    ) as instr:
+        assert instr.channel_1.label == "MyLabel"
+
+
+def test_label_exact_max_length_allowed():
+    label_20_chars = "A" * 20
+    with expected_protocol(
+        T3DSO3024HD,
+        [(f":CHANnel1:LABel:TEXT {label_20_chars}", None)],
+    ) as instr:
+        instr.channel_1.label = label_20_chars
+
+
+def test_label_too_long_rejected():
+    label_21_chars = "A" * 21
+    with (
+        expected_protocol(
+            T3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.channel_1.label = label_21_chars

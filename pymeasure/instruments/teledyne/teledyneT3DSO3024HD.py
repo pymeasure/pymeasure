@@ -71,6 +71,25 @@ class T3DSO3024HDChannel(Channel):
         cast=str,
     )
 
+    @staticmethod
+    def strict_length(value, max_length):
+        """Validator that ensures a string does not exceed max_length characters."""
+        value = str(value)
+        if len(value) > max_length:
+            raise ValueError(
+                f"Value '{value}' exceeds maximum length of {max_length} characters "
+                f"(length={len(value)})"
+            )
+        return value
+
+    label = Channel.control(
+        ":CHANnel{ch}:LABel:TEXT?", ":CHANnel{ch}:LABel:TEXT %s",
+        """Set the selected channel label to the string specified.""",
+        validator=strict_length,
+        values=20,
+        cast=str,
+    )
+
 
 class T3DSO3024HD(SCPIMixin, Instrument):
     """Represents the Teledyne T3DSO3024HD oscilloscope."""
