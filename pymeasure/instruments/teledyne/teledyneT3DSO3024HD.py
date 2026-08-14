@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments import Channel, Instrument, InstrumentProperty
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -37,15 +37,38 @@ class T3DSO3024HDChannel(Channel):
         values=["FULL", "20M", "200M"],
         cast=str,
     )
-    
+ 
     scale = Channel.control(
         ":CHANnel{ch}:SCALe?", ":CHANnel{ch}:SCALe %.3E",
         """Control the vertical scale of the channel in Volts/div (float).""",
         validator=strict_range,
-        values=[500e-6, 1e2],
+        values=[500e-6, 1e1],
         cast=float,
+        dynamic=True,
     )
 
+    impedance: InstrumentProperty[float] = Channel.control(
+        ":CHANnel{ch}:IMPedance?", ":CHANnel{ch}:IMPedance %s",
+        """Control the input impedance of the channel in Ohms, strictly 50 or 1e6 (float).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={50.0: "FIFT", 1e6: "ONEM"},
+        cast=str,
+    )
+    
+    def set_impedance(self, value):
+        """Set impedance and adjust the allowed scale range accordingly."""
+        self.impedance = value
+        self.scale_values = [500e-6, 1.0] if value == 50.0 else [500e-6, 1e1]
+        
+    invert: InstrumentProperty[bool] = Channel.control(
+        ":CHANnel{ch}:INVert?", ":CHANnel{ch}:INVert %s",
+        """Selects whether or not to mathematically invert the input signal for the specified channel.""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+        cast=str,
+    )   
 
 class T3DSO3024HD(SCPIMixin, Instrument):
     """Represents the Teledyne T3DSO3024HD oscilloscope."""
