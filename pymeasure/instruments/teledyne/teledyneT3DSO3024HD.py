@@ -71,6 +71,7 @@ class T3DSO3024HDChannel(Channel):
         cast=str,
     )
 
+
 class T3DSO3024HD(SCPIMixin, Instrument):
     """Represents the Teledyne T3DSO3024HD oscilloscope."""
 

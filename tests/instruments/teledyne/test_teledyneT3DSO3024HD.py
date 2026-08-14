@@ -31,11 +31,14 @@ from pymeasure.test import expected_protocol
 def test_bwlimit():
     with expected_protocol(
         T3DSO3024HD,
-        [(":CHANnel1:BWLimit 20M", None),   # (send CMD, answer=None )
-         (":CHANnel1:BWLimit?", "20M")],    # (query, simulated answer)
+        [
+            (":CHANnel1:BWLimit 20M", None),  # (send CMD, answer=None )
+            (":CHANnel1:BWLimit?", "20M"),
+        ],  # (query, simulated answer)
     ) as instr:
         instr.channel_1.bwlimit = "20M"
         assert instr.channel_1.bwlimit == "20M"
+
 
 def test_impedance_limits_scale_range():
     with expected_protocol(
@@ -51,6 +54,7 @@ def test_impedance_limits_scale_range():
         with pytest.raises(ValueError):
             # should raise a value error since impedance was set to 50.0
             instr.channel_1.scale = 2.0
+
 
 def test_invert_set_true():
     with expected_protocol(
@@ -83,9 +87,13 @@ def test_invert_get_false():
     ) as instr:
         assert instr.channel_1.invert is False
 
+
 def test_invert_invalid_value_rejected():
-    with expected_protocol(
-        T3DSO3024HD,
-        [],
-    ) as instr, pytest.raises(ValueError):
-        instr.channel_1.invert = "YES" # type: ignore
+    with (
+        expected_protocol(
+            T3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.channel_1.invert = "YES"  # type: ignore
