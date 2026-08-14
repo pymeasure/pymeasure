@@ -49,7 +49,8 @@ def test_impedance_limits_scale_range():
         instr.channel_1.scale = 0.5
 
         with pytest.raises(ValueError):
-            instr.channel_1.scale = 2.0   # should raise a value error since impedance was set to 50.0
+            # should raise a value error since impedance was set to 50.0
+            instr.channel_1.scale = 2.0
 
 def test_invert_set_true():
     with expected_protocol(
@@ -87,4 +88,4 @@ def test_invert_invalid_value_rejected():
         T3DSO3024HD,
         [],
     ) as instr, pytest.raises(ValueError):
-        instr.channel_1.invert = "YES"
+        instr.channel_1.invert = "YES" # type: ignore

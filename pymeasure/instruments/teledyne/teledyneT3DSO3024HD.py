@@ -63,7 +63,7 @@ class T3DSO3024HDChannel(Channel):
 
     invert: InstrumentProperty[bool] = Channel.control(
         ":CHANnel{ch}:INVert?", ":CHANnel{ch}:INVert %s",
-        """Control whether or not to mathematically invert the input signal for the 
+        """Control whether or not to mathematically invert the input signal for the
         specified channel.""",
         validator=strict_discrete_set,
         map_values=True,
