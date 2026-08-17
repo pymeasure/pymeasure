@@ -247,7 +247,7 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
         """
         warnings.warn("Don't use this function, use data_complex instead", FutureWarning)
         data_complex = self.data_complex
-        return data_complex.real, data_complex.complex
+        return data_complex.real, data_complex.imag
 
     def log_magnitude(self, real, imaginary):
         """ Returns the magnitude in dB from a real and imaginary

@@ -25,11 +25,14 @@ import json
 import logging
 import os
 import time
+from typing import Literal
 
 import numpy as np
 import pandas as pd
 
 from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
+from pymeasure.instruments.common_base import CommonBase, IdType
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range,
@@ -132,8 +135,12 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
     """
 
-    def __init__(self, adapter, name="Agilent 4155/4156 Semiconductor Parameter Analyzer",
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Agilent 4155/4156 Semiconductor Parameter Analyzer",
+        **kwargs,
+    ):
         super().__init__(
             adapter,
             name,
@@ -166,7 +173,8 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         values={'SWEEP': 'SWE', 'SAMPLING': 'SAMP'},
         map_values=True,
         check_set_errors=True,
-        check_get_errors=True
+        check_get_errors=True,
+        cast=str,
     )
 
     integration_time = Instrument.control(
@@ -183,7 +191,8 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         values={'SHORT': 'SHOR', 'MEDIUM': 'MED', 'LONG': 'LONG'},
         map_values=True,
         check_set_errors=True,
-        check_get_errors=True
+        check_get_errors=True,
+        cast=str
     )
 
     delay_time = Instrument.control(
@@ -198,7 +207,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         validator=truncated_discrete_set,
         values=np.arange(0, 65.1, 0.1),
         check_set_errors=True,
-        check_get_errors=True
+        check_get_errors=True,
     )
 
     hold_time = Instrument.control(
@@ -213,10 +222,11 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         validator=truncated_discrete_set,
         values=np.arange(0, 655, 1),
         check_set_errors=True,
-        check_get_errors=True
+        check_get_errors=True,
+        cast=int,
     )
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the ongoing measurement.
 
         .. code-block:: python
@@ -225,7 +235,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         """
         self.write(":PAGE:SCON:STOP")
 
-    def measure(self, period="INF", points=100):
+    def measure(self, period: float | Literal["INF"] = "INF", points: int = 100) -> None:
         """
         Perform a single measurement and wait for completion in sweep mode.
 
@@ -236,10 +246,11 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         :param points: Number of samples to be measured, from 1 to 10001.
             Default setting is :code:`100`.
 
-        .. code-block::python
+        .. code-block:: python
 
             instr.measure() #for sweep measurement
             instr.measure(period=100, points=100) #for sampling measurement
+
         """
         if self.analyzer_mode == "SWEEP":
             self.write(":PAGE:SCON:MEAS:SING; *OPC?")
@@ -249,7 +260,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
             self.write(f":PAGE:MEAS:SAMP:POIN {points}")
             self.write(":PAGE:SCON:MEAS:SING; *OPC?")
 
-    def disable_all(self):
+    def disable_all(self) -> None:
         """ Disable all channels in the instrument.
 
         .. code-block:: python
@@ -269,7 +280,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         self.vmu2.reset_settings()
         time.sleep(0.1)
 
-    def configure(self, config_file):
+    def configure(self, config_file: os.PathLike | str) -> None:
         """ Configure the channel setup and sweep using a JSON configuration file.
 
         (JSON is the `JavaScript Object Notation`_)
@@ -311,7 +322,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
                 setattr(obj, setting, value)
                 time.sleep(0.1)
 
-    def save(self, trace_list):
+    def save(self, trace_list: list[str] | str) -> None:
         """ Save the voltage or current in the instrument display list
 
         :param trace_list: A list of channel variables whose measured data should be saved.
@@ -338,13 +349,13 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
                 'multiple variables are being saved.'
             )
 
-    def save_var(self, trace_list):
+    def save_var(self, trace_list: list[str] | str) -> None:
         """ Save the voltage or current in the instrument variable list.
 
         This is useful if one or two more variables need to be saved in addition to the 8
         variables allowed by :meth:`~.Agilent4156.save`.
 
-        :param trace_list: A list of channel variables whose measured   data should be saved.
+        :param trace_list: A list of channel variables whose measured data should be saved.
             A maximum of 2 variables are allowed. If only one variable is being saved, a string
             can be specified.
 
@@ -427,7 +438,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         return df
 
 
-def check_current_voltage_name(name):
+def check_current_voltage_name(name: str) -> str:
     if (len(name) > 6) or not name[0].isalpha():
         new_name = 'a' + name[:5]
         log.info(f"Renaming {name} to {new_name}...")
@@ -458,7 +469,7 @@ class AgilentMeasurementChannel(Channel):
         cast=str,
     )
 
-    def reset_settings(self):
+    def reset_settings(self) -> list:
         """Reset the settings of this channel to default value.
 
         .. code-block:: python
@@ -469,7 +480,7 @@ class AgilentMeasurementChannel(Channel):
         return self.check_errors()
 
     @property
-    def disable(self):
+    def disable(self) -> None:
         """Set the settings of this channel to default value.
 
         .. code-block:: python
@@ -507,8 +518,9 @@ class AgilentMeasurementChannel(Channel):
 
 class SMU(AgilentMeasurementChannel):
     """SMU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
+    parent: Agilent4156
 
-    def __init__(self, parent, id, **kwargs):
+    def __init__(self, parent: Agilent4156, id: str, **kwargs):
         super().__init__(
             parent,
             id.upper(),
@@ -536,7 +548,7 @@ class SMU(AgilentMeasurementChannel):
     )
 
     @property
-    def constant_value(self):
+    def constant_value(self) -> str:
         """Control the constant source value of SMU<n>.
 
         You use this command only if :meth:`~.SMU.channel_function`
@@ -558,7 +570,7 @@ class SMU(AgilentMeasurementChannel):
         return value
 
     @constant_value.setter
-    def constant_value(self, const_value):
+    def constant_value(self, const_value: float) -> None:
         validator = strict_range
         values = self.__validate_cons()
         value = validator(const_value, values)
@@ -569,7 +581,7 @@ class SMU(AgilentMeasurementChannel):
         self.check_errors()
 
     @property
-    def compliance(self):
+    def compliance(self) -> str:
         """Control the *constant* compliance value of SMU<n>.
 
         If the SMU channel is setup as a variable (VAR1, VAR2, VARD) then compliance limits are
@@ -591,7 +603,7 @@ class SMU(AgilentMeasurementChannel):
         return value
 
     @compliance.setter
-    def compliance(self, comp):
+    def compliance(self, comp: float) -> None:
         validator = strict_range
         values = self.__validate_compl()
         value = validator(comp, values)
@@ -617,7 +629,7 @@ class SMU(AgilentMeasurementChannel):
         cast=str,
     )
 
-    def __validate_cons(self):
+    def __validate_cons(self) -> list[int]:
         """Validates the instrument settings for operation in constant mode.
         """
         if not ((self.channel_mode != 'COMM') and (
@@ -630,7 +642,7 @@ class SMU(AgilentMeasurementChannel):
             values = valid_iv(self.channel_mode)
         return values
 
-    def __validate_compl(self):
+    def __validate_compl(self) -> list[int]:
         """Validates the instrument compliance for operation in constant mode.
         """
         if not ((self.channel_mode != 'COMM') and (
@@ -647,7 +659,7 @@ class SMU(AgilentMeasurementChannel):
 class VMU(AgilentMeasurementChannel):
     """VMU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
 
-    def __init__(self, parent, id, **kwargs):
+    def __init__(self, parent: CommonBase, id: str, **kwargs):
         super().__init__(
             parent,
             id=id.upper(),
@@ -658,8 +670,9 @@ class VMU(AgilentMeasurementChannel):
 
 class VSU(AgilentMeasurementChannel):
     """VSU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
+    parent: Agilent4156
 
-    def __init__(self, parent, id, **kwargs):
+    def __init__(self, parent: Agilent4156, id: str, **kwargs):
         super().__init__(
             parent,
             id.upper(),
@@ -667,7 +680,7 @@ class VSU(AgilentMeasurementChannel):
         )
 
     @property
-    def constant_value(self):
+    def constant_value(self) -> str:
         """Control the constant source value of VSU<n>.
 
         .. code-block:: python
@@ -682,7 +695,7 @@ class VSU(AgilentMeasurementChannel):
         return value
 
     @constant_value.setter
-    def constant_value(self, const_value):
+    def constant_value(self, const_value: float) -> None:
         validator = strict_range
         values = [-200, 200]
         value = validator(const_value, values)
@@ -701,7 +714,7 @@ class VSU(AgilentMeasurementChannel):
 class VARX(Channel):
     """ Base class to define sweep variable settings."""
 
-    def __init__(self, parent, id, **kwargs):
+    def __init__(self, parent: CommonBase, id: str, **kwargs):
         super().__init__(
             parent,
             id.upper(),
@@ -709,7 +722,7 @@ class VARX(Channel):
         )
 
     @property
-    def channel_mode(self):
+    def channel_mode(self) -> str:
         """Control the channel mode."""
         channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
         for ch in channels:
@@ -719,7 +732,7 @@ class VARX(Channel):
         return ch_mode
 
     @property
-    def start(self):
+    def start(self) -> str:
         """Control the sweep START value.
 
         .. code-block:: python
@@ -731,15 +744,14 @@ class VARX(Channel):
         return value
 
     @start.setter
-    def start(self, value):
-        validator = strict_range
+    def start(self, value: float) -> None:
         values = valid_iv(self.channel_mode)
-        set_value = validator(value, values)
+        set_value = strict_range(value, values)
         self.write(f":PAGE:MEAS:{{ch}}:STAR {set_value}")
         self.check_errors()
 
     @property
-    def stop(self):
+    def stop(self) -> str:
         """Control the sweep STOP value.
 
         .. code-block:: python
@@ -751,7 +763,7 @@ class VARX(Channel):
         return value
 
     @stop.setter
-    def stop(self, value):
+    def stop(self, value: float) -> None:
         validator = strict_range
         values = valid_iv(self.channel_mode)
         set_value = validator(value, values)
@@ -759,7 +771,7 @@ class VARX(Channel):
         self.check_errors()
 
     @property
-    def step(self):
+    def step(self) -> str:
         """Control the sweep STEP value.
 
         .. code-block:: python
@@ -771,7 +783,7 @@ class VARX(Channel):
         return value
 
     @step.setter
-    def step(self, value):
+    def step(self, value: float) -> None:
         validator = strict_range
         values = 2 * valid_iv(self.channel_mode)
         set_value = validator(value, values)
@@ -779,7 +791,7 @@ class VARX(Channel):
         self.check_errors()
 
     @property
-    def compliance(self):
+    def compliance(self) -> str:
         """Control the sweep COMPLIANCE value.
 
         .. code-block:: python
@@ -791,7 +803,7 @@ class VARX(Channel):
         return value
 
     @compliance.setter
-    def compliance(self, value):
+    def compliance(self, value: float) -> None:
         validator = strict_range
         values = 2 * valid_compliance(self.channel_mode)
         set_value = validator(value, values)
@@ -804,7 +816,7 @@ class VAR1(VARX):
     Most common methods are inherited from base class.
     """
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent: CommonBase, **kwargs):
         super().__init__(
             parent,
             "VAR1",
@@ -833,9 +845,9 @@ class VAR2(VARX):
     Common methods are imported from base class.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, parent: CommonBase, **kwargs):
         super().__init__(
-            adapter,
+            parent,
             "VAR2",
             **kwargs
         )
@@ -864,7 +876,7 @@ class VARD(Channel):
     VARD is always defined in relation to VAR1.
     """
 
-    def __init__(self, parent, id="VARD", **kwargs):
+    def __init__(self, parent: CommonBase, id: IdType = "VARD", **kwargs):
         super().__init__(
             parent,
             id,
@@ -872,7 +884,7 @@ class VARD(Channel):
         )
 
     @property
-    def channel_mode(self):
+    def channel_mode(self) -> str:
         """Control the channel mode."""
         channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
         for ch in channels:
@@ -882,7 +894,7 @@ class VARD(Channel):
         return ch_mode
 
     @property
-    def offset(self):
+    def offset(self) -> str:
         """
         Control the OFFSET value of VARD.
         For each step of sweep, the output values of VAR1' are determined by the
@@ -898,7 +910,7 @@ class VARD(Channel):
         return value
 
     @offset.setter
-    def offset(self, offset_value):
+    def offset(self, offset_value: float) -> None:
         validator = strict_range
         values = 2 * valid_iv(self.channel_mode)
         value = validator(offset_value, values)
@@ -922,7 +934,7 @@ class VARD(Channel):
     )
 
     @property
-    def compliance(self):
+    def compliance(self) -> str:
         """Control the sweep COMPLIANCE value of VARD.
 
         .. code-block:: python
@@ -934,15 +946,14 @@ class VARD(Channel):
         return value
 
     @compliance.setter
-    def compliance(self, value):
-        validator = strict_range
+    def compliance(self, value: float) -> None:
         values = 2 * valid_compliance(self.channel_mode)
-        set_value = validator(value, values)
+        set_value = strict_range(value, values)
         self.write(f":PAGE:MEAS:VARD:COMP {set_value}")
         self.check_errors()
 
 
-def valid_iv(channel_mode):
+def valid_iv(channel_mode: Literal["V", "I"] | str) -> list[int]:
     if channel_mode == 'V':
         values = [-200, 200]
     elif channel_mode == 'I':
@@ -953,7 +964,7 @@ def valid_iv(channel_mode):
     return values
 
 
-def valid_compliance(channel_mode):
+def valid_compliance(channel_mode: Literal["V", "I"] | str) -> list[int]:
     if channel_mode == 'I':
         values = [-200, 200]
     elif channel_mode == 'V':

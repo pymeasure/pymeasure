@@ -29,6 +29,7 @@ from typing import Literal
 import numpy as np
 
 from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -255,10 +256,10 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
 
     BOOLS = {True: 1, False: 0}
 
-    def __init__(self, adapter, name="Keysight DSOX1102G Oscilloscope", **kwargs):
-        super().__init__(
-            adapter, name, timeout=6000, **kwargs
-        )
+    def __init__(
+        self, adapter: AdapterType, name: str = "Keysight DSOX1102G Oscilloscope", **kwargs
+    ):
+        super().__init__(adapter, name, timeout=6000, **kwargs)
         # Account for setup time for timebase_mode, waveform_points_mode
         self.ch1 = KeysightDSOXChannel(self, 1)
         self.ch2 = KeysightDSOXChannel(self, 2)
@@ -267,7 +268,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
     # Channel setup #
     #################
 
-    def autoscale(self):
+    def autoscale(self) -> None:
         """ Autoscale displayed channels. """
         self.write(":autoscale")
 
@@ -276,7 +277,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
     ##################
 
     @property
-    def timebase(self):
+    def timebase(self) -> dict[str, str | float]:
         """ Read timebase setup as a dict containing the following keys:
             - "REF": position on screen of timebase reference (str)
             - "MAIN:RANG": full-scale timebase range (float)
@@ -290,7 +291,8 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         "window", "xy", or "roll".""",
         validator=strict_discrete_set,
         values={"main": "MAIN", "window": "WIND", "xy": "XY", "roll": "ROLL"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     timebase_offset = Instrument.control(
@@ -321,7 +323,8 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         "hresolution", or "peak".""",
         validator=strict_discrete_set,
         values={"normal": "NORM", "average": "AVER", "hresolution": "HRES", "peak": "PEAK"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     acquisition_mode = Instrument.control(
@@ -329,21 +332,22 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         """ A string parameter that sets the acquisition mode. Can be "realtime" or "segmented".""",
         validator=strict_discrete_set,
         values={"realtime": "RTIM", "segmented": "SEGM"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
-    def run(self):
+    def run(self) -> None:
         """ Starts repetitive acquisitions.
 
         This is the same as pressing the Run key on the front panel.
         """
         self.write(":run")
 
-    def stop(self):
+    def stop(self) -> None:
         """  Stops the acquisition. This is the same as pressing the Stop key on the front panel."""
         self.write(":stop")
 
-    def single(self):
+    def single(self) -> None:
         """ Causes the instrument to acquire a single trigger of data.
         This is the same as pressing the Single key on the front panel. """
         self.write(":single")
@@ -359,7 +363,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         map_values=True
     )
 
-    def digitize(self, source: str):
+    def digitize(self, source: str) -> None:
         """ Acquire waveforms according to the settings of the :ACQuire commands. Ensure a delay
         between the digitize operation and further commands, as timeout may be reached before
         digitize has completed.
@@ -372,7 +376,8 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
          method. Can be "normal", "maximum", or "raw".""",
         validator=strict_discrete_set,
         values={"normal": "NORM", "maximum": "MAX", "raw": "RAW"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
     waveform_points = Instrument.control(
         ":waveform:points?", ":waveform:points %d",
@@ -382,7 +387,8 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
 
         Note that the oscilloscope may provide less than the specified nb of points. """,
         validator=strict_discrete_set,
-        values=[100, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 62500]
+        values=[100, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 62500],
+        cast=int,
     )
     waveform_source = Instrument.control(
         ":waveform:source?", ":waveform:source %s",
@@ -392,7 +398,8 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         validator=strict_discrete_set,
         values={"channel1": "CHAN1", "channel2": "CHAN2", "function": "FUNC", "fft": "FFT",
                 "wmemory1": "WMEM1", "wmemory2": "WMEM2", "ext": "EXT"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
     waveform_format = Instrument.control(
         ":waveform:format?", ":waveform:format %s",
@@ -401,11 +408,12 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         default.""",
         validator=strict_discrete_set,
         values={"ascii": "ASC", "word": "WORD", "byte": "BYTE"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     @property
-    def waveform_preamble(self):
+    def waveform_preamble(self) -> dict[str, str | float]:
         """ Get preamble information for the selected waveform source as a dict with the following keys:
             - "format": byte, word, or ascii (str)
             - "type": normal, peak detect, or average (str)
@@ -437,13 +445,13 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
     ################
 
     @property
-    def system_setup(self):
+    def system_setup(self) -> str:
         """ A string parameter that sets up the oscilloscope. Must be in IEEE 488.2 format.
         It is recommended to only set a string previously obtained from this command."""
         return self.ask(":system:setup?")
 
     @system_setup.setter
-    def system_setup(self, setup_string):
+    def system_setup(self, setup_string: str) -> None:
         self.write(":system:setup " + setup_string)
 
     def ch(self, channel_number: int) -> KeysightDSOXChannel:
@@ -454,20 +462,26 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         else:
             raise ValueError("Invalid channel number. Must be 1 or 2.")
 
-    def clear_status(self):
+    def clear_status(self) -> None:
         """ Clear device status. """
         self.write("*CLS")
 
-    def factory_reset(self):
+    def factory_reset(self) -> None:
         """ Factory default setup, no user settings remain unchanged. """
         self.write("*RST")
 
-    def default_setup(self):
+    def default_setup(self) -> None:
         """ Default setup, some user settings (like preferences) remain unchanged. """
         self.write(":SYSTem:PRESet")
 
-    def timebase_setup(self, mode=None, offset=None, horizontal_range=None, scale=None):
-        """ Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
+    def timebase_setup(
+        self,
+        mode: str | None = None,
+        offset: float | None = None,
+        horizontal_range: float | None = None,
+        scale: float | None = None,
+    ):
+        """Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to channel_setup if needed.
 
@@ -485,8 +499,12 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         if scale is not None:
             self.timebase_scale = scale
 
-    def download_image(self, format_="png", color_palette="color"):
-        """ Get image of oscilloscope screen in bytearray of specified file format.
+    def download_image(
+        self,
+        format_: Literal["png", "bmp8bit", "bmp"] = "png",
+        color_palette: Literal["color", "grayscale"] = "color",
+    ) -> bytearray:
+        """Get image of oscilloscope screen in bytearray of specified file format.
 
         :param format_: "bmp", "bmp8bit", or "png"
         :param color_palette: "color" or "grayscale"
@@ -496,7 +514,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         img = self.binary_values(query, header_bytes=10, dtype=np.uint8)
         return bytearray(img)
 
-    def download_data(self, source, points=62500):
+    def download_data(self, source: str, points: int = 62500):
         """ Get data from specified source of oscilloscope. Returned objects are a np.ndarray of
         data values (no temporal axis) and a dict of the waveform preamble, which can be used to
         build the corresponding time values for all data points.
@@ -521,7 +539,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         data_bytes = self.waveform_data
         return np.array(data_bytes), preamble
 
-    def _timebase(self):
+    def _timebase(self) -> dict[str, str | float]:
         """
         Reads setup data from timebase and converts it to a more convenient dict of values.
         """
@@ -549,7 +567,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
 
         return tb_setup
 
-    def _waveform_preamble(self):
+    def _waveform_preamble(self) -> dict[str, str | float]:
         """
         Reads waveform preamble and converts it to a more convenient dict of values.
         """

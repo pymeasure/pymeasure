@@ -30,6 +30,7 @@ from pyvisa import constants as vconst
 from pyvisa.errors import VisaIOError
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import AdapterType
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -45,7 +46,7 @@ class OxfordInstrumentsBase(Instrument):
     Checks the replies from instruments for validity.
 
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
-    :param string name: The name of the instrument. Often the model designation by default.
+    :param name: The name of the instrument. Often the model designation by default.
     :param max_attempts: Integer that sets how many attempts at getting a
         valid response to a query can be made
     :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
@@ -57,7 +58,13 @@ class OxfordInstrumentsBase(Instrument):
 
     regex_pattern = r"^([a-zA-Z])[\d.+-]*$"
 
-    def __init__(self, adapter, name="OxfordInstruments Base", max_attempts=5, **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "OxfordInstruments Base",
+        max_attempts: int = 5,
+        **kwargs,
+    ):
         kwargs.setdefault('read_termination', '\r')
 
         super().__init__(adapter,
