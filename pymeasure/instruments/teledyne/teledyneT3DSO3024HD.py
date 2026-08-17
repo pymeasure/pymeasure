@@ -30,6 +30,22 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 class T3DSO3024HDChannel(Channel):
     """Implementation of an analog channel on the :class:`T3DSO3024HD` oscilloscope."""
 
+    # CHANnel Commands
+    #
+    #   (✓)   :CHANnel<n>:BWLimit
+    #   (✓)   :CHANnel<n>:COUPling
+    #   (✓)   :CHANnel<n>:IMPedance
+    #   (✓)   :CHANnel<n>:INVert
+    #   (✓)   :CHANnel<n>:LABel
+    #   (✓)   :CHANnel<n>:LABel:TEXT
+    #   (✓)   :CHANnel<n>:OFFSet
+    #   (✓)   :CHANnel<n>:PROBe
+    #   (✓)   :CHANnel<n>:SCALe
+    #   (✓)   :CHANnel<n>:SKEW
+    #   (✓)   :CHANnel<n>:SWITch
+    #   (✓)   :CHANnel<n>:UNIT
+    #   (✓)   :CHANnel<n>:VISible
+
     bwlimit = Channel.control(
         ":CHANnel{ch}:BWLimit?", ":CHANnel{ch}:BWLimit %s",
         """Control the bandwidth limit of the channel (str), strictly in 'FULL', '20M', '200M'.""",
@@ -38,8 +54,16 @@ class T3DSO3024HDChannel(Channel):
         cast=str,
     )
 
+    coupling = Channel.control(
+        ":CHANnel{ch}:COUPling?", ":CHANnel{ch}:COUPling %s",
+        """Control the coupling of the channel (str), strictly in 'DC', 'AC', 'GND'.""",
+        validator=strict_discrete_set,
+        values=["DC", "AC", "GND"],
+        cast=str,
+    )
+
     scale = Channel.control(
-        ":CHANnel{ch}:SCALe?", ":CHANnel{ch}:SCALe %.3E",
+        ":CHANnel{ch}:SCALe?", ":CHANnel{ch}:SCALe %.2E",
         """Control the vertical scale of the channel in Volts/div (float).""",
         validator=strict_range,
         values=[500e-6, 1e1],
@@ -83,10 +107,39 @@ class T3DSO3024HDChannel(Channel):
         return value
 
     label = Channel.control(
+        ":CHANnel{ch}:LABel?", ":CHANnel{ch}:LABel %s",
+        """Set the selected channel label to ON or OFF.
+        Bool value 'True' or 'False'""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+        cast=str,
+    )
+
+    label_text = Channel.control(
         ":CHANnel{ch}:LABel:TEXT?", ":CHANnel{ch}:LABel:TEXT %s",
         """Set the selected channel label to the string specified.""",
         validator=strict_length,
         values=20,
+        cast=str,
+    )
+
+    skew = Channel.control(
+        ":CHANnel{ch}:SKEW?", ":CHANnel{ch}:SKEW %.2E",
+        """Set the channel-to-channel skew factor label specified.
+        The range of the value is [-1.00E-07, 1.00E-07].""",
+        validator=strict_range,
+        values=[-1e-7, 1e-7],
+        cast=float,
+    )
+
+    switch = Channel.control(
+        ":CHANnel{ch}:SWITch?", ":CHANnel{ch}:SWITch %s",
+        """Control the display of the specified channel ON or OFF.
+        Boolean value True or False.""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
         cast=str,
     )
 
@@ -117,6 +170,16 @@ class T3DSO3024HDChannel(Channel):
         validator=strict_range,
         values=[1e-6, 1e6],
         cast=float,
+    )
+
+    visible = Channel.control(
+        ":CHANnel{ch}:VISible?", ":CHANnel{ch}:VISible %s",
+        """Control to whether display the waveform of
+        the specified channel or not (ON or OFF). Boolean value True or False. """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+        cast=str,
     )
 
 
