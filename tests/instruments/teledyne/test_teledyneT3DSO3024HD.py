@@ -44,7 +44,7 @@ def test_impedance_limits_scale_range():
     with expected_protocol(
         T3DSO3024HD,
         [
-            (":CHANnel1:IMPedance FIFT", None),
+            (":CHANnel1:IMPedance FIFTy", None),
             (":CHANnel1:SCALe 5.00E-01", None),
         ],
     ) as instr:
