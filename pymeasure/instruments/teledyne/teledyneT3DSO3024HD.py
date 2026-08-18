@@ -71,18 +71,23 @@ class T3DSO3024HDChannel(Channel):
         dynamic=True,
     )
 
-    impedance: InstrumentProperty[float] = Channel.control(
+    _impedance: InstrumentProperty[float] = Channel.control(
         ":CHANnel{ch}:IMPedance?", ":CHANnel{ch}:IMPedance %s",
         """Control the input impedance of the channel in Ohms, strictly 50 or 1e6 (float).""",
         validator=strict_discrete_set,
         map_values=True,
-        values={50.0: "FIFT", 1e6: "ONEM"},
+        values={50.0: "FIFTy", 1e6: "ONEMeg"},
         cast=str,
     )
 
-    def set_impedance(self, value):
-        """Set impedance and adjust the allowed scale range accordingly."""
-        self.impedance = value
+    @property
+    def impedance(self) -> float:
+        """Control the input impedance of the channel in Ohms, strictly 50 or 1e6 (float)."""
+        return self._impedance
+
+    @impedance.setter
+    def impedance(self, value):
+        self._impedance = value
         self.scale_values = [500e-6, 1.0] if value == 50.0 else [500e-6, 1e1]
 
     invert: InstrumentProperty[bool] = Channel.control(
