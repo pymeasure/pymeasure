@@ -56,6 +56,14 @@ def test_impedance_limits_scale_range():
             instr.channel_1.scale = 2.0
 
 
+def test_impedance_get():
+    with expected_protocol(
+        T3DSO3024HD,
+        [(":CHANnel1:IMPedance?", "FIFTy")],
+    ) as instr:
+        assert instr.channel_1.impedance == 50.0
+
+
 def test_invert_set_true():
     with expected_protocol(
         T3DSO3024HD,
