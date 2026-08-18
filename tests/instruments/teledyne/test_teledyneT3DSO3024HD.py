@@ -48,7 +48,7 @@ def test_impedance_limits_scale_range():
             (":CHANnel1:SCALe 5.00E-01", None),
         ],
     ) as instr:
-        instr.channel_1.set_impedance(50.0)
+        instr.channel_1.impedance = 50.0
         instr.channel_1.scale = 0.5
 
         with pytest.raises(ValueError):
