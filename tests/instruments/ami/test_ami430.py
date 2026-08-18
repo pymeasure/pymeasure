@@ -39,9 +39,6 @@ def test_has_persistent_switch_enabled_true():
 
 
 def test_has_persistent_switch_enabled_false():
-    # Regression test: bool(self.ask(...)) is always True for a non-empty
-    # string reply, so a "0" (switch disabled) reply was incorrectly
-    # reported as enabled. See github.com/pymeasure/pymeasure/issues/1205.
     with expected_protocol(
             AMI430,
             INIT + [(b"PSwitch?", b"0")],
