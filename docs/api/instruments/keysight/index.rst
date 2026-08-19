@@ -22,3 +22,4 @@ If the instrument you are looking for is not here, also check :doc:`Agilent<../a
    keysight6811B
    keysight6812B
    keysight6813B
+   keysightE364xA

@@ -33,6 +33,7 @@ This file provides guidance to agents when working with code in this repository.
 - It is recommended to use `ruff format` for code formatting
 - You may add type hints as you see fit, adhering to the guidelines set out in the typing package
 - For typing use Python types like dict, list, if applicable
+- In Markdown files, start each sentence on a new line (semantic line breaks) so diffs show which sentence is affected; this applies to prose, not code blocks or tables
 
 ### Instrument drivers
 
@@ -53,7 +54,7 @@ This file provides guidance to agents when working with code in this repository.
 
 #### Property Creator Details
 
-- Use validators (strict_range, truncated_range, strict_discrete_set, truncated_discrete_set) to restrict property values
+- Use validators (strict_range, strict_discrete_set, etc.) to restrict property values; prefer strict validators by default, as truncated validators silently clip out-of-range values without feedback (only use a truncated validator when silent clipping is genuinely desired and documented in the property docstring)
 - Use map_values parameter when instrument commands require non-physical values
 - Implement boolean properties using maps with True/False values
 - Use set_process and get_process functions for value transformations (e.g., unit conversions)

@@ -29,6 +29,8 @@ from pymeasure.instruments.agilent.agilentB1500 import (
     CMU,
     SMU,
     SPGU,
+    ADCMode,
+    ADCType,
     ControlMode,
     MFCMUMeasurementMode,
     PgSelectorConnectionStatus,
@@ -81,19 +83,42 @@ class TestB1500:
         ) as inst:
             inst.set_port_connection(port, status)
 
+    def test_unit_names(self):
+        """Test that unit_names covers all initialized units."""
+        with expected_protocol(AgilentB1500Mock, []) as inst:
+            assert inst.unit_names == {
+                inst.spgu1.id: "SPGU1",
+                inst.cmu.id: "CMU",
+                inst.smu1.id: "SMU1",
+            }
+
+    def test_smu_names(self):
+        """Test that smu_names is the SMU-only subset of unit_names."""
+        with expected_protocol(AgilentB1500Mock, []) as inst:
+            assert inst.smu_names == {inst.smu1.id: "SMU1"}
+
+    def test_adc_setup(self):
+        with expected_protocol(
+            AgilentB1500,
+            [("AIT 0, 1", None), ("ERRX?", '0,"No error"')],
+        ) as inst:
+            inst.adc_setup(ADCType.HSADC, mode=ADCMode.MANUAL)
+
 
 class AgilentB1500Mock(AgilentB1500):
+    """B1500 with one unit per slot: SPGU in slot 1, CMU in slot 2, SMU in slot 3."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.spgu1 = SPGU(self, 1)
-        self.cmu = CMU(self, 2)
-        self.smu1 = SMU(self, index=1, smu_type="HRSMU", name="test", slot=1)
+        self.add_child(SPGU, id=1, collection="spgus", prefix="spgu")
+        self.add_child(CMU, id=2, collection="cmu", prefix=None)
+        self.add_child(SMU, id=1, collection="smus", prefix="smu", smu_type="HRSMU", slot=3)
 
 
 class TestSMU:
     """Tests for SMU module functionality."""
 
-    channel = 1
+    channel = 3
 
     def test_enable(self):
         """Test enable method."""
@@ -423,6 +448,21 @@ class TestCMU:
         with expected_protocol(AgilentB1500Mock, []) as inst, pytest.raises(ValueError):
             inst.cmu.measure(meas_range=500)
 
+    def test_read_data_cmu(self):
+        """Test read_data labels MFCMU data with the CMU unit name."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [
+                ("FMT 1, 0", None),
+                ("ERRX?", '+0,"No Error."'),
+                (None, "NBC+001.000E-12,NBY+002.000E-06"),
+            ],
+        ) as inst:
+            inst.data_format(1)
+            data = inst.read_data(1)
+            assert data.iloc[0]["CMU Capacitance (F)"] == 1e-12
+            assert data.iloc[0]["CMU Admittance (S)"] == 2e-6
+
     def test_set_cv_timings(self):
         """Test set_cv_timings method."""
         with expected_protocol(
@@ -469,3 +509,4 @@ class TestCMU:
             [(f"SSP 2, {path.value}", None)],
         ) as inst:
             inst.cmu.set_scuu_path(path)
+

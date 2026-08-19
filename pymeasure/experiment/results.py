@@ -31,13 +31,14 @@ from datetime import datetime
 from decimal import Decimal
 from importlib import import_module
 from string import Formatter
+from typing import Any
 
 import pandas as pd
 import pint
 
 from pymeasure.units import ureg
 
-from .procedure import Procedure, UnknownProcedure
+from .procedure import Procedure, ProcedureStatus, UnknownProcedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -135,7 +136,7 @@ class CSVFormatter(logging.Formatter):
         self.units = Procedure.parse_columns(columns)
         self.delimiter = delimiter
 
-    def format(self, record):
+    def format(self, record: dict[str, Any]) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Formats a record as csv.
 
         :param record: record to format.
@@ -232,7 +233,7 @@ class Results:
 
         if os.path.exists(data_filename):  # Assume header is already written
             self.reload()
-            self.procedure.status = Procedure.FINISHED
+            self.procedure.status = ProcedureStatus.FINISHED
             # TODO: Correctly store and retrieve status
         else:
             for filename in self.data_filenames:
@@ -265,9 +266,8 @@ class Results:
         spec.loader.exec_module(module)
         cls = getattr(module, self._class)
 
-        self.procedure = cls()
+        self.procedure: Procedure = cls()
         self.procedure.set_parameters(self._parameters)
-        self.procedure.refresh_parameters()
 
         self.procedure_class = cls
 
@@ -398,8 +398,6 @@ class Results:
                     f"'{procedure_class}', setting default value")
                 setattr(procedure, name, parameter.default)
 
-        procedure.refresh_parameters()  # Enforce update of meta data
-
         # Fill the procedure with the metadata found
         for name, metadata in procedure.metadata_objects().items():
             if metadata.name in parameters:
@@ -407,7 +405,7 @@ class Results:
                 setattr(procedure, name, value)
 
                 # Set the value in the metadata
-                metadata._value = value
+                metadata.value = value
                 metadata.evaluated = True
 
         return procedure

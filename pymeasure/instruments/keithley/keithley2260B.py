@@ -24,7 +24,7 @@
 
 from warnings import warn
 
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import Instrument, SCPIMixin, identity
 from pymeasure.instruments.validators import strict_discrete_set
 
 
@@ -107,6 +107,7 @@ class Keithley2260B(SCPIMixin, Instrument):
         whether the instrument is in constant current or constant voltage mode,
         the values achieved by the instrument will differ from the ones set.
         """,
+        get_process_list=identity,
     )
 
     @property

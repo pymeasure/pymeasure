@@ -28,15 +28,26 @@ import logging
 import re
 import sys
 from copy import deepcopy
+from typing import Any
+from warnings import warn
 
-from pint import UndefinedUnitError
+from pint import UndefinedUnitError, facets
 
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.units import ureg
 
 from .parameters import Measurable, Metadata, Parameter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+class ProcedureStatus(StrEnum):
+    FINISHED = "Finished"
+    FAILED = "Failed"
+    ABORTED = "Aborted"
+    QUEUED = "Queued"
+    RUNNING = "Running"
 
 
 class Procedure:
@@ -61,17 +72,12 @@ class Procedure:
 
     DATA_COLUMNS = []
     MEASURE = {}
-    FINISHED, FAILED, ABORTED, QUEUED, RUNNING = 0, 1, 2, 3, 4
-    STATUS_STRINGS = {
-        FINISHED: 'Finished', FAILED: 'Failed',
-        ABORTED: 'Aborted', QUEUED: 'Queued',
-        RUNNING: 'Running'
-    }
 
-    _parameters = {}
+    status: ProcedureStatus
+    _parameters: dict[str, Parameter] = {}
 
     def __init__(self, **kwargs):
-        self.status = Procedure.QUEUED
+        self.status = ProcedureStatus.QUEUED
         self._update_parameters()
         self._update_metadata()
         for key, value in kwargs.items():
@@ -81,7 +87,7 @@ class Procedure:
         self.gen_measurement()
 
     @staticmethod
-    def parse_columns(columns):
+    def parse_columns(columns: list[str]) -> dict[str, facets.plain.PlainUnit]:
         """Get columns with any units in parentheses.
         For each column, if there are matching parentheses containing text
         with no spaces, parse the value between the parentheses as a Pint unit. For example,
@@ -107,7 +113,7 @@ class Procedure:
                         "DATA_COLUMNS contains valid Pint units.")
         return units
 
-    def gen_measurement(self):
+    def gen_measurement(self) -> None:
         """Create MEASURE and DATA_COLUMNS variables for get_datapoint method."""
         # TODO: Refactor measurable-s implementation to be consistent with parameters
 
@@ -126,12 +132,12 @@ class Procedure:
         data = {key: getattr(self, self.MEASURE[key]).value for key in self.MEASURE}
         return data
 
-    def measure(self):
+    def measure(self) -> None:
         data = self.get_datapoint()
         log.debug(f"Produced numbers: {data}")
         self.emit('results', data)
 
-    def _update_parameters(self):
+    def _update_parameters(self) -> None:
         """ Collects all the Parameter objects for the procedure and stores
         them in a meta dictionary so that the actual values can be set in
         their stead
@@ -141,19 +147,15 @@ class Procedure:
         for item, parameter in inspect.getmembers(self.__class__):
             if isinstance(parameter, Parameter):
                 self._parameters[item] = deepcopy(parameter)
-                if parameter.is_set():
-                    setattr(self, item, parameter.value)
-                else:
-                    setattr(self, item, None)
 
-    def parameters_are_set(self):
+    def parameters_are_set(self) -> bool:
         """ Returns True if all parameters are set """
         for name in self._parameters:
             if getattr(self, name) is None:
                 return False
         return True
 
-    def check_parameters(self):
+    def check_parameters(self) -> None:
         """ Raises an exception if any parameter is missing before calling
         the associated function. Ensures that each value can be set and
         got, which should cast it into the right format. Used as a decorator
@@ -164,72 +166,58 @@ class Procedure:
             if value is None:
                 raise NameError(f"Missing {parameter.__class__} '{name}' in {self.__class__}")
 
-    def parameter_values(self):
+    def parameter_values(self) -> dict[str, Any]:
         """ Returns a dictionary of all the Parameter values and grabs any
         current values that are not in the default definitions
         """
-        result = {}
-        for name, parameter in self._parameters.items():
-            value = getattr(self, name)
-            if value is not None:
-                parameter.value = value
-                setattr(self, name, parameter.value)
-                result[name] = parameter.value
-            else:
-                result[name] = None
+        result: dict[str, Any] = {}
+        for name in self._parameters:
+            result[name] = getattr(self, name)
         return result
 
-    def parameter_objects(self):
+    def parameter_objects(self) -> dict[str, Parameter]:
         """ Returns a dictionary of all the Parameter objects and grabs any
         current values that are not in the default definitions
         """
-        result = {}
-        for name, parameter in self._parameters.items():
-            value = getattr(self, name)
-            if value is not None:
-                parameter.value = value
-                setattr(self, name, parameter.value)
-            result[name] = parameter
-        return result
+        return dict(self._parameters)
 
-    def refresh_parameters(self):
-        """ Enforces that all the parameters are re-cast and updated in the meta
-        dictionary
+    def refresh_parameters(self) -> None:
+        """No-op retained for API compatibility.
+
+        .. deprecated:: 0.17.0
+            Historically re-cast parameter values; now a no-op retained for API
+            compatibility since ``__set__`` eagerly converts values at assignment
+            time.
+
         """
-        for name, parameter in self._parameters.items():
-            value = getattr(self, name)
-            parameter.value = value
-            setattr(self, name, parameter.value)
+        warn(
+            "`refresh_parameters` is deprecated as it does nothing, just remove the call.",
+            FutureWarning,
+        )
 
-    def set_parameters(self, parameters, except_missing=True):
+    def set_parameters(self, parameters: dict[str, Any], except_missing: bool = True) -> None:
         """ Sets a dictionary of parameters and raises an exception if additional
         parameters are present if except_missing is True
         """
         for name, value in parameters.items():
             if name in self._parameters:
-                self._parameters[name].value = value
-                setattr(self, name, self._parameters[name].value)
+                setattr(self, name, value)
             else:
                 if except_missing:
                     raise NameError(f"Parameter '{name}' does not belong to '{self!r}'")
 
-    def _update_metadata(self):
+    def _update_metadata(self) -> None:
         """ Collects all the Metadata objects for the procedure and stores
         them in a meta dictionary so that the actual values can be set and used
         in their stead
         """
-        self._metadata = {}
+        self._metadata: dict[str, Metadata] = {}
 
         for item, metadata in inspect.getmembers(self.__class__):
             if isinstance(metadata, Metadata):
                 self._metadata[item] = deepcopy(metadata)
 
-                if metadata.is_set():
-                    setattr(self, item, metadata.value)
-                else:
-                    setattr(self, item, None)
-
-    def evaluate_metadata(self):
+    def evaluate_metadata(self) -> None:
         """ Evaluates all Metadata objects, fixing their values to the current value
         """
         for item, metadata in self._metadata.items():
@@ -239,45 +227,45 @@ class Procedure:
             # Make the value of the metadata easily accessible
             setattr(self, item, value)
 
-    def metadata_objects(self):
+    def metadata_objects(self) -> dict[str, Metadata]:
         """ Returns a dictionary of all the Metadata objects
         """
         return self._metadata
 
-    def placeholder_objects(self):
+    def placeholder_objects(self) -> dict[str, Parameter | Metadata]:
         """ Collect all eligible placeholders (parameters & metadata) with their value in a dict.
         """
         return {**self.parameter_objects(), **self.metadata_objects()}
 
     @classmethod
-    def placeholder_names(cls):
+    def placeholder_names(cls) -> list[str]:
         """ Collect the names of all eligible placeholders (parameters & metadata)"""
-        placeholders = []
+        placeholders: list[str] = []
         for _, item in inspect.getmembers(cls):
             if isinstance(item, (Metadata, Parameter)):
                 placeholders.append(item.name)
 
         return list(set(placeholders))
 
-    def startup(self):
+    def startup(self) -> None:
         """ Executes the commands needed at the start-up of the measurement
         """
 
-    def execute(self):
+    def execute(self) -> None:
         """ Perform the commands needed for the measurement itself. During
         execution the shutdown method will always be run following this method.
         This includes when Exceptions are raised.
         """
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """ Executes the commands necessary to shut down the instruments
         and leave them in a safe state. This method is always run at the end.
         """
 
-    def emit(self, topic, record):
+    def emit(self, topic, record) -> None:
         raise NotImplementedError('should be monkey patched by a worker')
 
-    def should_stop(self):
+    def should_stop(self) -> bool:
         raise NotImplementedError('should be monkey patched by a worker')
 
     def is_last(self) -> bool:
@@ -290,7 +278,7 @@ class Procedure:
         """
         raise NotImplementedError("should be monkey patched by a worker")
 
-    def get_estimates(self):
+    def get_estimates(self) -> int | float | list[tuple[str, str]]:
         """ Function that returns estimates that are to be displayed by
         the EstimatorWidget. Must be reimplemented by subclasses. Should
         return an int or float representing the duration in seconds, or
@@ -300,14 +288,14 @@ class Procedure:
         """
         raise NotImplementedError('Must be reimplemented by subclasses')
 
-    def __str__(self):
+    def __str__(self) -> str:
         result = repr(self) + "\n"
         for parameter in self._parameters.items():
             result += str(parameter)
         return result
 
-    def __repr__(self):
-        return (f"<{self.__class__.__name__}(status={self.STATUS_STRINGS[self.status]},"
+    def __repr__(self) -> str:
+        return (f"<{self.__class__.__name__}(status={self.status!s},"
                 f"parameters_are_set={self.parameters_are_set()})>")
 
 
@@ -316,20 +304,26 @@ class UnknownProcedure(Procedure):
     during loading in the :class:`.Results` class
     """
 
-    def __init__(self, parameters):
+    def __init__(self, parameters: dict[str, str]):
         super().__init__()
         self._parameters = parameters
 
-    def startup(self):
+    def parameter_objects(self) -> dict[str, Parameter]:
+        return {}
+
+    def metadata_objects(self) -> dict[str, Metadata]:
+        return {}
+
+    def startup(self) -> None:
         raise NotImplementedError("UnknownProcedure can not be run")
 
 
 class ProcedureWrapper:
 
-    def __init__(self, procedure):
+    def __init__(self, procedure: Procedure):
         self.procedure = procedure
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         # Get all information needed to reconstruct procedure
         self._parameters = self.procedure.parameter_values()
         self._class = self.procedure.__class__.__name__
@@ -342,19 +336,18 @@ class ProcedureWrapper:
         del state['procedure']
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]) -> None:
         self.__dict__.update(state)
 
         # Restore the procedure
         spec = importlib.util.spec_from_file_location(self._module, self._file)
-        module = importlib.util.module_from_spec(spec)
+        module = importlib.util.module_from_spec(spec)  # type: ignore[reportArgumentType]
         sys.modules[self._module] = module
         spec.loader.exec_module(module)
         cls = getattr(module, self._class)
 
-        self.procedure = cls()
+        self.procedure: Procedure = cls()
         self.procedure.set_parameters(self._parameters)
-        self.procedure.refresh_parameters()
 
         del self._parameters
         del self._class

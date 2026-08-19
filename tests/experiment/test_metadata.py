@@ -26,6 +26,7 @@ import pytest
 
 from pymeasure.experiment.parameters import Metadata
 from pymeasure.experiment.procedure import Procedure
+from pymeasure.experiment.results import Results
 
 
 def test_metadata_default():
@@ -115,3 +116,89 @@ def test_metadata_fget_evaluation():
     assert pr._metadata["md_str_prop"].value == 24
     assert pr._metadata["md_nest_call"].value == 84
     assert pr._metadata["md_nest_prop"].value == 48
+
+
+def test_metadata_set_stores_on_metadata_object_not_side_dict():
+    class TestProcedure(Procedure):
+        md = Metadata('Test', default=5)
+
+    pr = TestProcedure()
+    pr.md = 42
+    assert pr._metadata["md"]._value == 42
+    assert not hasattr(pr, "_metadata_values")
+
+
+def test_metadata_none_passthrough_does_not_call_convert():
+    class NoConvertMetadata(Metadata):
+        def convert(self, value):
+            raise AssertionError("convert should not be called for None")
+
+    class TestProcedure(Procedure):
+        md = NoConvertMetadata('Test', default=5)
+
+    pr = TestProcedure()
+    pr.md = None
+    assert pr._metadata["md"]._value is None
+
+
+def test_metadata_convert_identity_and_override():
+    md = Metadata('Test')
+    assert md.convert(42) == 42
+
+    class DoublingMetadata(Metadata):
+        def convert(self, value):
+            return value * 2
+
+    class TestProcedure(Procedure):
+        md = DoublingMetadata('Test', default=5)
+
+    pr = TestProcedure()
+    pr.md = 10
+    assert pr._metadata["md"]._value == 20
+
+
+def test_metadata_evaluate_routes_new_value_through_convert():
+    class DoublingMetadata(Metadata):
+        def convert(self, value):
+            return value * 2
+
+    class TestProcedure(Procedure):
+        md = DoublingMetadata('Test')
+
+    pr = TestProcedure()
+    pr._metadata["md"].evaluate(parent=pr, new_value=7)
+    assert pr._metadata["md"]._value == 14
+
+
+def test_metadata_evaluate_routes_fget_through_convert():
+    class DoublingMetadata(Metadata):
+        def convert(self, value):
+            return value * 2
+
+    class TestProcedure(Procedure):
+        md = DoublingMetadata('Test', fget=lambda: 10)
+
+    pr = TestProcedure()
+    pr._metadata["md"].evaluate(parent=pr)
+    assert pr._metadata["md"]._value == 20
+
+
+def test_results_parse_header_routes_metadata_through_convert(tmp_path):
+    class DoublingMetadata(Metadata):
+        def convert(self, value):
+            return int(value) * 2
+
+    class TestProcedure(Procedure):
+        md = DoublingMetadata('Test MD')
+
+    TestProcedure()
+    header_lines = [
+        "#Procedure: <TestProcedure>",
+        "#Parameters:",
+        "#Metadata:",
+        "#\tTest MD: 5",
+    ]
+    header = "\n".join(header_lines)
+    procedure = Results.parse_header(header, TestProcedure)
+    assert procedure._metadata["md"]._value == 10
+    assert procedure._metadata["md"].evaluated is True

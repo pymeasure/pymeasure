@@ -65,6 +65,9 @@ PyMeasure documents code using reStructuredText and the `Sphinx documentation ge
 reStructuredText heading underlines must be exactly as long as the heading text.
 For example, for a heading "HCP TC038 crystal oven" (22 characters), use exactly 22 hash characters: ``######################``.
 
+In Markdown and reStructuredText prose, start each sentence on a new line (semantic line breaks) so that diffs show which sentence is affected.
+This does not apply to code blocks or tables.
+
 
 Usage of getter and setter functions
 ====================================

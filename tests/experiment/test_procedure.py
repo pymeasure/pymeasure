@@ -28,7 +28,7 @@ import pytest
 from data.procedure_for_testing import RandomProcedure
 
 from pymeasure.experiment.parameters import Parameter
-from pymeasure.experiment.procedure import Procedure, ProcedureWrapper
+from pymeasure.experiment.procedure import Procedure, ProcedureWrapper, UnknownProcedure
 from pymeasure.units import ureg
 
 
@@ -124,3 +124,78 @@ def test_procedure_no_parsed_units(valid_header_no_unit):
 def test_procedure_invalid_parsed_unit(invalid_header_unit):
     with pytest.raises(ValueError):
         Procedure.parse_columns(invalid_header_unit)
+
+
+# Phase 2: non-idempotent convert must not be double-invoked.
+
+
+class _CountingParameter(Parameter):
+    """Parameter subclass recording every `convert` invocation."""
+
+    def __init__(self, name, default=None, **kwargs):
+        self.convert_calls: list = []
+        super().__init__(name, default=default, **kwargs)
+
+    def convert(self, value):
+        self.convert_calls.append(value)
+        return value
+
+
+def test_parameter_values_does_not_double_convert():
+    """`parameter_values()` must not invoke `convert` a second time on already-converted values."""
+
+    class TestProcedure(Procedure):
+        x = _CountingParameter('X', default=None)
+
+    p = TestProcedure()
+    p.x = 5
+    # one convert call from the descriptor __set__
+    assert p._parameters['x'].convert_calls == [5]
+    values = p.parameter_values()
+    assert values['x'] == 5
+    # no additional convert calls
+    assert p._parameters['x'].convert_calls == [5]
+
+
+def test_parameter_objects_does_not_double_convert():
+    """`parameter_objects()` must not invoke `convert` a second time on already-converted values."""
+
+    class TestProcedure(Procedure):
+        x = _CountingParameter('X', default=None)
+
+    p = TestProcedure()
+    p.x = 7
+    assert p._parameters['x'].convert_calls == [7]
+    objs = p.parameter_objects()
+    assert objs['x'].value == 7
+    assert p._parameters['x'].convert_calls == [7]
+
+
+def test_param_values_not_populated():
+    """`_param_values` is no longer created by `_update_parameters`."""
+
+    class TestProcedure(Procedure):
+        x = Parameter('X', default=5)
+
+    p = TestProcedure()
+    assert getattr(p, '_param_values', None) is None
+
+
+def test_procedure_wrapper_pickle_with_unset_parameter():
+    """Pickling a procedure with an unset (None) parameter round-trips without raising."""
+    procedure = RandomProcedure()
+    procedure.iterations = 101
+    procedure.seed = None
+    wrapper = ProcedureWrapper(procedure)
+
+    new_wrapper = pickle.loads(pickle.dumps(wrapper))
+    assert new_wrapper.procedure.iterations == 101
+    assert new_wrapper.procedure.seed is None
+    assert RandomProcedure.iterations.value == 100
+
+
+def test_unknown_procedure_parameter_objects_returns_empty():
+    """`UnknownProcedure.parameter_objects()` returns `{}` (nothing restorable)."""
+    p = UnknownProcedure({'iterations': '100', 'delay': '0.001'})
+    assert p.parameter_objects() == {}
+    assert p.metadata_objects() == {}

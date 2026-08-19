@@ -161,6 +161,6 @@ def test_output_load_inf_or_50(generator):
     measured_50 = generator.output_load
     assert measured_50 == pytest.approx(50.0, rel=1e-3, abs=1e-3)
 
-    generator.output_load = "INF"
+    generator.output_load = float("inf")
     measured_inf = generator.output_load
     assert math.isinf(measured_inf) or measured_inf >= 9.9e37

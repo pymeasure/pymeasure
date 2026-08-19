@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from collections.abc import Callable
 from importlib.util import find_spec
 from time import sleep
 
@@ -106,7 +107,7 @@ class SynchronousAI:
         command.flags = CMDF.wake_eos
         return command
 
-    def _verifyCommand(self):
+    def _verifyCommand(self) -> None:
         """ Checks the command over three times and allows comedi to correct
         the command given any device specific conflicts
         """
@@ -115,7 +116,7 @@ class SynchronousAI:
             if rc is None:
                 break
 
-    def measure(self, hasAborted=lambda: False):
+    def measure(self, hasAborted: Callable[[], bool] = lambda: False) -> None:
         """ Initiates the scan after first checking the command
         and does not block, returns the starting timestamp
         """
@@ -143,7 +144,7 @@ class SynchronousAI:
                 bin_slice += self.subdevice.device.file.read(size)
             previous_bin_slice = bin_slice[size:]
             bin_slice = bin_slice[:size]
-            slice = np.fromstring(
+            slice = np.fromstring(  # type: ignore
                 bin_slice,
                 dtype=dtype,
                 count=length

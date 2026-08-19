@@ -100,9 +100,8 @@ class Instrument(CommonBase):
     def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool | None:
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.shutdown()
-        return None
 
     # Wrapper functions for the Adapter object
     def write(self, command: str, **kwargs) -> None:
