@@ -153,7 +153,7 @@ class Keysight681xB(SCPIMixin, Instrument):
         "TRIG:SEQ1:SOUR %s",
         """Control the trigger source for first sequence. Can be BUS|EXT|IMM.
 
-        When set to BUS, the trigger will activate after receiving a *TRG command over GPIB.
+        When set to BUS, the trigger will activate after receiving a `*TRG` command over GPIB.
         When set to EXTernal, the AC source backplane BNC trigger input is used as the trigger.
         When set to IMMediate, the trigger is generated as soon as the trigger system is initiated.
         """,
@@ -275,7 +275,7 @@ class Keysight681xB(SCPIMixin, Instrument):
 
         This method uses the existing voltage setpoint to set a voltage step level on trigger.
         The voltage setpoint is set to 0V, the output is enabled, and the trigger system is used
-        to step the voltage to the prior setpoint when we send *TRG and the waveform phase
+        to step the voltage to the prior setpoint when we send `*TRG` and the waveform phase
         reaches `phase`. A GPIB trigger is sent.
 
         After this method, the voltage setpoint will be the same as before, the trigger SYNC
