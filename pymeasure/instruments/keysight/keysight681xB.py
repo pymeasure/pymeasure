@@ -429,7 +429,7 @@ class Keysight681xB(SCPIMixin, Instrument):
             raise ValueError(
                 f"Length error, received array of length {len(data)}; length must be 1024."
             )
-        data_f = data.astype(float)
+        data_f = np.asarray(data, dtype=float)
 
         # Preprocess name, delete existing trace if present
         name = name.upper()
