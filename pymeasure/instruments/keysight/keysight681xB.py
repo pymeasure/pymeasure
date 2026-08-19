@@ -21,14 +21,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import logging
 from time import sleep
 
 import numpy as np
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pymeasure.instruments._strenum import StrEnum
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Functions(StrEnum):
@@ -89,7 +93,7 @@ class Keysight681xB(SCPIMixin, Instrument):
     frequency_setpoint = Instrument.control(
         "FREQ?",
         "FREQ %f",
-        """Control the frequency setpoint in hertz""",
+        """Control the frequency setpoint in hertz.""",
         validator=strict_range,
         values=FREQ_RANGE,
     )
@@ -135,30 +139,26 @@ class Keysight681xB(SCPIMixin, Instrument):
         cast=str,
     )
 
-    output_state = Instrument.control(
+    output_enabled = Instrument.control(
         "OUTPUT:STATE?",
         "OUTPUT:STATE %s",
-        """Control the enable/disable state of the AC source (bool).
-
-        See also :py:method:`output_enable()`.
-        """,
+        """Control the enabled/disabled state of the AC source (bool).""",
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True,
-        cast=str,
     )
 
     trigger_source = Instrument.control(
         "TRIG:SOUR?",
         "TRIG:SEQ1:SOUR %s",
-        """Control the trigger source for first sequence. Can be BUS|EXTernal|IMMediate.
+        """Control the trigger source for first sequence. Can be BUS|EXT|IMM.
 
         When set to BUS, the trigger will activate after receiving a *TRG command over GPIB.
         When set to EXTernal, the AC source backplane BNC trigger input is used as the trigger.
         When set to IMMediate, the trigger is generated as soon as the trigger system is initiated.
         """,
         validator=strict_discrete_set,
-        values=["BUS", "EXT", "EXTERNAL", "IMM", "IMMEDIATE"],
+        values=["BUS", "EXT", "IMM"],
         cast=str,
     )
 
@@ -169,17 +169,17 @@ class Keysight681xB(SCPIMixin, Instrument):
         The trigger system can delay the trigger event until a certain synchronization event
         occurs. In particular, it can delay until the waveform phase reaches a particular value.
 
-        Values can be IMMediate|PHASe.
+        Values can be IMM|PHAS.
         """,
         validator=strict_discrete_set,
-        values=["IMM", "IMMEDIATE", "PHAS", "PHASE"],
+        values=["IMM", "PHAS"],
         cast=str,
     )
 
     trigger_sync_phase = Instrument.control(
         "TRIG:SYNC:PHASE?",
         "TRIG:SYNC:PHASE %f",
-        """Control the trigger synchronization phase value.
+        """Control the trigger synchronization phase value in degrees.
 
         When the trigger is phase synchronized, it waits until the waveform reaches this phase
         before the triggered event actually occurs.
@@ -191,7 +191,7 @@ class Keysight681xB(SCPIMixin, Instrument):
     voltage_trigger_level = Instrument.control(
         "VOLT:TRIG?",
         "VOLT:TRIG %f",
-        """Control the AC RMS amplitude of the output waveform when triggered.""",
+        """Control the AC RMS amplitude in volts of the output waveform when triggered.""",
         validator=strict_range,
         values=[0, 1],
         dynamic=True,
@@ -200,16 +200,16 @@ class Keysight681xB(SCPIMixin, Instrument):
     voltage_trigger_mode = Instrument.control(
         "VOLT:MODE?",
         "VOLT:MODE %s",
-        """Control the voltage trigger mode""",
+        """Control the voltage trigger mode. Can be FIX|STEP|PULS|LIST.""",
         validator=strict_discrete_set,
-        values=["FIX", "FIXED", "STEP", "PULS", "PULSE", "LIST"],
+        values=["FIX", "STEP", "PULS", "LIST"],
         cast=str,
     )
 
     pulse_count = Instrument.control(
         "PULSE:COUNT?",
         "PULSE:COUNT %f",
-        """Control the number of pulses when trigger mode is set to PULSE.""",
+        """Control the number of pulses when trigger mode is set to PULS.""",
         validator=strict_range,
         values=[1, 9.9e37],
     )
@@ -217,15 +217,15 @@ class Keysight681xB(SCPIMixin, Instrument):
     pulse_period = Instrument.control(
         "PULSE:PER?",
         "PULSE:PER %f",
-        """Control pulse period in seconds when trigger mode is set to PULSE.""",
+        """Control pulse period in seconds when trigger mode is set to PULS.""",
         validator=strict_range,
-        values=[0, 4.30133e5],
+        values=[0, 430133],
     )
 
     pulse_duty_cycle_pct = Instrument.control(
         "PULSE:DCYCLE?",
         "PULSE:DCYCLE %f",
-        """Control pulse duty cycle as a percentage (0-100) when trigger mode is set to PULSE.""",
+        """Control pulse duty cycle as a percentage (0-100) when trigger mode is set to PULS.""",
         validator=strict_range,
         values=[0, 100],
     )
@@ -234,17 +234,17 @@ class Keysight681xB(SCPIMixin, Instrument):
         "PULSE:WIDTH?",
         "PULSE:WIDTH %f",
         """Control the width in seconds of a transient output pulse when trigger mode is set to
-        PULSE.""",
+        PULS.""",
         validator=strict_range,
         values=[0, 4.30133e5],
     )
 
     voltage_sense_source = Instrument.control(
         "VOLTAGE:SENSE:SOURCE?", "VOLTAGE:SENSE:SOURCE %s",
-        """Control the source from which the output voltage is sensed. Can be INTernal or
-        EXTernal.""",
+        """Control the source from which the output voltage is sensed. Can be INT or
+        EXT.""",
         validator=strict_discrete_set,
-        values=['EXT', 'EXTERNAL', 'INT', 'INTERNAL'],
+        values=['EXT', 'INT'],
         cast=str,
     )
 
@@ -270,10 +270,6 @@ class Keysight681xB(SCPIMixin, Instrument):
         self.trigger_source = "BUS"
         self.write("*TRG")
 
-    def output_enable(self, enable: bool = True):
-        """Enable or disable the AC source."""
-        self.output_state = enable
-
     def output_enable_at_phase(self, trig_phase: float):
         """Enable the output at a given phase.
 
@@ -283,7 +279,7 @@ class Keysight681xB(SCPIMixin, Instrument):
         reaches `phase`. A GPIB trigger is sent.
 
         After this method, the voltage setpoint will be the same as before, the trigger SYNC
-        source will be PHASE, and the voltage trigger mode will be STEP.
+        source will be PHAS, and the voltage trigger mode will be STEP.
 
         Example:
         ```python
@@ -296,46 +292,46 @@ class Keysight681xB(SCPIMixin, Instrument):
         """
         vset = self.voltage_setpoint
         self.voltage_setpoint = 0
-        self.output_enable(True)
+        self.output_enabled = True
         self.voltage_trigger_mode = "STEP"
         self.voltage_trigger_level = vset
-        self.trigger_sync_source = "PHASE"
+        self.trigger_sync_source = "PHAS"
         self.trigger_sync_phase = trig_phase
         sleep(1)  # MUST dwell here for trigger to work.
         self.arm_immediate_trigger()
         self.send_GPIB_trigger()
 
-    def output_pulse(self, Vdefault, Vpulse, pulse_period, N_pulses=1, pulse_ON_time=-1):
+    def output_pulse(self, v_default, v_pulse, pulse_period, npulses=1, pulse_on_time=-1):
         """Trigger one or more voltage pulses.
 
-        :param N_pulses: number of pulses to output
-        :param Vdefault: default voltage, or pulse OFF state voltage
-        :param Vpulse: pulse ON state voltage
+        :param v_default: default voltage, or pulse OFF state voltage
+        :param v_pulse: pulse ON state voltage
         :param pulse_period: Time duration of one full pulse (an ON and an OFF duration)
-        :param pulse_ON_time: Time duration for pulse ON state, or -1 for a single pulse.
+        :param npulses: number of pulses to output
+        :param pulse_on_time: Time duration for pulse ON state, or -1 for a single pulse.
         """
-        if pulse_ON_time == -1:
-            pulse_ON_time = pulse_period
-        self.voltage_setpoint = Vdefault
-        self.output_enable(True)
+        if pulse_on_time == -1:
+            pulse_on_time = pulse_period
+        self.voltage_setpoint = v_default
+        self.output_enabled = True
         sleep(1)  # Dwell before trigger setup
-        self.voltage_trigger_mode = "PULSE"
-        self.voltage_trigger_level = Vpulse
-        self.pulse_count = N_pulses
+        self.voltage_trigger_mode = "PULS"
+        self.voltage_trigger_level = v_pulse
+        self.pulse_count = npulses
         self.pulse_period = pulse_period
-        self.pulse_width = pulse_ON_time
+        self.pulse_width = pulse_on_time
         self.arm_immediate_trigger()
         self.send_GPIB_trigger()
 
     def output_pulse_at_phase(
         self,
-        Vdefault,
-        Vpulse,
-        pulse_period,
-        trig_phase=0.0,
-        N_pulses=1,
-        pulse_ON_time=-1,
-        trigger_source="GPIB",
+        v_default: float,
+        v_pulse: float,
+        pulse_period: float,
+        trig_phase: float = 0.0,
+        npulses: int = 1,
+        pulse_on_time: float = -1,
+        trigger_source: str = "GPIB",
     ):
         """Trigger one or more voltage pulses, waiting for a particular phase angle before
         triggering.
@@ -343,25 +339,25 @@ class Keysight681xB(SCPIMixin, Instrument):
         If trigger source is GPIB, trigger is sent immediately. if trigger source is
         external, this function returns with the system armed for an external trigger.
 
-        :param Vdefault: default voltage, or pulse OFF state voltage
-        :param Vpulse: pulse ON state voltage
+        :param v_default: default voltage, or pulse OFF state voltage
+        :param v_pulse: pulse ON state voltage
         :param pulse_period: Time duration of one full pulse (an ON and an OFF duration)
         :param trig_phase: waveform phase angle at which to trigger
-        :param N_pulses: number of pulses to output
-        :param pulse_ON_time: Time duration for pulse ON state, or -1 for a single pulse.
-        :param trigger_source: Trigger source, can be GPIB|BUS|EXTernal|IMMediate.
+        :param npulses: number of pulses to output
+        :param pulse_on_time: Time duration for pulse ON state, or -1 for a single pulse.
+        :param trigger_source: Trigger source, can be GPIB|BUS|EXT|IMM.
         """
-        if pulse_ON_time == -1:
-            pulse_ON_time = pulse_period
-        self.voltage_setpoint = Vdefault
-        self.output_enable(True)
+        if pulse_on_time == -1:
+            pulse_on_time = pulse_period
+        self.voltage_setpoint = v_default
+        self.output_enabled = True
         sleep(1)  # Dwell before trigger setup
-        self.voltage_trigger_mode = "PULSE"
-        self.voltage_trigger_level = Vpulse
-        self.pulse_count = N_pulses
+        self.voltage_trigger_mode = "PULS"
+        self.voltage_trigger_level = v_pulse
+        self.pulse_count = npulses
         self.pulse_period = pulse_period
-        self.pulse_width = pulse_ON_time
-        self.trigger_sync_source = "PHASE"
+        self.pulse_width = pulse_on_time
+        self.trigger_sync_source = "PHAS"
         self.trigger_sync_phase = trig_phase
         self.arm_immediate_trigger()
         if trigger_source == "GPIB" or trigger_source == "BUS":
@@ -374,9 +370,10 @@ class Keysight681xB(SCPIMixin, Instrument):
         "TRACE:CATALOG?",
         """Get the user waveform catalog.""",
         get_process_list=lambda names: [str(name).replace('"', "") for name in names],
+        cast=str,
     )
 
-    def get_user_wfm_data(self, name: str):
+    def get_user_wfm_data(self, name: str) -> np.ndarray:
         """Get the data points for a particular user waveform.
 
         :param name: internal name of user waveform.
@@ -386,7 +383,7 @@ class Keysight681xB(SCPIMixin, Instrument):
         data = np.array(data_str.strip().split(","), dtype=float)
         return data
 
-    def get_user_waveform_catalog(self):
+    def get_user_waveform_catalog(self) -> dict:
         """Query the list of user waveforms.."""
         print("Retrieving user waveform catalog. This might take a minute...")
         names = self.user_wfm_catalog
@@ -397,16 +394,18 @@ class Keysight681xB(SCPIMixin, Instrument):
                 cat[name] = namedata
         return cat
 
-    def delete_user_waveform(self, name: str):
+    def delete_user_waveform(self, name: str) -> None:
         """Delete a user waveform by name."""
         self.write(f"TRACE:DEL {name}")
 
-    def define_user_waveform_name(self, name: str):
+    def define_user_waveform_name(self, name: str) -> None:
         """Define a user waveform name without data."""
         self.write(f"TRACE:DEF {name}")
 
-    def add_user_waveform(self, name, data1024, delete_existing=False):
-        """Add a waveform called `name` with 1024 float data points in [0.0, 1.0] to the user
+    def add_user_waveform(self, name: str,
+                          data: list[float],
+                          delete_existing: bool = False) -> None:
+        """Add a waveform called `name` with 1024 float data points to the user
         waveform catalog.
 
         From the programming guide:
@@ -426,17 +425,17 @@ class Keysight681xB(SCPIMixin, Instrument):
         :param delete_existing: if True, any waveform with the same name will be deleted before
                                 adding the new data. If False, raises an exception if name exists.
         """
-        if len(data1024) != 1024:
+        if len(data) != 1024:
             raise ValueError(
-                f"Length error, received array of length {len(data1024)}; length must be 1024."
+                f"Length error, received array of length {len(data)}; length must be 1024."
             )
-        data1024f = data1024.astype(float)
+        data_f = data.astype(float)
 
         # Preprocess name, delete existing trace if present
         name = name.upper()
         if name in self.user_wfm_catalog:
             if delete_existing:
-                print(f"NOTE: Deleting existing waveform '{name}'")
+                log.info(f"NOTE: Deleting existing waveform '{name}'")
                 self.delete_user_waveform(name)
             else:
                 raise ValueError(
@@ -445,7 +444,7 @@ class Keysight681xB(SCPIMixin, Instrument):
                 )
 
         # Convert to 5 digits of precision
-        wave = [f"{x:.5f}" for x in data1024f]
+        wave = [f"{x:.5f}" for x in data_f]
 
         # Add name if needed, then write data
         self.define_user_waveform_name(name)
@@ -459,6 +458,7 @@ class Keysight6811B(Keysight681xB):
     IPEAK_MAX = 40
 
     def __init__(self, adapter, name="Keysight 6811B AC Power Source/Analyzer", **kwargs):
+        """Represents the Keysight 6811B AC Power Source/Analyzer."""
         super().__init__(adapter, name, **kwargs)
         self.voltage_setpoint_values = [0, self.VRMS_MAX]
         self.current_setpoint_values = [0, self.IRMS_MAX]
@@ -472,6 +472,7 @@ class Keysight6812B(Keysight681xB):
     IPEAK_MAX = 40
 
     def __init__(self, adapter, name="Keysight 6812B AC Power Source/Analyzer", **kwargs):
+        """Represents the Keysight 6812B AC Power Source/Analyzer."""
         super().__init__(adapter, name, **kwargs)
         self.voltage_setpoint_values = [0, self.VRMS_MAX]
         self.current_setpoint_values = [0, self.IRMS_MAX]
@@ -485,6 +486,7 @@ class Keysight6813B(Keysight681xB):
     IPEAK_MAX = 80
 
     def __init__(self, adapter, name="Keysight 6813B AC Power Source/Analyzer", **kwargs):
+        """Represents the Keysight 6813B AC Power Source/Analyzer."""
         super().__init__(adapter, name, **kwargs)
         self.voltage_setpoint_values = [0, self.VRMS_MAX]
         self.current_setpoint_values = [0, self.IRMS_MAX]

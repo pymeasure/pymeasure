@@ -1,3 +1,26 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2026 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 import pytest
 
 from pymeasure.instruments.keysight import Keysight6812B
@@ -116,20 +139,20 @@ def test_id_getter():
         assert inst.id == 'HEWLETT-PACKARD,6812B,0,A.00.07'
 
 
-def test_output_state_setter():
+def test_output_enabled_setter():
     with expected_protocol(
             Keysight6812B,
             [(b'OUTPUT:STATE 0', None)],
     ) as inst:
-        inst.output_state = False
+        inst.output_enabled = False
 
 
-def test_output_state_getter():
+def test_output_enabled_getter():
     with expected_protocol(
             Keysight6812B,
             [(b'OUTPUT:STATE?', b'0\n')],
     ) as inst:
-        assert inst.output_state is False
+        assert inst.output_enabled is False
 
 
 def test_power_apparent_getter():
