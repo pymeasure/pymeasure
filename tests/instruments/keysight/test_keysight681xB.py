@@ -430,8 +430,6 @@ def test_waveform_getter():
 @pytest.mark.parametrize("comm_pairs, args, kwargs, value", (
     ([(b'*RST', None)],
      (), {}, None),
-    ([(b'*RST', None)],
-     (), {}, None),
 ))
 def test_reset(comm_pairs, args, kwargs, value):
     with expected_protocol(
