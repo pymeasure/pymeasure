@@ -25,3 +25,4 @@
 from .rigol_dg800 import DG800
 from .rigol_dho_base import DHOBase
 from .rigol_mso5000 import MSO5000
+from .rigol_oscilloscope import RigolOscilloscope
