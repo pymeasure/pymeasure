@@ -122,7 +122,7 @@ class TestChannel:
 
     # -- bandwidth_limit -------------------------------------------------
 
-    @pytest.mark.parametrize("value", ["OFF", "20M", "100M"])
+    @pytest.mark.parametrize("value", ["OFF", "ON", "20M", "250M"])
     def test_bandwidth_limit_set(self, value):
         with expected_protocol(
             DHOBase, [(f":CHAN1:BWL {value}", None)]
@@ -131,7 +131,7 @@ class TestChannel:
 
     def test_bandwidth_limit_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.ch_1.bandwidth_limit = "200M"
+            inst.ch_1.bandwidth_limit = "100M"
 
     # -- scale -----------------------------------------------------------
 
@@ -146,6 +146,10 @@ class TestChannel:
             DHOBase, [(":CHAN1:SCAL?", "0.5")]
         ) as inst:
             assert inst.ch_1.scale == pytest.approx(0.5)
+
+    def test_scale_accepts_dho4000_minimum(self):
+        with expected_protocol(DHOBase, [(":CHAN1:SCAL 0.0001", None)]) as inst:
+            inst.ch_1.scale = 100e-6
 
     def test_scale_out_of_range_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
@@ -181,7 +185,7 @@ class TestChannel:
 
     def test_probe_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.ch_1.probe = 7
+            inst.ch_1.probe = 15
 
     # -- invert (bool) ---------------------------------------------------
 
@@ -239,7 +243,7 @@ class TestChannel:
 
 class TestAcquisition:
 
-    @pytest.mark.parametrize("value", ["NORM", "AVER", "PEAK", "ULTR"])
+    @pytest.mark.parametrize("value", ["NORM", "AVER", "PEAK", "HRES", "ULTR"])
     def test_acquisition_type_set(self, value):
         with expected_protocol(
             DHOBase, [(f":ACQ:TYPE {value}", None)]
@@ -266,11 +270,13 @@ class TestAcquisition:
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
             inst.acquisition_averages = 3  # not a power of 2
 
-    def test_memory_depth_set(self):
-        with expected_protocol(
-            DHOBase, [(":ACQ:MDEP 1000000", None)]
-        ) as inst:
-            inst.acquisition_memory_depth = 1_000_000
+    @pytest.mark.parametrize(
+        "value",
+        ["AUTO", 1_000_000, 5_000_000, 125_000_000, 250_000_000, 500_000_000],
+    )
+    def test_memory_depth_set(self, value):
+        with expected_protocol(DHOBase, [(f":ACQ:MDEP {value}", None)]) as inst:
+            inst.acquisition_memory_depth = value
 
     def test_sample_rate(self):
         with expected_protocol(
@@ -336,12 +342,10 @@ class TestTimebase:
 
 class TestTrigger:
 
-    # One representative mode is enough – the rest are enum validation
-    def test_trigger_mode_set(self):
-        with expected_protocol(
-            DHOBase, [(":TRIG:MODE EDGE", None)]
-        ) as inst:
-            inst.trigger_mode = "EDGE"
+    @pytest.mark.parametrize("value", ["EDGE", "SET", "FLEX", "IIS", "M1553"])
+    def test_trigger_mode_set(self, value):
+        with expected_protocol(DHOBase, [(f":TRIG:MODE {value}", None)]) as inst:
+            inst.trigger_mode = value
 
     def test_trigger_mode_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
@@ -367,6 +371,10 @@ class TestTrigger:
             DHOBase, [(f":TRIG:EDGE:SOUR {value}", None)]
         ) as inst:
             inst.trigger_source = value
+
+    def test_canonical_edge_trigger_source_set(self):
+        with expected_protocol(DHOBase, [(":TRIG:EDGE:SOUR CHAN2", None)]) as inst:
+            inst.edge_trigger_source = "CHAN2"
 
     def test_trigger_source_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):

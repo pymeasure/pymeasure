@@ -28,8 +28,13 @@ import numpy as np
 
 from pymeasure.instruments import AdapterType, Channel, Instrument
 from pymeasure.instruments.common_base import InstrumentProperty, cast_or_str, identity
-from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
+from .rigol_oscilloscope import (
+    RigolOscilloscope,
+    RigolOscilloscopeChannel,
+    _parse_ieee_block,
+)
 
 PROBE_ATTENUATIONS = [
     0.0001,
@@ -190,24 +195,6 @@ def _validate_system_time(value: tuple[int, int, int], _values: None) -> str:
     return f"{hours},{minutes},{seconds}"
 
 
-def _parse_ieee_block(response: bytes, data_name: str) -> bytes:
-    """Remove and validate the definite-length IEEE block framing."""
-    if len(response) < 2 or response[:1] != b"#" or not response[1:2].isdigit():
-        raise ValueError(f"{data_name} does not start with an IEEE block header.")
-    digit_count = int(response[1:2])
-    header_end = 2 + digit_count
-    if digit_count == 0 or len(response) < header_end or not response[2:header_end].isdigit():
-        raise ValueError(f"{data_name} contains an invalid IEEE block header.")
-    byte_count = int(response[2:header_end])
-    payload_end = header_end + byte_count
-    payload = response[header_end:payload_end]
-    if len(payload) != byte_count:
-        raise ValueError(f"{data_name} declares {byte_count} data bytes, received {len(payload)}.")
-    if response[payload_end:] not in (b"", b"\n"):
-        raise ValueError(f"{data_name} contains data beyond its declared IEEE block length.")
-    return payload
-
-
 def _validate_trigger_pattern(
     pattern: list[str] | tuple[str, ...], constraints: tuple[frozenset[str], int]
 ) -> str:
@@ -222,84 +209,11 @@ def _validate_trigger_pattern(
     return ",".join(pattern)
 
 
-class MSO5000Channel(Channel):
+class MSO5000Channel(RigolOscilloscopeChannel):
     """Represent an analog input channel of a Rigol MSO5000 oscilloscope."""
 
-    bandwidth_limit = Channel.control(
-        ":CHAN{ch}:BWL?",
-        ":CHAN{ch}:BWL %s",
-        """Control the bandwidth limit (``"20M"``, ``"100M"``, ``"200M"``, or ``"OFF"``).
-
-        Supported limits depend on the oscilloscope model.
-        """,
-        validator=strict_discrete_set,
-        values=["20M", "100M", "200M", "OFF"],
-        cast=str,
-    )
-
-    coupling = Channel.control(
-        ":CHAN{ch}:COUP?",
-        ":CHAN{ch}:COUP %s",
-        """Control the input coupling: ``"AC"``, ``"DC"``, or ``"GND"``.""",
-        validator=strict_discrete_set,
-        values=["AC", "DC", "GND"],
-        cast=str,
-    )
-
-    display_enabled = Channel.control(
-        ":CHAN{ch}:DISP?",
-        ":CHAN{ch}:DISP %d",
-        """Control whether the channel is displayed (bool).""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
-        cast=int,
-    )
-
-    invert = Channel.control(
-        ":CHAN{ch}:INV?",
-        ":CHAN{ch}:INV %d",
-        """Control whether the displayed waveform is inverted (bool).""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
-        cast=int,
-    )
-
-    offset = Channel.control(
-        ":CHAN{ch}:OFFS?",
-        ":CHAN{ch}:OFFS %g",
-        """Control the vertical offset in Volts (float).
-
-        The valid range depends on the current vertical scale.
-        """,
-    )
-
-    scale = Channel.control(
-        ":CHAN{ch}:SCAL?",
-        ":CHAN{ch}:SCAL %g",
-        """Control the vertical scale in Volts per division (float).
-
-        The valid range depends on the probe ratio.
-        """,
-    )
-
-    probe = Channel.control(
-        ":CHAN{ch}:PROB?",
-        ":CHAN{ch}:PROB %g",
-        """Control the probe attenuation ratio (float from the documented discrete set).""",
-        validator=strict_discrete_set,
-        values=PROBE_ATTENUATIONS,
-    )
-
-    units = Channel.control(
-        ":CHAN{ch}:UNIT?",
-        ":CHAN{ch}:UNIT %s",
-        """Control the amplitude display unit: ``"VOLT"``, ``"WATT"``, ``"AMP"``, or ``"UNKN"``.""",
-        validator=strict_discrete_set,
-        values=["VOLT", "WATT", "AMP", "UNKN"],
-        cast=str,
-    )
+    bandwidth_limit_values = ["20M", "100M", "200M", "OFF"]
+    probe_values = PROBE_ATTENUATIONS
 
     vernier_enabled = Channel.control(
         ":CHAN{ch}:VERN?",
@@ -312,7 +226,7 @@ class MSO5000Channel(Channel):
     )
 
 
-class MSO5000(SCPIMixin, Instrument):
+class MSO5000(RigolOscilloscope):
     """Control the Rigol MSO5000 series oscilloscopes.
 
     This driver supports the MSO5072, MSO5074, MSO5102, MSO5104, MSO5204,
@@ -331,6 +245,24 @@ class MSO5000(SCPIMixin, Instrument):
     ch_2 = Instrument.ChannelCreator(MSO5000Channel, 2)
     ch_3 = Instrument.ChannelCreator(MSO5000Channel, 3)
     ch_4 = Instrument.ChannelCreator(MSO5000Channel, 4)
+
+    acquisition_memory_depth_values = [
+        "AUTO",
+        1_000,
+        10_000,
+        100_000,
+        1_000_000,
+        10_000_000,
+        25_000_000,
+        50_000_000,
+        100_000_000,
+        200_000_000,
+    ]
+    acquisition_type_values = ["NORM", "AVER", "PEAK", "HRES"]
+    trigger_holdoff_validator = strict_range
+    trigger_holdoff_values = [8e-9, 10]
+    edge_trigger_source_values = [*TRIGGER_SOURCES, "ACL"]
+    waveform_source_values = WAVEFORM_SOURCES
 
     event_status_enable_bits = Instrument.control(
         "*ESE?",
@@ -524,49 +456,6 @@ class MSO5000(SCPIMixin, Instrument):
         get_process_list=list,
     )
 
-    acquisition_averages = Instrument.control(
-        ":ACQ:AVER?",
-        ":ACQ:AVER %d",
-        """Control the number of acquisition averages (integer power of two from 2 to 65536).""",
-        validator=strict_discrete_set,
-        values=[2**n for n in range(1, 17)],
-        cast=int,
-    )
-
-    acquisition_memory_depth = Instrument.control(
-        ":ACQ:MDEP?",
-        ":ACQ:MDEP %s",
-        """Control the acquisition memory depth in points (``"AUTO"`` or a discrete integer).""",
-        validator=strict_discrete_set,
-        values=[
-            "AUTO",
-            1_000,
-            10_000,
-            100_000,
-            1_000_000,
-            10_000_000,
-            25_000_000,
-            50_000_000,
-            100_000_000,
-            200_000_000,
-        ],
-        cast=cast_or_str(float),
-    )
-
-    acquisition_type = Instrument.control(
-        ":ACQ:TYPE?",
-        ":ACQ:TYPE %s",
-        """Control the acquisition type: ``"NORM"``, ``"AVER"``, ``"PEAK"``, or ``"HRES"``.""",
-        validator=strict_discrete_set,
-        values=["NORM", "AVER", "PEAK", "HRES"],
-        cast=str,
-    )
-
-    sample_rate = Instrument.measurement(
-        ":ACQ:SRAT?",
-        """Measure the current sample rate in samples per second (float).""",
-    )
-
     logic_analyzer_sample_rate = Instrument.measurement(
         ":ACQ:LA:SRAT?",
         """Measure the logic-analyzer sample rate in samples per second (float).""",
@@ -616,33 +505,6 @@ class MSO5000(SCPIMixin, Instrument):
         """,
     )
 
-    timebase_offset = Instrument.control(
-        ":TIM:MAIN:OFFS?",
-        ":TIM:MAIN:OFFS %g",
-        """Control the main timebase offset in seconds (float).
-
-        The valid range depends on the current timebase mode and acquisition state.
-        """,
-    )
-
-    timebase_scale = Instrument.control(
-        ":TIM:MAIN:SCAL?",
-        ":TIM:MAIN:SCAL %g",
-        """Control the main timebase scale in seconds per division (float).
-
-        The valid range depends on the oscilloscope model and timebase mode.
-        """,
-    )
-
-    timebase_mode = Instrument.control(
-        ":TIM:MODE?",
-        ":TIM:MODE %s",
-        """Control the timebase mode: MAIN, XY, or ROLL.""",
-        validator=strict_discrete_set,
-        values=["MAIN", "XY", "ROLL"],
-        cast=str,
-    )
-
     horizontal_reference_mode = Instrument.control(
         ":TIM:HREF:MODE?",
         ":TIM:HREF:MODE %s",
@@ -674,68 +536,6 @@ class MSO5000(SCPIMixin, Instrument):
         cast=int,
     )
 
-    trigger_mode = Instrument.control(
-        ":TRIG:MODE?",
-        ":TRIG:MODE %s",
-        """Control the trigger mode (str).""",
-        validator=strict_discrete_set,
-        values=[
-            "EDGE",
-            "PULS",
-            "SLOP",
-            "VID",
-            "PATT",
-            "DUR",
-            "TIM",
-            "RUNT",
-            "WIND",
-            "DEL",
-            "SET",
-            "NEDG",
-            "RS232",
-            "IIC",
-            "SPI",
-            "CAN",
-            "FLEX",
-            "LIN",
-            "IIS",
-            "M1553",
-        ],
-        cast=str,
-    )
-
-    trigger_coupling = Instrument.control(
-        ":TRIG:COUP?",
-        ":TRIG:COUP %s",
-        """Control Edge-trigger coupling: AC, DC, LFR, or HFR.""",
-        validator=strict_discrete_set,
-        values=["AC", "DC", "LFR", "HFR"],
-        cast=str,
-    )
-
-    trigger_status = Instrument.measurement(
-        ":TRIG:STAT?",
-        """Measure the trigger status: TD, WAIT, RUN, AUTO, or STOP.""",
-        cast=str,
-    )
-
-    trigger_sweep = Instrument.control(
-        ":TRIG:SWE?",
-        ":TRIG:SWE %s",
-        """Control the trigger sweep: AUTO, NORM, or SING.""",
-        validator=strict_discrete_set,
-        values=["AUTO", "NORM", "SING"],
-        cast=str,
-    )
-
-    trigger_holdoff = Instrument.control(
-        ":TRIG:HOLD?",
-        ":TRIG:HOLD %g",
-        """Control the trigger holdoff time in seconds (8 ns to 10 s).""",
-        validator=strict_range,
-        values=[8e-9, 10],
-    )
-
     trigger_noise_rejection_enabled = Instrument.control(
         ":TRIG:NREJ?",
         ":TRIG:NREJ %d",
@@ -744,37 +544,6 @@ class MSO5000(SCPIMixin, Instrument):
         values={True: 1, False: 0},
         map_values=True,
         cast=int,
-    )
-
-    edge_trigger_source = Instrument.control(
-        ":TRIG:EDGE:SOUR?",
-        ":TRIG:EDGE:SOUR %s",
-        """Control the Edge-trigger source (str).""",
-        validator=strict_discrete_set,
-        values=[
-            *[f"D{number}" for number in range(16)],
-            *[f"CHAN{number}" for number in range(1, 5)],
-            "ACL",
-        ],
-        cast=str,
-    )
-
-    edge_trigger_slope = Instrument.control(
-        ":TRIG:EDGE:SLOP?",
-        ":TRIG:EDGE:SLOP %s",
-        """Control the Edge-trigger slope: POS, NEG, or RFAL.""",
-        validator=strict_discrete_set,
-        values=["POS", "NEG", "RFAL"],
-        cast=str,
-    )
-
-    edge_trigger_level = Instrument.control(
-        ":TRIG:EDGE:LEV?",
-        ":TRIG:EDGE:LEV %g",
-        """Control the Edge-trigger level (float).
-
-        The valid range depends on the selected trigger source, channel scale, and offset.
-        """,
     )
 
     pulse_trigger_source = Instrument.control(
@@ -1369,33 +1138,6 @@ class MSO5000(SCPIMixin, Instrument):
         """Control the Nth-Edge trigger threshold level (float).""",
     )
 
-    waveform_source = Instrument.control(
-        ":WAV:SOUR?",
-        ":WAV:SOUR %s",
-        """Control the source used for waveform reads (str).""",
-        validator=strict_discrete_set,
-        values=WAVEFORM_SOURCES,
-        cast=str,
-    )
-
-    waveform_mode = Instrument.control(
-        ":WAV:MODE?",
-        ":WAV:MODE %s",
-        """Control the waveform reading mode: NORM, MAX, or RAW.""",
-        validator=strict_discrete_set,
-        values=["NORM", "MAX", "RAW"],
-        cast=str,
-    )
-
-    waveform_format = Instrument.control(
-        ":WAV:FORM?",
-        ":WAV:FORM %s",
-        """Control the waveform return format: WORD, BYTE, or ASC.""",
-        validator=strict_discrete_set,
-        values=["WORD", "BYTE", "ASC"],
-        cast=str,
-    )
-
     waveform_points = Instrument.control(
         ":WAV:POIN?",
         ":WAV:POIN %d",
@@ -1406,102 +1148,9 @@ class MSO5000(SCPIMixin, Instrument):
         cast=int,
     )
 
-    waveform_x_increment = Instrument.measurement(
-        ":WAV:XINC?",
-        """Measure the interval between adjacent waveform points (float).""",
-    )
-
-    waveform_x_origin = Instrument.measurement(
-        ":WAV:XOR?",
-        """Measure the waveform start time on the X axis (float).""",
-    )
-
-    waveform_x_reference = Instrument.measurement(
-        ":WAV:XREF?",
-        """Measure the waveform reference point on the X axis (float).""",
-    )
-
-    waveform_y_increment = Instrument.measurement(
-        ":WAV:YINC?",
-        """Measure the waveform step value on the Y axis (float).""",
-    )
-
-    waveform_y_origin = Instrument.measurement(
-        ":WAV:YOR?",
-        """Measure the waveform vertical origin (float).""",
-    )
-
-    waveform_y_reference = Instrument.measurement(
-        ":WAV:YREF?",
-        """Measure the waveform vertical reference position (float).""",
-    )
-
-    waveform_start = Instrument.control(
-        ":WAV:STAR?",
-        ":WAV:STAR %d",
-        """Control the first waveform point to read (int).
-
-        The valid range depends on the waveform reading mode and memory depth.
-        """,
-        cast=int,
-    )
-
-    waveform_stop = Instrument.control(
-        ":WAV:STOP?",
-        ":WAV:STOP %d",
-        """Control the last waveform point to read (int).
-
-        The valid range depends on the waveform reading mode and memory depth.
-        """,
-        cast=int,
-    )
-
     def get_waveform_preamble(self) -> dict[str, int | float]:
         """Return the ten waveform scaling parameters as a dictionary."""
-        values = self.ask(":WAV:PRE?").strip().split(",")
-        if len(values) != 10:
-            raise ValueError(f"Expected 10 waveform preamble values, received {len(values)}.")
-
-        return {
-            "format": int(values[0]),
-            "type": int(values[1]),
-            "points": int(values[2]),
-            "count": int(values[3]),
-            "x_increment": float(values[4]),
-            "x_origin": float(values[5]),
-            "x_reference": float(values[6]),
-            "y_increment": float(values[7]),
-            "y_origin": int(values[8]),
-            "y_reference": int(values[9]),
-        }
-
-    def _read_ieee_block(self, data_name: str) -> bytes:
-        """Read and validate a definite-length IEEE block."""
-        header = self.read_bytes(2)
-        if len(header) != 2 or header[:1] != b"#" or not header[1:2].isdigit():
-            raise ValueError(f"{data_name} does not start with an IEEE block header.")
-
-        digit_count = int(header[1:2])
-        if digit_count == 0:
-            raise ValueError(f"{data_name} contains an invalid IEEE block header.")
-
-        length = self.read_bytes(digit_count)
-        if len(length) != digit_count or not length.isdigit():
-            raise ValueError(f"{data_name} contains an invalid IEEE block header.")
-
-        byte_count = int(length)
-        payload = self.read_bytes(byte_count)
-        if len(payload) != byte_count:
-            raise ValueError(
-                f"{data_name} declares {byte_count} data bytes, received {len(payload)}."
-            )
-
-        terminator = self.read_bytes(1)
-        if terminator != b"\n":
-            # The declared payload is consumed; discard the malformed remainder.
-            self.read_bytes(-1, break_on_termchar=True)
-            raise ValueError(f"{data_name} contains data beyond its declared IEEE block length.")
-        return payload
+        return self._query_waveform_preamble()
 
     def waveform_data(self) -> np.ndarray:
         """Read waveform points in the currently selected return format.
@@ -1661,19 +1310,3 @@ class MSO5000(SCPIMixin, Instrument):
     def clear_waveforms(self) -> None:
         """Clear all waveforms from the display."""
         self.write(":CLE")
-
-    def run(self) -> None:
-        """Start continuous acquisition."""
-        self.write(":RUN")
-
-    def stop(self) -> None:
-        """Stop acquisition."""
-        self.write(":STOP")
-
-    def single(self) -> None:
-        """Select single trigger mode."""
-        self.write(":SING")
-
-    def force_trigger(self) -> None:
-        """Generate a trigger in normal or single trigger mode."""
-        self.write(":TFOR")
