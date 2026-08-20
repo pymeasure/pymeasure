@@ -23,28 +23,44 @@
 #
 
 import configparser
-import logging
 import os
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+
+def set_file(filename: str) -> None:
+    os.environ["CONFIG"] = filename
 
 
-def set_file(filename):
-    os.environ['CONFIG'] = filename
-
-
-def get_config(filename='default_config.ini'):
-    if 'CONFIG' in os.environ:
-        filename = os.environ['CONFIG']
+def get_config(filename: str = "default_config.ini") -> configparser.ConfigParser:
+    if "CONFIG" in os.environ:
+        filename = os.environ["CONFIG"]
     config = configparser.ConfigParser()
     config.read(filename)
     return config
 
 
+def section_items(config: configparser.ConfigParser, section: str) -> dict[str, str]:
+    """Return a section's own items, excluding keys inherited from ``[DEFAULT]``.
+
+    Keys explicitly overridden in ``section`` (same-named as a ``[DEFAULT]``
+    key) are included; only keys genuinely inherited from ``[DEFAULT]``
+    without a section-local definition are excluded.
+
+    :param config: The config parser to read from.
+    :param section: The section name; it must exist in ``config``.
+    :returns: A dict of the section's own raw ``(key, value)`` pairs.
+    """
+    # ``config.items()`` merges ``[DEFAULT]`` items into every section, so it
+    # cannot distinguish an inherited key from a same-named section override.
+    # ``_sections`` holds the section's own raw items (what configparser
+    # ``read*`` stored for this section), which is used here to keep overrides.
+    # It is not part of the public stubs, hence the ignore below.
+    return dict(config._sections[section])  # pyright: ignore[reportAttributeAccessIssue]
+
+
 # noinspection PyProtectedMember
-def set_mpl_rcparams(config):
-    if 'matplotlib.rcParams' in config._sections:
+def set_mpl_rcparams(config: configparser.ConfigParser) -> None:
+    if config.has_section("matplotlib.rcParams"):
         import matplotlib
-        for key in config._sections['matplotlib.rcParams']:
-            matplotlib.rcParams[key] = eval(config._sections['matplotlib.rcParams'][key])
+
+        for key, value in section_items(config, "matplotlib.rcParams").items():
+            matplotlib.rcParams[key] = eval(value)  # pyright: ignore[reportArgumentType]

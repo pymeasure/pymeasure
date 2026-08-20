@@ -27,7 +27,12 @@ import os
 
 import pytest
 
-from pymeasure.experiment.config import get_config, set_file, set_mpl_rcparams
+from pymeasure.experiment.config import (
+    get_config,
+    section_items,
+    set_file,
+    set_mpl_rcparams,
+)
 
 
 def test_set_file_sets_env_var(monkeypatch):
@@ -74,6 +79,23 @@ def test_get_config_missing_file_empty(monkeypatch):
     assert config.sections() == []
 
 
+def test_section_items_excludes_inherited_defaults():
+    config = configparser.ConfigParser()
+    config.read_string("[DEFAULT]\ndirectory = /def\nbad_key = leaked\n[Filename]\nonly = y\n")
+    assert section_items(config, "Filename") == {"only": "y"}
+
+
+def test_section_items_includes_explicit_override_of_default():
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[DEFAULT]\ndirectory = /def\nbad_key = leaked\n"
+        "[Filename]\ndirectory = /own\n"
+    )
+    # The section's own `directory` key must survive, not be dropped because a
+    # same-named [DEFAULT] key exists.
+    assert section_items(config, "Filename") == {"directory": "/own"}
+
+
 def test_set_mpl_rcparams_no_section_noop(monkeypatch):
     matplotlib = pytest.importorskip("matplotlib")
 
@@ -98,6 +120,24 @@ def test_set_mpl_rcparams_applies_values(monkeypatch):
         matplotlib.rcParams, "figure.dpi", matplotlib.rcParams["figure.dpi"]
     )
     set_mpl_rcparams(config)
+    assert matplotlib.rcParams["figure.dpi"] == 100
+
+
+def test_set_mpl_rcparams_ignores_default_section(monkeypatch):
+    matplotlib = pytest.importorskip("matplotlib")
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[DEFAULT]\nnot_an_rcparam = 1\n"
+        "[matplotlib.rcParams]\nfigure.dpi = 100\n"
+    )
+    # Register the original value so monkeypatch restores it after the test.
+    monkeypatch.setitem(
+        matplotlib.rcParams, "figure.dpi", matplotlib.rcParams["figure.dpi"]
+    )
+    set_mpl_rcparams(config)
+    # The [DEFAULT] key must not leak into matplotlib.rcParams: assigning an
+    # unrecognized key there raises KeyError, so reaching this assert means
+    # only the section's own items were applied.
     assert matplotlib.rcParams["figure.dpi"] == 100
 
 

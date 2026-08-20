@@ -138,7 +138,7 @@ def test_create_filename_no_config_section_uses_mktemp(monkeypatch):
 def test_create_filename_with_config_section_uses_unique_filename(monkeypatch):
     monkeypatch.delenv("CONFIG", raising=False)
     config = configparser.ConfigParser()
-    config["Filename"] = {"directory": "/some/dir", "prefix": "DATA"}
+    config.read_string("[Filename]\ndirectory = /some/dir\nprefix = DATA\n")
     with mock.patch(
         "pymeasure.experiment.experiment.get_config", return_value=config
     ), mock.patch(
@@ -153,10 +153,49 @@ def test_create_filename_with_config_section_uses_unique_filename(monkeypatch):
     assert kwargs["prefix"] == "DATA"
 
 
+def test_create_filename_ignores_default_section(monkeypatch):
+    monkeypatch.delenv("CONFIG", raising=False)
+    config = configparser.ConfigParser()
+    config.read_string("[DEFAULT]\nbad_kwarg = leaked\n[Filename]\ndirectory = /some/dir\n")
+    with mock.patch(
+        "pymeasure.experiment.experiment.get_config", return_value=config
+    ), mock.patch(
+        "pymeasure.experiment.experiment.unique_filename",
+        return_value="/some/dir/DATA_title.csv",
+    ) as mock_unique:
+        create_filename("title")
+    _, kwargs = mock_unique.call_args
+    # Only the Filename section's own items may be passed to unique_filename;
+    # [DEFAULT] keys must not leak into the kwargs.
+    assert kwargs["directory"] == "/some/dir"
+    assert "bad_kwarg" not in kwargs
+
+
+def test_create_filename_section_overrides_default(monkeypatch):
+    monkeypatch.delenv("CONFIG", raising=False)
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[DEFAULT]\ndirectory = /def\nbad_kwarg = leaked\n"
+        "[Filename]\ndirectory = /own\n"
+    )
+    with mock.patch(
+        "pymeasure.experiment.experiment.get_config", return_value=config
+    ), mock.patch(
+        "pymeasure.experiment.experiment.unique_filename",
+        return_value="/own/DATA_title.csv",
+    ) as mock_unique:
+        create_filename("title")
+    _, kwargs = mock_unique.call_args
+    # The section's own `directory` key must win over the same-named [DEFAULT]
+    # key, while the still-inherited `bad_kwarg` must not leak.
+    assert kwargs["directory"] == "/own"
+    assert "bad_kwarg" not in kwargs
+
+
 def test_create_filename_includes_title(monkeypatch):
     monkeypatch.delenv("CONFIG", raising=False)
     config = configparser.ConfigParser()
-    config["Filename"] = {"directory": "/some/dir"}
+    config.read_string("[Filename]\ndirectory = /some/dir\n")
     with mock.patch(
         "pymeasure.experiment.experiment.get_config", return_value=config
     ), mock.patch(
@@ -211,6 +250,28 @@ def mock_dependencies(monkeypatch, empty_config):
     }
 
 
+def make_experiment_mocks(monkeypatch, config):
+    """Patch Experiment.__init__ dependencies to run against the given config.
+
+    Returns the ``setup_logging`` mock; all other collaborators are MagicMocks.
+    """
+    monkeypatch.delenv("CONFIG", raising=False)
+    monkeypatch.setattr("pymeasure.experiment.experiment.get_config", lambda: config)
+    monkeypatch.setattr(
+        "pymeasure.experiment.experiment.set_mpl_rcparams", mock.MagicMock()
+    )
+    mock_setup = mock.MagicMock()
+    monkeypatch.setattr("pymeasure.experiment.experiment.setup_logging", mock_setup)
+    mock_setup.return_value = mock.MagicMock()
+    monkeypatch.setattr(
+        "pymeasure.experiment.experiment.Results", mock.MagicMock()
+    )
+    monkeypatch.setattr(
+        "pymeasure.experiment.experiment.Worker", mock.MagicMock()
+    )
+    return mock_setup
+
+
 def test_experiment_initialization(mock_dependencies, monkeypatch):
     procedure = RandomProcedure()
     with mock.patch(
@@ -231,29 +292,12 @@ def test_experiment_initialization(mock_dependencies, monkeypatch):
 
 def test_experiment_initialization_with_logging_section(monkeypatch):
     config = configparser.ConfigParser()
-    config["Logging"] = {"console": "True", "console_level": "INFO"}
-    monkeypatch.delenv("CONFIG", raising=False)
-    monkeypatch.setattr("pymeasure.experiment.experiment.get_config", lambda: config)
-    monkeypatch.setattr(
-        "pymeasure.experiment.experiment.set_mpl_rcparams", mock.MagicMock()
-    )
-    mock_setup = mock.MagicMock()
-    monkeypatch.setattr("pymeasure.experiment.experiment.setup_logging", mock_setup)
-    mock_scribe = mock.MagicMock()
-    mock_setup.return_value = mock_scribe
-    mock_results = mock.MagicMock()
-    mock_worker = mock.MagicMock()
-    monkeypatch.setattr(
-        "pymeasure.experiment.experiment.Results", mock.Mock(return_value=mock_results)
-    )
-    monkeypatch.setattr(
-        "pymeasure.experiment.experiment.Worker", mock.Mock(return_value=mock_worker)
-    )
+    config.read_string("[Logging]\nconsole = True\nconsole_level = INFO\n")
+    mock_setup = make_experiment_mocks(monkeypatch, config)
     with mock.patch(
         "pymeasure.experiment.experiment.create_filename", return_value=(None, "/tmp/data.csv")
     ):
-        procedure = RandomProcedure()
-        Experiment("Title", procedure)
+        Experiment("Title", RandomProcedure())
 
     mock_setup.assert_called_once()
     _args, kwargs = mock_setup.call_args
@@ -261,6 +305,43 @@ def test_experiment_initialization_with_logging_section(monkeypatch):
     assert "console" in kwargs
     assert kwargs["console"] == "True"
     assert kwargs["console_level"] == "INFO"
+
+
+def test_experiment_initialization_logging_ignores_default_section(monkeypatch):
+    config = configparser.ConfigParser()
+    config.read_string("[DEFAULT]\nbad_kwarg = leaked\n[Logging]\nconsole = True\n")
+    mock_setup = make_experiment_mocks(monkeypatch, config)
+    with mock.patch(
+        "pymeasure.experiment.experiment.create_filename", return_value=(None, "/tmp/data.csv")
+    ):
+        Experiment("Title", RandomProcedure())
+
+    mock_setup.assert_called_once()
+    _args, kwargs = mock_setup.call_args
+    # Only the Logging section's own items may be passed to setup_logging;
+    # [DEFAULT] keys must not leak into the kwargs.
+    assert kwargs["console"] == "True"
+    assert "bad_kwarg" not in kwargs
+
+
+def test_experiment_initialization_logging_section_overrides_default(monkeypatch):
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[DEFAULT]\nconsole = False\nbad_kwarg = leaked\n"
+        "[Logging]\nconsole = True\n"
+    )
+    mock_setup = make_experiment_mocks(monkeypatch, config)
+    with mock.patch(
+        "pymeasure.experiment.experiment.create_filename", return_value=(None, "/tmp/data.csv")
+    ):
+        Experiment("Title", RandomProcedure())
+
+    mock_setup.assert_called_once()
+    _args, kwargs = mock_setup.call_args
+    # The section's own `console` key must win over the same-named [DEFAULT]
+    # key, while the still-inherited `bad_kwarg` must not leak.
+    assert kwargs["console"] == "True"
+    assert "bad_kwarg" not in kwargs
 
 
 def test_experiment_start_calls_worker_start(mock_dependencies, monkeypatch):
