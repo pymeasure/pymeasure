@@ -1,3 +1,4 @@
+# type: ignore[reportCallIssue, reportArgumentType]
 #
 # This file is part of the PyMeasure package.
 #
