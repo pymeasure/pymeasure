@@ -23,7 +23,7 @@
 #
 
 import logging
-from queue import Queue
+from multiprocessing import Queue
 
 from ..experiment.procedure import ProcedureStatus
 from .Qt import QtCore

@@ -25,7 +25,7 @@
 import logging
 import logging.handlers
 from logging.handlers import QueueHandler
-from queue import Queue
+from multiprocessing import Queue
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
