@@ -112,4 +112,5 @@ reportOptionalSubscript = "warning"
 reportOptionalMemberAccess = "warning"
 reportIncompatibleMethodOverride = "warning"
 reportOperatorIssue = "warning"
-defineConstant = { PYQT5 = true, PYSIDE2 = false, PYQT6 = false, PYSIDE6 = false }
+reportPrivateImportUsage = "none"
+defineConstant = { PYQT6 = true, PYSIDE2 = false, PYQT5 = false, PYSIDE6 = false }
