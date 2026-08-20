@@ -214,7 +214,9 @@ def test_search_measurement_setup_invalid_command():
         AdvantestR6246,
         []
     ) as inst, pytest.raises(ValueError):
-        inst.search_measurement_setup(1, 1, 'DV 1,20,5,0.1')
+        inst.search_measurement_setup(
+            SearchMode.BINARY_SENSE, OccurrenceAfterStop.GENERATE_BIAS, "DV 1,20,5,0.1"
+        )
 
 
 def test_search_comparison_setup():
@@ -225,16 +227,25 @@ def test_search_comparison_setup():
         inst.search_comparison_setup(
             SearchMode.BINARY_SENSE,
             OccurrenceAfterStop.LEAVE_AS_IS,
-            1, 3, 1, 5.8, -1.4
+            1,
+            ComparisonMode.ON_WITH_ABS_VALUE,
+            ComparisonValueType.VOLTAGE,
+            5.8,
+            -1.4,
         )
 
 
 def test_search_comparison_setup_invalid_limits():
-    with expected_protocol(
-        AdvantestR6246,
-        []
-    ) as inst, pytest.raises(ValueError):
-        inst.search_comparison_setup(1, 1, 1, 2, 1, -1.0, 5.0)
+    with expected_protocol(AdvantestR6246, []) as inst, pytest.raises(ValueError):
+        inst.search_comparison_setup(
+            SearchMode.BINARY_SENSE,
+            OccurrenceAfterStop.GENERATE_BIAS,
+            1,
+            ComparisonMode.ON_WITH_POLARITY,
+            ComparisonValueType.VOLTAGE,
+            -1.0,
+            5.0,
+        )
 
 
 # High-speed sequence tests
@@ -485,13 +496,13 @@ def test_seq_wait():
 
 def test_seq_join():
     result = seq_join(
-        seq_voltage_source(1, 20, 5, 0.1), seq_enable_source(1))
+        seq_voltage_source(1, VoltageRange.FIXED_BEST, 5, 0.1), seq_enable_source(1))
     assert result == 'dv 1,20,5.0000e+00,1.0000e-01;cn 1'
 
 
 def test_seq_voltage_source_invalid_channel():
     with pytest.raises(ValueError):
-        seq_voltage_source(3, VoltageRange.AUTO, 1.0, 0.1)
+        seq_voltage_source(3, VoltageRange.AUTO, 1.0, 0.1)  # pyright: ignore[reportArgumentType]
 
 
 def test_store_highspeed_sequence_with_builders():
@@ -754,7 +765,7 @@ def test_service_request_enable_register():
         [("*sre 100", None),
          ("*sre?", "100")]
     ) as inst:
-        inst.service_request_enable_register = 100
+        inst.service_request_enable_register = SRER(100)
         result = inst.service_request_enable_register
         assert isinstance(result, SRER)
 
@@ -1248,8 +1259,8 @@ def test_ch_output_enable_register():
         [("coe_01?", "512"),
          ("coe_01 512", None)]
     ) as inst:
-        assert inst.ch_A.output_enable_register == 512
-        inst.ch_A.output_enable_register = 512
+        assert inst.ch_A.output_enable_register == COR.OSCILLATION_DETECTION
+        inst.ch_A.output_enable_register = COR.OSCILLATION_DETECTION
 
 
 # SMUChannel misc method tests (timing, modes, wire, calibration)
