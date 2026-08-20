@@ -36,9 +36,9 @@ log.addHandler(logging.NullHandler())
 
 
 class KeysightDSOXChannel(Channel):
-    """ Implementation of a Keysight DSOX1102G Oscilloscope channel.
+    """Implementation of a Keysight DSOX1102G Oscilloscope channel.
 
-    Implementation modeled on Channel object of Tektronix AFG3152C instrument. """
+    Implementation modeled on Channel object of Tektronix AFG3152C instrument."""
 
     BOOLS = {True: 1, False: 0}
 
@@ -65,23 +65,26 @@ class KeysightDSOXChannel(Channel):
     )
 
     display = Instrument.control(
-        "DISPlay?", "DISPlay %d",
+        "DISPlay?",
+        "DISPlay %d",
         """Control whether the display is enabled (bool).""",
         validator=strict_discrete_set,
         values=BOOLS,
-        map_values=True
+        map_values=True,
     )
 
     invert = Instrument.control(
-        "INVert?", "INVert %d",
+        "INVert?",
+        "INVert %d",
         """Control whether the signal is inverted (bool).""",
         validator=strict_discrete_set,
         values=BOOLS,
-        map_values=True
+        map_values=True,
     )
 
     label = Instrument.control(
-        "LABel?", 'LABel "%s"',
+        "LABel?",
+        'LABel "%s"',
         """Control the channel label (string). Labels with more than 10 characters are truncated to
         10 characters. May contain commonly used ASCII characters. Lower case characters are
         converted to upper case.""",
@@ -90,30 +93,34 @@ class KeysightDSOXChannel(Channel):
     )
 
     offset = Instrument.control(
-        "OFFSet?", "OFFSet %f",
+        "OFFSet?",
+        "OFFSet %f",
         """Control the value that is represented at center of screen in Volts (float).
         The range of legal values varies depending on range and scale. If the specified
         value is outside of the legal range, the offset value is automatically set to the nearest
         legal value.
-        """
+        """,
     )
 
     probe_attenuation = Instrument.control(
-        "PROBe?", "PROBe %f",
+        "PROBe?",
+        "PROBe %f",
         """Control the probe attenuation (float strictly from 0.1 to 10000).""",
         validator=strict_range,
-        values=[0.1, 10000]
+        values=[0.1, 10000],
     )
 
     range = Instrument.control(
-        "RANGe?", "RANGe %f",
+        "RANGe?",
+        "RANGe %f",
         """Control the full-scale vertical axis in Volts (float).
-        When using 1:1 probe attenuation, legal values for the range are from 8 mV to 40V."""
+        When using 1:1 probe attenuation, legal values for the range are from 8 mV to 40V.""",
     )
 
     scale = Instrument.control(
-        "SCALe?", "SCALe %f",
-        """Control the vertical scale, or units per division, in Volts (float)."""
+        "SCALe?",
+        "SCALe %f",
+        """Control the vertical scale, or units per division, in Volts (float).""",
     )
 
     def setup(
@@ -128,7 +135,7 @@ class KeysightDSOXChannel(Channel):
         vertical_range: float | None = None,
         scale: float | None = None,
     ) -> None:
-        """ Setup channel. Unspecified settings are not modified. Modifying values such as
+        """Setup channel. Unspecified settings are not modified. Modifying values such as
         probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and
         make multiple consecutive calls to setup() if needed.
 
@@ -143,11 +150,12 @@ class KeysightDSOXChannel(Channel):
         :param vertical_range: Full-scale vertical axis of the selected channel. When using 1:1
             probe attenuation, legal values for the range are  from 8mV to 40 V. If the probe
             attenuation is changed, the range value is multiplied by the probe attenuation factor.
-        :param scale: Units per division. """
+        :param scale: Units per division."""
 
         if vertical_range is not None and scale is not None:
             log.warning(
-                'Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
+                'Both "vertical_range" and "scale" are specified. Specified "scale" has priority.'
+            )
 
         if probe_attenuation is not None:
             self.probe_attenuation = probe_attenuation
@@ -171,18 +179,18 @@ class KeysightDSOXChannel(Channel):
     @property
     def current_configuration(self):
         """Get channel configuration as a dict containing the following keys:
-            - "CHAN": channel number (int)
-            - "OFFS": vertical offset (float)
-            - "RANG": vertical range (float)
-            - "COUP": "dc" or "ac" coupling (str)
-            - "IMP": input impedance (str)
-            - "DISP": currently displayed (bool)
-            - "BWL": bandwidth limiting enabled (bool)
-            - "INV": inverted (bool)
-            - "UNIT": unit (str)
-            - "PROB": probe attenuation (float)
-            - "PROB:SKEW": skew factor (float)
-            - "STYP": probe signal type (str)
+        - "CHAN": channel number (int)
+        - "OFFS": vertical offset (float)
+        - "RANG": vertical range (float)
+        - "COUP": "dc" or "ac" coupling (str)
+        - "IMP": input impedance (str)
+        - "DISP": currently displayed (bool)
+        - "BWL": bandwidth limiting enabled (bool)
+        - "INV": inverted (bool)
+        - "UNIT": unit (str)
+        - "PROB": probe attenuation (float)
+        - "PROB:SKEW": skew factor (float)
+        - "STYP": probe signal type (str)
         """
 
         # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and
@@ -214,7 +222,7 @@ class KeysightDSOXChannel(Channel):
             if key in to_str:
                 ch_setup_dict[key] = str(value)
             elif key in to_bool:
-                ch_setup_dict[key] = (value == "1")
+                ch_setup_dict[key] = value == "1"
             elif key in to_float:
                 ch_setup_dict[key] = float(value)
             elif key in to_int:
