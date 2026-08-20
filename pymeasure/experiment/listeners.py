@@ -65,6 +65,8 @@ class Listener(StoppableThread):
 
         self.port = port
         self.topic = topic
+        if zmq is None:
+            raise ImportError("ZMQ required for Listener.")
         self.context = zmq.Context()
         log.debug(f"{self.__class__.__name__} has ZMQ Context: {self.context!r}")
         self.subscriber = self.context.socket(zmq.SUB)
@@ -86,7 +88,7 @@ class Listener(StoppableThread):
 
     def message_waiting(self):
         """Check if we have a message, wait at most until timeout."""
-        return self.poller.poll(self.timeout * 1000)  # poll timeout is in ms
+        return self.poller.poll(round(self.timeout * 1000))  # poll timeout is in ms
 
     def __repr__(self):
         return (f"<{self.__class__.__name__}(port={self.port},topic={self.topic},"

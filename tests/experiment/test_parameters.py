@@ -148,7 +148,7 @@ def test_float_step_type():
     p = FloatParameter('Test', step=2, step_type="log")
     assert p.step_type == "log"
     with pytest.raises(ValueError):
-        FloatParameter('Test', step_type="invalid")
+        FloatParameter('Test', step_type="invalid")  # pyright: ignore[reportArgumentType]
     # step must be positive for log stepping (it is a multiplicative factor)
     with pytest.raises(ValueError):
         FloatParameter('Test', step=-2, step_type="log")
