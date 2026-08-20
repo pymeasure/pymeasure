@@ -24,110 +24,118 @@
 
 import logging
 from collections.abc import Mapping
+from typing import Literal
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin, cast_or_str
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Channel:
-    """ Implementation of a Keysight DSOX1102G Oscilloscope channel.
+class KeysightDSOXChannel(Channel):
+    """Implementation of a Keysight DSOX1102G Oscilloscope channel.
 
-    Implementation modeled on Channel object of Tektronix AFG3152C instrument. """
+    Implementation modeled on Channel object of Tektronix AFG3152C instrument."""
 
     BOOLS = {True: 1, False: 0}
 
+    def insert_id(self, command: str) -> str:
+        return super().insert_id(":channel{ch}:" + command)
+
     bwlimit = Instrument.control(
-        "BWLimit?", "BWLimit %d",
-        """ A boolean parameter that toggles 25 MHz internal low-pass filter.""",
+        "BWLimit?",
+        "BWLimit %d",
+        """Control whether the 25 MHz internal low-pass filter is enabled (bool).""",
         validator=strict_discrete_set,
         values=BOOLS,
-        map_values=True
+        map_values=True,
     )
 
     coupling = Instrument.control(
-        "COUPling?", "COUPling %s",
-        """ A string parameter that determines the coupling ("ac" or "dc").""",
+        "COUPling?",
+        "COUPling %s",
+        """Control the coupling (str strictly "ac" or "dc").""",
         validator=strict_discrete_set,
         values={"ac": "AC", "dc": "DC"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     display = Instrument.control(
-        "DISPlay?", "DISPlay %d",
-        """ A boolean parameter that toggles the display.""",
+        "DISPlay?",
+        "DISPlay %d",
+        """Control whether the display is enabled (bool).""",
         validator=strict_discrete_set,
         values=BOOLS,
-        map_values=True
+        map_values=True,
     )
 
     invert = Instrument.control(
-        "INVert?", "INVert %d",
-        """ A boolean parameter that toggles the inversion of the input signal.""",
+        "INVert?",
+        "INVert %d",
+        """Control whether the signal is inverted (bool).""",
         validator=strict_discrete_set,
         values=BOOLS,
-        map_values=True
+        map_values=True,
     )
 
     label = Instrument.control(
-        "LABel?", 'LABel "%s"',
-        """ A string to label the channel. Labels with more than 10 characters are truncated to 10
-        characters. May contain commonly used ASCII characters. Lower case characters are converted
-        to upper case.""",
-        get_process_list=lambda v: str(v[1:-1])
+        "LABel?",
+        'LABel "%s"',
+        """Control the channel label (string). Labels with more than 10 characters are truncated to
+        10 characters. May contain commonly used ASCII characters. Lower case characters are
+        converted to upper case.""",
+        get_process_list=lambda v: str(v[1:-1]),
+        cast=str,
     )
 
     offset = Instrument.control(
-        "OFFSet?", "OFFSet %f",
-        """ A float parameter to set value that is represented at center of screen in
-        Volts. The range of legal values varies depending on range and scale. If the specified
+        "OFFSet?",
+        "OFFSet %f",
+        """Control the value that is represented at center of screen in Volts (float).
+        The range of legal values varies depending on range and scale. If the specified
         value is outside of the legal range, the offset value is automatically set to the nearest
         legal value.
-        """
+        """,
     )
 
     probe_attenuation = Instrument.control(
-        "PROBe?", "PROBe %f",
-        """ A float parameter that specifies the probe attenuation. The probe attenuation
-        may be from 0.1 to 10000.""",
+        "PROBe?",
+        "PROBe %f",
+        """Control the probe attenuation (float strictly from 0.1 to 10000).""",
         validator=strict_range,
-        values=[0.1, 10000]
+        values=[0.1, 10000],
     )
 
     range = Instrument.control(
-        "RANGe?", "RANGe %f",
-        """ A float parameter that specifies the full-scale vertical axis in Volts.
-        When using 1:1 probe attenuation, legal values for the range are from 8 mV to 40V."""
+        "RANGe?",
+        "RANGe %f",
+        """Control the full-scale vertical axis in Volts (float).
+        When using 1:1 probe attenuation, legal values for the range are from 8 mV to 40V.""",
     )
 
     scale = Instrument.control(
-        "SCALe?", "SCALe %f",
-        """A float parameter that specifies the vertical scale, or units per division, in Volts."""
+        "SCALe?",
+        "SCALe %f",
+        """Control the vertical scale, or units per division, in Volts (float).""",
     )
 
-    def __init__(self, instrument, number):
-        self.instrument = instrument
-        self.number = number
-
-    def values(self, command, **kwargs):
-        """ Reads a set of values from the instrument through the adapter,
-        passing on any key-word arguments.
-        """
-        return self.instrument.values(f":channel{self.number}:{command}", **kwargs)
-
-    def ask(self, command):
-        self.instrument.ask(f":channel{self.number}:{command}")
-
-    def write(self, command):
-        self.instrument.write(f":channel{self.number}:{command}")
-
-    def setup(self, bwlimit=None, coupling=None, display=None, invert=None, label=None, offset=None,
-              probe_attenuation=None, vertical_range=None, scale=None):
-        """ Setup channel. Unspecified settings are not modified. Modifying values such as
+    def setup(
+        self,
+        bwlimit: bool | None = None,
+        coupling: Literal["ac", "dc"] | None = None,
+        display: bool | None = None,
+        invert: bool | None = None,
+        label: str | None = None,
+        offset: float | None = None,
+        probe_attenuation: float | None = None,
+        vertical_range: float | None = None,
+        scale: float | None = None,
+    ) -> None:
+        """Setup channel. Unspecified settings are not modified. Modifying values such as
         probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and
         make multiple consecutive calls to setup() if needed.
 
@@ -142,11 +150,12 @@ class Channel:
         :param vertical_range: Full-scale vertical axis of the selected channel. When using 1:1
             probe attenuation, legal values for the range are  from 8mV to 40 V. If the probe
             attenuation is changed, the range value is multiplied by the probe attenuation factor.
-        :param scale: Units per division. """
+        :param scale: Units per division."""
 
         if vertical_range is not None and scale is not None:
             log.warning(
-                'Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
+                'Both "vertical_range" and "scale" are specified. Specified "scale" has priority.'
+            )
 
         if probe_attenuation is not None:
             self.probe_attenuation = probe_attenuation
@@ -169,35 +178,37 @@ class Channel:
 
     @property
     def current_configuration(self):
-        """ Read channel configuration as a dict containing the following keys:
-            - "CHAN": channel number (int)
-            - "OFFS": vertical offset (float)
-            - "RANG": vertical range (float)
-            - "COUP": "dc" or "ac" coupling (str)
-            - "IMP": input impedance (str)
-            - "DISP": currently displayed (bool)
-            - "BWL": bandwidth limiting enabled (bool)
-            - "INV": inverted (bool)
-            - "UNIT": unit (str)
-            - "PROB": probe attenuation (float)
-            - "PROB:SKEW": skew factor (float)
-            - "STYP": probe signal type (str)
+        """Get channel configuration as a dict containing the following keys:
+        - "CHAN": channel number (int)
+        - "OFFS": vertical offset (float)
+        - "RANG": vertical range (float)
+        - "COUP": "dc" or "ac" coupling (str)
+        - "IMP": input impedance (str)
+        - "DISP": currently displayed (bool)
+        - "BWL": bandwidth limiting enabled (bool)
+        - "INV": inverted (bool)
+        - "UNIT": unit (str)
+        - "PROB": probe attenuation (float)
+        - "PROB:SKEW": skew factor (float)
+        - "STYP": probe signal type (str)
         """
 
         # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and
         # to query the configuration details, we actually need to ask ":channelX?", without a
         # second ":"
-        ch_setup_raw = self.instrument.ask(f":channel{self.number}?").strip("\n")
+        ch_setup_raw = self.parent.ask(f":channel{self.id}?").strip("\n")
 
         # ch_setup_raw hat the following format:
         # :CHAN1:RANG +40.0E+00;OFFS +0.00000E+00;COUP DC;IMP ONEM;DISP 1;BWL 0;
         # INV 0;LAB "1";UNIT VOLT;PROB +10E+00;PROB:SKEW +0.00E+00;STYP SING
 
         # Cut out the ":CHANx:" at beginning and split string
-        ch_setup_splitted = ch_setup_raw[7:].split(";")
+        ch_setup_split = ch_setup_raw[7:].split(";")
 
         # Create dict of setup parameters
-        ch_setup_dict = dict(map(lambda v: v.split(" "), ch_setup_splitted))
+        ch_setup_dict: dict[str, str | bool | float | int] = {
+            key: value for key, value in (v.split(" ") for v in ch_setup_split)
+        }
 
         # Add "CHAN" key
         ch_setup_dict["CHAN"] = ch_setup_raw[5]
@@ -211,7 +222,7 @@ class Channel:
             if key in to_str:
                 ch_setup_dict[key] = str(value)
             elif key in to_bool:
-                ch_setup_dict[key] = (value == "1")
+                ch_setup_dict[key] = value == "1"
             elif key in to_float:
                 ch_setup_dict[key] = float(value)
             elif key in to_int:
@@ -249,8 +260,8 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
             adapter, name, timeout=6000, **kwargs
         )
         # Account for setup time for timebase_mode, waveform_points_mode
-        self.ch1 = Channel(self, 1)
-        self.ch2 = Channel(self, 2)
+        self.ch1 = KeysightDSOXChannel(self, 1)
+        self.ch2 = KeysightDSOXChannel(self, 2)
 
     #################
     # Channel setup #
@@ -435,7 +446,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
     def system_setup(self, setup_string):
         self.write(":system:setup " + setup_string)
 
-    def ch(self, channel_number):
+    def ch(self, channel_number: int) -> KeysightDSOXChannel:
         if channel_number == 1:
             return self.ch1
         elif channel_number == 2:
@@ -520,10 +531,12 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         # :TIM:MODE MAIN;REF CENT;MAIN:RANG +1.00E-03;POS +0.0E+00
 
         # Cut out the ":TIM:" at beginning and split string
-        tb_setup_splitted = tb_setup_raw[5:].split(";")
+        tb_setup_split = tb_setup_raw[5:].split(";")
 
         # Create dict of setup parameters
-        tb_setup: Mapping[str, str | float] = dict(map(lambda v: v.split(" "), tb_setup_splitted))
+        tb_setup: dict[str, str | float] = {
+            key: value for key, value in (v.split(" ") for v in tb_setup_split)
+        }
 
         # Convert values to specific type
         to_str = ["MODE", "REF"]
