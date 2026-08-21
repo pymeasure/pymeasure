@@ -26,11 +26,14 @@
 
 Invoke this module with ``--device-address``. Most tests only query the current
 configuration. ``test_waveform_data_transfer`` temporarily changes waveform
-transfer settings, and ``test_network_description_write_readback`` temporarily
-changes the inactive network description; both restore the previous values before
+transfer settings, ``test_awg_loopback_control`` drives a 1 kHz, 1 Vpp sine from
+G1 into CH2, and ``test_network_description_write_readback`` temporarily changes
+the inactive network description. These tests restore their previous values before
 returning. The suite does not apply network configuration or issue reset, autoscale,
 self-test, front-panel emulation, setup upload/recall, or instrument-file write commands.
 """
+
+import time
 
 import pytest
 
@@ -210,6 +213,69 @@ def test_measurement_readback(scope):
     assert 0 <= scope.measurements.category <= 2
     assert isinstance(scope.measurements.item("VPP", "CHAN1"), float)
     assert isinstance(scope.measurements.statistic_item("CURR", "VPP", "CHAN1"), float)
+
+
+def test_reference_signal_measurement(scope):
+    """Measure the 1 kHz, approximately 3 V reference output connected to CH1."""
+    channel = scope.ch_1
+    saved_channel = (
+        channel.display_enabled,
+        channel.coupling,
+        channel.scale,
+        channel.offset,
+    )
+    saved_scope = (
+        scope.timebase_mode,
+        scope.timebase_scale,
+        scope.trigger_mode,
+        scope.edge_trigger_source,
+        scope.edge_trigger_slope,
+        scope.edge_trigger_level,
+        scope.trigger_sweep,
+        scope.trigger_status != "STOP",
+    )
+
+    try:
+        channel.display_enabled = True
+        channel.coupling = "DC"
+        channel.scale = 1
+        channel.offset = 0
+        scope.timebase_mode = "MAIN"
+        scope.timebase_scale = 200e-6
+        scope.trigger_mode = "EDGE"
+        scope.edge_trigger_source = "CHAN1"
+        scope.edge_trigger_slope = "POS"
+        scope.edge_trigger_level = 1
+        scope.trigger_sweep = "AUTO"
+        scope.run()
+        time.sleep(2)
+
+        first_frequency = scope.measurements.item("FREQ", "CHAN1")
+        first_amplitude = scope.measurements.item("VPP", "CHAN1")
+        time.sleep(0.1)
+        second_frequency = scope.measurements.item("FREQ", "CHAN1")
+        second_amplitude = scope.measurements.item("VPP", "CHAN1")
+
+        assert first_frequency == pytest.approx(1_000, rel=0.05)
+        assert first_amplitude == pytest.approx(3, rel=0.2)
+        assert second_frequency == pytest.approx(first_frequency, rel=0.01)
+        assert second_amplitude == pytest.approx(first_amplitude, rel=0.1)
+    finally:
+        channel.display_enabled = saved_channel[0]
+        channel.coupling = saved_channel[1]
+        channel.scale = saved_channel[2]
+        channel.offset = saved_channel[3]
+        scope.timebase_scale = saved_scope[1]
+        scope.timebase_mode = saved_scope[0]
+        scope.edge_trigger_source = saved_scope[3]
+        scope.edge_trigger_slope = saved_scope[4]
+        scope.edge_trigger_level = saved_scope[5]
+        scope.trigger_sweep = saved_scope[6]
+        scope.trigger_mode = saved_scope[2]
+        if saved_scope[7]:
+            scope.run()
+        else:
+            scope.stop()
 
 
 def test_waveform_metadata_readback(scope):
@@ -778,6 +844,95 @@ def test_awg_readback(scope):
     ]
     assert isinstance(scope.awg_1.output_enabled, bool)
     assert len(scope.awg_1.get_applied_waveform()) == 5
+
+
+def test_awg_loopback_control(scope):
+    """Control G1 and verify its 1 kHz, 1 Vpp sine through the CH2 loopback."""
+    awg = scope.awg_1
+    channel = scope.ch_2
+    saved_awg = (
+        awg.output_enabled,
+        awg.output_impedance,
+        awg.function_shape,
+        awg.frequency_fixed,
+        awg.voltage_level_immediate_amplitude,
+        awg.voltage_level_immediate_offset,
+        awg.phase_adjust,
+    )
+    saved_channel = (
+        channel.display_enabled,
+        channel.coupling,
+        channel.probe,
+        channel.scale,
+        channel.offset,
+    )
+    saved_scope = (
+        scope.timebase_mode,
+        scope.timebase_scale,
+        scope.trigger_mode,
+        scope.edge_trigger_source,
+        scope.edge_trigger_slope,
+        scope.edge_trigger_level,
+        scope.trigger_sweep,
+        scope.trigger_status != "STOP",
+    )
+
+    try:
+        awg.output_enabled = False
+        awg.output_impedance = "OMEG"
+        awg.apply_sine(1_000, 1, 0, 0)
+        assert awg.function_shape == "SIN"
+        assert awg.frequency_fixed == pytest.approx(1_000)
+        assert awg.voltage_level_immediate_amplitude == pytest.approx(1)
+        assert awg.voltage_level_immediate_offset == pytest.approx(0)
+
+        channel.display_enabled = True
+        channel.coupling = "DC"
+        channel.probe = 1
+        channel.scale = 0.2
+        channel.offset = 0
+        scope.timebase_mode = "MAIN"
+        scope.timebase_scale = 200e-6
+        scope.trigger_mode = "EDGE"
+        scope.edge_trigger_source = "CHAN2"
+        scope.edge_trigger_slope = "POS"
+        scope.edge_trigger_level = 0
+        scope.trigger_sweep = "AUTO"
+        scope.run()
+
+        awg.output_enabled = True
+        time.sleep(0.5)
+        assert awg.output_enabled is True
+        assert scope.measurements.item("FREQ", "CHAN2") == pytest.approx(1_000, rel=0.05)
+        assert scope.measurements.item("VPP", "CHAN2") == pytest.approx(1, rel=0.3)
+    finally:
+        awg.output_enabled = False
+        awg.output_impedance = saved_awg[1]
+        awg.function_shape = saved_awg[2]
+        awg.frequency_fixed = saved_awg[3]
+        awg.voltage_level_immediate_amplitude = saved_awg[4]
+        awg.voltage_level_immediate_offset = saved_awg[5]
+        awg.phase_adjust = saved_awg[6]
+
+        channel.display_enabled = saved_channel[0]
+        channel.coupling = saved_channel[1]
+        channel.probe = saved_channel[2]
+        channel.scale = saved_channel[3]
+        channel.offset = saved_channel[4]
+        scope.timebase_scale = saved_scope[1]
+        scope.timebase_mode = saved_scope[0]
+        scope.edge_trigger_source = saved_scope[3]
+        scope.edge_trigger_slope = saved_scope[4]
+        scope.edge_trigger_level = saved_scope[5]
+        scope.trigger_sweep = saved_scope[6]
+        scope.trigger_mode = saved_scope[2]
+        if saved_scope[7]:
+            scope.run()
+        else:
+            scope.stop()
+        awg.output_enabled = saved_awg[0]
+        # Firmware 00.01.03.03.00 drops queries sent immediately after AWG restoration.
+        time.sleep(1)
 
 
 def test_network_description_write_readback(scope):
