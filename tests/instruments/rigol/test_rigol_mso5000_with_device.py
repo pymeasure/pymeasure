@@ -727,3 +727,7 @@ def test_bus_decoder_readback(scope, name):
 def test_protocol_trigger_readback(scope, name):
     """Read one protocol-trigger setting with the matching trigger option installed."""
     assert getattr(scope.protocol_trigger, name) is not None
+
+
+def test_quick_operation_readback(scope):
+    assert scope.quick.operation in ["SIM", "SWAV", "SSET", "AME", "SRES"]

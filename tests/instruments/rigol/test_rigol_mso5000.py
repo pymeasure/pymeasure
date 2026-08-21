@@ -2272,3 +2272,17 @@ def test_mixed_signal_controls_reject_invalid_values():
             instrument.logic_analyzer.append_group("GRO1")
         with pytest.raises(ValueError):
             instrument.bus_1.threshold("UNKNOWN")
+
+
+def test_quick_operation():
+    with expected_protocol(
+        MSO5000,
+        [(":QUIC:OPER SWAV", None), (":QUIC:OPER?", "SWAV")],
+    ) as instrument:
+        instrument.quick.operation = "SWAV"
+        assert instrument.quick.operation == "SWAV"
+
+
+def test_quick_operation_rejects_invalid_value():
+    with expected_protocol(MSO5000, []) as instrument, pytest.raises(ValueError):
+        instrument.quick.operation = "PRINT"
