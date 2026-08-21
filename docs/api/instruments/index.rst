@@ -38,6 +38,7 @@ Instruments by manufacturer:
    deltaelektronica/index
    edwards/index
    eurotest/index
+   exfo/index
    fluke/index
    formfactor/index
    fwbell/index
