@@ -77,6 +77,7 @@ def test_read_ieee_block_does_not_drain_after_data_beyond_declared_length(monkey
     calls = []
 
     def read_bytes(count, break_on_termchar=False):
+        """Return the next prepared response and record the read arguments."""
         calls.append((count, break_on_termchar))
         return next(responses)
 
