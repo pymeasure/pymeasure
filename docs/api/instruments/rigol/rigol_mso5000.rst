@@ -4,8 +4,9 @@ Rigol MSO5000 Series Oscilloscopes
 
 The :class:`~pymeasure.instruments.rigol.MSO5000` driver supports the
 MSO5072, MSO5074, MSO5102, MSO5104, MSO5204, and MSO5354 models.
-It exposes analog channels, acquisition, automatic measurement and timebase
-settings, common trigger modes, waveform transfer, and selected system and storage functions.
+It exposes analog channels, acquisition, automatic measurement, timebase, advanced analysis,
+common trigger modes, waveform transfer, and selected system and storage
+functions.
 
 Connection
 ==========
@@ -45,6 +46,31 @@ The :meth:`~pymeasure.instruments.rigol.MSO5000.measure` convenience method quer
 automatic measurement on an analog channel.
 For example, ``scope.measure("VPP", 2)`` measures peak-to-peak voltage on channel 2.
 Use the measurement child directly for math, digital, or dual-source measurements.
+
+Advanced scope functions
+========================
+
+Dedicated child interfaces group cursor, display, histogram, mask-test, recording,
+reference-waveform, and search configuration.
+The four math waveforms use :attr:`~pymeasure.instruments.rigol.MSO5000.math_1` through
+:attr:`~pymeasure.instruments.rigol.MSO5000.math_4` so their channel selector is explicit.
+
+.. code-block:: python
+
+    scope.cursor.mode = "MAN"
+    scope.cursor.manual_source = "CHAN1"
+    delta_t = scope.cursor.manual_x_delta
+
+    scope.math_1.operator = "FFT"
+    scope.math_1.fft_source = "CHAN1"
+    scope.math_1.fft_window = "HANN"
+
+    scope.search.mode = "EDGE"
+    scope.search.edge_source = "CHAN1"
+
+Per-slot reference settings use methods on
+:attr:`~pymeasure.instruments.rigol.MSO5000.references` because the SCPI commands carry a
+reference number argument.
 
 Waveform transfer
 =================
@@ -87,6 +113,38 @@ API reference
     :show-inheritance:
 
 .. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.MeasurementSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.CursorSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.DisplaySubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.HistogramSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.MaskSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.MathChannel
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.RecordingSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.ReferenceSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.SearchSubsystem
     :members:
     :show-inheritance:
 

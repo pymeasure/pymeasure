@@ -452,3 +452,123 @@ def test_nth_edge_trigger_readback(scope):
     assert 16e-9 <= scope.nth_edge_trigger_idle_time <= 10
     assert 1 <= scope.nth_edge_trigger_edge_count <= 65535
     assert isinstance(scope.nth_edge_trigger_level, float)
+
+
+def test_cursor_readback(scope):
+    cursor = scope.cursor
+    assert isinstance(cursor.measure_indicator, bool)
+    assert cursor.mode in ["OFF", "MAN", "TRAC", "XY", "MEAS"]
+    assert cursor.manual_type in ["TIME", "AMPL"]
+    # Remaining cursor queries require a matching active mode on this firmware.
+
+
+def test_display_readback(scope):
+    assert scope.display.type in ["VECT", "DOTS"]
+    assert scope.display.grading_time in ["MIN", "0.1", "0.2", "0.5", "1", "2", "5", "10", "INF"]
+    assert 1 <= scope.display.waveform_brightness <= 100
+    assert scope.display.grid in ["FULL", "HALF", "NONE", "IRE"]
+    assert 1 <= scope.display.grid_brightness <= 100
+    assert isinstance(scope.display.rulers, bool)
+    assert isinstance(scope.display.color, bool)
+
+
+def test_histogram_readback(scope):
+    assert isinstance(scope.histogram.display, bool)
+    assert scope.histogram.type in ["HOR", "VERT", "MEAS"]
+    assert scope.histogram.source in ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "OFF"]
+    assert 1 <= scope.histogram.size <= 4
+    assert isinstance(scope.histogram.static, bool)
+    assert isinstance(scope.histogram.bottom_limit, float)
+    assert isinstance(scope.histogram.left_limit, float)
+    assert isinstance(scope.histogram.right_limit, float)
+    assert isinstance(scope.histogram.top_limit, float)
+
+
+def test_mask_readback(scope):
+    assert isinstance(scope.mask.enabled, bool)
+    assert scope.mask.source in ["CHAN1", "CHAN2", "CHAN3", "CHAN4"]
+    assert scope.mask.operate in ["RUN", "STOP"]
+    assert isinstance(scope.mask.measurement_display, bool)
+    assert 0.01 <= scope.mask.x <= 2
+    assert 0.04 <= scope.mask.y <= 2
+    assert scope.mask.passed >= 0
+    assert scope.mask.failed >= 0
+    assert scope.mask.total >= 0
+
+
+def test_recording_readback(scope):
+    assert isinstance(scope.recording.enabled, bool)
+    assert isinstance(scope.recording.start, bool)
+    assert isinstance(scope.recording.play, bool)
+    assert scope.recording.current >= 0
+    assert scope.recording.frames >= 1
+
+
+def test_reference_readback(scope):
+    assert isinstance(scope.references.display, bool)
+    assert isinstance(scope.references.label_enabled, bool)
+    assert isinstance(scope.references.source(1), str)
+    assert isinstance(scope.references.vertical_scale(1), float)
+    assert isinstance(scope.references.vertical_offset(1), float)
+    assert scope.references.color(1) in ["GRAY", "GRE", "BLUE", "RED", "ORAN"]
+    assert isinstance(scope.references.label_content(1), str)
+
+
+def test_math_readback(scope):
+    math_channel = scope.math_1
+    assert isinstance(math_channel.display, bool)
+    assert isinstance(math_channel.operator, str)
+    assert isinstance(math_channel.source1, str)
+    assert isinstance(math_channel.source2, str)
+    assert isinstance(math_channel.left_source_1, str)
+    assert isinstance(math_channel.left_source_2, str)
+    assert isinstance(math_channel.scale, float)
+    assert isinstance(math_channel.offset, float)
+    assert isinstance(math_channel.invert, bool)
+    assert math_channel.fft_source in ["CHAN1", "CHAN2", "CHAN3", "CHAN4"]
+    assert isinstance(math_channel.fft_window, str)
+    assert math_channel.fft_unit in ["VRMS", "DB"]
+    assert isinstance(math_channel.fft_scale, float)
+    assert isinstance(math_channel.fft_offset, float)
+    assert isinstance(math_channel.fft_horizontal_scale, float)
+    assert isinstance(math_channel.fft_horizontal_center, float)
+    assert isinstance(math_channel.fft_frequency_start, float)
+    assert isinstance(math_channel.fft_frequency_end, float)
+    assert isinstance(math_channel.fft_search_enabled, bool)
+    assert 1 <= math_channel.fft_search_num <= 15
+    assert isinstance(math_channel.fft_search_threshold, float)
+    assert isinstance(math_channel.fft_search_excursion, float)
+    assert math_channel.fft_search_order in ["AMP", "FREQ"]
+    # Filter, logic, and differentiation queries require their matching operator.
+
+
+def test_search_readback(scope):
+    assert scope.search.count >= 0
+    assert isinstance(scope.search.state, bool)
+    assert isinstance(scope.search.mode, str)
+    assert scope.search.event >= 0
+    assert isinstance(scope.search.edge_slope, str)
+    assert isinstance(scope.search.edge_source, str)
+    assert isinstance(scope.search.edge_threshold, float)
+    assert isinstance(scope.search.pulse_polarity, str)
+    assert isinstance(scope.search.pulse_qualifier, str)
+    assert isinstance(scope.search.pulse_source, str)
+    assert 800e-12 <= scope.search.pulse_upper_width <= 10
+    assert 800e-12 <= scope.search.pulse_lower_width <= 10
+    assert isinstance(scope.search.pulse_threshold, float)
+    assert isinstance(scope.search.runt_polarity, str)
+    assert isinstance(scope.search.runt_qualifier, str)
+    assert isinstance(scope.search.runt_source, str)
+    assert 800e-12 <= scope.search.runt_width_upper <= 10
+    assert 800e-12 <= scope.search.runt_width_lower <= 10
+    assert isinstance(scope.search.runt_threshold1, float)
+    assert isinstance(scope.search.runt_threshold2, float)
+    assert isinstance(scope.search.slope_polarity, str)
+    assert isinstance(scope.search.slope_qualifier, str)
+    assert isinstance(scope.search.slope_source, str)
+    assert 800e-12 <= scope.search.slope_time_upper <= 10
+    assert 800e-12 <= scope.search.slope_time_lower <= 10
+    assert isinstance(scope.search.slope_threshold1, float)
+    assert isinstance(scope.search.slope_threshold2, float)
+    if scope.search.count:
+        assert isinstance(scope.search.value(0), float)
