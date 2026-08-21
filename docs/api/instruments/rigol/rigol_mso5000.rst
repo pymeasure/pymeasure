@@ -96,6 +96,23 @@ logic-pod operation additionally requires the appropriate active logic probe. Th
 :attr:`~pymeasure.instruments.rigol.rigol_mso5000.LogicAnalyzerSubsystem.time_calibration`
 property is read-only because changing it alters calibration state.
 
+Integrated functions
+====================
+
+Dedicated child interfaces expose Bode plot, counter, DVM, and power-analysis settings. Optional
+waveform-generator channels use :attr:`~pymeasure.instruments.rigol.MSO5000.awg_1` and
+:attr:`~pymeasure.instruments.rigol.MSO5000.awg_2`.
+
+.. code-block:: python
+
+    frequency = scope.counter.current
+    voltage = scope.dvm.current
+    scope.awg_1.apply_sine(1000, 0.5, 0, 0)
+
+Generator and Bode-plot availability depends on the installed AWG option and suitable wiring.
+``upload_waveform`` accepts raw DAC16 bytes so the driver does not impose an undocumented byte
+order.
+
 Waveform transfer
 =================
 
@@ -172,6 +189,26 @@ API reference
     :members:
     :show-inheritance:
 
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.BodePlotSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.CounterSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.DVMSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.PowerAnalysisSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.AWGChannel
+    :members:
+    :show-inheritance:
 
 .. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.QuickSubsystem
     :members:

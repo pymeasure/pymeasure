@@ -1771,6 +1771,588 @@ class SearchSubsystem(Channel):
         return float(self.ask(f":SEAR:VAL? {event}"))
 
 
+class BodePlotSubsystem(Channel):
+    """Represent MSO5000 Bode-plot configuration and results."""
+
+    enabled = Channel.control(
+        ":BODE:ENAB?",
+        ":BODE:ENAB %d",
+        """Control the Bode-plot state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    display_type = Channel.control(
+        ":BODE:DISP?",
+        ":BODE:DISP %s",
+        """Control the display type (str).""",
+        validator=strict_discrete_set,
+        values=["DISP_WAVE", "DISP_CHART"],
+        cast=str,
+    )
+
+    source = Channel.control(
+        ":BODE:SOUR?",
+        ":BODE:SOUR %s",
+        """Control the generator source (str).""",
+        validator=strict_discrete_set,
+        values=["SOURCE1"],
+        cast=str,
+    )
+
+    sweep_type = Channel.control(
+        ":BODE:SWEE?",
+        ":BODE:SWEE %s",
+        """Control the sweep type (str).""",
+        validator=strict_discrete_set,
+        values=["LOG_SWEEP", "LINE_SWEEP"],
+        cast=str,
+    )
+
+    reference_input = Channel.control(
+        ":BODE:REFI?",
+        ":BODE:REFI %s",
+        """Control the reference input (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    reference_output = Channel.control(
+        ":BODE:REFO?",
+        ":BODE:REFO %s",
+        """Control the reference output (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    impedance = Channel.control(
+        ":BODE:IMP?",
+        ":BODE:IMP %s",
+        """Control the output impedance (str).""",
+        validator=strict_discrete_set,
+        values=["OMEG", "FIFT"],
+        cast=str,
+    )
+
+    start = Channel.control(
+        ":BODE:STAR?",
+        ":BODE:STAR %g",
+        """Control the start frequency in Hertz (float).""",
+        validator=strict_range,
+        values=[10, 25e6],
+        cast=float,
+    )
+
+    stop = Channel.control(
+        ":BODE:STOP?",
+        ":BODE:STOP %g",
+        """Control the stop frequency in Hertz (float).""",
+        validator=strict_range,
+        values=[100, 25e6],
+        cast=float,
+    )
+
+    point = Channel.control(
+        ":BODE:POIN?",
+        ":BODE:POIN %d",
+        """Control the point count (int).""",
+        validator=strict_range,
+        values=[10, 300],
+        cast=int,
+    )
+
+    voltage_profile = Channel.control(
+        ":BODE:VOLT:PROF?",
+        ":BODE:VOLT:PROF %d",
+        """Control the voltage profile state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    gain_margin = Channel.measurement(":BODE:GMAR?", """Measure gain margin (float).""", cast=float)
+    gain_margin_frequency = Channel.measurement(
+        ":BODE:GMAR:FREQ?", """Measure gain-margin frequency in Hertz (float).""", cast=float
+    )
+    phase_margin = Channel.measurement(
+        ":BODE:PMAR?", """Measure phase margin (float).""", cast=float
+    )
+    phase_margin_frequency = Channel.measurement(
+        ":BODE:PMAR:FREQ?", """Measure phase-margin frequency in Hertz (float).""", cast=float
+    )
+
+    voltage_ranges = [
+        "ALL",
+        "F10HZ",
+        "F100HZ",
+        "F1KHZ",
+        "F10KHZ",
+        "F100KHZ",
+        "F1MHZ",
+        "F10MHZ",
+        "F25MHZ",
+    ]
+
+    def set_voltage(self, frequency_range: str, amplitude: float) -> None:
+        """Set sweep amplitude in Volts for one documented frequency range."""
+        frequency_range = strict_discrete_set(frequency_range, self.voltage_ranges)
+        self.write(f":BODE:VOLT {amplitude:g},{frequency_range}")
+
+    def voltage(self, frequency_range: str) -> float:
+        """Return sweep amplitude in Volts for one documented frequency range."""
+        frequency_range = strict_discrete_set(frequency_range, self.voltage_ranges)
+        return float(self.ask(f":BODE:VOLT? {frequency_range}"))
+
+
+class CounterSubsystem(Channel):
+    """Represent the MSO5000 hardware counter."""
+
+    current = Channel.measurement(
+        ":COUN:CURR?", """Measure the current counter value (float).""", cast=float
+    )
+
+    enabled = Channel.control(
+        ":COUN:ENAB?",
+        ":COUN:ENAB %d",
+        """Control the counter state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    source = Channel.control(
+        ":COUN:SOUR?",
+        ":COUN:SOUR %s",
+        """Control the counter source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    mode = Channel.control(
+        ":COUN:MODE?",
+        ":COUN:MODE %s",
+        """Control the counter mode (str).""",
+        validator=strict_discrete_set,
+        values=["FREQ", "PER", "TOT"],
+        cast=str,
+    )
+
+    digits = Channel.control(
+        ":COUN:NDIG?",
+        ":COUN:NDIG %d",
+        """Control the displayed digit count (int).""",
+        validator=strict_range,
+        values=[3, 6],
+        cast=int,
+    )
+
+    totalize_enabled = Channel.control(
+        ":COUN:TOT:ENAB?",
+        ":COUN:TOT:ENAB %d",
+        """Control the totalizer state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    def clear_totalizer(self) -> None:
+        """Clear the accumulated totalizer value."""
+        self.write(":COUN:TOT:CLE")
+
+
+class DVMSubsystem(Channel):
+    """Represent the MSO5000 digital voltmeter."""
+
+    current = Channel.measurement(
+        ":DVM:CURR?", """Measure the current voltage in Volts (float).""", cast=float
+    )
+
+    enabled = Channel.control(
+        ":DVM:ENAB?",
+        ":DVM:ENAB %d",
+        """Control the DVM state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    source = Channel.control(
+        ":DVM:SOUR?",
+        ":DVM:SOUR %s",
+        """Control the DVM source (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    mode = Channel.control(
+        ":DVM:MODE?",
+        ":DVM:MODE %s",
+        """Control the DVM mode (str).""",
+        validator=strict_discrete_set,
+        values=["ACRM", "DC", "DCRM"],
+        cast=str,
+    )
+
+
+class PowerAnalysisSubsystem(Channel):
+    """Represent MSO5000 power-analysis configuration."""
+
+    type = Channel.control(
+        ":POW:TYPE?",
+        ":POW:TYPE %s",
+        """Control the analysis type (str).""",
+        validator=strict_discrete_set,
+        values=["QUAL", "RIPP"],
+        cast=str,
+    )
+
+    current_source = Channel.control(
+        ":POW:CURR?",
+        ":POW:CURR %s",
+        """Control the current source (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    voltage_source = Channel.control(
+        ":POW:VOLT?",
+        ":POW:VOLT %s",
+        """Control the voltage source (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    quality_frequency_reference = Channel.control(
+        ":POW:QUAL:FREQ?",
+        ":POW:QUAL:FREQ %s",
+        """Control the quality frequency reference (str).""",
+        validator=strict_discrete_set,
+        values=["VOLT", "CURR"],
+        cast=str,
+    )
+
+    reference_level_method = Channel.control(
+        ":POW:REFL:METH?",
+        ":POW:REFL:METH %s",
+        """Control the reference-level method (str).""",
+        validator=strict_discrete_set,
+        values=["ABS", "PERC"],
+        cast=str,
+    )
+
+    reference_level_percent_high = Channel.control(
+        ":POW:REFL:PERC:HIGH?",
+        ":POW:REFL:PERC:HIGH %d",
+        """Control the high reference level in percent (int from 0 to 100).""",
+        validator=strict_range,
+        values=[0, 100],
+        cast=int,
+    )
+
+    reference_level_percent_low = Channel.control(
+        ":POW:REFL:PERC:LOW?",
+        ":POW:REFL:PERC:LOW %d",
+        """Control the low reference level in percent (int from 0 to 100).""",
+        validator=strict_range,
+        values=[0, 100],
+        cast=int,
+    )
+
+    reference_level_percent_mid = Channel.control(
+        ":POW:REFL:PERC:MID?",
+        ":POW:REFL:PERC:MID %d",
+        """Control the middle reference level in percent (int from 0 to 100).""",
+        validator=strict_range,
+        values=[0, 100],
+        cast=int,
+    )
+
+
+class AWGChannel(Channel):
+    """Represent one optional MSO5000 arbitrary waveform generator channel."""
+
+    frequency_fixed = Channel.control(
+        ":SOUR{ch}:FREQ?",
+        ":SOUR{ch}:FREQ %g",
+        """Control the output frequency in Hertz (float).""",
+        cast=float,
+    )
+
+    phase_adjust = Channel.control(
+        ":SOUR{ch}:PHAS?",
+        ":SOUR{ch}:PHAS %g",
+        """Control the start phase in degrees (float).""",
+        validator=strict_range,
+        values=[0, 360],
+        cast=float,
+    )
+
+    function_shape = Channel.control(
+        ":SOUR{ch}:FUNC?",
+        ":SOUR{ch}:FUNC %s",
+        """Control the waveform shape (str).""",
+        validator=strict_discrete_set,
+        values=[
+            "SIN",
+            "SQU",
+            "RAMP",
+            "PULS",
+            "NOIS",
+            "DC",
+            "SINC",
+            "EXPR",
+            "EXPF",
+            "ECG",
+            "GAUS",
+            "LOR",
+            "HAV",
+            "ARB",
+        ],
+        cast=str,
+    )
+
+    function_ramp_symmetry = Channel.control(
+        ":SOUR{ch}:FUNC:RAMP:SYMM?",
+        ":SOUR{ch}:FUNC:RAMP:SYMM %g",
+        """Control the ramp symmetry in percent (float).""",
+        validator=strict_range,
+        values=[1, 100],
+        cast=float,
+    )
+
+    voltage_level_immediate_amplitude = Channel.control(
+        ":SOUR{ch}:VOLT?",
+        ":SOUR{ch}:VOLT %g",
+        """Control the amplitude in Volts peak-to-peak (float).""",
+        cast=float,
+    )
+
+    voltage_level_immediate_offset = Channel.control(
+        ":SOUR{ch}:VOLT:OFFS?",
+        ":SOUR{ch}:VOLT:OFFS %g",
+        """Control the DC offset in Volts (float).""",
+        cast=float,
+    )
+
+    pulse_duty_cycle = Channel.control(
+        ":SOUR{ch}:PULS:DCYC?",
+        ":SOUR{ch}:PULS:DCYC %g",
+        """Control the pulse duty cycle in percent (float).""",
+        validator=strict_range,
+        values=[10, 90],
+        cast=float,
+    )
+
+    type = Channel.control(
+        ":SOUR{ch}:TYPE?",
+        ":SOUR{ch}:TYPE %s",
+        """Control the operating type (str).""",
+        validator=strict_discrete_set,
+        values=["NONE", "MOD", "SWE", "BURS"],
+        cast=str,
+    )
+
+    mod_type = Channel.control(
+        ":SOUR{ch}:MOD:TYPE?",
+        ":SOUR{ch}:MOD:TYPE %s",
+        """Control the modulation type (str).""",
+        validator=strict_discrete_set,
+        values=["AM", "FM", "FSK"],
+        cast=str,
+    )
+
+    mod_am_depth = Channel.control(
+        ":SOUR{ch}:MOD:AM?",
+        ":SOUR{ch}:MOD:AM %d",
+        """Control the AM depth in percent (int).""",
+        validator=strict_range,
+        values=[0, 120],
+        cast=int,
+    )
+
+    mod_am_internal_frequency = Channel.control(
+        ":SOUR{ch}:MOD:AM:INT:FREQ?",
+        ":SOUR{ch}:MOD:AM:INT:FREQ %d",
+        """Control the AM internal frequency in Hertz (int).""",
+        validator=strict_range,
+        values=[1, 50_000],
+        cast=int,
+    )
+
+    mod_fm_internal_frequency = Channel.control(
+        ":SOUR{ch}:MOD:FM:INT:FREQ?",
+        ":SOUR{ch}:MOD:FM:INT:FREQ %d",
+        """Control the FM internal frequency in Hertz (int).""",
+        validator=strict_range,
+        values=[1, 50_000],
+        cast=int,
+    )
+
+    mod_am_internal_function = Channel.control(
+        ":SOUR{ch}:MOD:AM:INT:FUNC?",
+        ":SOUR{ch}:MOD:AM:INT:FUNC %s",
+        """Control the AM internal waveform (str).""",
+        validator=strict_discrete_set,
+        values=["SIN", "SQU", "RAMP", "NOIS"],
+        cast=str,
+    )
+
+    mod_fm_internal_function = Channel.control(
+        ":SOUR{ch}:MOD:FM:INT:FUNC?",
+        ":SOUR{ch}:MOD:FM:INT:FUNC %s",
+        """Control the FM internal waveform (str).""",
+        validator=strict_discrete_set,
+        values=["SIN", "SQU", "RAMP", "NOIS"],
+        cast=str,
+    )
+
+    mod_fm_deviation = Channel.control(
+        ":SOUR{ch}:MOD:FM:DEV?",
+        ":SOUR{ch}:MOD:FM:DEV %g",
+        """Control the FM deviation in Hertz (float).""",
+        cast=float,
+    )
+
+    sweep_type = Channel.control(
+        ":SOUR{ch}:SWE:TYPE?",
+        ":SOUR{ch}:SWE:TYPE %s",
+        """Control the sweep type (str).""",
+        validator=strict_discrete_set,
+        values=["LIN", "LOG", "STEP"],
+        cast=str,
+    )
+
+    sweep_time = Channel.control(
+        ":SOUR{ch}:SWE:STIM?",
+        ":SOUR{ch}:SWE:STIM %g",
+        """Control the sweep time in seconds (float).""",
+        validator=strict_range,
+        values=[0.001, 500],
+        cast=float,
+    )
+
+    sweep_back_time = Channel.control(
+        ":SOUR{ch}:SWE:BTIM?",
+        ":SOUR{ch}:SWE:BTIM %g",
+        """Control the sweep return time in seconds (float).""",
+        validator=strict_range,
+        values=[0, 500],
+        cast=float,
+    )
+
+    burst_type = Channel.control(
+        ":SOUR{ch}:BURS:TYPE?",
+        ":SOUR{ch}:BURS:TYPE %s",
+        """Control the burst type (str).""",
+        validator=strict_discrete_set,
+        values=["NCYC", "INF"],
+        cast=str,
+    )
+
+    burst_cycles = Channel.control(
+        ":SOUR{ch}:BURS:CYCL?",
+        ":SOUR{ch}:BURS:CYCL %d",
+        """Control the burst cycle count (int).""",
+        validator=strict_range,
+        values=[1, 1_000_000],
+        cast=int,
+    )
+
+    burst_delay = Channel.control(
+        ":SOUR{ch}:BURS:DEL?",
+        ":SOUR{ch}:BURS:DEL %g",
+        """Control the burst delay in seconds (float).""",
+        cast=float,
+    )
+
+    output_enabled = Channel.control(
+        ":SOUR{ch}:OUTP{ch}?",
+        ":SOUR{ch}:OUTP{ch} %d",
+        """Control the output state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    output_impedance = Channel.control(
+        ":SOUR{ch}:OUTP{ch}:IMP?",
+        ":SOUR{ch}:OUTP{ch}:IMP %s",
+        """Control the output impedance (str).""",
+        validator=strict_discrete_set,
+        values=["OMEG", "FIFT"],
+        cast=str,
+    )
+
+    def reset_phase(self) -> None:
+        """Synchronize the phases of both generator channels."""
+        self.write(":SOUR{ch}:PHAS:INIT")
+
+    def get_applied_waveform(self) -> tuple[str, ...]:
+        """Return the current waveform configuration fields without lossy conversion."""
+        return tuple(value.strip() for value in self.ask(":SOUR{ch}:APPL?").split(","))
+
+    @staticmethod
+    def _apply_arguments(values: tuple[float | None, ...]) -> str:
+        first_missing = next(
+            (index for index, value in enumerate(values) if value is None), len(values)
+        )
+        if any(value is not None for value in values[first_missing:]):
+            raise ValueError("Generator apply parameters cannot skip an earlier parameter.")
+        return ",".join(f"{value:g}" for value in values[:first_missing] if value is not None)
+
+    def _apply(self, shape: str, *values: float | None) -> None:
+        arguments = self._apply_arguments(values)
+        suffix = f" {arguments}" if arguments else ""
+        self.write(f":SOUR{self.id}:APPL:{shape}{suffix}")
+
+    def apply_noise(self, amplitude: float | None = None, offset: float | None = None) -> None:
+        """Apply noise with optional amplitude and offset."""
+        self._apply("NOIS", amplitude, offset)
+
+    def apply_pulse(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
+        """Apply a pulse waveform with sequential optional parameters."""
+        self._apply("PULS", frequency, amplitude, offset, phase)
+
+    def apply_ramp(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
+        """Apply a ramp waveform with sequential optional parameters."""
+        self._apply("RAMP", frequency, amplitude, offset, phase)
+
+    def apply_sine(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
+        """Apply a sine waveform with sequential optional parameters."""
+        self._apply("SIN", frequency, amplitude, offset, phase)
+
+    def apply_square(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
+        """Apply a square waveform with sequential optional parameters."""
+        self._apply("SQU", frequency, amplitude, offset, phase)
+
+    def apply_user(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
+        """Apply the selected arbitrary waveform with sequential optional parameters."""
+        self._apply("USER", frequency, amplitude, offset, phase)
+
+    def upload_waveform(self, data: bytes) -> None:
+        """Upload 4 to 32768 raw DAC16 bytes with definite-block framing."""
+        if not isinstance(data, bytes):
+            raise TypeError("Waveform data must be bytes.")
+        if not 4 <= len(data) <= 32768 or len(data) % 2:
+            raise ValueError("Waveform data must contain an even 4 to 32768 bytes.")
+        count = str(len(data))
+        prefix = f":TRAC{self.id}:DATA:DAC16 volatile,END,#{len(count)}{count}".encode()
+        self.write_bytes(prefix + data)
+
+
 class QuickSubsystem(Channel):
     """Represent the configurable front-panel shortcut operation."""
 
@@ -3086,6 +3668,12 @@ class MSO5000(RigolOscilloscope):
     references = Instrument.ChannelCreator(ReferenceSubsystem)
     search = Instrument.ChannelCreator(SearchSubsystem)
     quick = Instrument.ChannelCreator(QuickSubsystem)
+    bode_plot = Instrument.ChannelCreator(BodePlotSubsystem)
+    counter = Instrument.ChannelCreator(CounterSubsystem)
+    dvm = Instrument.ChannelCreator(DVMSubsystem)
+    power_analysis = Instrument.ChannelCreator(PowerAnalysisSubsystem)
+    awg_1 = Instrument.ChannelCreator(AWGChannel, 1)
+    awg_2 = Instrument.ChannelCreator(AWGChannel, 2)
     logic_analyzer = Instrument.ChannelCreator(LogicAnalyzerSubsystem)
     digital_channels = Instrument.MultiChannelCreator(DigitalChannel, list(range(16)), prefix="d_")
     pod_1 = Instrument.ChannelCreator(LogicPod, 1)

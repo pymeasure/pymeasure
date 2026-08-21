@@ -2286,3 +2286,220 @@ def test_quick_operation():
 def test_quick_operation_rejects_invalid_value():
     with expected_protocol(MSO5000, []) as instrument, pytest.raises(ValueError):
         instrument.quick.operation = "PRINT"
+
+
+@pytest.mark.parametrize(
+    "name, command, value, reply",
+    [
+        ("enabled", "ENAB", True, "1"),
+        ("display_type", "DISP", "DISP_CHART", "DISP_CHART"),
+        ("source", "SOUR", "SOURCE1", "SOURCE1"),
+        ("sweep_type", "SWEE", "LOG_SWEEP", "LOG_SWEEP"),
+        ("reference_input", "REFI", "CHAN1", "CHAN1"),
+        ("reference_output", "REFO", "CHAN2", "CHAN2"),
+        ("impedance", "IMP", "OMEG", "OMEG"),
+        ("start", "STAR", 10.0, "1E+1"),
+        ("stop", "STOP", 1e6, "1E+6"),
+        ("point", "POIN", 100, "100"),
+        ("voltage_profile", "VOLT:PROF", False, "0"),
+    ],
+)
+def test_bode_plot_controls(name, command, value, reply):
+    wire = (
+        int(value)
+        if isinstance(value, bool)
+        else f"{value:g}"
+        if isinstance(value, float)
+        else value
+    )
+    with expected_protocol(
+        MSO5000, [(f":BODE:{command} {wire}", None), (f":BODE:{command}?", reply)]
+    ) as instrument:
+        setattr(instrument.bode_plot, name, value)
+        result = getattr(instrument.bode_plot, name)
+        assert result == pytest.approx(value) if isinstance(value, float) else result == value
+
+
+def test_bode_plot_voltage_and_results():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":BODE:VOLT 0.2,F1KHZ", None),
+            (":BODE:VOLT? F1KHZ", "2E-1"),
+            (":BODE:GMAR?", "12.5"),
+            (":BODE:GMAR:FREQ?", "1000"),
+            (":BODE:PMAR?", "45"),
+            (":BODE:PMAR:FREQ?", "2000"),
+        ],
+    ) as instrument:
+        instrument.bode_plot.set_voltage("F1KHZ", 0.2)
+        assert instrument.bode_plot.voltage("F1KHZ") == pytest.approx(0.2)
+        assert instrument.bode_plot.gain_margin == pytest.approx(12.5)
+        assert instrument.bode_plot.gain_margin_frequency == pytest.approx(1000)
+        assert instrument.bode_plot.phase_margin == pytest.approx(45)
+        assert instrument.bode_plot.phase_margin_frequency == pytest.approx(2000)
+
+
+@pytest.mark.parametrize(
+    "name, command, value, reply",
+    [
+        ("enabled", "ENAB", True, "1"),
+        ("source", "SOUR", "CHAN2", "CHAN2"),
+        ("mode", "MODE", "FREQ", "FREQ"),
+        ("digits", "NDIG", 6, "6"),
+        ("totalize_enabled", "TOT:ENAB", False, "0"),
+    ],
+)
+def test_counter_controls(name, command, value, reply):
+    wire = int(value) if isinstance(value, bool) else value
+    with expected_protocol(
+        MSO5000, [(f":COUN:{command} {wire}", None), (f":COUN:{command}?", reply)]
+    ) as instrument:
+        setattr(instrument.counter, name, value)
+        assert getattr(instrument.counter, name) == value
+
+
+def test_counter_result_and_action():
+    with expected_protocol(
+        MSO5000, [(":COUN:CURR?", "1.25E+6"), (":COUN:TOT:CLE", None)]
+    ) as instrument:
+        assert instrument.counter.current == pytest.approx(1.25e6)
+        instrument.counter.clear_totalizer()
+
+
+@pytest.mark.parametrize(
+    "name, command, value, reply",
+    [
+        ("enabled", "ENAB", True, "1"),
+        ("source", "SOUR", "CHAN2", "CHAN2"),
+        ("mode", "MODE", "DCRM", "DCRM"),
+    ],
+)
+def test_dvm_controls(name, command, value, reply):
+    wire = int(value) if isinstance(value, bool) else value
+    with expected_protocol(
+        MSO5000, [(f":DVM:{command} {wire}", None), (f":DVM:{command}?", reply)]
+    ) as instrument:
+        setattr(instrument.dvm, name, value)
+        assert getattr(instrument.dvm, name) == value
+
+
+def test_dvm_current():
+    with expected_protocol(MSO5000, [(":DVM:CURR?", "0.125000")]) as instrument:
+        assert instrument.dvm.current == pytest.approx(0.125)
+
+
+@pytest.mark.parametrize(
+    "name, command, value, reply",
+    [
+        ("type", "TYPE", "QUAL", "QUAL"),
+        ("current_source", "CURR", "CHAN1", "CHAN1"),
+        ("voltage_source", "VOLT", "CHAN2", "CHAN2"),
+        ("quality_frequency_reference", "QUAL:FREQ", "VOLT", "VOLT"),
+        ("reference_level_method", "REFL:METH", "PERC", "PERC"),
+        ("reference_level_percent_high", "REFL:PERC:HIGH", 90, "90"),
+        ("reference_level_percent_low", "REFL:PERC:LOW", 10, "10"),
+        ("reference_level_percent_mid", "REFL:PERC:MID", 50, "50"),
+    ],
+)
+def test_power_analysis_controls(name, command, value, reply):
+    with expected_protocol(
+        MSO5000, [(f":POW:{command} {value}", None), (f":POW:{command}?", reply)]
+    ) as instrument:
+        setattr(instrument.power_analysis, name, value)
+        assert getattr(instrument.power_analysis, name) == value
+
+
+@pytest.mark.parametrize(
+    "name, command, value, reply",
+    [
+        ("frequency_fixed", "FREQ", 1000.0, "1E+3"),
+        ("phase_adjust", "PHAS", 90.0, "9E+1"),
+        ("function_shape", "FUNC", "SIN", "SIN"),
+        ("function_ramp_symmetry", "FUNC:RAMP:SYMM", 50.0, "5E+1"),
+        ("voltage_level_immediate_amplitude", "VOLT", 0.5, "5E-1"),
+        ("voltage_level_immediate_offset", "VOLT:OFFS", 0.0, "0"),
+        ("pulse_duty_cycle", "PULS:DCYC", 20.0, "20"),
+        ("type", "TYPE", "NONE", "NONE"),
+        ("mod_type", "MOD:TYPE", "AM", "AM"),
+        ("mod_am_depth", "MOD:AM", 100, "100"),
+        ("mod_am_internal_frequency", "MOD:AM:INT:FREQ", 1000, "1000"),
+        ("mod_fm_internal_frequency", "MOD:FM:INT:FREQ", 1000, "1000"),
+        ("mod_am_internal_function", "MOD:AM:INT:FUNC", "SIN", "SIN"),
+        ("mod_fm_internal_function", "MOD:FM:INT:FUNC", "SQU", "SQU"),
+        ("mod_fm_deviation", "MOD:FM:DEV", 1000.0, "1E+3"),
+        ("sweep_type", "SWE:TYPE", "LOG", "LOG"),
+        ("sweep_time", "SWE:STIM", 1.0, "1"),
+        ("sweep_back_time", "SWE:BTIM", 0.0, "0"),
+        ("burst_type", "BURS:TYPE", "NCYC", "NCYC"),
+        ("burst_cycles", "BURS:CYCL", 10, "10"),
+        ("burst_delay", "BURS:DEL", 0.0, "0"),
+        ("output_enabled", "OUTP2", True, "1"),
+        ("output_impedance", "OUTP2:IMP", "OMEG", "OMEG"),
+    ],
+)
+def test_awg_controls(name, command, value, reply):
+    wire = (
+        int(value)
+        if isinstance(value, bool)
+        else f"{value:g}"
+        if isinstance(value, float)
+        else value
+    )
+    with expected_protocol(
+        MSO5000, [(f":SOUR2:{command} {wire}", None), (f":SOUR2:{command}?", reply)]
+    ) as instrument:
+        setattr(instrument.awg_2, name, value)
+        result = getattr(instrument.awg_2, name)
+        assert result == pytest.approx(value) if isinstance(value, float) else result == value
+
+
+def test_awg_actions_and_apply_query():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":SOUR1:PHAS:INIT", None),
+            (":SOUR1:APPL?", "SIN,1000,0.5,0,90"),
+            (":SOUR1:APPL:NOIS 0.5,0", None),
+            (":SOUR1:APPL:PULS 1000,0.5,0,90", None),
+            (":SOUR1:APPL:RAMP", None),
+            (":SOUR1:APPL:SIN 1000", None),
+            (":SOUR1:APPL:SQU 1000,0.5", None),
+            (":SOUR1:APPL:USER 1000,0.5,0", None),
+        ],
+    ) as instrument:
+        instrument.awg_1.reset_phase()
+        assert instrument.awg_1.get_applied_waveform() == ("SIN", "1000", "0.5", "0", "90")
+        instrument.awg_1.apply_noise(0.5, 0)
+        instrument.awg_1.apply_pulse(1000, 0.5, 0, 90)
+        instrument.awg_1.apply_ramp()
+        instrument.awg_1.apply_sine(1000)
+        instrument.awg_1.apply_square(1000, 0.5)
+        instrument.awg_1.apply_user(1000, 0.5, 0)
+
+
+def test_awg_upload_waveform():
+    data = b"\x00\x00\xff\x3f"
+    with expected_protocol(
+        MSO5000, [(b":TRAC2:DATA:DAC16 volatile,END,#14" + data, None)]
+    ) as instrument:
+        instrument.awg_2.upload_waveform(data)
+
+
+def test_integrated_functions_reject_invalid_values():
+    with expected_protocol(MSO5000, []) as instrument:
+        for child, name, value in [
+            (instrument.bode_plot, "point", 9),
+            (instrument.counter, "digits", 7),
+            (instrument.power_analysis, "reference_level_percent_high", 101),
+            (instrument.awg_1, "phase_adjust", 361),
+            (instrument.awg_1, "burst_cycles", 0),
+        ]:
+            with pytest.raises(ValueError):
+                setattr(child, name, value)
+        with pytest.raises(ValueError):
+            instrument.awg_1.apply_sine(None, 0.5)
+        with pytest.raises(ValueError):
+            instrument.awg_1.upload_waveform(b"\x00\x00")
+        with pytest.raises(TypeError):
+            instrument.awg_1.upload_waveform([0, 1])  # pyright: ignore[reportArgumentType]
