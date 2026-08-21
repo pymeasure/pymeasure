@@ -26,6 +26,7 @@ import pytest
 
 from pymeasure.instruments.rigol import MSO5000, DHOBase, RigolOscilloscope
 from pymeasure.instruments.rigol.rigol_oscilloscope import _parse_ieee_block
+from pymeasure.test import expected_protocol
 
 
 def test_rigol_oscilloscope_drivers_share_protocol_base():
@@ -54,3 +55,18 @@ def test_parse_ieee_block_preserves_terminator_bytes_in_payload():
 def test_parse_ieee_block_rejects_malformed_blocks(block, message):
     with pytest.raises(ValueError, match=message):
         _parse_ieee_block(block, "Test response")
+
+
+def test_query_waveform_preamble_rejects_wrong_value_count():
+    with (
+        expected_protocol(RigolOscilloscope, [(":WAV:PRE?", "0,1")]) as inst,
+        pytest.raises(ValueError, match="Expected 10 waveform preamble values"),
+    ):
+        inst._query_waveform_preamble()
+
+
+def test_read_ieee_block_rejects_zero_digit_count():
+    with expected_protocol(RigolOscilloscope, [(":WAV:DATA?", b"#0")]) as inst:
+        inst.write(":WAV:DATA?")
+        with pytest.raises(ValueError, match="invalid IEEE block header"):
+            inst._read_ieee_block("Test response")

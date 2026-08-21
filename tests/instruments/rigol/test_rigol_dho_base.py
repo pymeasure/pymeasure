@@ -376,6 +376,10 @@ class TestTrigger:
         with expected_protocol(DHOBase, [(":TRIG:EDGE:SOUR CHAN2", None)]) as inst:
             inst.edge_trigger_source = "CHAN2"
 
+    def test_trigger_source_get(self):
+        with expected_protocol(DHOBase, [(":TRIG:EDGE:SOUR?", "CHAN3")]) as inst:
+            assert inst.trigger_source == "CHAN3"
+
     def test_trigger_source_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
             inst.trigger_source = "CH5"
@@ -586,6 +590,29 @@ class TestWaveform:
             assert len(t) == 4
             assert len(v) == 4
 
+    def test_get_waveform_raw_byte(self):
+        raw_samples = bytes([128, 130, 126, 132])
+        ieee_block = b"#1" + str(len(raw_samples)).encode() + raw_samples + b"\n"
+
+        with expected_protocol(
+            DHOBase,
+            [
+                (":TRIG:STAT?", "STOP"),
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:MODE RAW", None),
+                (":WAV:FORM BYTE", None),
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:PRE?", PREAMBLE),
+                (":ACQ:MDEP?", "4"),
+                (":WAV:STAR 1", None),
+                (":WAV:STOP 4", None),
+                (":WAV:DATA?", ieee_block),
+            ],
+        ) as inst:
+            t, v = inst.get_waveform(channel=1, mode="RAW", fmt="BYTE")
+            assert len(t) == 4
+            assert len(v) == 4
+
     def test_get_waveform_ascii(self):
         csv = "0.1,0.2,0.3,0.4"
         with expected_protocol(
@@ -599,6 +626,27 @@ class TestWaveform:
                 (":WAV:STAR 1", None),
                 (":WAV:STOP 1000", None),
                 (":WAV:DATA?", csv),
+            ],
+        ) as inst:
+            t, v = inst.get_waveform_ascii(channel=1)
+            assert len(v) == 4
+            assert v[0] == pytest.approx(0.1)
+            assert len(t) == len(v)
+
+    def test_get_waveform_ascii_with_ieee_block(self):
+        csv = "0.1,0.2,0.3,0.4"
+        ieee_block = f"#2{len(csv):02}{csv}"
+        with expected_protocol(
+            DHOBase,
+            [
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:MODE NORM", None),
+                (":WAV:FORM ASC", None),
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:PRE?", PREAMBLE),
+                (":WAV:STAR 1", None),
+                (":WAV:STOP 1000", None),
+                (":WAV:DATA?", ieee_block),
             ],
         ) as inst:
             t, v = inst.get_waveform_ascii(channel=1)
