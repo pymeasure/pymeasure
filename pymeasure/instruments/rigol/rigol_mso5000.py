@@ -130,6 +130,30 @@ MEASUREMENT_STATISTIC_TYPES = {
     "CNT": "CNT",
 }
 
+ANALOG_SOURCES = [f"CHAN{number}" for number in range(1, 5)]
+CURSOR_MANUAL_SOURCES = [
+    *ANALOG_SOURCES,
+    *[f"MATH{number}" for number in range(1, 5)],
+    "LA",
+    "NONE",
+]
+CURSOR_TRACK_SOURCES = [
+    *ANALOG_SOURCES,
+    *[f"MATH{number}" for number in range(1, 5)],
+    "NONE",
+]
+MATH_SOURCES = [
+    *ANALOG_SOURCES,
+    *[f"REF{number}" for number in range(1, 11)],
+    *[f"MATH{number}" for number in range(1, 4)],
+]
+LOGIC_SOURCES = [*[f"D{number}" for number in range(16)], *ANALOG_SOURCES]
+REFERENCE_SOURCES = [
+    *[f"D{number}" for number in range(16)],
+    *ANALOG_SOURCES,
+    *[f"MATH{number}" for number in range(1, 5)],
+]
+
 TRIGGER_SOURCES = [
     *[f"D{number}" for number in range(16)],
     *[f"CHAN{number}" for number in range(1, 5)],
@@ -275,6 +299,20 @@ def _validate_scpi_keyword(value: str, keywords: dict[str, str], name: str) -> s
     if any(full.startswith(value) and len(value) >= len(short) for short, full in keywords.items()):
         return value
     raise ValueError(f"{name} must be a documented SCPI value.")
+
+
+def _validate_nonnegative_integer(value: int, _values: None) -> int:
+    """Validate an integer whose upper limit depends on current instrument state."""
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        raise ValueError("Value must be a non-negative integer.")
+    return value
+
+
+def _validate_positive_integer(value: int, _values: None) -> int:
+    """Validate a positive integer whose upper limit depends on instrument state."""
+    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+        raise ValueError("Value must be a positive integer.")
+    return value
 
 
 class MeasurementSubsystem(Channel):
@@ -491,6 +529,1220 @@ class MeasurementSubsystem(Channel):
         return self._parse_result(self.ask(f":MEAS:STAT:ITEM? {statistic_type},{arguments}"))
 
 
+class CursorSubsystem(Channel):
+    """Represent cursor configuration and cursor measurement results."""
+
+    measure_indicator = Channel.control(
+        ":CURS:MEAS:IND?",
+        ":CURS:MEAS:IND %d",
+        """Control whether the automatic-measurement cursor is displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    mode = Channel.control(
+        ":CURS:MODE?",
+        ":CURS:MODE %s",
+        """Control the cursor mode: OFF, MAN, TRAC, XY, or MEAS.""",
+        validator=strict_discrete_set,
+        values=["OFF", "MAN", "TRAC", "XY", "MEAS"],
+        cast=str,
+    )
+
+    manual_type = Channel.control(
+        ":CURS:MAN:TYPE?",
+        ":CURS:MAN:TYPE %s",
+        """Control the manual cursor type: TIME or AMPL.""",
+        validator=strict_discrete_set,
+        values=["TIME", "AMPL"],
+        cast=str,
+    )
+
+    manual_source = Channel.control(
+        ":CURS:MAN:SOUR?",
+        ":CURS:MAN:SOUR %s",
+        """Control the source for manual cursor measurements (str).""",
+        validator=strict_discrete_set,
+        values=CURSOR_MANUAL_SOURCES,
+        cast=str,
+    )
+
+    manual_time_unit = Channel.control(
+        ":CURS:MAN:TUN?",
+        ":CURS:MAN:TUN %s",
+        """Control the manual cursor horizontal unit: SEC, HZ, DEGR, or PERC.""",
+        validator=strict_discrete_set,
+        values=["SEC", "HZ", "DEGR", "PERC"],
+        cast=str,
+    )
+
+    manual_vertical_unit = Channel.control(
+        ":CURS:MAN:VUN?",
+        ":CURS:MAN:VUN %s",
+        """Control the manual cursor vertical unit: SOUR or PERC.""",
+        validator=strict_discrete_set,
+        values=["SOUR", "PERC"],
+        cast=str,
+    )
+
+    manual_cursor_a_x = Channel.control(
+        ":CURS:MAN:CAX?",
+        ":CURS:MAN:CAX %d",
+        """Control Cursor A's horizontal screen coordinate (int from 0 to 999).""",
+        validator=strict_range,
+        values=[0, 999],
+        cast=int,
+    )
+
+    manual_cursor_b_x = Channel.control(
+        ":CURS:MAN:CBX?",
+        ":CURS:MAN:CBX %d",
+        """Control Cursor B's horizontal screen coordinate (int from 0 to 999).""",
+        validator=strict_range,
+        values=[0, 999],
+        cast=int,
+    )
+
+    manual_cursor_a_y = Channel.control(
+        ":CURS:MAN:CAY?",
+        ":CURS:MAN:CAY %d",
+        """Control Cursor A's vertical screen coordinate (int from 0 to 479).""",
+        validator=strict_range,
+        values=[0, 479],
+        cast=int,
+    )
+
+    manual_cursor_b_y = Channel.control(
+        ":CURS:MAN:CBY?",
+        ":CURS:MAN:CBY %d",
+        """Control Cursor B's vertical screen coordinate (int from 0 to 479).""",
+        validator=strict_range,
+        values=[0, 479],
+        cast=int,
+    )
+
+    manual_cursor_a_x_value = Channel.measurement(
+        ":CURS:MAN:AXV?",
+        """Measure Cursor A's horizontal value in the selected unit (float).""",
+        cast=float,
+    )
+
+    manual_cursor_a_y_value = Channel.measurement(
+        ":CURS:MAN:AYV?",
+        """Measure Cursor A's vertical value in the selected unit (float).""",
+        cast=float,
+    )
+
+    manual_cursor_b_x_value = Channel.measurement(
+        ":CURS:MAN:BXV?",
+        """Measure Cursor B's horizontal value in the selected unit (float).""",
+        cast=float,
+    )
+
+    manual_cursor_b_y_value = Channel.measurement(
+        ":CURS:MAN:BYV?",
+        """Measure Cursor B's vertical value in the selected unit (float).""",
+        cast=float,
+    )
+
+    manual_x_delta = Channel.measurement(
+        ":CURS:MAN:XDEL?",
+        """Measure the manual cursor horizontal difference (float).""",
+        cast=float,
+    )
+
+    manual_inverse_x_delta = Channel.measurement(
+        ":CURS:MAN:IXD?",
+        """Measure the reciprocal absolute manual cursor horizontal difference (float).""",
+        cast=float,
+    )
+
+    manual_y_delta = Channel.measurement(
+        ":CURS:MAN:YDEL?",
+        """Measure the manual cursor vertical difference (float).""",
+        cast=float,
+    )
+
+    track_source1 = Channel.control(
+        ":CURS:TRAC:SOUR1?",
+        ":CURS:TRAC:SOUR1 %s",
+        """Control the track-mode source for Cursor A (str).""",
+        validator=strict_discrete_set,
+        values=CURSOR_TRACK_SOURCES,
+        cast=str,
+    )
+
+    track_source2 = Channel.control(
+        ":CURS:TRAC:SOUR2?",
+        ":CURS:TRAC:SOUR2 %s",
+        """Control the track-mode source for Cursor B (str).""",
+        validator=strict_discrete_set,
+        values=CURSOR_TRACK_SOURCES,
+        cast=str,
+    )
+
+    track_cursor_a_x = Channel.control(
+        ":CURS:TRAC:CAX?",
+        ":CURS:TRAC:CAX %d",
+        """Control Cursor A's horizontal screen coordinate (int from 0 to 999).""",
+        validator=strict_range,
+        values=[0, 999],
+        cast=int,
+    )
+
+    track_cursor_b_x = Channel.control(
+        ":CURS:TRAC:CBX?",
+        ":CURS:TRAC:CBX %d",
+        """Control Cursor B's horizontal screen coordinate (int from 0 to 999).""",
+        validator=strict_range,
+        values=[0, 999],
+        cast=int,
+    )
+
+    track_cursor_a_y = Channel.measurement(
+        ":CURS:TRAC:CAY?",
+        """Measure Cursor A's vertical screen coordinate (int).""",
+        cast=int,
+    )
+
+    track_cursor_b_y = Channel.measurement(
+        ":CURS:TRAC:CBY?",
+        """Measure Cursor B's vertical screen coordinate (int).""",
+        cast=int,
+    )
+
+    track_cursor_a_x_value = Channel.measurement(
+        ":CURS:TRAC:AXV?",
+        """Measure Cursor A's horizontal track value (float).""",
+        cast=float,
+    )
+
+    track_cursor_a_y_value = Channel.measurement(
+        ":CURS:TRAC:AYV?",
+        """Measure Cursor A's vertical track value (float).""",
+        cast=float,
+    )
+
+    track_cursor_b_x_value = Channel.measurement(
+        ":CURS:TRAC:BXV?",
+        """Measure Cursor B's horizontal track value (float).""",
+        cast=float,
+    )
+
+    track_cursor_b_y_value = Channel.measurement(
+        ":CURS:TRAC:BYV?",
+        """Measure Cursor B's vertical track value (float).""",
+        cast=float,
+    )
+
+    track_x_delta = Channel.measurement(
+        ":CURS:TRAC:XDEL?",
+        """Measure the track cursor horizontal difference (float).""",
+        cast=float,
+    )
+
+    track_y_delta = Channel.measurement(
+        ":CURS:TRAC:YDEL?",
+        """Measure the track cursor vertical difference (float).""",
+        cast=float,
+    )
+
+    track_inverse_x_delta = Channel.measurement(
+        ":CURS:TRAC:IXD?",
+        """Measure the reciprocal absolute track cursor horizontal difference (float).""",
+        cast=float,
+    )
+
+    xy_ax = Channel.control(
+        ":CURS:XY:AX?",
+        ":CURS:XY:AX %d",
+        """Control Cursor A's horizontal XY coordinate (int from 0 to 479).""",
+        validator=strict_range,
+        values=[0, 479],
+        cast=int,
+    )
+
+    xy_bx = Channel.control(
+        ":CURS:XY:BX?",
+        ":CURS:XY:BX %d",
+        """Control Cursor B's horizontal XY coordinate (int from 0 to 479).""",
+        validator=strict_range,
+        values=[0, 479],
+        cast=int,
+    )
+
+    xy_ay = Channel.control(
+        ":CURS:XY:AY?",
+        ":CURS:XY:AY %d",
+        """Control Cursor A's vertical XY coordinate (int from 0 to 479).""",
+        validator=strict_range,
+        values=[0, 479],
+        cast=int,
+    )
+
+    xy_by = Channel.control(
+        ":CURS:XY:BY?",
+        ":CURS:XY:BY %d",
+        """Control Cursor B's vertical XY coordinate (int from 0 to 479).""",
+        validator=strict_range,
+        values=[0, 479],
+        cast=int,
+    )
+
+    xy_cursor_a_x_value = Channel.measurement(
+        ":CURS:XY:AXV?",
+        """Measure Cursor A's horizontal XY value (float).""",
+        cast=float,
+    )
+
+    xy_cursor_a_y_value = Channel.measurement(
+        ":CURS:XY:AYV?",
+        """Measure Cursor A's vertical XY value (float).""",
+        cast=float,
+    )
+
+    xy_cursor_b_x_value = Channel.measurement(
+        ":CURS:XY:BXV?",
+        """Measure Cursor B's horizontal XY value (float).""",
+        cast=float,
+    )
+
+    xy_cursor_b_y_value = Channel.measurement(
+        ":CURS:XY:BYV?",
+        """Measure Cursor B's vertical XY value (float).""",
+        cast=float,
+    )
+
+
+class DisplaySubsystem(Channel):
+    """Represent waveform display configuration."""
+
+    type = Channel.control(
+        ":DISP:TYPE?",
+        ":DISP:TYPE %s",
+        """Control the waveform display type: VECT or DOTS.""",
+        validator=strict_discrete_set,
+        values=["VECT", "DOTS"],
+        cast=str,
+    )
+
+    grading_time = Channel.control(
+        ":DISP:GRAD:TIME?",
+        ":DISP:GRAD:TIME %s",
+        """Control persistence time in seconds, MIN, or INF (str).""",
+        validator=strict_discrete_set,
+        values=["MIN", "0.1", "0.2", "0.5", "1", "2", "5", "10", "INF"],
+        cast=str,
+    )
+
+    waveform_brightness = Channel.control(
+        ":DISP:WBR?",
+        ":DISP:WBR %d",
+        """Control waveform brightness in percent (int from 1 to 100).""",
+        validator=strict_range,
+        values=[1, 100],
+        cast=int,
+    )
+
+    grid = Channel.control(
+        ":DISP:GRID?",
+        ":DISP:GRID %s",
+        """Control the screen grid type: FULL, HALF, NONE, or IRE.""",
+        validator=strict_discrete_set,
+        values=["FULL", "HALF", "NONE", "IRE"],
+        cast=str,
+    )
+
+    grid_brightness = Channel.control(
+        ":DISP:GBR?",
+        ":DISP:GBR %d",
+        """Control screen grid brightness in percent (int from 1 to 100).""",
+        validator=strict_range,
+        values=[1, 100],
+        cast=int,
+    )
+
+    rulers = Channel.control(
+        ":DISP:RUL?",
+        ":DISP:RUL %d",
+        """Control whether rulers are displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    color = Channel.control(
+        ":DISP:COL?",
+        ":DISP:COL %d",
+        """Control whether color grading is displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    def clear(self) -> None:
+        """Clear all waveforms currently shown on the screen."""
+        self.write(":DISP:CLE")
+
+
+class HistogramSubsystem(Channel):
+    """Represent waveform histogram configuration and boundaries."""
+
+    display = Channel.control(
+        ":HIST:DISP?",
+        ":HIST:DISP %d",
+        """Control whether the histogram function is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    type = Channel.control(
+        ":HIST:TYPE?",
+        ":HIST:TYPE %s",
+        """Control the histogram type: HOR, VERT, or MEAS.""",
+        validator=strict_discrete_set,
+        values=["HOR", "VERT", "MEAS"],
+        cast=str,
+    )
+
+    source = Channel.control(
+        ":HIST:SOUR?",
+        ":HIST:SOUR %s",
+        """Control the histogram source: CHAN1 to CHAN4, or OFF.""",
+        validator=strict_discrete_set,
+        values=[*ANALOG_SOURCES, "OFF"],
+        cast=str,
+    )
+
+    size = Channel.control(
+        ":HIST:SIZE?",
+        ":HIST:SIZE %d",
+        """Control histogram height (int from 1 to 4).""",
+        validator=strict_range,
+        values=[1, 4],
+        cast=int,
+    )
+
+    static = Channel.control(
+        ":HIST:STAT?",
+        ":HIST:STAT %d",
+        """Control whether histogram statistics are enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    bottom_limit = Channel.control(
+        ":HIST:BLIM?",
+        ":HIST:BLIM %g",
+        """Control the histogram bottom boundary in source units (float).""",
+        cast=float,
+    )
+
+    left_limit = Channel.control(
+        ":HIST:LLIM?",
+        ":HIST:LLIM %g",
+        """Control the histogram left boundary in seconds (float).""",
+        cast=float,
+    )
+
+    right_limit = Channel.control(
+        ":HIST:RLIM?",
+        ":HIST:RLIM %g",
+        """Control the histogram right boundary in seconds (float).""",
+        cast=float,
+    )
+
+    top_limit = Channel.control(
+        ":HIST:TLIM?",
+        ":HIST:TLIM %g",
+        """Control the histogram top boundary in source units (float).""",
+        cast=float,
+    )
+
+    def reset(self) -> None:
+        """Reset accumulated histogram statistics."""
+        self.write(":HIST:RES")
+
+
+class MaskSubsystem(Channel):
+    """Represent pass/fail mask-test configuration and counters."""
+
+    enabled = Channel.control(
+        ":MASK:ENAB?",
+        ":MASK:ENAB %d",
+        """Control whether the pass/fail mask test is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    source = Channel.control(
+        ":MASK:SOUR?",
+        ":MASK:SOUR %s",
+        """Control the enabled analog source used for mask testing (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    operate = Channel.control(
+        ":MASK:OPER?",
+        ":MASK:OPER %s",
+        """Control mask-test operation: RUN or STOP.""",
+        validator=strict_discrete_set,
+        values=["RUN", "STOP"],
+        cast=str,
+    )
+
+    measurement_display = Channel.control(
+        ":MASK:MDIS?",
+        ":MASK:MDIS %d",
+        """Control whether mask-test statistics are displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    x = Channel.control(
+        ":MASK:X?",
+        ":MASK:X %g",
+        """Control horizontal mask adjustment in divisions (float from 0.01 to 2).""",
+        validator=strict_range,
+        values=[0.01, 2],
+        cast=float,
+    )
+
+    y = Channel.control(
+        ":MASK:Y?",
+        ":MASK:Y %g",
+        """Control vertical mask adjustment in divisions (float from 0.04 to 2).""",
+        validator=strict_range,
+        values=[0.04, 2],
+        cast=float,
+    )
+
+    passed = Channel.measurement(
+        ":MASK:PASS?",
+        """Measure the number of frames that passed the mask test (int).""",
+        cast=int,
+    )
+
+    failed = Channel.measurement(
+        ":MASK:FAIL?",
+        """Measure the number of frames that failed the mask test (int).""",
+        cast=int,
+    )
+
+    total = Channel.measurement(
+        ":MASK:TOT?",
+        """Measure the total number of mask-test frames (int).""",
+        cast=int,
+    )
+
+    def create(self) -> None:
+        """Create a mask from the current horizontal and vertical adjustments."""
+        self.write(":MASK:CRE")
+
+    def reset(self) -> None:
+        """Reset the pass, fail, and total frame counters."""
+        self.write(":MASK:RES")
+
+
+class RecordingSubsystem(Channel):
+    """Represent waveform recording and playback configuration."""
+
+    enabled = Channel.control(
+        ":REC:ENAB?",
+        ":REC:ENAB %d",
+        """Control whether waveform recording is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    start = Channel.control(
+        ":REC:STAR?",
+        ":REC:STAR %d",
+        """Control whether waveform recording is running (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    play = Channel.control(
+        ":REC:PLAY?",
+        ":REC:PLAY %d",
+        """Control whether waveform playback is running (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    current = Channel.control(
+        ":REC:CURR?",
+        ":REC:CURR %d",
+        """Control the current playback frame (positive int within recorded frames).""",
+        validator=_validate_positive_integer,
+        values=None,
+        cast=int,
+    )
+
+    frames = Channel.control(
+        ":REC:FRAM?",
+        ":REC:FRAM %d",
+        """Control the requested recording frame count (positive int within capacity).""",
+        validator=_validate_positive_integer,
+        values=None,
+        cast=int,
+    )
+
+
+class ReferenceSubsystem(Channel):
+    """Represent global and per-slot reference-waveform configuration."""
+
+    display = Channel.control(
+        ":REF:DISP?",
+        ":REF:DISP %d",
+        """Control whether the reference-waveform function is displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    label_enabled = Channel.control(
+        ":REF:LAB:ENAB?",
+        ":REF:LAB:ENAB %d",
+        """Control whether all reference labels are displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    @staticmethod
+    def _reference(reference: int) -> int:
+        return strict_range(reference, [1, 10])
+
+    def set_source(self, reference: int, source: str) -> None:
+        """Set the source of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        source = strict_discrete_set(source, REFERENCE_SOURCES)
+        self.write(f":REF:SOUR {reference},{source}")
+
+    def source(self, reference: int) -> str:
+        """Return the source of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        return self.ask(f":REF:SOUR? {reference}").strip()
+
+    def set_vertical_scale(self, reference: int, scale: float) -> None:
+        """Set the vertical scale of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        self.write(f":REF:VSC {reference},{scale:g}")
+
+    def vertical_scale(self, reference: int) -> float:
+        """Return the vertical scale of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        return float(self.ask(f":REF:VSC? {reference}"))
+
+    def set_vertical_offset(self, reference: int, offset: float) -> None:
+        """Set the vertical offset of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        self.write(f":REF:VOFF {reference},{offset:g}")
+
+    def vertical_offset(self, reference: int) -> float:
+        """Return the vertical offset of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        return float(self.ask(f":REF:VOFF? {reference}"))
+
+    def reset(self, reference: int) -> None:
+        """Reset vertical scale and offset for reference slot 1 to 10."""
+        reference = self._reference(reference)
+        self.write(f":REF:RES {reference}")
+
+    def select_current(self, reference: int) -> None:
+        """Select the current reference slot from 1 to 10."""
+        reference = self._reference(reference)
+        self.write(f":REF:CURR {reference}")
+
+    def set_color(self, reference: int, color: str) -> None:
+        """Set the display color of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        color = strict_discrete_set(color, ["GRAY", "GRE", "BLUE", "RED", "ORAN"])
+        self.write(f":REF:COL {reference},{color}")
+
+    def color(self, reference: int) -> str:
+        """Return the display color of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        return self.ask(f":REF:COL? {reference}").strip()
+
+    def set_label_content(self, reference: int, content: str) -> None:
+        """Set the label content of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        if not isinstance(content, str):
+            raise TypeError("Reference label content must be a string.")
+        self.write(f":REF:LAB:CONT {reference},{content}")
+
+    def label_content(self, reference: int) -> str:
+        """Return the label content of reference slot 1 to 10."""
+        reference = self._reference(reference)
+        return self.ask(f":REF:LAB:CONT? {reference}").strip()
+
+
+class MathChannel(Channel):
+    """Represent one of the four math waveform channels."""
+
+    display = Channel.control(
+        ":MATH{ch}:DISP?",
+        ":MATH{ch}:DISP %d",
+        """Control whether this math waveform is displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    operator = Channel.control(
+        ":MATH{ch}:OPER?",
+        ":MATH{ch}:OPER %s",
+        """Control the math operator (str).""",
+        validator=strict_discrete_set,
+        values=[
+            "ADD",
+            "SUBT",
+            "MULT",
+            "DIV",
+            "AND",
+            "OR",
+            "XOR",
+            "NOT",
+            "FFT",
+            "INTG",
+            "DIFF",
+            "SQRT",
+            "LOG",
+            "LN",
+            "EXP",
+            "ABS",
+            "LPAS",
+            "HPAS",
+            "BPAS",
+            "BST",
+            "AXB",
+        ],
+        cast=str,
+    )
+
+    source1 = Channel.control(
+        ":MATH{ch}:SOUR1?",
+        ":MATH{ch}:SOUR1 %s",
+        """Control Source A, or the sole source, for arithmetic and function operations.""",
+        validator=strict_discrete_set,
+        values=MATH_SOURCES,
+        cast=str,
+    )
+
+    source2 = Channel.control(
+        ":MATH{ch}:SOUR2?",
+        ":MATH{ch}:SOUR2 %s",
+        """Control Source B for two-source arithmetic operations.""",
+        validator=strict_discrete_set,
+        values=MATH_SOURCES,
+        cast=str,
+    )
+
+    left_source_1 = Channel.control(
+        ":MATH{ch}:LSOU1?",
+        ":MATH{ch}:LSOU1 %s",
+        """Control Source A for logic operations (str).""",
+        validator=strict_discrete_set,
+        values=LOGIC_SOURCES,
+        cast=str,
+    )
+
+    left_source_2 = Channel.control(
+        ":MATH{ch}:LSOU2?",
+        ":MATH{ch}:LSOU2 %s",
+        """Control Source B for two-source logic operations (str).""",
+        validator=strict_discrete_set,
+        values=LOGIC_SOURCES,
+        cast=str,
+    )
+
+    scale = Channel.control(
+        ":MATH{ch}:SCAL?",
+        ":MATH{ch}:SCAL %g",
+        """Control the vertical scale in operator-dependent units (float).""",
+        cast=float,
+    )
+
+    offset = Channel.control(
+        ":MATH{ch}:OFFS?",
+        ":MATH{ch}:OFFS %g",
+        """Control vertical offset in operator-dependent units (float from -1e9 to 1e9).""",
+        validator=strict_range,
+        values=[-1e9, 1e9],
+        cast=float,
+    )
+
+    invert = Channel.control(
+        ":MATH{ch}:INV?",
+        ":MATH{ch}:INV %d",
+        """Control whether non-FFT math results are displayed inverted (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    fft_source = Channel.control(
+        ":MATH{ch}:FFT:SOUR?",
+        ":MATH{ch}:FFT:SOUR %s",
+        """Control the analog source for FFT operation (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    fft_window = Channel.control(
+        ":MATH{ch}:FFT:WIND?",
+        ":MATH{ch}:FFT:WIND %s",
+        """Control the FFT window: RECT, BLAC, HANN, HAMM, FLAT, or TRI.""",
+        validator=strict_discrete_set,
+        values=["RECT", "BLAC", "HANN", "HAMM", "FLAT", "TRI"],
+        cast=str,
+    )
+
+    fft_unit = Channel.control(
+        ":MATH{ch}:FFT:UNIT?",
+        ":MATH{ch}:FFT:UNIT %s",
+        """Control the FFT vertical unit: VRMS or DB.""",
+        validator=strict_discrete_set,
+        values=["VRMS", "DB"],
+        cast=str,
+    )
+
+    fft_scale = Channel.control(
+        ":MATH{ch}:FFT:SCAL?",
+        ":MATH{ch}:FFT:SCAL %g",
+        """Control FFT vertical scale (float from 1e-9 to 5e9).""",
+        validator=strict_range,
+        values=[1e-9, 5e9],
+        cast=float,
+    )
+
+    fft_offset = Channel.control(
+        ":MATH{ch}:FFT:OFFS?",
+        ":MATH{ch}:FFT:OFFS %g",
+        """Control FFT vertical offset (float from -1e9 to 1e9).""",
+        validator=strict_range,
+        values=[-1e9, 1e9],
+        cast=float,
+    )
+
+    fft_horizontal_scale = Channel.control(
+        ":MATH{ch}:FFT:HSC?",
+        ":MATH{ch}:FFT:HSC %g",
+        """Control FFT frequency range in Hz (float from 10 to 5e9).""",
+        validator=strict_range,
+        values=[10, 5e9],
+        cast=float,
+    )
+
+    fft_horizontal_center = Channel.control(
+        ":MATH{ch}:FFT:HCEN?",
+        ":MATH{ch}:FFT:HCEN %g",
+        """Control FFT center frequency in Hz (float from -2.5e9 to 2.5e9).""",
+        validator=strict_range,
+        values=[-2.5e9, 2.5e9],
+        cast=float,
+    )
+
+    fft_frequency_start = Channel.control(
+        ":MATH{ch}:FFT:FREQ:STAR?",
+        ":MATH{ch}:FFT:FREQ:STAR %g",
+        """Control FFT start frequency in Hz (float from -2.5e9 to 2.5e9).""",
+        validator=strict_range,
+        values=[-2.5e9, 2.5e9],
+        cast=float,
+    )
+
+    fft_frequency_end = Channel.control(
+        ":MATH{ch}:FFT:FREQ:END?",
+        ":MATH{ch}:FFT:FREQ:END %g",
+        """Control FFT stop frequency in Hz (float from -2.5e9 to 2.5e9).""",
+        validator=strict_range,
+        values=[-2.5e9, 2.5e9],
+        cast=float,
+    )
+
+    fft_search_enabled = Channel.control(
+        ":MATH{ch}:FFT:SEAR:ENAB?",
+        ":MATH{ch}:FFT:SEAR:ENAB %d",
+        """Control whether FFT peak search is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    fft_search_num = Channel.control(
+        ":MATH{ch}:FFT:SEAR:NUM?",
+        ":MATH{ch}:FFT:SEAR:NUM %d",
+        """Control the maximum FFT peak count (int from 1 to 15).""",
+        validator=strict_range,
+        values=[1, 15],
+        cast=int,
+    )
+
+    fft_search_threshold = Channel.control(
+        ":MATH{ch}:FFT:SEAR:THR?",
+        ":MATH{ch}:FFT:SEAR:THR %g",
+        """Control the FFT peak-search threshold in current FFT units (float).""",
+        cast=float,
+    )
+
+    fft_search_excursion = Channel.control(
+        ":MATH{ch}:FFT:SEAR:EXC?",
+        ":MATH{ch}:FFT:SEAR:EXC %g",
+        """Control FFT peak-search excursion in current FFT units (float).""",
+        cast=float,
+    )
+
+    fft_search_order = Channel.control(
+        ":MATH{ch}:FFT:SEAR:ORD?",
+        ":MATH{ch}:FFT:SEAR:ORD %s",
+        """Control FFT peak-search ordering: AMP or FREQ.""",
+        validator=strict_discrete_set,
+        values=["AMP", "FREQ"],
+        cast=str,
+    )
+
+    filter_type = Channel.control(
+        ":MATH{ch}:FILT:TYPE?",
+        ":MATH{ch}:FILT:TYPE %s",
+        """Control the filter type: LPAS, HPAS, BPAS, or BST.""",
+        validator=strict_discrete_set,
+        values=["LPAS", "HPAS", "BPAS", "BST"],
+        cast=str,
+    )
+
+    filter_w1 = Channel.control(
+        ":MATH{ch}:FILT:W1?",
+        ":MATH{ch}:FILT:W1 %g",
+        """Control filter cutoff frequency 1 in Hz (float within the dynamic range).""",
+        cast=float,
+    )
+
+    filter_w2 = Channel.control(
+        ":MATH{ch}:FILT:W2?",
+        ":MATH{ch}:FILT:W2 %g",
+        """Control filter cutoff frequency 2 in Hz (float within the dynamic range).""",
+        cast=float,
+    )
+
+    sensitivity = Channel.control(
+        ":MATH{ch}:SENS?",
+        ":MATH{ch}:SENS %g",
+        """Control logic-operation sensitivity in divisions (float from 0.1 to 1).""",
+        validator=strict_range,
+        values=[0.1, 1],
+        cast=float,
+    )
+
+    distance = Channel.control(
+        ":MATH{ch}:DIST?",
+        ":MATH{ch}:DIST %d",
+        """Control differential smoothing window width (int from 5 to 10000).""",
+        validator=strict_range,
+        values=[5, 10_000],
+        cast=int,
+    )
+
+    threshold1 = Channel.control(
+        ":MATH{ch}:THR1?",
+        ":MATH{ch}:THR1 %g",
+        """Control the Channel 1 logic threshold in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    threshold2 = Channel.control(
+        ":MATH{ch}:THR2?",
+        ":MATH{ch}:THR2 %g",
+        """Control the Channel 2 logic threshold in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    threshold3 = Channel.control(
+        ":MATH{ch}:THR3?",
+        ":MATH{ch}:THR3 %g",
+        """Control the Channel 3 logic threshold in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    threshold4 = Channel.control(
+        ":MATH{ch}:THR4?",
+        ":MATH{ch}:THR4 %g",
+        """Control the Channel 4 logic threshold in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    def reset(self) -> None:
+        """Adjust this math waveform's vertical scale to an optimal value."""
+        self.write(":MATH{ch}:RES")
+
+
+class SearchSubsystem(Channel):
+    """Represent waveform event-search configuration and results."""
+
+    count = Channel.measurement(
+        ":SEAR:COUN?",
+        """Measure the total number of search events (int).""",
+        cast=int,
+    )
+
+    state = Channel.control(
+        ":SEAR:STAT?",
+        ":SEAR:STAT %d",
+        """Control whether waveform search is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    mode = Channel.control(
+        ":SEAR:MODE?",
+        ":SEAR:MODE %s",
+        """Control search type: EDGE, PULS, RUNT, SLOP, RS232, I2C, or SPI.""",
+        validator=strict_discrete_set,
+        values=["EDGE", "PULS", "RUNT", "SLOP", "RS232", "I2C", "SPI"],
+        cast=str,
+    )
+
+    event = Channel.control(
+        ":SEAR:EVEN?",
+        ":SEAR:EVEN %d",
+        """Control the selected search event (non-negative int within current results).""",
+        validator=_validate_nonnegative_integer,
+        values=None,
+        cast=int,
+    )
+
+    edge_slope = Channel.control(
+        ":SEAR:EDGE:SLOP?",
+        ":SEAR:EDGE:SLOP %s",
+        """Control edge-search slope: POS, NEG, or EITH.""",
+        validator=strict_discrete_set,
+        values=["POS", "NEG", "EITH"],
+        cast=str,
+    )
+
+    edge_source = Channel.control(
+        ":SEAR:EDGE:SOUR?",
+        ":SEAR:EDGE:SOUR %s",
+        """Control the analog source for edge search (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    edge_threshold = Channel.control(
+        ":SEAR:EDGE:THR?",
+        ":SEAR:EDGE:THR %g",
+        """Control the edge-search threshold in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    pulse_polarity = Channel.control(
+        ":SEAR:PULS:POL?",
+        ":SEAR:PULS:POL %s",
+        """Control pulse-search polarity: POS or NEG.""",
+        validator=strict_discrete_set,
+        values=["POS", "NEG"],
+        cast=str,
+    )
+
+    pulse_qualifier = Channel.control(
+        ":SEAR:PULS:QUAL?",
+        ":SEAR:PULS:QUAL %s",
+        """Control pulse-search qualifier: GRE, LESS, or GLES.""",
+        validator=strict_discrete_set,
+        values=["GRE", "LESS", "GLES"],
+        cast=str,
+    )
+
+    pulse_source = Channel.control(
+        ":SEAR:PULS:SOUR?",
+        ":SEAR:PULS:SOUR %s",
+        """Control the analog source for pulse search (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    pulse_upper_width = Channel.control(
+        ":SEAR:PULS:UWID?",
+        ":SEAR:PULS:UWID %g",
+        """Control pulse-search upper width in seconds (float from 800e-12 to 10).""",
+        validator=strict_range,
+        values=[800e-12, 10],
+        cast=float,
+    )
+
+    pulse_lower_width = Channel.control(
+        ":SEAR:PULS:LWID?",
+        ":SEAR:PULS:LWID %g",
+        """Control pulse-search lower width in seconds (float from 800e-12 to 10).""",
+        validator=strict_range,
+        values=[800e-12, 10],
+        cast=float,
+    )
+
+    pulse_threshold = Channel.control(
+        ":SEAR:PULS:THR?",
+        ":SEAR:PULS:THR %g",
+        """Control the pulse-search threshold in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    runt_polarity = Channel.control(
+        ":SEAR:RUNT:POL?",
+        ":SEAR:RUNT:POL %s",
+        """Control runt-search polarity: POS or NEG.""",
+        validator=strict_discrete_set,
+        values=["POS", "NEG"],
+        cast=str,
+    )
+
+    runt_qualifier = Channel.control(
+        ":SEAR:RUNT:QUAL?",
+        ":SEAR:RUNT:QUAL %s",
+        """Control runt-search qualifier: NONE, GRE, LESS, or GLES.""",
+        validator=strict_discrete_set,
+        values=["NONE", "GRE", "LESS", "GLES"],
+        cast=str,
+    )
+
+    runt_source = Channel.control(
+        ":SEAR:RUNT:SOUR?",
+        ":SEAR:RUNT:SOUR %s",
+        """Control the analog source for runt search (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    runt_width_upper = Channel.control(
+        ":SEAR:RUNT:WUPP?",
+        ":SEAR:RUNT:WUPP %g",
+        """Control runt-search upper width in seconds (float from 800e-12 to 10).""",
+        validator=strict_range,
+        values=[800e-12, 10],
+        cast=float,
+    )
+
+    runt_width_lower = Channel.control(
+        ":SEAR:RUNT:WLOW?",
+        ":SEAR:RUNT:WLOW %g",
+        """Control runt-search lower width in seconds (float from 800e-12 to 10).""",
+        validator=strict_range,
+        values=[800e-12, 10],
+        cast=float,
+    )
+
+    runt_threshold1 = Channel.control(
+        ":SEAR:RUNT:THR1?",
+        ":SEAR:RUNT:THR1 %g",
+        """Control runt-search Threshold A in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    runt_threshold2 = Channel.control(
+        ":SEAR:RUNT:THR2?",
+        ":SEAR:RUNT:THR2 %g",
+        """Control runt-search Threshold B in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    slope_polarity = Channel.control(
+        ":SEAR:SLOP:POL?",
+        ":SEAR:SLOP:POL %s",
+        """Control slope-search polarity: POS or NEG.""",
+        validator=strict_discrete_set,
+        values=["POS", "NEG"],
+        cast=str,
+    )
+
+    slope_qualifier = Channel.control(
+        ":SEAR:SLOP:QUAL?",
+        ":SEAR:SLOP:QUAL %s",
+        """Control slope-search qualifier: GRE, LESS, or GLES.""",
+        validator=strict_discrete_set,
+        values=["GRE", "LESS", "GLES"],
+        cast=str,
+    )
+
+    slope_source = Channel.control(
+        ":SEAR:SLOP:SOUR?",
+        ":SEAR:SLOP:SOUR %s",
+        """Control the analog source for slope search (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    slope_time_upper = Channel.control(
+        ":SEAR:SLOP:TUPP?",
+        ":SEAR:SLOP:TUPP %g",
+        """Control slope-search upper time in seconds (float from 800e-12 to 10).""",
+        validator=strict_range,
+        values=[800e-12, 10],
+        cast=float,
+    )
+
+    slope_time_lower = Channel.control(
+        ":SEAR:SLOP:TLOW?",
+        ":SEAR:SLOP:TLOW %g",
+        """Control slope-search lower time in seconds (float from 800e-12 to 10).""",
+        validator=strict_range,
+        values=[800e-12, 10],
+        cast=float,
+    )
+
+    slope_threshold1 = Channel.control(
+        ":SEAR:SLOP:THR1?",
+        ":SEAR:SLOP:THR1 %g",
+        """Control slope-search Threshold A in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    slope_threshold2 = Channel.control(
+        ":SEAR:SLOP:THR2?",
+        ":SEAR:SLOP:THR2 %g",
+        """Control slope-search Threshold B in Volts (float within the dynamic range).""",
+        cast=float,
+    )
+
+    def value(self, event: int) -> float:
+        """Return the time in seconds corresponding to search event 0 to 1000."""
+        event = strict_range(event, [0, 1000])
+        return float(self.ask(f":SEAR:VAL? {event}"))
+
+
 class MSO5000Channel(RigolOscilloscopeChannel):
     """Represent an analog input channel of a Rigol MSO5000 oscilloscope."""
 
@@ -528,6 +1780,17 @@ class MSO5000(RigolOscilloscope):
     ch_3 = Instrument.ChannelCreator(MSO5000Channel, 3)
     ch_4 = Instrument.ChannelCreator(MSO5000Channel, 4)
     measurements = Instrument.ChannelCreator(MeasurementSubsystem)
+    cursor = Instrument.ChannelCreator(CursorSubsystem)
+    display = Instrument.ChannelCreator(DisplaySubsystem)
+    histogram = Instrument.ChannelCreator(HistogramSubsystem)
+    mask = Instrument.ChannelCreator(MaskSubsystem)
+    math_1 = Instrument.ChannelCreator(MathChannel, 1)
+    math_2 = Instrument.ChannelCreator(MathChannel, 2)
+    math_3 = Instrument.ChannelCreator(MathChannel, 3)
+    math_4 = Instrument.ChannelCreator(MathChannel, 4)
+    recording = Instrument.ChannelCreator(RecordingSubsystem)
+    references = Instrument.ChannelCreator(ReferenceSubsystem)
+    search = Instrument.ChannelCreator(SearchSubsystem)
 
     acquisition_memory_depth_values = [
         "AUTO",

@@ -1590,3 +1590,401 @@ def test_measurement_methods_reject_invalid_arguments():
 def test_measure_compatibility_method():
     with expected_protocol(MSO5000, [(":MEAS:ITEM? VPP,CHAN3", "3.3")]) as instrument:
         assert instrument.measure("VPP", 3) == pytest.approx(3.3)
+
+
+@pytest.mark.parametrize(
+    "name, command, value, wire, reply",
+    [
+        ("measure_indicator", "MEAS:IND", True, "1", "1"),
+        ("mode", "MODE", "TRAC", "TRAC", "TRAC"),
+        ("manual_type", "MAN:TYPE", "TIME", "TIME", "TIME"),
+        ("manual_source", "MAN:SOUR", "MATH3", "MATH3", "MATH3"),
+        ("manual_time_unit", "MAN:TUN", "DEGR", "DEGR", "DEGR"),
+        ("manual_vertical_unit", "MAN:VUN", "PERC", "PERC", "PERC"),
+        ("track_source1", "TRAC:SOUR1", "CHAN2", "CHAN2", "CHAN2"),
+        ("track_source2", "TRAC:SOUR2", "MATH4", "MATH4", "MATH4"),
+    ],
+)
+def test_cursor_discrete_controls(name, command, value, wire, reply):
+    with expected_protocol(
+        MSO5000,
+        [(f":CURS:{command} {wire}", None), (f":CURS:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.cursor, name, value)
+        assert getattr(instrument.cursor, name) == value
+
+
+@pytest.mark.parametrize(
+    "name, command, value",
+    [
+        ("manual_cursor_a_x", "MAN:CAX", 250),
+        ("manual_cursor_b_x", "MAN:CBX", 750),
+        ("manual_cursor_a_y", "MAN:CAY", 120),
+        ("manual_cursor_b_y", "MAN:CBY", 360),
+        ("track_cursor_a_x", "TRAC:CAX", 300),
+        ("track_cursor_b_x", "TRAC:CBX", 700),
+        ("xy_ax", "XY:AX", 100),
+        ("xy_bx", "XY:BX", 300),
+        ("xy_ay", "XY:AY", 120),
+        ("xy_by", "XY:BY", 360),
+    ],
+)
+def test_cursor_position_controls(name, command, value):
+    with expected_protocol(
+        MSO5000,
+        [(f":CURS:{command} {value}", None), (f":CURS:{command}?", str(value))],
+    ) as instrument:
+        setattr(instrument.cursor, name, value)
+        assert getattr(instrument.cursor, name) == value
+
+
+@pytest.mark.parametrize(
+    "name, command, reply, expected",
+    [
+        ("manual_cursor_a_x_value", "MAN:AXV", "1.25E-6", 1.25e-6),
+        ("manual_cursor_a_y_value", "MAN:AYV", "2.5E+0", 2.5),
+        ("manual_cursor_b_x_value", "MAN:BXV", "2.25E-6", 2.25e-6),
+        ("manual_cursor_b_y_value", "MAN:BYV", "3.5E+0", 3.5),
+        ("manual_x_delta", "MAN:XDEL", "1E-6", 1e-6),
+        ("manual_inverse_x_delta", "MAN:IXD", "1E+6", 1e6),
+        ("manual_y_delta", "MAN:YDEL", "1E+0", 1.0),
+        ("track_cursor_a_y", "TRAC:CAY", "120", 120),
+        ("track_cursor_b_y", "TRAC:CBY", "360", 360),
+        ("track_cursor_a_x_value", "TRAC:AXV", "1E-6", 1e-6),
+        ("track_cursor_a_y_value", "TRAC:AYV", "1E+0", 1.0),
+        ("track_cursor_b_x_value", "TRAC:BXV", "2E-6", 2e-6),
+        ("track_cursor_b_y_value", "TRAC:BYV", "2E+0", 2.0),
+        ("track_x_delta", "TRAC:XDEL", "1E-6", 1e-6),
+        ("track_y_delta", "TRAC:YDEL", "1E+0", 1.0),
+        ("track_inverse_x_delta", "TRAC:IXD", "1E+6", 1e6),
+        ("xy_cursor_a_x_value", "XY:AXV", "1E+0", 1.0),
+        ("xy_cursor_a_y_value", "XY:AYV", "2E+0", 2.0),
+        ("xy_cursor_b_x_value", "XY:BXV", "3E+0", 3.0),
+        ("xy_cursor_b_y_value", "XY:BYV", "4E+0", 4.0),
+    ],
+)
+def test_cursor_measurements(name, command, reply, expected):
+    with expected_protocol(MSO5000, [(f":CURS:{command}?", reply)]) as instrument:
+        assert getattr(instrument.cursor, name) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "name, command, value, wire, reply",
+    [
+        ("type", "TYPE", "DOTS", "DOTS", "DOTS"),
+        ("grading_time", "GRAD:TIME", "0.2", "0.2", "0.2"),
+        ("waveform_brightness", "WBR", 75, "75", "75"),
+        ("grid", "GRID", "HALF", "HALF", "HALF"),
+        ("grid_brightness", "GBR", 45, "45", "45"),
+        ("rulers", "RUL", True, "1", "1"),
+        ("color", "COL", False, "0", "0"),
+    ],
+)
+def test_display_controls(name, command, value, wire, reply):
+    with expected_protocol(
+        MSO5000,
+        [(f":DISP:{command} {wire}", None), (f":DISP:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.display, name, value)
+        assert getattr(instrument.display, name) == value
+
+
+def test_display_clear():
+    with expected_protocol(MSO5000, [(":DISP:CLE", None)]) as instrument:
+        instrument.display.clear()
+
+
+@pytest.mark.parametrize(
+    "name, command, value, wire, reply",
+    [
+        ("display", "DISP", True, "1", "1"),
+        ("type", "TYPE", "VERT", "VERT", "VERT"),
+        ("source", "SOUR", "CHAN3", "CHAN3", "CHAN3"),
+        ("size", "SIZE", 3, "3", "3"),
+        ("static", "STAT", True, "1", "1"),
+        ("bottom_limit", "BLIM", -1.25, "-1.25", "-1.25E+0"),
+        ("left_limit", "LLIM", -2e-6, "-2e-06", "-2E-6"),
+        ("right_limit", "RLIM", 2e-6, "2e-06", "2E-6"),
+        ("top_limit", "TLIM", 1.25, "1.25", "1.25E+0"),
+    ],
+)
+def test_histogram_controls(name, command, value, wire, reply):
+    with expected_protocol(
+        MSO5000,
+        [(f":HIST:{command} {wire}", None), (f":HIST:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.histogram, name, value)
+        assert getattr(instrument.histogram, name) == pytest.approx(value)
+
+
+def test_histogram_reset():
+    with expected_protocol(MSO5000, [(":HIST:RES", None)]) as instrument:
+        instrument.histogram.reset()
+
+
+@pytest.mark.parametrize(
+    "name, command, value, wire, reply",
+    [
+        ("enabled", "ENAB", True, "1", "1"),
+        ("source", "SOUR", "CHAN2", "CHAN2", "CHAN2"),
+        ("operate", "OPER", "STOP", "STOP", "STOP"),
+        ("measurement_display", "MDIS", False, "0", "0"),
+        ("x", "X", 0.2, "0.2", "2E-1"),
+        ("y", "Y", 0.4, "0.4", "4E-1"),
+    ],
+)
+def test_mask_controls(name, command, value, wire, reply):
+    with expected_protocol(
+        MSO5000,
+        [(f":MASK:{command} {wire}", None), (f":MASK:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.mask, name, value)
+        result = getattr(instrument.mask, name)
+        if isinstance(value, float):
+            assert result == pytest.approx(value)
+        else:
+            assert result == value
+
+
+@pytest.mark.parametrize(
+    "name, command, reply",
+    [("passed", "PASS", "12"), ("failed", "FAIL", "3"), ("total", "TOT", "15")],
+)
+def test_mask_counters(name, command, reply):
+    with expected_protocol(MSO5000, [(f":MASK:{command}?", reply)]) as instrument:
+        assert getattr(instrument.mask, name) == int(reply)
+
+
+def test_mask_actions():
+    with expected_protocol(MSO5000, [(":MASK:CRE", None), (":MASK:RES", None)]) as instrument:
+        instrument.mask.create()
+        instrument.mask.reset()
+
+
+@pytest.mark.parametrize(
+    "name, command, value, wire, reply",
+    [
+        ("enabled", "ENAB", True, "1", "1"),
+        ("start", "STAR", False, "0", "0"),
+        ("play", "PLAY", True, "1", "1"),
+        ("current", "CURR", 7, "7", "7"),
+        ("frames", "FRAM", 100, "100", "100"),
+    ],
+)
+def test_recording_controls(name, command, value, wire, reply):
+    with expected_protocol(
+        MSO5000,
+        [(f":REC:{command} {wire}", None), (f":REC:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.recording, name, value)
+        assert getattr(instrument.recording, name) == value
+
+
+def test_reference_global_controls():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":REF:DISP 1", None),
+            (":REF:DISP?", "1"),
+            (":REF:LAB:ENAB 0", None),
+            (":REF:LAB:ENAB?", "0"),
+        ],
+    ) as instrument:
+        instrument.references.display = True
+        assert instrument.references.display is True
+        instrument.references.label_enabled = False
+        assert instrument.references.label_enabled is False
+
+
+def test_reference_slot_controls():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":REF:SOUR 3,MATH2", None),
+            (":REF:SOUR? 3", "MATH2"),
+            (":REF:VSC 3,2.5", None),
+            (":REF:VSC? 3", "2.5E+0"),
+            (":REF:VOFF 3,-0.25", None),
+            (":REF:VOFF? 3", "-2.5E-1"),
+            (":REF:COL 3,ORAN", None),
+            (":REF:COL? 3", "ORAN"),
+            (":REF:LAB:CONT 3,baseline", None),
+            (":REF:LAB:CONT? 3", "baseline"),
+            (":REF:RES 3", None),
+            (":REF:CURR 3", None),
+        ],
+    ) as instrument:
+        instrument.references.set_source(3, "MATH2")
+        assert instrument.references.source(3) == "MATH2"
+        instrument.references.set_vertical_scale(3, 2.5)
+        assert instrument.references.vertical_scale(3) == pytest.approx(2.5)
+        instrument.references.set_vertical_offset(3, -0.25)
+        assert instrument.references.vertical_offset(3) == pytest.approx(-0.25)
+        instrument.references.set_color(3, "ORAN")
+        assert instrument.references.color(3) == "ORAN"
+        instrument.references.set_label_content(3, "baseline")
+        assert instrument.references.label_content(3) == "baseline"
+        instrument.references.reset(3)
+        instrument.references.select_current(3)
+
+
+@pytest.mark.parametrize(
+    "name, command, value, wire, reply",
+    [
+        ("display", "DISP", True, "1", "1"),
+        ("operator", "OPER", "FFT", "FFT", "FFT"),
+        ("source1", "SOUR1", "REF2", "REF2", "REF2"),
+        ("source2", "SOUR2", "CHAN4", "CHAN4", "CHAN4"),
+        ("left_source_1", "LSOU1", "D7", "D7", "D7"),
+        ("left_source_2", "LSOU2", "CHAN2", "CHAN2", "CHAN2"),
+        ("invert", "INV", False, "0", "0"),
+        ("fft_source", "FFT:SOUR", "CHAN3", "CHAN3", "CHAN3"),
+        ("fft_window", "FFT:WIND", "FLAT", "FLAT", "FLAT"),
+        ("fft_unit", "FFT:UNIT", "DB", "DB", "DB"),
+        ("fft_search_enabled", "FFT:SEAR:ENAB", True, "1", "1"),
+        ("fft_search_order", "FFT:SEAR:ORD", "FREQ", "FREQ", "FREQ"),
+        ("filter_type", "FILT:TYPE", "BPAS", "BPAS", "BPAS"),
+    ],
+)
+def test_math_discrete_controls(name, command, value, wire, reply):
+    with expected_protocol(
+        MSO5000,
+        [(f":MATH2:{command} {wire}", None), (f":MATH2:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.math_2, name, value)
+        assert getattr(instrument.math_2, name) == value
+
+
+@pytest.mark.parametrize(
+    "name, command, value, wire, reply",
+    [
+        ("scale", "SCAL", 2.5, "2.5", "2.5E+0"),
+        ("offset", "OFFS", -0.25, "-0.25", "-2.5E-1"),
+        ("fft_scale", "FFT:SCAL", 5.0, "5", "5E+0"),
+        ("fft_offset", "FFT:OFFS", -10.0, "-10", "-1E+1"),
+        ("fft_horizontal_scale", "FFT:HSC", 1e6, "1e+06", "1E+6"),
+        ("fft_horizontal_center", "FFT:HCEN", 5e5, "500000", "5E+5"),
+        ("fft_frequency_start", "FFT:FREQ:STAR", 1e3, "1000", "1E+3"),
+        ("fft_frequency_end", "FFT:FREQ:END", 1e6, "1e+06", "1E+6"),
+        ("fft_search_num", "FFT:SEAR:NUM", 7, "7", "7"),
+        ("fft_search_threshold", "FFT:SEAR:THR", -20.0, "-20", "-2E+1"),
+        ("fft_search_excursion", "FFT:SEAR:EXC", 3.0, "3", "3E+0"),
+        ("filter_w1", "FILT:W1", 1e3, "1000", "1E+3"),
+        ("filter_w2", "FILT:W2", 2e3, "2000", "2E+3"),
+        ("sensitivity", "SENS", 0.3, "0.3", "3E-1"),
+        ("distance", "DIST", 25, "25", "25"),
+        ("threshold1", "THR1", 0.1, "0.1", "1E-1"),
+        ("threshold2", "THR2", 0.2, "0.2", "2E-1"),
+        ("threshold3", "THR3", 0.3, "0.3", "3E-1"),
+        ("threshold4", "THR4", 0.4, "0.4", "4E-1"),
+    ],
+)
+def test_math_numeric_controls(name, command, value, wire, reply):
+    with expected_protocol(
+        MSO5000,
+        [(f":MATH2:{command} {wire}", None), (f":MATH2:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.math_2, name, value)
+        assert getattr(instrument.math_2, name) == pytest.approx(value)
+
+
+def test_math_reset_and_channel_ids():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":MATH1:RES", None),
+            (":MATH2:RES", None),
+            (":MATH3:RES", None),
+            (":MATH4:RES", None),
+        ],
+    ) as instrument:
+        instrument.math_1.reset()
+        instrument.math_2.reset()
+        instrument.math_3.reset()
+        instrument.math_4.reset()
+
+
+@pytest.mark.parametrize(
+    "name, command, value, wire, reply",
+    [
+        ("state", "STAT", True, "1", "1"),
+        ("mode", "MODE", "RUNT", "RUNT", "RUNT"),
+        ("event", "EVEN", 2, "2", "2"),
+        ("edge_slope", "EDGE:SLOP", "EITH", "EITH", "EITH"),
+        ("edge_source", "EDGE:SOUR", "CHAN2", "CHAN2", "CHAN2"),
+        ("pulse_polarity", "PULS:POL", "NEG", "NEG", "NEG"),
+        ("pulse_qualifier", "PULS:QUAL", "GLES", "GLES", "GLES"),
+        ("pulse_source", "PULS:SOUR", "CHAN3", "CHAN3", "CHAN3"),
+        ("runt_polarity", "RUNT:POL", "POS", "POS", "POS"),
+        ("runt_qualifier", "RUNT:QUAL", "LESS", "LESS", "LESS"),
+        ("runt_source", "RUNT:SOUR", "CHAN4", "CHAN4", "CHAN4"),
+        ("slope_polarity", "SLOP:POL", "NEG", "NEG", "NEG"),
+        ("slope_qualifier", "SLOP:QUAL", "GRE", "GRE", "GRE"),
+        ("slope_source", "SLOP:SOUR", "CHAN1", "CHAN1", "CHAN1"),
+    ],
+)
+def test_search_discrete_controls(name, command, value, wire, reply):
+    with expected_protocol(
+        MSO5000,
+        [(f":SEAR:{command} {wire}", None), (f":SEAR:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.search, name, value)
+        assert getattr(instrument.search, name) == value
+
+
+@pytest.mark.parametrize(
+    "name, command, value, wire, reply",
+    [
+        ("edge_threshold", "EDGE:THR", 0.1, "0.1", "1E-1"),
+        ("pulse_upper_width", "PULS:UWID", 2e-6, "2e-06", "2E-6"),
+        ("pulse_lower_width", "PULS:LWID", 1e-6, "1e-06", "1E-6"),
+        ("pulse_threshold", "PULS:THR", 0.2, "0.2", "2E-1"),
+        ("runt_width_upper", "RUNT:WUPP", 3e-6, "3e-06", "3E-6"),
+        ("runt_width_lower", "RUNT:WLOW", 2e-6, "2e-06", "2E-6"),
+        ("runt_threshold1", "RUNT:THR1", 0.1, "0.1", "1E-1"),
+        ("runt_threshold2", "RUNT:THR2", 0.2, "0.2", "2E-1"),
+        ("slope_time_upper", "SLOP:TUPP", 4e-6, "4e-06", "4E-6"),
+        ("slope_time_lower", "SLOP:TLOW", 3e-6, "3e-06", "3E-6"),
+        ("slope_threshold1", "SLOP:THR1", 0.1, "0.1", "1E-1"),
+        ("slope_threshold2", "SLOP:THR2", 0.2, "0.2", "2E-1"),
+    ],
+)
+def test_search_numeric_controls(name, command, value, wire, reply):
+    with expected_protocol(
+        MSO5000,
+        [(f":SEAR:{command} {wire}", None), (f":SEAR:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.search, name, value)
+        assert getattr(instrument.search, name) == pytest.approx(value)
+
+
+def test_search_results():
+    with expected_protocol(
+        MSO5000,
+        [(":SEAR:COUN?", "12"), (":SEAR:VAL? 7", "1.25E-6")],
+    ) as instrument:
+        assert instrument.search.count == 12
+        assert instrument.search.value(7) == pytest.approx(1.25e-6)
+
+
+def test_advanced_scope_controls_reject_invalid_values():
+    with expected_protocol(MSO5000, []) as instrument:
+        invalid = [
+            (instrument.cursor, "mode", "AUTO"),
+            (instrument.cursor, "manual_cursor_a_x", 1000),
+            (instrument.display, "waveform_brightness", 0),
+            (instrument.histogram, "size", 5),
+            (instrument.mask, "x", 0),
+            (instrument.recording, "frames", 0),
+            (instrument.math_1, "fft_search_num", 16),
+            (instrument.math_1, "sensitivity", 0.01),
+            (instrument.search, "event", -1),
+            (instrument.search, "pulse_upper_width", 11),
+        ]
+        for child, name, value in invalid:
+            with pytest.raises(ValueError):
+                setattr(child, name, value)
+        with pytest.raises(ValueError):
+            instrument.references.source(11)
+        with pytest.raises(ValueError):
+            instrument.search.value(1001)
