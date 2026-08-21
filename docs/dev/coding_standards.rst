@@ -35,8 +35,12 @@ If there are conflicts between :code:`ruff format`/:code:`darker`'s output and t
 
 You may add type hints as you see fit.
 All type hints should adhere to the guidelines set out in the `typing`_ package.
+Changes must keep the :code:`pyright` check green in continuous integration (see :ref:`type_checking`); do not silence type errors by removing annotations or casting unsoundly.
+Fix the underlying types or add precise annotations instead.
 
 .. _typing: https://docs.python.org/3/library/typing.html
+
+.. _type_checking:
 
 Type checking
 =============
@@ -58,7 +62,10 @@ The property creators (see :ref:`type-hints-property-creators`) are heavily over
 Documentation
 =============
 
-PyMeasure documents code using reStructuredText and the `Sphinx documentation generator`_. All functions, classes, and methods should be documented in the code using a docstring, see section :ref:`docstrings`.
+PyMeasure documents code using reStructuredText and the `Sphinx documentation generator`_.
+All functions, classes, and public methods should be documented in the code using a docstring, see section :ref:`docstrings`.
+Private methods may omit a docstring when their name and signature (including type hints) make their behavior self-evident.
+Test methods (functions named :code:`test_*`) do not need a docstring, as their name and body make their intent clear.
 
 .. _Sphinx documentation generator: http://www.sphinx-doc.org/en/stable/
 
@@ -87,6 +94,9 @@ Most importantly:
 * Use triple-quoted strings (:code:`"""`) to delimit docstrings.
 * One short summary line in imperative voice, with a period at the end.
 * Optionally, after a blank line, include more detailed information.
+* Do not add a docstring to :code:`__init__` methods; document the class instead.
+  Per `PEP257 <https://peps.python.org/pep-0257/>`_, the class docstring covers constructor behavior, including parameters.
+* Property setters do not need a docstring: only the getter's docstring is exposed (as :code:`__doc__`) on the property.
 * For functions and methods, you can add documentation on their parameters using the `reStructuredText docstring format <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#info-field-lists>`__.
 
 Specific to properties, start them with "Control", "Get", "Measure", or "Set" to indicate the kind of property, as it is not visible after import, whether a property is gettable ("Get" or "Measure", e.g. for a :meth:`measurement`), settable ("Set", for a :meth:`setting`), or both ("Control", for a :meth:`control`).
