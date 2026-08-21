@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import math
+
 import pytest
 
 from pymeasure.instruments.rigol import MSO5000
@@ -1449,3 +1451,142 @@ def test_nth_edge_trigger_numeric_controls(name, command, value):
 def test_nth_edge_trigger_numeric_controls_reject_out_of_range_values(name, value):
     with expected_protocol(MSO5000, []) as instrument, pytest.raises(ValueError):
         setattr(instrument, name, value)
+
+
+@pytest.mark.parametrize(
+    "name, command, value",
+    [
+        ("source", "SOUR", "MATH2"),
+        ("mode", "MODE", "PREC"),
+        ("am_source", "AMS", "CHAN3"),
+        ("setup_primary_source_a", "SET:PSA", "D15"),
+        ("setup_primary_source_b", "SET:PSB", "CHAN2"),
+        ("setup_digital_source_a", "SET:DSA", "MATH1"),
+        ("setup_digital_source_b", "SET:DSB", "D0"),
+        ("area", "AREA", "CURS"),
+    ],
+)
+def test_measurement_discrete_controls(name, command, value):
+    with expected_protocol(
+        MSO5000,
+        [(f":MEAS:{command} {value}", None), (f":MEAS:{command}?", value)],
+    ) as instrument:
+        setattr(instrument.measurements, name, value)
+        assert getattr(instrument.measurements, name) == value
+
+
+@pytest.mark.parametrize("value, raw", [(True, "1"), (False, "0")])
+def test_measurement_statistic_display(value, raw):
+    with expected_protocol(
+        MSO5000,
+        [(f":MEAS:STAT:DISP {raw}", None), (":MEAS:STAT:DISP?", raw)],
+    ) as instrument:
+        instrument.measurements.statistic_display = value
+        assert instrument.measurements.statistic_display is value
+
+
+@pytest.mark.parametrize(
+    "name, command, value",
+    [
+        ("setup_max", "SET:MAX", 90),
+        ("setup_mid", "SET:MID", 50),
+        ("setup_min", "SET:MIN", -20),
+        ("cregion_cursor_a_x", "CREG:CAX", 250),
+        ("cregion_cursor_b_x", "CREG:CBX", 750),
+        ("category", "CAT", 2),
+    ],
+)
+def test_measurement_numeric_controls(name, command, value):
+    with expected_protocol(
+        MSO5000,
+        [(f":MEAS:{command} {value}", None), (f":MEAS:{command}?", str(value))],
+    ) as instrument:
+        setattr(instrument.measurements, name, value)
+        assert getattr(instrument.measurements, name) == value
+
+
+@pytest.mark.parametrize(
+    "name, value",
+    [
+        ("source", "REF1"),
+        ("mode", "FAST"),
+        ("am_source", "MATH1"),
+        ("setup_max", 101),
+        ("setup_min", -101),
+        ("cregion_cursor_a_x", -1),
+        ("cregion_cursor_b_x", 1001),
+        ("category", 3),
+    ],
+)
+def test_measurement_controls_reject_invalid_values(name, value):
+    with expected_protocol(MSO5000, []) as instrument, pytest.raises(ValueError):
+        setattr(instrument.measurements, name, value)
+
+
+def test_measurement_threshold_source_and_actions():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":MEAS:THR:SOUR MATH4", None),
+            (":MEAS:THR:DEF", None),
+            (":MEAS:CLE ITEM7", None),
+            (":MEAS:STAT:RES", None),
+        ],
+    ) as instrument:
+        instrument.measurements.threshold_source = "MATH4"
+        instrument.measurements.reset_thresholds()
+        instrument.measurements.clear("ITEM7")
+        instrument.measurements.reset_statistics()
+
+
+def test_measurement_item_set_and_query():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":MEAS:ITEM RRDEL,CHAN1,D0", None),
+            (":MEAS:ITEM? RRDEL,CHAN1,D0", "1.25E-6"),
+        ],
+    ) as instrument:
+        instrument.measurements.enable_item("RRDEL", "CHAN1", "D0")
+        assert instrument.measurements.item("RRDEL", "CHAN1", "D0") == pytest.approx(1.25e-6)
+
+
+def test_measurement_statistic_item_set_and_query():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":MEAS:STAT:ITEM VPP,CHAN2", None),
+            (":MEAS:STAT:ITEM? AVER,VPP,CHAN2", "2.5E+0"),
+        ],
+    ) as instrument:
+        instrument.measurements.enable_statistic_item("VPP", "CHAN2")
+        assert instrument.measurements.statistic_item("AVER", "VPP", "CHAN2") == pytest.approx(2.5)
+
+
+def test_measurement_item_defaults_to_selected_source():
+    with expected_protocol(MSO5000, [(":MEAS:ITEM? FREQ", "1.0E+6")]) as instrument:
+        assert instrument.measurements.item("FREQ") == pytest.approx(1e6)
+
+
+def test_measurement_unavailable_returns_nan():
+    with expected_protocol(MSO5000, [(":MEAS:ITEM? VMAX,CHAN1", "****")]) as instrument:
+        assert math.isnan(instrument.measurements.item("VMAX", "CHAN1"))
+
+
+def test_measurement_methods_reject_invalid_arguments():
+    with expected_protocol(MSO5000, []) as instrument:
+        with pytest.raises(ValueError):
+            instrument.measurements.clear("ITEM11")
+        with pytest.raises(ValueError):
+            instrument.measurements.item("UNKNOWN")
+        with pytest.raises(ValueError):
+            instrument.measurements.item("VPP", "REF1")
+        with pytest.raises(ValueError):
+            instrument.measurements.item("VPP", None, "CHAN2")
+        with pytest.raises(ValueError):
+            instrument.measurements.statistic_item("MEAN", "VPP")
+
+
+def test_measure_compatibility_method():
+    with expected_protocol(MSO5000, [(":MEAS:ITEM? VPP,CHAN3", "3.3")]) as instrument:
+        assert instrument.measure("VPP", 3) == pytest.approx(3.3)
