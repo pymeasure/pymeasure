@@ -180,6 +180,37 @@ def test_timebase_readback(scope):
     assert isinstance(scope.timebase_vernier_enabled, bool)
 
 
+def test_measurement_readback(scope):
+    sources = [
+        *[f"D{number}" for number in range(16)],
+        *[f"CHAN{number}" for number in range(1, 5)],
+        *[f"MATH{number}" for number in range(1, 5)],
+    ]
+    assert scope.measurements.source in sources
+    assert scope.measurements.mode in ["NORM", "PREC"]
+    assert scope.measurements.am_source in [
+        "CHAN1",
+        "CHAN2",
+        "CHAN3",
+        "CHAN4",
+        "OFF",
+    ]
+    assert -100 <= scope.measurements.setup_max <= 100
+    assert -100 <= scope.measurements.setup_mid <= 100
+    assert -100 <= scope.measurements.setup_min <= 100
+    assert scope.measurements.setup_primary_source_a in sources
+    assert scope.measurements.setup_primary_source_b in sources
+    assert scope.measurements.setup_digital_source_a in sources
+    assert scope.measurements.setup_digital_source_b in sources
+    assert isinstance(scope.measurements.statistic_display, bool)
+    assert scope.measurements.area in ["MAIN", "ZOOM", "CURS"]
+    assert 0 <= scope.measurements.cregion_cursor_a_x <= 1000
+    assert 0 <= scope.measurements.cregion_cursor_b_x <= 1000
+    assert 0 <= scope.measurements.category <= 2
+    assert isinstance(scope.measurements.item("VPP", "CHAN1"), float)
+    assert isinstance(scope.measurements.statistic_item("CURR", "VPP", "CHAN1"), float)
+
+
 def test_waveform_metadata_readback(scope):
     assert scope.waveform_source in [
         *[f"D{number}" for number in range(16)],

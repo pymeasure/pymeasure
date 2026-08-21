@@ -72,6 +72,64 @@ WAVEFORM_SOURCES = [
     *[f"MATH{number}" for number in range(1, 5)],
 ]
 
+MEASUREMENT_THRESHOLD_SOURCES = [
+    *[f"CHAN{number}" for number in range(1, 5)],
+    *[f"MATH{number}" for number in range(1, 5)],
+]
+
+MEASUREMENT_ITEMS = {
+    "VMAX": "VMAX",
+    "VMIN": "VMIN",
+    "VPP": "VPP",
+    "VTOP": "VTOP",
+    "VBASE": "VBASE",
+    "VAMP": "VAMP",
+    "VAVG": "VAVG",
+    "VRMS": "VRMS",
+    "OVER": "OVERSHOOT",
+    "PRES": "PRESHOOT",
+    "MAR": "MAREA",
+    "MPAR": "MPAREA",
+    "PER": "PERIOD",
+    "FREQ": "FREQUENCY",
+    "RTIM": "RTIME",
+    "FTIM": "FTIME",
+    "PWID": "PWIDTH",
+    "NWID": "NWIDTH",
+    "PDUT": "PDUTY",
+    "NDUT": "NDUTY",
+    "TVMAX": "TVMAX",
+    "TVMIN": "TVMIN",
+    "PSL": "PSLEWRATE",
+    "NSL": "NSLEWRATE",
+    "VUPP": "VUPPER",
+    "VMID": "VMID",
+    "VLOW": "VLOWER",
+    "VAR": "VARIANCE",
+    "PVRMS": "PVRMS",
+    "PPUL": "PPULSES",
+    "NPUL": "NPULSES",
+    "PEDG": "PEDGES",
+    "NEDG": "NEDGES",
+    "RRD": "RRDELAY",
+    "RFD": "RFDELAY",
+    "FRD": "FRDELAY",
+    "FFD": "FFDELAY",
+    "RRP": "RRPHASE",
+    "RFP": "RFPHASE",
+    "FRP": "FRPHASE",
+    "FFP": "FFPHASE",
+}
+
+MEASUREMENT_STATISTIC_TYPES = {
+    "MAX": "MAXIMUM",
+    "MIN": "MINIMUM",
+    "CURR": "CURRENT",
+    "AVER": "AVERAGES",
+    "DEV": "DEVIATION",
+    "CNT": "CNT",
+}
+
 TRIGGER_SOURCES = [
     *[f"D{number}" for number in range(16)],
     *[f"CHAN{number}" for number in range(1, 5)],
@@ -209,6 +267,230 @@ def _validate_trigger_pattern(
     return ",".join(pattern)
 
 
+def _validate_scpi_keyword(value: str, keywords: dict[str, str], name: str) -> str:
+    """Validate a SCPI keyword in any documented short-to-long form."""
+    if not isinstance(value, str):
+        raise TypeError(f"{name} must be a string.")
+    value = value.upper()
+    if any(full.startswith(value) and len(value) >= len(short) for short, full in keywords.items()):
+        return value
+    raise ValueError(f"{name} must be a documented SCPI value.")
+
+
+class MeasurementSubsystem(Channel):
+    """Represent automatic-measurement configuration and results."""
+
+    source = Channel.control(
+        ":MEAS:SOUR?",
+        ":MEAS:SOUR %s",
+        """Control the source of the current measurement parameter (str).""",
+        validator=strict_discrete_set,
+        values=WAVEFORM_SOURCES,
+        cast=str,
+    )
+
+    threshold_source = Channel.setting(
+        ":MEAS:THR:SOUR %s",
+        """Set the analog or math source whose measurement thresholds are configured.""",
+        validator=strict_discrete_set,
+        values=MEASUREMENT_THRESHOLD_SOURCES,
+    )
+
+    mode = Channel.control(
+        ":MEAS:MODE?",
+        ":MEAS:MODE %s",
+        """Control the measurement mode: ``"NORM"`` or ``"PREC"``.""",
+        validator=strict_discrete_set,
+        values=["NORM", "PREC"],
+        cast=str,
+    )
+
+    am_source = Channel.control(
+        ":MEAS:AMS?",
+        ":MEAS:AMS %s",
+        """Control the source for displaying all measurement values (str).""",
+        validator=strict_discrete_set,
+        values=[*[f"CHAN{number}" for number in range(1, 5)], "OFF"],
+        cast=str,
+    )
+
+    setup_max = Channel.control(
+        ":MEAS:SET:MAX?",
+        ":MEAS:SET:MAX %d",
+        """Control the upper measurement threshold (int from -100 to 100).
+
+        The instrument interprets the value according to its percentage or absolute
+        threshold type.
+        """,
+        validator=strict_range,
+        values=[-100, 100],
+        cast=int,
+    )
+
+    setup_mid = Channel.control(
+        ":MEAS:SET:MID?",
+        ":MEAS:SET:MID %d",
+        """Control the middle measurement threshold (int from -100 to 100).""",
+        validator=strict_range,
+        values=[-100, 100],
+        cast=int,
+    )
+
+    setup_min = Channel.control(
+        ":MEAS:SET:MIN?",
+        ":MEAS:SET:MIN %d",
+        """Control the lower measurement threshold (int from -100 to 100).""",
+        validator=strict_range,
+        values=[-100, 100],
+        cast=int,
+    )
+
+    setup_primary_source_a = Channel.control(
+        ":MEAS:SET:PSA?",
+        ":MEAS:SET:PSA %s",
+        """Control source A for phase or delay measurement (str).""",
+        validator=strict_discrete_set,
+        values=WAVEFORM_SOURCES,
+        cast=str,
+    )
+
+    setup_primary_source_b = Channel.control(
+        ":MEAS:SET:PSB?",
+        ":MEAS:SET:PSB %s",
+        """Control source B for phase or delay measurement (str).""",
+        validator=strict_discrete_set,
+        values=WAVEFORM_SOURCES,
+        cast=str,
+    )
+
+    setup_digital_source_a = Channel.control(
+        ":MEAS:SET:DSA?",
+        ":MEAS:SET:DSA %s",
+        """Control source A for phase or delay measurement (str).""",
+        validator=strict_discrete_set,
+        values=WAVEFORM_SOURCES,
+        cast=str,
+    )
+
+    setup_digital_source_b = Channel.control(
+        ":MEAS:SET:DSB?",
+        ":MEAS:SET:DSB %s",
+        """Control source B for phase or delay measurement (str).""",
+        validator=strict_discrete_set,
+        values=WAVEFORM_SOURCES,
+        cast=str,
+    )
+
+    statistic_display = Channel.control(
+        ":MEAS:STAT:DISP?",
+        ":MEAS:STAT:DISP %d",
+        """Control whether measurement statistics are displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    area = Channel.control(
+        ":MEAS:AREA?",
+        ":MEAS:AREA %s",
+        """Control the measurement range: ``"MAIN"``, ``"ZOOM"``, or ``"CURS"``.""",
+        validator=strict_discrete_set,
+        values=["MAIN", "ZOOM", "CURS"],
+        cast=str,
+    )
+
+    cregion_cursor_a_x = Channel.control(
+        ":MEAS:CREG:CAX?",
+        ":MEAS:CREG:CAX %d",
+        """Control Cursor A's horizontal pixel coordinate (int from 0 to 1000).""",
+        validator=strict_range,
+        values=[0, 1000],
+        cast=int,
+    )
+
+    cregion_cursor_b_x = Channel.control(
+        ":MEAS:CREG:CBX?",
+        ":MEAS:CREG:CBX %d",
+        """Control Cursor B's horizontal pixel coordinate (int from 0 to 1000).""",
+        validator=strict_range,
+        values=[0, 1000],
+        cast=int,
+    )
+
+    category = Channel.control(
+        ":MEAS:CAT?",
+        ":MEAS:CAT %d",
+        """Control the measurement category: 0 horizontal, 1 vertical, or 2 other.""",
+        validator=strict_range,
+        values=[0, 2],
+        cast=int,
+    )
+
+    @staticmethod
+    def _item_arguments(item: str, source_a: str | None, source_b: str | None) -> str:
+        item = _validate_scpi_keyword(item, MEASUREMENT_ITEMS, "Measurement item")
+        if source_b is not None and source_a is None:
+            raise ValueError("Source B requires source A.")
+        arguments = [item]
+        if source_a is not None:
+            arguments.append(strict_discrete_set(source_a, WAVEFORM_SOURCES))
+        if source_b is not None:
+            arguments.append(strict_discrete_set(source_b, WAVEFORM_SOURCES))
+        return ",".join(arguments)
+
+    @staticmethod
+    def _parse_result(result: str) -> float:
+        try:
+            return float(result.strip())
+        except ValueError:
+            return float("nan")
+
+    def clear(self, item: str = "ALL") -> None:
+        """Clear a displayed measurement item, from ``"ITEM1"`` to ``"ITEM10"``, or all."""
+        item = strict_discrete_set(item, [*[f"ITEM{number}" for number in range(1, 11)], "ALL"])
+        self.write(f":MEAS:CLE {item}")
+
+    def reset_thresholds(self) -> None:
+        """Restore the automatic-measurement threshold levels to their defaults."""
+        self.write(":MEAS:THR:DEF")
+
+    def reset_statistics(self) -> None:
+        """Clear accumulated measurement statistics and start them again."""
+        self.write(":MEAS:STAT:RES")
+
+    def enable_item(
+        self, item: str, source_a: str | None = None, source_b: str | None = None
+    ) -> None:
+        """Enable a measurement item for one or two optional sources."""
+        self.write(f":MEAS:ITEM {self._item_arguments(item, source_a, source_b)}")
+
+    def item(self, item: str, source_a: str | None = None, source_b: str | None = None) -> float:
+        """Return the current value of a measurement item for optional sources."""
+        arguments = self._item_arguments(item, source_a, source_b)
+        return self._parse_result(self.ask(f":MEAS:ITEM? {arguments}"))
+
+    def enable_statistic_item(
+        self, item: str, source_a: str | None = None, source_b: str | None = None
+    ) -> None:
+        """Enable statistics for a measurement item and optional sources."""
+        self.write(f":MEAS:STAT:ITEM {self._item_arguments(item, source_a, source_b)}")
+
+    def statistic_item(
+        self,
+        statistic_type: str,
+        item: str,
+        source_a: str | None = None,
+        source_b: str | None = None,
+    ) -> float:
+        """Return one statistic for a measurement item and optional sources."""
+        statistic_type = _validate_scpi_keyword(
+            statistic_type, MEASUREMENT_STATISTIC_TYPES, "Statistic type"
+        )
+        arguments = self._item_arguments(item, source_a, source_b)
+        return self._parse_result(self.ask(f":MEAS:STAT:ITEM? {statistic_type},{arguments}"))
+
+
 class MSO5000Channel(RigolOscilloscopeChannel):
     """Represent an analog input channel of a Rigol MSO5000 oscilloscope."""
 
@@ -230,8 +512,8 @@ class MSO5000(RigolOscilloscope):
     """Control the Rigol MSO5000 series oscilloscopes.
 
     This driver supports the MSO5072, MSO5074, MSO5102, MSO5104, MSO5204,
-    and MSO5354 models. It provides analog-channel, acquisition, timebase,
-    trigger, waveform-transfer, system, and storage controls.
+    and MSO5354 models. It provides analog-channel, acquisition, measurement,
+    timebase, trigger, waveform-transfer, system, and storage controls.
 
     :param adapter: VISA resource name or adapter object used to communicate with the instrument.
     :param name: Human-readable instrument name.
@@ -245,6 +527,7 @@ class MSO5000(RigolOscilloscope):
     ch_2 = Instrument.ChannelCreator(MSO5000Channel, 2)
     ch_3 = Instrument.ChannelCreator(MSO5000Channel, 3)
     ch_4 = Instrument.ChannelCreator(MSO5000Channel, 4)
+    measurements = Instrument.ChannelCreator(MeasurementSubsystem)
 
     acquisition_memory_depth_values = [
         "AUTO",
@@ -1306,6 +1589,19 @@ class MSO5000(RigolOscilloscope):
     def autoscale(self) -> None:
         """Automatically configure the vertical scale, timebase, and trigger mode."""
         self.write(":AUT")
+
+    def measure(self, item: str, channel: int = 1) -> float:
+        """Return an automatic measurement for analog channel 1 to 4.
+
+        This convenience method delegates to :attr:`measurements`. Use the child
+        interface directly for math, digital, or dual-source measurements.
+        """
+        channel = strict_range(channel, [1, 4])
+        return self.measurements.item(item, f"CHAN{channel}")
+
+    def clear_measurements(self) -> None:
+        """Clear all displayed automatic measurement items."""
+        self.measurements.clear()
 
     def clear_waveforms(self) -> None:
         """Clear all waveforms from the display."""
