@@ -35,9 +35,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class KeithleyBuffer:
-    """ Implements the basic buffering capability found in
-    many Keithley instruments. """
+class KeithleyBufferBase:
+    """Implement the subset of buffer capability that is available in :class:`Keithley2450`."""
 
     buffer_points = Instrument.control(
         ":TRAC:POIN?", ":TRAC:POIN %d",
@@ -47,6 +46,24 @@ class KeithleyBuffer:
         values=[2, 1024],
         cast=int
     )
+
+    def start_buffer(self) -> None:
+        """Start the buffer."""
+        self.write(":INIT")
+
+    def stop_buffer(self) -> None:
+        """ Abort the buffering measurement, by stopping the measurement
+        arming and triggering sequence. If possible, a Selected Device
+        Clear (SDC) is used. """
+        if type(self.adapter) is PrologixAdapter:
+            self.write("++clr")
+        else:
+            self.write(":ABOR")
+
+
+class KeithleyBuffer(KeithleyBufferBase):
+    """Implements the basic buffering capability found in
+    many Keithley instruments."""
 
     def config_buffer(self, points=64, delay=0):
         """ Configure the measurement buffer for a number of points, to be
@@ -96,22 +113,9 @@ class KeithleyBuffer:
         self.write(":FORM:DATA ASCII")
         return np.array(self.values(":TRAC:DATA?"), dtype=np.float64)
 
-    def start_buffer(self):
-        """ Starts the buffer. """
-        self.write(":INIT")
-
     def reset_buffer(self):
         """ Reset the buffer. """
         self.write(":STAT:PRES;*CLS;:TRAC:CLEAR;:TRAC:FEED:CONT NEXT;")
-
-    def stop_buffer(self):
-        """ Abort the buffering measurement, by stopping the measurement
-        arming and triggering sequence. If possible, a Selected Device
-        Clear (SDC) is used. """
-        if type(self.adapter) is PrologixAdapter:
-            self.write("++clr")
-        else:
-            self.write(":ABOR")
 
     def disable_buffer(self):
         """ Disable the connection between measurements and the
