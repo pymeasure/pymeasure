@@ -731,3 +731,49 @@ def test_protocol_trigger_readback(scope, name):
 
 def test_quick_operation_readback(scope):
     assert scope.quick.operation in ["SIM", "SWAV", "SSET", "AME", "SRES"]
+
+
+def test_bode_plot_readback(scope):
+    assert isinstance(scope.bode_plot.enabled, bool)
+    assert scope.bode_plot.point >= 10
+    assert scope.bode_plot.source == "SOURCE1"
+
+
+def test_counter_integrated_readback(scope):
+    assert isinstance(scope.counter.current, float)
+    assert isinstance(scope.counter.enabled, bool)
+    assert scope.counter.digits in [3, 4, 5, 6]
+
+
+def test_dvm_integrated_readback(scope):
+    assert isinstance(scope.dvm.current, float)
+    assert isinstance(scope.dvm.enabled, bool)
+    assert scope.dvm.source in ["CHAN1", "CHAN2", "CHAN3", "CHAN4"]
+
+
+def test_power_analysis_readback(scope):
+    assert scope.power_analysis.type in ["QUAL", "RIPP"]
+    assert scope.power_analysis.current_source in ["CHAN1", "CHAN2", "CHAN3", "CHAN4"]
+    assert scope.power_analysis.voltage_source in ["CHAN1", "CHAN2", "CHAN3", "CHAN4"]
+
+
+def test_awg_readback(scope):
+    assert scope.awg_1.frequency_fixed > 0
+    assert scope.awg_1.function_shape in [
+        "SIN",
+        "SQU",
+        "RAMP",
+        "PULS",
+        "NOIS",
+        "DC",
+        "SINC",
+        "EXPR",
+        "EXPF",
+        "ECG",
+        "GAUS",
+        "LOR",
+        "HAV",
+        "ARB",
+    ]
+    assert isinstance(scope.awg_1.output_enabled, bool)
+    assert len(scope.awg_1.get_applied_waveform()) == 5
