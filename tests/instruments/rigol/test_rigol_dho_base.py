@@ -558,6 +558,7 @@ class TestWaveform:
             assert pre["yincrement"] == pytest.approx(1.6e-3)
             assert pre["yreference"] == 128
             assert pre["xreference"] == 0
+            assert isinstance(pre["xreference"], int)
 
     def test_get_waveform_invalid_fmt_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):

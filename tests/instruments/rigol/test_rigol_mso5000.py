@@ -643,9 +643,8 @@ def test_waveform_data_byte_rejects_malformed_ieee_block(block, message):
         instrument.waveform_data()
 
 
-@pytest.mark.filterwarnings("ignore:Breaking on termination character")
 def test_waveform_data_byte_rejects_data_beyond_declared_length():
-    block = b"#14" + bytes([128, 130, 126, 132]) + b"x\n"
+    block = b"#14" + bytes([128, 130, 126, 132]) + b"x"
     with (
         expected_protocol(
             MSO5000,
@@ -1714,7 +1713,11 @@ def test_histogram_controls(name, command, value, wire, reply):
         [(f":HIST:{command} {wire}", None), (f":HIST:{command}?", reply)],
     ) as instrument:
         setattr(instrument.histogram, name, value)
-        assert getattr(instrument.histogram, name) == pytest.approx(value)
+        result = getattr(instrument.histogram, name)
+        if isinstance(value, float):
+            assert result == pytest.approx(value)
+        else:
+            assert result == value
 
 
 def test_histogram_reset():

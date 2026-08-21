@@ -89,7 +89,9 @@ TRIGGER_MODES = [
 ]
 
 
-def _parse_ieee_block(response: bytes, data_name: str) -> bytes:
+def _parse_ieee_block(
+    response: bytes, data_name: str, *, require_terminator: bool = False
+) -> bytes:
     """Remove and validate the definite-length IEEE block framing."""
     if len(response) < 2 or response[:1] != b"#" or not response[1:2].isdigit():
         raise ValueError(f"{data_name} does not start with an IEEE block header.")
@@ -102,7 +104,8 @@ def _parse_ieee_block(response: bytes, data_name: str) -> bytes:
     payload = response[header_end:payload_end]
     if len(payload) != byte_count:
         raise ValueError(f"{data_name} declares {byte_count} data bytes, received {len(payload)}.")
-    if response[payload_end:] not in (b"", b"\n"):
+    trailing_data = response[payload_end:]
+    if trailing_data not in (b"", b"\n") or (require_terminator and trailing_data != b"\n"):
         raise ValueError(f"{data_name} contains data beyond its declared IEEE block length.")
     return payload
 
@@ -405,30 +408,27 @@ class RigolOscilloscope(SCPIMixin, Instrument):
 
     def _read_ieee_block(self, data_name: str) -> bytes:
         """Read and validate a definite-length IEEE block."""
-        header = self.read_bytes(2)
-        if len(header) != 2 or header[:1] != b"#" or not header[1:2].isdigit():
-            raise ValueError(f"{data_name} does not start with an IEEE block header.")
+        response = self.read_bytes(2)
+        if len(response) != 2 or response[:1] != b"#" or not response[1:2].isdigit():
+            return _parse_ieee_block(response, data_name, require_terminator=True)
 
-        digit_count = int(header[1:2])
+        digit_count = int(response[1:2])
         if digit_count == 0:
-            raise ValueError(f"{data_name} contains an invalid IEEE block header.")
+            return _parse_ieee_block(response, data_name, require_terminator=True)
 
         length = self.read_bytes(digit_count)
+        response += length
         if len(length) != digit_count or not length.isdigit():
-            raise ValueError(f"{data_name} contains an invalid IEEE block header.")
+            return _parse_ieee_block(response, data_name, require_terminator=True)
 
         byte_count = int(length)
         payload = self.read_bytes(byte_count)
+        response += payload
         if len(payload) != byte_count:
-            raise ValueError(
-                f"{data_name} declares {byte_count} data bytes, received {len(payload)}."
-            )
+            return _parse_ieee_block(response, data_name, require_terminator=True)
 
-        terminator = self.read_bytes(1)
-        if terminator != b"\n":
-            self.read_bytes(-1, break_on_termchar=True)
-            raise ValueError(f"{data_name} contains data beyond its declared IEEE block length.")
-        return payload
+        response += self.read_bytes(1)
+        return _parse_ieee_block(response, data_name, require_terminator=True)
 
     def run(self) -> None:
         """Start continuous acquisition."""
