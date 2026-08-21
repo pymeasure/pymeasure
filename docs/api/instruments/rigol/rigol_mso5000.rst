@@ -4,9 +4,9 @@ Rigol MSO5000 Series Oscilloscopes
 
 The :class:`~pymeasure.instruments.rigol.MSO5000` driver supports the
 MSO5072, MSO5074, MSO5102, MSO5104, MSO5204, and MSO5354 models.
-It exposes analog channels, acquisition, automatic measurement, timebase, advanced analysis,
-common trigger modes, waveform transfer, and selected system and storage
-functions.
+It exposes analog and digital channels, acquisition, automatic measurement, timebase,
+advanced analysis, bus decoding, protocol triggers, waveform transfer, and selected system and
+storage functions.
 
 Connection
 ==========
@@ -71,6 +71,30 @@ The four math waveforms use :attr:`~pymeasure.instruments.rigol.MSO5000.math_1` 
 Per-slot reference settings use methods on
 :attr:`~pymeasure.instruments.rigol.MSO5000.references` because the SCPI commands carry a
 reference number argument.
+
+Mixed-signal and protocol functions
+===================================
+
+Four decoding buses are exposed as :attr:`~pymeasure.instruments.rigol.MSO5000.bus_1` through
+:attr:`~pymeasure.instruments.rigol.MSO5000.bus_4`. Digital inputs ``D0`` through ``D15`` are
+available as ``d_0`` through ``d_15`` and in the
+:attr:`~pymeasure.instruments.rigol.MSO5000.digital_channels` collection. The two logic pods use
+:attr:`~pymeasure.instruments.rigol.MSO5000.pod_1` and
+:attr:`~pymeasure.instruments.rigol.MSO5000.pod_2`.
+
+.. code-block:: python
+
+    scope.bus_1.mode = "RS232"
+    scope.bus_1.rs232_rx = "CHAN2"
+    scope.bus_1.rs232_baud = 9600
+
+    scope.protocol_trigger.rs232_source = "CHAN2"
+    scope.protocol_trigger.rs232_when = "DATA"
+
+Decoder and trigger availability depends on the installed instrument options. Digital-channel and
+logic-pod operation additionally requires the appropriate active logic probe. The
+:attr:`~pymeasure.instruments.rigol.rigol_mso5000.LogicAnalyzerSubsystem.time_calibration`
+property is read-only because changing it alters calibration state.
 
 Waveform transfer
 =================
@@ -145,6 +169,27 @@ API reference
     :show-inheritance:
 
 .. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.SearchSubsystem
+    :members:
+    :show-inheritance:
+
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.DigitalChannel
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.LogicPod
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.LogicAnalyzerSubsystem
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.BusChannel
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.TriggerSubsystem
     :members:
     :show-inheritance:
 
