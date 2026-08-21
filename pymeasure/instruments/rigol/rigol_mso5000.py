@@ -1771,6 +1771,19 @@ class SearchSubsystem(Channel):
         return float(self.ask(f":SEAR:VAL? {event}"))
 
 
+class QuickSubsystem(Channel):
+    """Represent the configurable front-panel shortcut operation."""
+
+    operation = Channel.control(
+        ":QUIC:OPER?",
+        ":QUIC:OPER %s",
+        """Control the shortcut operation: SIM, SWAV, SSET, AME, or SRES.""",
+        validator=strict_discrete_set,
+        values=["SIM", "SWAV", "SSET", "AME", "SRES"],
+        cast=str,
+    )
+
+
 class DigitalChannel(Channel):
     """Represent one MSO5000 digital input channel."""
 
@@ -3072,6 +3085,7 @@ class MSO5000(RigolOscilloscope):
     recording = Instrument.ChannelCreator(RecordingSubsystem)
     references = Instrument.ChannelCreator(ReferenceSubsystem)
     search = Instrument.ChannelCreator(SearchSubsystem)
+    quick = Instrument.ChannelCreator(QuickSubsystem)
     logic_analyzer = Instrument.ChannelCreator(LogicAnalyzerSubsystem)
     digital_channels = Instrument.MultiChannelCreator(DigitalChannel, list(range(16)), prefix="d_")
     pod_1 = Instrument.ChannelCreator(LogicPod, 1)

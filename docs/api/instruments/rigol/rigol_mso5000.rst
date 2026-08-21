@@ -173,6 +173,10 @@ API reference
     :show-inheritance:
 
 
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.QuickSubsystem
+    :members:
+    :show-inheritance:
+
 .. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.DigitalChannel
     :members:
     :show-inheritance:
