@@ -29,10 +29,15 @@ from enum import IntFlag
 import numpy as np
 
 from pymeasure.instruments import Channel, Instrument
-from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range,
+)
+
+from .rigol_oscilloscope import (
+    RigolOscilloscope,
+    RigolOscilloscopeChannel,
+    _parse_ieee_block,
 )
 
 log = logging.getLogger(__name__)
@@ -65,91 +70,12 @@ class StatusByte(IntFlag):
     OSR = 128          # Bit 7: Operation Status Register
 
 
-class DHOBaseChannel(Channel):
+class DHOBaseChannel(RigolOscilloscopeChannel):
     """A single analog input channel of the Rigol DHO series."""
 
-    PROBE_ATTENUATIONS = [
-        0.001, 0.002, 0.005,
-        0.01, 0.02, 0.05,
-        0.1, 0.2, 0.5,
-        1, 2, 5, 10, 15, 20, 50,
-        100, 150, 200, 500,
-        1000, 1500, 2000, 5000,
-        10000, 15000, 20000, 50000,
-        ]
-
-    display_enabled = Channel.control(
-        ":CHAN{ch}:DISP?",
-        ":CHAN{ch}:DISP %d",
-        """Control whether the channel is displayed (bool).""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
-
-    coupling = Channel.control(
-        ":CHAN{ch}:COUP?",
-        ":CHAN{ch}:COUP %s",
-        """Control the input coupling: ``"AC"``, ``"DC"``, or ``"GND"``.""",
-        validator=strict_discrete_set,
-        values=["AC", "DC", "GND"],
-        cast=str,
-    )
-
-    bandwidth_limit = Channel.control(
-        ":CHAN{ch}:BWL?",
-        ":CHAN{ch}:BWL %s",
-        """Control the bandwidth limit: ``"OFF"``, ``"20M"``, or
-        ``"100M"``.""",
-        validator=strict_discrete_set,
-        values=["OFF", "20M", "100M"],
-    )
-
-    scale = Channel.control(
-        ":CHAN{ch}:SCAL?",
-        ":CHAN{ch}:SCAL %g",
-        """Control the vertical scale in V/div (float).
-
-        Valid range: 500 µV/div - 10 V/div for a 1x probe.
-        """,
-        validator=strict_range,
-        values=[500e-6, 10.0],
-    )
-
-    offset = Channel.control(
-        ":CHAN{ch}:OFFS?",
-        ":CHAN{ch}:OFFS %g",
-        """Control the vertical offset in Volts (float).""",
-    )
-
-    probe = Channel.control(
-        ":CHAN{ch}:PROB?",
-        ":CHAN{ch}:PROB %g",
-        f"""Control the probe attenuation ratio (float).
-
-        Valid values: {PROBE_ATTENUATIONS}
-        """,
-        validator=strict_discrete_set,
-        values=PROBE_ATTENUATIONS,
-    )
-
-    invert = Channel.control(
-        ":CHAN{ch}:INV?",
-        ":CHAN{ch}:INV %s",
-        """Control whether the channel waveform is inverted (bool).""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
-
-    units = Channel.control(
-        ":CHAN{ch}:UNIT?",
-        ":CHAN{ch}:UNIT %s",
-        """Control the unit of the vertical axis: ``"VOLT"``, ``"WATT"``,
-        ``"AMP"``, or ``"UNKN"``.""",
-        validator=strict_discrete_set,
-        values=["VOLT", "WATT", "AMP", "UNKN"],
-    )
+    bandwidth_limit_values = ["OFF", "ON", "20M", "250M"]
+    scale_validator = strict_range
+    scale_values = [100e-6, 10.0]
 
     label = Channel.control(
         ":CHAN{ch}:LAB:CONT?",
@@ -169,7 +95,7 @@ class DHOBaseChannel(Channel):
     )
 
 
-class DHOBase(SCPIMixin, Instrument):
+class DHOBase(RigolOscilloscope):
     """PyMeasure driver base class for the Rigol DHO series oscilloscopes."""
 
     name = "Rigol DHO"
@@ -178,6 +104,27 @@ class DHOBase(SCPIMixin, Instrument):
     ch_2 = Instrument.ChannelCreator(DHOBaseChannel, 2)
     ch_3 = Instrument.ChannelCreator(DHOBaseChannel, 3)
     ch_4 = Instrument.ChannelCreator(DHOBaseChannel, 4)
+
+    acquisition_memory_depth_values = [
+        "AUTO",
+        1_000,
+        10_000,
+        100_000,
+        1_000_000,
+        5_000_000,
+        10_000_000,
+        25_000_000,
+        50_000_000,
+        100_000_000,
+        125_000_000,
+        200_000_000,
+        250_000_000,
+        500_000_000,
+    ]
+    acquisition_type_values = ["NORM", "AVER", "PEAK", "HRES", "ULTR"]
+    timebase_scale_validator = strict_range
+    timebase_scale_values = [1e-9, 1000.0]
+    edge_trigger_source_values = ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "AC", "EXT"]
 
     def __init__(self, adapter, name="Rigol DHO", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -208,202 +155,32 @@ class DHOBase(SCPIMixin, Instrument):
         cast=lambda v: EventStatusByte(int(v))
     )
 
-    # ================================================================== #
-    #  ACQUISITION                                                        #
-    # ================================================================== #
+    @property
+    def trigger_source(self):
+        """Control the Edge-trigger source as an alias for :attr:`edge_trigger_source`."""
+        return self.edge_trigger_source
 
-    acquisition_type = Instrument.control(
-        ":ACQ:TYPE?",
-        ":ACQ:TYPE %s",
-        """Control the acquisition mode:
-
-        * ``"NORM"``     - Normal (default)
-        * ``"AVER"``     - Average
-        * ``"PEAK"``     - Peak detect
-        * ``"ULTR"``     - UltraAcquire (DHO-series specific)
-        """,
-        validator=strict_discrete_set,
-        values=["NORM", "AVER", "PEAK", "ULTR"],
-    )
-
-    acquisition_averages = Instrument.control(
-        ":ACQ:AVER?",
-        ":ACQ:AVER %d",
-        """Control the number of averages (2 … 65536, powers of 2).""",
-        validator=strict_discrete_set,
-        values=[2**n for n in range(1, 17)],
-        cast=int,
-    )
-
-    acquisition_memory_depth = Instrument.control(
-        ":ACQ:MDEP?",
-        ":ACQ:MDEP %s",
-        """Control the memory depth per channel.
-
-        Accepted values: ``"AUTO"``, 1000, 10000, 100000, 1000000,
-        10000000, 25000000, 50000000, 100000000, 200000000.
-        """,
-        validator=strict_discrete_set,
-        values=[
-            "AUTO",
-            1_000,
-            10_000,
-            100_000,
-            1_000_000,
-            10_000_000,
-            25_000_000,
-            50_000_000,
-            100_000_000,
-            200_000_000,
-        ],
-    )
-
-    sample_rate = Instrument.measurement(
-        ":ACQ:SRAT?",
-        """Get the current sample rate in Sa/s (float).""",
-    )
-
-    # ================================================================== #
-    #  TIMEBASE                                                           #
-    # ================================================================== #
-
-    timebase_scale = Instrument.control(
-        ":TIM:MAIN:SCAL?",
-        ":TIM:MAIN:SCAL %g",
-        """Control the horizontal (timebase) scale in s/div (float).
-
-        Valid range: 1 ns/div - 1000 s/div.
-        """,
-        validator=strict_range,
-        values=[1e-9, 1000.0],
-    )
-
-    timebase_offset = Instrument.control(
-        ":TIM:MAIN:OFFS?",
-        ":TIM:MAIN:OFFS %g",
-        """Control the horizontal offset (trigger delay) in seconds
-        (float).""",
-    )
-
-    timebase_mode = Instrument.control(
-        ":TIM:MODE?",
-        ":TIM:MODE %s",
-        """Control the timebase mode: ``"MAIN"``, ``"XY"``, or ``"ROLL"``.""",
-        validator=strict_discrete_set,
-        values=["MAIN", "XY", "ROLL"],
-    )
-
-    # ================================================================== #
-    #  TRIGGER                                                            #
-    # ================================================================== #
-
-    trigger_mode = Instrument.control(
-        ":TRIG:MODE?",
-        ":TRIG:MODE %s",
-        """Control the trigger mode: ``"EDGE"``, ``"PULS"``, ``"RUNT"``,
-        ``"WIND"``, ``"NEDG"``, ``"SLOP"``, ``"VID"``, ``"PATT"``,
-        ``"DEL"``, ``"TIM"``, ``"DUR"``, ``"SHOL"``,
-        ``"RS232"``, ``"IIC"``, ``"SPI"``, ``"CAN"``, ``"LIN"``.""",
-        validator=strict_discrete_set,
-        values=[
-            "EDGE",
-            "PULS",
-            "RUNT",
-            "WIND",
-            "NEDG",
-            "SLOP",
-            "VID",
-            "PATT",
-            "DEL",
-            "TIM",
-            "DUR",
-            "SHOL",
-            "RS232",
-            "IIC",
-            "SPI",
-            "CAN",
-            "LIN",
-        ],
-    )
-
-    trigger_sweep = Instrument.control(
-        ":TRIG:SWE?",
-        ":TRIG:SWE %s",
-        """Control the trigger sweep mode: ``"AUTO"``, ``"NORM"``,
-        or ``"SING"``.""",
-        validator=strict_discrete_set,
-        values=["AUTO", "NORM", "SING"],
-        cast=str,
-    )
-
-    trigger_source = Instrument.control(
-        ":TRIG:EDGE:SOUR?",
-        ":TRIG:EDGE:SOUR %s",
-        """Control the edge trigger source channel: ``"CHAN1"`` … ``"CHAN4"``,
-        ``"AC"``, or ``"EXT"``.""",
-        validator=strict_discrete_set,
-        values=(["CHAN1", "CHAN2", "CHAN3", "CHAN4", "AC", "EXT"]),
-    )
-
-    trigger_slope = Instrument.control(
-        ":TRIG:EDGE:SLOP?",
-        ":TRIG:EDGE:SLOP %s",
-        """Control the edge trigger slope: ``"POS"`` (rising), ``"NEG"``
-        (falling), or ``"RFAL"`` (either).""",
-        validator=strict_discrete_set,
-        values=["POS", "NEG", "RFAL"],
-        cast=str,
-    )
-
-    trigger_level = Instrument.control(
-        ":TRIG:EDGE:LEV?",
-        ":TRIG:EDGE:LEV %g",
-        """Control the trigger level in Volts (float).""",
-    )
-
-    trigger_coupling = Instrument.control(
-        ":TRIG:COUP?",
-        ":TRIG:COUP %s",
-        """Control the trigger coupling: ``"AC"``, ``"DC"``, ``"LFR"``,
-        or ``"HFR"``.""",
-        validator=strict_discrete_set,
-        values=["AC", "DC", "LFR", "HFR"],
-    )
-
-    trigger_holdoff = Instrument.control(
-        ":TRIG:HOLD?",
-        ":TRIG:HOLD %g",
-        """Control the trigger holdoff time in seconds (float).""",
-    )
+    @trigger_source.setter
+    def trigger_source(self, value):
+        self.edge_trigger_source = value
 
     @property
-    def trigger_status(self):
-        """Get the current trigger status string.
+    def trigger_slope(self):
+        """Control the Edge-trigger slope as an alias for :attr:`edge_trigger_slope`."""
+        return self.edge_trigger_slope
 
-        Possible values: ``"TD"``, ``"WAIT"``, ``"RUN"``, ``"AUTO"``,
-        ``"STOP"``.
-        """
-        return self.ask(":TRIG:STAT?").strip()
+    @trigger_slope.setter
+    def trigger_slope(self, value):
+        self.edge_trigger_slope = value
 
-    # ================================================================== #
-    #  RUN CONTROL                                                        #
-    # ================================================================== #
+    @property
+    def trigger_level(self):
+        """Control the Edge-trigger level as an alias for :attr:`edge_trigger_level`."""
+        return self.edge_trigger_level
 
-    def run(self):
-        """Start continuous acquisition."""
-        self.write(":RUN")
-
-    def stop(self):
-        """Stop acquisition."""
-        self.write(":STOP")
-
-    def single(self):
-        """Trigger a single acquisition."""
-        self.write(":SING")
-
-    def force_trigger(self):
-        """Force a trigger event."""
-        self.write(":TFOR")
+    @trigger_level.setter
+    def trigger_level(self, value):
+        self.edge_trigger_level = value
 
     def autoset(self):
         """Execute AUTOSET to automatically configure timebase, channels, and
@@ -484,42 +261,21 @@ class DHOBase(SCPIMixin, Instrument):
         self.write(f":WAV:SOUR CHAN{channel}")
 
     def get_waveform_preamble(self, channel=1):
-        """Get the waveform preamble for *channel* as a dict.
-
-        The preamble encodes scaling information needed to convert raw
-        samples to physical units.
-
-        :param channel: Channel number 1-4.
-        :returns: dict with keys ``format``, ``type``, ``points``,
-            ``count``, ``xincrement``, ``xorigin``, ``xreference``,
-            ``yincrement``, ``yorigin``, ``yreference``.
-        """
+        """Get the waveform preamble for *channel* as a dict."""
         self._set_waveform_source(channel)
-        raw = self.ask(":WAV:PRE?").strip()
-        parts = raw.split(",")
-        keys = [
-            "format",
-            "type",
-            "points",
-            "count",
-            "xincrement",
-            "xorigin",
-            "xreference",
-            "yincrement",
-            "yorigin",
-            "yreference",
-        ]
-        preamble = {}
-        for key, val in zip(keys, parts):
-            try:
-                preamble[key] = float(val)
-            except ValueError:
-                preamble[key] = val
-        preamble["points"] = int(preamble["points"])
-        preamble["count"] = int(preamble["count"])
-        preamble["xreference"] = int(preamble["xreference"])
-        preamble["yreference"] = int(preamble["yreference"])
-        return preamble
+        preamble = self._query_waveform_preamble()
+        return {
+            "format": float(preamble["format"]),
+            "type": float(preamble["type"]),
+            "points": preamble["points"],
+            "count": preamble["count"],
+            "xincrement": preamble["x_increment"],
+            "xorigin": preamble["x_origin"],
+            "xreference": int(preamble["x_reference"]),
+            "yincrement": preamble["y_increment"],
+            "yorigin": float(preamble["y_origin"]),
+            "yreference": preamble["y_reference"],
+        }
 
     def get_waveform(self, channel=1, mode="NORM", fmt="BYTE"):
         """Download a waveform from the oscilloscope.
@@ -580,22 +336,14 @@ class DHOBase(SCPIMixin, Instrument):
                     self.write(f":WAV:STAR {start}")
                     self.write(f":WAV:STOP {stop}")
                     self.write(":WAV:DATA?")
-                    header = self.read_bytes(2)
-                    n_digits = int(chr(header[1]))
-                    n_data_bytes = int(self.read_bytes(n_digits))
-                    raw = self.read_bytes(n_data_bytes)
-                    self.read_bytes(1)  # trailing terminator
+                    raw = self._read_ieee_block("Waveform response")
                     all_samples.append(
                         np.frombuffer(raw, dtype=np.dtype(f"<{dtype}")))
             else:
                 self.write(":WAV:STAR 1")
                 self.write(f":WAV:STOP {min(n_total, chunk_size)}")
                 self.write(":WAV:DATA?")
-                header = self.read_bytes(2)
-                n_digits = int(chr(header[1]))
-                n_data_bytes = int(self.read_bytes(n_digits))
-                raw = self.read_bytes(n_data_bytes)
-                self.read_bytes(1)  # trailing terminator
+                raw = self._read_ieee_block("Waveform response")
                 all_samples.append(
                     np.frombuffer(raw, dtype=np.dtype(f"<{dtype}")))
 
@@ -633,8 +381,7 @@ class DHOBase(SCPIMixin, Instrument):
 
         # ASCII response may start with a '#' block header or plain CSV
         if raw.startswith("#"):
-            n_digits = int(raw[1])
-            raw = raw[2 + n_digits:]
+            raw = _parse_ieee_block(raw.encode(), "ASCII waveform response").decode()
 
         voltage = np.array([float(v) for v in raw.split(",") if v])
         t = np.arange(len(voltage)) * pre["xincrement"] + pre["xorigin"]
