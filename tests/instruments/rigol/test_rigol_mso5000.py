@@ -1481,8 +1481,8 @@ def test_measurement_statistic_display(value, raw):
         MSO5000,
         [(f":MEAS:STAT:DISP {raw}", None), (":MEAS:STAT:DISP?", raw)],
     ) as instrument:
-        instrument.measurements.statistic_display = value
-        assert instrument.measurements.statistic_display is value
+        instrument.measurements.statistics_display_enabled = value
+        assert instrument.measurements.statistics_display_enabled is value
 
 
 @pytest.mark.parametrize(
@@ -1595,7 +1595,7 @@ def test_measure_compatibility_method():
 @pytest.mark.parametrize(
     "name, command, value, wire, reply",
     [
-        ("measure_indicator", "MEAS:IND", True, "1", "1"),
+        ("measurement_indicator_enabled", "MEAS:IND", True, "1", "1"),
         ("mode", "MODE", "TRAC", "TRAC", "TRAC"),
         ("manual_type", "MAN:TYPE", "TIME", "TIME", "TIME"),
         ("manual_source", "MAN:SOUR", "MATH3", "MATH3", "MATH3"),
@@ -1676,8 +1676,8 @@ def test_cursor_measurements(name, command, reply, expected):
         ("waveform_brightness", "WBR", 75, "75", "75"),
         ("grid", "GRID", "HALF", "HALF", "HALF"),
         ("grid_brightness", "GBR", 45, "45", "45"),
-        ("rulers", "RUL", True, "1", "1"),
-        ("color", "COL", False, "0", "0"),
+        ("rulers_enabled", "RUL", True, "1", "1"),
+        ("color_grading_enabled", "COL", False, "0", "0"),
     ],
 )
 def test_display_controls(name, command, value, wire, reply):
@@ -1697,11 +1697,11 @@ def test_display_clear():
 @pytest.mark.parametrize(
     "name, command, value, wire, reply",
     [
-        ("display", "DISP", True, "1", "1"),
+        ("enabled", "DISP", True, "1", "1"),
         ("type", "TYPE", "VERT", "VERT", "VERT"),
         ("source", "SOUR", "CHAN3", "CHAN3", "CHAN3"),
         ("size", "SIZE", 3, "3", "3"),
-        ("static", "STAT", True, "1", "1"),
+        ("statistics_enabled", "STAT", True, "1", "1"),
         ("bottom_limit", "BLIM", -1.25, "-1.25", "-1.25E+0"),
         ("left_limit", "LLIM", -2e-6, "-2e-06", "-2E-6"),
         ("right_limit", "RLIM", 2e-6, "2e-06", "2E-6"),
@@ -1728,7 +1728,7 @@ def test_histogram_reset():
         ("enabled", "ENAB", True, "1", "1"),
         ("source", "SOUR", "CHAN2", "CHAN2", "CHAN2"),
         ("operate", "OPER", "STOP", "STOP", "STOP"),
-        ("measurement_display", "MDIS", False, "0", "0"),
+        ("statistics_display_enabled", "MDIS", False, "0", "0"),
         ("x", "X", 0.2, "0.2", "2E-1"),
         ("y", "Y", 0.4, "0.4", "4E-1"),
     ],
@@ -1765,8 +1765,8 @@ def test_mask_actions():
     "name, command, value, wire, reply",
     [
         ("enabled", "ENAB", True, "1", "1"),
-        ("start", "STAR", False, "0", "0"),
-        ("play", "PLAY", True, "1", "1"),
+        ("recording_running", "STAR", False, "0", "0"),
+        ("playback_running", "PLAY", True, "1", "1"),
         ("current", "CURR", 7, "7", "7"),
         ("frames", "FRAM", 100, "100", "100"),
     ],
@@ -1790,8 +1790,8 @@ def test_reference_global_controls():
             (":REF:LAB:ENAB?", "0"),
         ],
     ) as instrument:
-        instrument.references.display = True
-        assert instrument.references.display is True
+        instrument.references.display_enabled = True
+        assert instrument.references.display_enabled is True
         instrument.references.label_enabled = False
         assert instrument.references.label_enabled is False
 
@@ -1831,13 +1831,13 @@ def test_reference_slot_controls():
 @pytest.mark.parametrize(
     "name, command, value, wire, reply",
     [
-        ("display", "DISP", True, "1", "1"),
+        ("display_enabled", "DISP", True, "1", "1"),
         ("operator", "OPER", "FFT", "FFT", "FFT"),
         ("source1", "SOUR1", "REF2", "REF2", "REF2"),
         ("source2", "SOUR2", "CHAN4", "CHAN4", "CHAN4"),
         ("left_source_1", "LSOU1", "D7", "D7", "D7"),
         ("left_source_2", "LSOU2", "CHAN2", "CHAN2", "CHAN2"),
-        ("invert", "INV", False, "0", "0"),
+        ("inverted", "INV", False, "0", "0"),
         ("fft_source", "FFT:SOUR", "CHAN3", "CHAN3", "CHAN3"),
         ("fft_window", "FFT:WIND", "FLAT", "FLAT", "FLAT"),
         ("fft_unit", "FFT:UNIT", "DB", "DB", "DB"),
@@ -1907,7 +1907,7 @@ def test_math_reset_and_channel_ids():
 @pytest.mark.parametrize(
     "name, command, value, wire, reply",
     [
-        ("state", "STAT", True, "1", "1"),
+        ("enabled", "STAT", True, "1", "1"),
         ("mode", "MODE", "RUNT", "RUNT", "RUNT"),
         ("event", "EVEN", 2, "2", "2"),
         ("edge_slope", "EDGE:SLOP", "EITH", "EITH", "EITH"),
@@ -1993,7 +1993,7 @@ def test_advanced_scope_controls_reject_invalid_values():
 @pytest.mark.parametrize(
     "name, command, value, reply",
     [
-        ("state", "STAT", True, "1"),
+        ("enabled", "STAT", True, "1"),
         ("active_channel", "ACT", "D7", "D7"),
         ("size", "SIZE", "MED", "MED"),
     ],
@@ -2020,10 +2020,10 @@ def test_logic_analyzer_setting_measurement_and_actions():
             (":LA:GRO:APP GRO1,D0,D7,D15", None),
         ],
     ) as instrument:
-        instrument.logic_analyzer.auto_sort = True
+        instrument.logic_analyzer.auto_sort_enabled = True
         assert instrument.logic_analyzer.time_calibration == pytest.approx(2.5e-9)
         instrument.logic_analyzer.set_display("GRO2", True)
-        assert instrument.logic_analyzer.display("GRO2") is True
+        assert instrument.logic_analyzer.is_displayed("GRO2") is True
         instrument.logic_analyzer.delete_group("GRO3")
         instrument.logic_analyzer.append_group("GRO1", "D0", "D7", "D15")
 
@@ -2040,8 +2040,8 @@ def test_digital_channel_controls_and_channel_ids():
             (":LA:DIG:LAB? D7", "clock"),
         ],
     ) as instrument:
-        instrument.d_7.display = True
-        assert instrument.d_7.display is True
+        instrument.d_7.display_enabled = True
+        assert instrument.d_7.display_enabled is True
         instrument.d_7.position = 12
         assert instrument.d_7.position == 12
         instrument.d_7.label = "clock"
@@ -2059,8 +2059,8 @@ def test_logic_pod_controls_and_channel_ids():
             (":LA:POD2:THR?", "1.4E+0"),
         ],
     ) as instrument:
-        instrument.pod_2.display = True
-        assert instrument.pod_2.display is True
+        instrument.pod_2.display_enabled = True
+        assert instrument.pod_2.display_enabled is True
         instrument.pod_2.threshold = 1.4
         assert instrument.pod_2.threshold == pytest.approx(1.4)
 
@@ -2069,12 +2069,12 @@ def test_logic_pod_controls_and_channel_ids():
     "catalog_id, name, command, value, reply",
     [
         ("BUSN.MODE", "mode", "MODE", "PAR", "PAR"),
-        ("BUSN.DISPLAY", "display", "DISP", True, "1"),
+        ("BUSN.DISPLAY", "display_enabled", "DISP", True, "1"),
         ("BUSN.FORMAT", "format", "FORM", "HEX", "HEX"),
-        ("BUSN.EVENT", "event", "EVEN", True, "1"),
+        ("BUSN.EVENT", "event_table_enabled", "EVEN", True, "1"),
         ("BUSN.EVENT.FORMAT", "event_format", "EVEN:FORM", "ASC", "ASC"),
         ("BUSN.EVENT.VIEW", "event_view", "EVEN:VIEW", "DET", "DET"),
-        ("BUSN.LABEL", "label", "LAB", False, "0"),
+        ("BUSN.LABEL", "label_enabled", "LAB", False, "0"),
         ("BUSN.POSITION", "position", "POS", 25, "25"),
         ("BUSN.PARALLEL.BUS", "parallel_bus", "PAR:BUS", "D7D0", "D7D0"),
         ("BUSN.PARALLEL.CLK", "parallel_clk", "PAR:CLK", "CHAN2", "CHAN2"),
@@ -2083,7 +2083,7 @@ def test_logic_pod_controls_and_channel_ids():
         ("BUSN.PARALLEL.BITX", "parallel_bitx", "PAR:BITX", 3, "3"),
         ("BUSN.PARALLEL.SOURCE", "parallel_source", "PAR:SOUR", "D7", "D7"),
         ("BUSN.PARALLEL.POLARITY", "parallel_polarity", "PAR:POL", "NEG", "NEG"),
-        ("BUSN.PARALLEL.NREJECT", "parallel_noise_reject", "PAR:NREJ", True, "1"),
+        ("BUSN.PARALLEL.NREJECT", "parallel_noise_rejection_enabled", "PAR:NREJ", True, "1"),
         ("BUSN.PARALLEL.NRTIME", "parallel_noise_reject_time", "PAR:NRT", 1e-06, "1E-6"),
         ("BUSN.RS232.TX", "rs232_tx", "RS232:TX", "CHAN2", "CHAN2"),
         ("BUSN.RS232.RX", "rs232_rx", "RS232:RX", "OFF", "OFF"),
@@ -2093,7 +2093,7 @@ def test_logic_pod_controls_and_channel_ids():
         ("BUSN.RS232.DBITS", "rs232_data_bits", "RS232:DBIT", 8, "8"),
         ("BUSN.RS232.SBITS", "rs232_stop_bits", "RS232:SBIT", 1.5, "1.5"),
         ("BUSN.RS232.PARITY", "rs232_parity", "RS232:PAR", "EVEN", "EVEN"),
-        ("BUSN.RS232.PACKET", "rs232_packet", "RS232:PACK", True, "1"),
+        ("BUSN.RS232.PACKET", "rs232_packet_enabled", "RS232:PACK", True, "1"),
         ("BUSN.RS232.PEND", "rs232_pend", "RS232:PEND", "CR", "CR"),
         ("BUSN.IIC.SCLK.SOURCE", "iic_clock_source", "IIC:SCLK:SOUR", "CHAN1", "CHAN1"),
         ("BUSN.IIC.SDA.SOURCE", "iic_data_source", "IIC:SDA:SOUR", "CHAN2", "CHAN2"),
@@ -2301,7 +2301,7 @@ def test_quick_operation_rejects_invalid_value():
         ("start", "STAR", 10.0, "1E+1"),
         ("stop", "STOP", 1e6, "1E+6"),
         ("point", "POIN", 100, "100"),
-        ("voltage_profile", "VOLT:PROF", False, "0"),
+        ("voltage_profile_enabled", "VOLT:PROF", False, "0"),
     ],
 )
 def test_bode_plot_controls(name, command, value, reply):
@@ -2506,9 +2506,9 @@ def test_network_boolean_controls(name, command, value, reply):
 @pytest.mark.parametrize(
     "name, command, value",
     [
-        ("gateway", "GAT", "192.168.1.1"),
-        ("dns", "DNS", "192.168.1.1"),
-        ("ip_address", "IPAD", "192.168.1.207"),
+        ("gateway", "GAT", "192.0.2.254"),
+        ("dns", "DNS", "192.0.2.53"),
+        ("ip_address", "IPAD", "192.0.2.1"),
         ("subnet_mask", "SMAS", "255.255.255.0"),
         ("host_name", "HOST:NAME", "RIGOL_TEST"),
         ("description", "DESC", "LAB_SCOPE"),
@@ -2526,9 +2526,9 @@ def test_network_string_controls(name, command, value):
     "name, command, reply",
     [
         ("mac_address", "MAC", "00:19:AF:00:11:22"),
-        ("dhcp_server", "DSE", "192.168.1.1"),
+        ("dhcp_server", "DSE", "192.0.2.254"),
         ("status", "STAT", "CONFIGURED"),
-        ("visa_address", "VISA", "TCPIP::192.168.1.207::INSTR"),
+        ("visa_address", "VISA", "TCPIP::192.0.2.1::INSTR"),
     ],
 )
 def test_network_measurements(name, command, reply):
@@ -2566,3 +2566,20 @@ def test_integrated_functions_reject_invalid_values():
             instrument.awg_1.upload_waveform(b"\x00\x00")
         with pytest.raises(TypeError):
             instrument.awg_1.upload_waveform([0, 1])  # pyright: ignore[reportArgumentType]
+
+
+@pytest.mark.parametrize(
+    "method, args",
+    [
+        ("apply_pulse", (1_000_001,)),
+        ("apply_ramp", (100_001,)),
+        ("apply_sine", (25_000_001,)),
+        ("apply_square", (15_000_001,)),
+        ("apply_user", (10_000_001,)),
+        ("apply_sine", (0.09,)),
+        ("apply_sine", (1000, 0.5, 0, 361)),
+    ],
+)
+def test_awg_apply_rejects_out_of_range_frequency_and_phase(method, args):
+    with expected_protocol(MSO5000, []) as instrument, pytest.raises(ValueError):
+        getattr(instrument.awg_1, method)(*args)

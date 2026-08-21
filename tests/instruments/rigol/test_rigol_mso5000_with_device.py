@@ -203,7 +203,7 @@ def test_measurement_readback(scope):
     assert scope.measurements.setup_primary_source_b in sources
     assert scope.measurements.setup_digital_source_a in sources
     assert scope.measurements.setup_digital_source_b in sources
-    assert isinstance(scope.measurements.statistic_display, bool)
+    assert isinstance(scope.measurements.statistics_display_enabled, bool)
     assert scope.measurements.area in ["MAIN", "ZOOM", "CURS"]
     assert 0 <= scope.measurements.cregion_cursor_a_x <= 1000
     assert 0 <= scope.measurements.cregion_cursor_b_x <= 1000
@@ -457,7 +457,7 @@ def test_nth_edge_trigger_readback(scope):
 
 def test_cursor_readback(scope):
     cursor = scope.cursor
-    assert isinstance(cursor.measure_indicator, bool)
+    assert isinstance(cursor.measurement_indicator_enabled, bool)
     assert cursor.mode in ["OFF", "MAN", "TRAC", "XY", "MEAS"]
     assert cursor.manual_type in ["TIME", "AMPL"]
     # Remaining cursor queries require a matching active mode on this firmware.
@@ -469,16 +469,16 @@ def test_display_readback(scope):
     assert 1 <= scope.display.waveform_brightness <= 100
     assert scope.display.grid in ["FULL", "HALF", "NONE", "IRE"]
     assert 1 <= scope.display.grid_brightness <= 100
-    assert isinstance(scope.display.rulers, bool)
-    assert isinstance(scope.display.color, bool)
+    assert isinstance(scope.display.rulers_enabled, bool)
+    assert isinstance(scope.display.color_grading_enabled, bool)
 
 
 def test_histogram_readback(scope):
-    assert isinstance(scope.histogram.display, bool)
+    assert isinstance(scope.histogram.enabled, bool)
     assert scope.histogram.type in ["HOR", "VERT", "MEAS"]
     assert scope.histogram.source in ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "OFF"]
     assert 1 <= scope.histogram.size <= 4
-    assert isinstance(scope.histogram.static, bool)
+    assert isinstance(scope.histogram.statistics_enabled, bool)
     assert isinstance(scope.histogram.bottom_limit, float)
     assert isinstance(scope.histogram.left_limit, float)
     assert isinstance(scope.histogram.right_limit, float)
@@ -489,7 +489,7 @@ def test_mask_readback(scope):
     assert isinstance(scope.mask.enabled, bool)
     assert scope.mask.source in ["CHAN1", "CHAN2", "CHAN3", "CHAN4"]
     assert scope.mask.operate in ["RUN", "STOP"]
-    assert isinstance(scope.mask.measurement_display, bool)
+    assert isinstance(scope.mask.statistics_display_enabled, bool)
     assert 0.01 <= scope.mask.x <= 2
     assert 0.04 <= scope.mask.y <= 2
     assert scope.mask.passed >= 0
@@ -499,14 +499,14 @@ def test_mask_readback(scope):
 
 def test_recording_readback(scope):
     assert isinstance(scope.recording.enabled, bool)
-    assert isinstance(scope.recording.start, bool)
-    assert isinstance(scope.recording.play, bool)
+    assert isinstance(scope.recording.recording_running, bool)
+    assert isinstance(scope.recording.playback_running, bool)
     assert scope.recording.current >= 0
     assert scope.recording.frames >= 1
 
 
 def test_reference_readback(scope):
-    assert isinstance(scope.references.display, bool)
+    assert isinstance(scope.references.display_enabled, bool)
     assert isinstance(scope.references.label_enabled, bool)
     assert isinstance(scope.references.source(1), str)
     assert isinstance(scope.references.vertical_scale(1), float)
@@ -517,7 +517,7 @@ def test_reference_readback(scope):
 
 def test_math_readback(scope):
     math_channel = scope.math_1
-    assert isinstance(math_channel.display, bool)
+    assert isinstance(math_channel.display_enabled, bool)
     assert isinstance(math_channel.operator, str)
     assert isinstance(math_channel.source1, str)
     assert isinstance(math_channel.source2, str)
@@ -525,7 +525,7 @@ def test_math_readback(scope):
     assert isinstance(math_channel.left_source_2, str)
     assert isinstance(math_channel.scale, float)
     assert isinstance(math_channel.offset, float)
-    assert isinstance(math_channel.invert, bool)
+    assert isinstance(math_channel.inverted, bool)
     assert math_channel.fft_source in ["CHAN1", "CHAN2", "CHAN3", "CHAN4"]
     assert isinstance(math_channel.fft_window, str)
     assert math_channel.fft_unit in ["VRMS", "DB"]
@@ -545,7 +545,7 @@ def test_math_readback(scope):
 
 def test_search_readback(scope):
     assert scope.search.count >= 0
-    assert isinstance(scope.search.state, bool)
+    assert isinstance(scope.search.enabled, bool)
     assert isinstance(scope.search.mode, str)
     assert scope.search.event >= 0
     assert isinstance(scope.search.edge_slope, str)
@@ -577,15 +577,15 @@ def test_search_readback(scope):
 
 def test_logic_analyzer_readback(scope):
     """Read logic-analyzer configuration with a connected active logic probe."""
-    assert isinstance(scope.logic_analyzer.state, bool)
+    assert isinstance(scope.logic_analyzer.enabled, bool)
     assert scope.logic_analyzer.active_channel in [*[f"D{number}" for number in range(16)], "NONE"]
     assert scope.logic_analyzer.size in ["SMAL", "MED", "LARG"]
     assert isinstance(scope.logic_analyzer.time_calibration, float)
-    assert isinstance(scope.logic_analyzer.display("D0"), bool)
-    assert isinstance(scope.d_0.display, bool)
+    assert isinstance(scope.logic_analyzer.is_displayed("D0"), bool)
+    assert isinstance(scope.d_0.display_enabled, bool)
     assert 0 <= scope.d_0.position <= 31
     assert isinstance(scope.d_0.label, str)
-    assert isinstance(scope.pod_1.display, bool)
+    assert isinstance(scope.pod_1.display_enabled, bool)
     assert -15 <= scope.pod_1.threshold <= 15
 
 
@@ -593,12 +593,12 @@ def test_logic_analyzer_readback(scope):
     "name",
     [
         "mode",
-        "display",
+        "display_enabled",
         "format",
-        "event",
+        "event_table_enabled",
         "event_format",
         "event_view",
-        "label",
+        "label_enabled",
         "position",
         "parallel_bus",
         "parallel_clk",
@@ -607,7 +607,7 @@ def test_logic_analyzer_readback(scope):
         "parallel_bitx",
         "parallel_source",
         "parallel_polarity",
-        "parallel_noise_reject",
+        "parallel_noise_rejection_enabled",
         "parallel_noise_reject_time",
         "rs232_tx",
         "rs232_rx",
@@ -617,7 +617,7 @@ def test_logic_analyzer_readback(scope):
         "rs232_data_bits",
         "rs232_stop_bits",
         "rs232_parity",
-        "rs232_packet",
+        "rs232_packet_enabled",
         "rs232_pend",
         "iic_clock_source",
         "iic_data_source",

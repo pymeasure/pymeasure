@@ -4,9 +4,9 @@ Rigol MSO5000 Series Oscilloscopes
 
 The :class:`~pymeasure.instruments.rigol.MSO5000` driver supports the
 MSO5072, MSO5074, MSO5102, MSO5104, MSO5204, and MSO5354 models.
-It exposes analog and digital channels, acquisition, automatic measurement, timebase,
-advanced analysis, bus decoding, protocol triggers, waveform transfer, and selected system and
-storage functions.
+It exposes analog and digital channels, acquisition, automatic measurement, timebase, advanced
+analysis, bus decoding, protocol triggers, waveform transfer, network administration, and selected
+system and storage functions.
 
 Connection
 ==========
@@ -112,6 +112,46 @@ waveform-generator channels use :attr:`~pymeasure.instruments.rigol.MSO5000.awg_
 Generator and Bode-plot availability depends on the installed AWG option and suitable wiring.
 ``upload_waveform`` accepts raw DAC16 bytes so the driver does not impose an undocumented byte
 order.
+
+Network administration
+======================
+
+Use :attr:`~pymeasure.instruments.rigol.MSO5000.network` to inspect LAN configuration and status.
+Reading these properties does not change the instrument configuration.
+
+.. code-block:: python
+
+    network_status = {
+        "status": scope.network.status,
+        "ip_address": scope.network.ip_address,
+        "subnet_mask": scope.network.subnet_mask,
+        "gateway": scope.network.gateway,
+        "visa_address": scope.network.visa_address,
+    }
+
+Network controls support write followed by readback.
+For a reversible metadata test, restore and verify the original value even when an assertion fails:
+
+.. code-block:: python
+
+    original_description = scope.network.description
+    try:
+        scope.network.description = "PyMeasure test"
+        assert scope.network.description == "PyMeasure test"
+    finally:
+        scope.network.description = original_description
+        assert scope.network.description == original_description
+
+Address, gateway, DNS, DHCP, Auto IP, static-IP, mDNS, and host-name controls change pending network
+configuration.
+Call :meth:`~pymeasure.instruments.rigol.rigol_mso5000.NetworkSubsystem.apply` only when those
+changes are deliberately ready to be activated.
+
+.. warning::
+
+    Applying pending network settings can persist configuration changes and immediately interrupt
+    the active connection.
+    Ensure that recovery access is available before calling ``scope.network.apply()``.
 
 Waveform transfer
 =================
@@ -227,6 +267,10 @@ API reference
     :show-inheritance:
 
 .. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.BusChannel
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rigol.rigol_mso5000.NetworkSubsystem
     :members:
     :show-inheritance:
 

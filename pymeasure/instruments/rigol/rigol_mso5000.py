@@ -447,7 +447,7 @@ class MeasurementSubsystem(Channel):
         cast=str,
     )
 
-    statistic_display = Channel.control(
+    statistics_display_enabled = Channel.control(
         ":MEAS:STAT:DISP?",
         ":MEAS:STAT:DISP %d",
         """Control whether measurement statistics are displayed (bool).""",
@@ -513,7 +513,10 @@ class MeasurementSubsystem(Channel):
             return float("nan")
 
     def clear(self, item: str = "ALL") -> None:
-        """Clear a displayed measurement item, from ``"ITEM1"`` to ``"ITEM10"``, or all."""
+        """Clear a displayed measurement item, from ``"ITEM1"`` to ``"ITEM10"``, or all.
+
+        :param item: Measurement display slot to clear, or ``"ALL"``.
+        """
         item = strict_discrete_set(item, [*[f"ITEM{number}" for number in range(1, 11)], "ALL"])
         self.write(f":MEAS:CLE {item}")
 
@@ -528,18 +531,33 @@ class MeasurementSubsystem(Channel):
     def enable_item(
         self, item: str, source_a: str | None = None, source_b: str | None = None
     ) -> None:
-        """Enable a measurement item for one or two optional sources."""
+        """Enable a measurement item for one or two optional sources.
+
+        :param item: Documented automatic-measurement item.
+        :param source_a: Optional first waveform source.
+        :param source_b: Optional second waveform source for dual-source measurements.
+        """
         self.write(f":MEAS:ITEM {self._item_arguments(item, source_a, source_b)}")
 
     def item(self, item: str, source_a: str | None = None, source_b: str | None = None) -> float:
-        """Return the current value of a measurement item for optional sources."""
+        """Return the current value of a measurement item for optional sources.
+
+        :param item: Documented automatic-measurement item.
+        :param source_a: Optional first waveform source.
+        :param source_b: Optional second waveform source for dual-source measurements.
+        """
         arguments = self._item_arguments(item, source_a, source_b)
         return self._parse_result(self.ask(f":MEAS:ITEM? {arguments}"))
 
     def enable_statistic_item(
         self, item: str, source_a: str | None = None, source_b: str | None = None
     ) -> None:
-        """Enable statistics for a measurement item and optional sources."""
+        """Enable statistics for a measurement item and optional sources.
+
+        :param item: Documented automatic-measurement item.
+        :param source_a: Optional first waveform source.
+        :param source_b: Optional second waveform source for dual-source measurements.
+        """
         self.write(f":MEAS:STAT:ITEM {self._item_arguments(item, source_a, source_b)}")
 
     def statistic_item(
@@ -549,7 +567,13 @@ class MeasurementSubsystem(Channel):
         source_a: str | None = None,
         source_b: str | None = None,
     ) -> float:
-        """Return one statistic for a measurement item and optional sources."""
+        """Return one statistic for a measurement item and optional sources.
+
+        :param statistic_type: Statistic type such as ``"CURR"``, ``"MAX"``, or ``"DEV"``.
+        :param item: Documented automatic-measurement item.
+        :param source_a: Optional first waveform source.
+        :param source_b: Optional second waveform source for dual-source measurements.
+        """
         statistic_type = _validate_scpi_keyword(
             statistic_type, MEASUREMENT_STATISTIC_TYPES, "Statistic type"
         )
@@ -560,7 +584,7 @@ class MeasurementSubsystem(Channel):
 class CursorSubsystem(Channel):
     """Represent cursor configuration and cursor measurement results."""
 
-    measure_indicator = Channel.control(
+    measurement_indicator_enabled = Channel.control(
         ":CURS:MEAS:IND?",
         ":CURS:MEAS:IND %d",
         """Control whether the automatic-measurement cursor is displayed (bool).""",
@@ -892,7 +916,7 @@ class DisplaySubsystem(Channel):
         cast=int,
     )
 
-    rulers = Channel.control(
+    rulers_enabled = Channel.control(
         ":DISP:RUL?",
         ":DISP:RUL %d",
         """Control whether rulers are displayed (bool).""",
@@ -902,7 +926,7 @@ class DisplaySubsystem(Channel):
         cast=int,
     )
 
-    color = Channel.control(
+    color_grading_enabled = Channel.control(
         ":DISP:COL?",
         ":DISP:COL %d",
         """Control whether color grading is displayed (bool).""",
@@ -920,7 +944,7 @@ class DisplaySubsystem(Channel):
 class HistogramSubsystem(Channel):
     """Represent waveform histogram configuration and boundaries."""
 
-    display = Channel.control(
+    enabled = Channel.control(
         ":HIST:DISP?",
         ":HIST:DISP %d",
         """Control whether the histogram function is enabled (bool).""",
@@ -957,7 +981,7 @@ class HistogramSubsystem(Channel):
         cast=int,
     )
 
-    static = Channel.control(
+    statistics_enabled = Channel.control(
         ":HIST:STAT?",
         ":HIST:STAT %d",
         """Control whether histogram statistics are enabled (bool).""",
@@ -1031,7 +1055,7 @@ class MaskSubsystem(Channel):
         cast=str,
     )
 
-    measurement_display = Channel.control(
+    statistics_display_enabled = Channel.control(
         ":MASK:MDIS?",
         ":MASK:MDIS %d",
         """Control whether mask-test statistics are displayed (bool).""",
@@ -1099,7 +1123,7 @@ class RecordingSubsystem(Channel):
         cast=int,
     )
 
-    start = Channel.control(
+    recording_running = Channel.control(
         ":REC:STAR?",
         ":REC:STAR %d",
         """Control whether waveform recording is running (bool).""",
@@ -1109,7 +1133,7 @@ class RecordingSubsystem(Channel):
         cast=int,
     )
 
-    play = Channel.control(
+    playback_running = Channel.control(
         ":REC:PLAY?",
         ":REC:PLAY %d",
         """Control whether waveform playback is running (bool).""",
@@ -1141,7 +1165,7 @@ class RecordingSubsystem(Channel):
 class ReferenceSubsystem(Channel):
     """Represent global and per-slot reference-waveform configuration."""
 
-    display = Channel.control(
+    display_enabled = Channel.control(
         ":REF:DISP?",
         ":REF:DISP %d",
         """Control whether the reference-waveform function is displayed (bool).""",
@@ -1166,66 +1190,107 @@ class ReferenceSubsystem(Channel):
         return strict_range(reference, [1, 10])
 
     def set_source(self, reference: int, source: str) -> None:
-        """Set the source of reference slot 1 to 10."""
+        """Set the source of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        :param source: Waveform source to copy into the reference slot.
+        """
         reference = self._reference(reference)
         source = strict_discrete_set(source, REFERENCE_SOURCES)
         self.write(f":REF:SOUR {reference},{source}")
 
     def source(self, reference: int) -> str:
-        """Return the source of reference slot 1 to 10."""
+        """Return the source of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        """
         reference = self._reference(reference)
         return self.ask(f":REF:SOUR? {reference}").strip()
 
     def set_vertical_scale(self, reference: int, scale: float) -> None:
-        """Set the vertical scale of reference slot 1 to 10."""
+        """Set the vertical scale of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        :param scale: Vertical scale in the selected source unit per division.
+        """
         reference = self._reference(reference)
         self.write(f":REF:VSC {reference},{scale:g}")
 
     def vertical_scale(self, reference: int) -> float:
-        """Return the vertical scale of reference slot 1 to 10."""
+        """Return the vertical scale of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        """
         reference = self._reference(reference)
         return float(self.ask(f":REF:VSC? {reference}"))
 
     def set_vertical_offset(self, reference: int, offset: float) -> None:
-        """Set the vertical offset of reference slot 1 to 10."""
+        """Set the vertical offset of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        :param offset: Vertical offset in the selected source unit.
+        """
         reference = self._reference(reference)
         self.write(f":REF:VOFF {reference},{offset:g}")
 
     def vertical_offset(self, reference: int) -> float:
-        """Return the vertical offset of reference slot 1 to 10."""
+        """Return the vertical offset of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        """
         reference = self._reference(reference)
         return float(self.ask(f":REF:VOFF? {reference}"))
 
     def reset(self, reference: int) -> None:
-        """Reset vertical scale and offset for reference slot 1 to 10."""
+        """Reset vertical scale and offset for reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        """
         reference = self._reference(reference)
         self.write(f":REF:RES {reference}")
 
     def select_current(self, reference: int) -> None:
-        """Select the current reference slot from 1 to 10."""
+        """Select the current reference slot from 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        """
         reference = self._reference(reference)
         self.write(f":REF:CURR {reference}")
 
     def set_color(self, reference: int, color: str) -> None:
-        """Set the display color of reference slot 1 to 10."""
+        """Set the display color of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        :param color: Display color: ``"GRAY"``, ``"GRE"``, ``"BLUE"``, ``"RED"``, or ``"ORAN"``.
+        """
         reference = self._reference(reference)
         color = strict_discrete_set(color, ["GRAY", "GRE", "BLUE", "RED", "ORAN"])
         self.write(f":REF:COL {reference},{color}")
 
     def color(self, reference: int) -> str:
-        """Return the display color of reference slot 1 to 10."""
+        """Return the display color of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        """
         reference = self._reference(reference)
         return self.ask(f":REF:COL? {reference}").strip()
 
     def set_label_content(self, reference: int, content: str) -> None:
-        """Set the label content of reference slot 1 to 10."""
+        """Set the label content of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        :param content: Label text sent to the instrument.
+        """
         reference = self._reference(reference)
         if not isinstance(content, str):
             raise TypeError("Reference label content must be a string.")
         self.write(f":REF:LAB:CONT {reference},{content}")
 
     def label_content(self, reference: int) -> str:
-        """Return the label content of reference slot 1 to 10."""
+        """Return the label content of reference slot 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        """
         reference = self._reference(reference)
         return self.ask(f":REF:LAB:CONT? {reference}").strip()
 
@@ -1233,7 +1298,7 @@ class ReferenceSubsystem(Channel):
 class MathChannel(Channel):
     """Represent one of the four math waveform channels."""
 
-    display = Channel.control(
+    display_enabled = Channel.control(
         ":MATH{ch}:DISP?",
         ":MATH{ch}:DISP %d",
         """Control whether this math waveform is displayed (bool).""",
@@ -1326,7 +1391,7 @@ class MathChannel(Channel):
         cast=float,
     )
 
-    invert = Channel.control(
+    inverted = Channel.control(
         ":MATH{ch}:INV?",
         ":MATH{ch}:INV %d",
         """Control whether non-FFT math results are displayed inverted (bool).""",
@@ -1542,7 +1607,7 @@ class SearchSubsystem(Channel):
         cast=int,
     )
 
-    state = Channel.control(
+    enabled = Channel.control(
         ":SEAR:STAT?",
         ":SEAR:STAT %d",
         """Control whether waveform search is enabled (bool).""",
@@ -1766,7 +1831,10 @@ class SearchSubsystem(Channel):
     )
 
     def value(self, event: int) -> float:
-        """Return the time in seconds corresponding to search event 0 to 1000."""
+        """Return the time in seconds corresponding to search event 0 to 1000.
+
+        :param event: Search-event index from 0 to 1000.
+        """
         event = strict_range(event, [0, 1000])
         return float(self.ask(f":SEAR:VAL? {event}"))
 
@@ -1865,7 +1933,7 @@ class BodePlotSubsystem(Channel):
         cast=int,
     )
 
-    voltage_profile = Channel.control(
+    voltage_profile_enabled = Channel.control(
         ":BODE:VOLT:PROF?",
         ":BODE:VOLT:PROF %d",
         """Control the voltage profile state (bool).""",
@@ -1899,12 +1967,19 @@ class BodePlotSubsystem(Channel):
     ]
 
     def set_voltage(self, frequency_range: str, amplitude: float) -> None:
-        """Set sweep amplitude in Volts for one documented frequency range."""
+        """Set sweep amplitude in Volts for one documented frequency range.
+
+        :param frequency_range: Frequency-range selector such as ``"ALL"`` or ``"F1KHZ"``.
+        :param amplitude: Sweep amplitude in Volts.
+        """
         frequency_range = strict_discrete_set(frequency_range, self.voltage_ranges)
         self.write(f":BODE:VOLT {amplitude:g},{frequency_range}")
 
     def voltage(self, frequency_range: str) -> float:
-        """Return sweep amplitude in Volts for one documented frequency range."""
+        """Return sweep amplitude in Volts for one documented frequency range.
+
+        :param frequency_range: Frequency-range selector such as ``"ALL"`` or ``"F1KHZ"``.
+        """
         frequency_range = strict_discrete_set(frequency_range, self.voltage_ranges)
         return float(self.ask(f":BODE:VOLT? {frequency_range}"))
 
@@ -2086,7 +2161,10 @@ class AWGChannel(Channel):
     frequency_fixed = Channel.control(
         ":SOUR{ch}:FREQ?",
         ":SOUR{ch}:FREQ %g",
-        """Control the output frequency in Hertz (float).""",
+        """Control the output frequency in Hertz (float).
+
+        The valid range depends on :attr:`function_shape`.
+        """,
         cast=float,
     )
 
@@ -2318,32 +2396,116 @@ class AWGChannel(Channel):
         suffix = f" {arguments}" if arguments else ""
         self.write(f":SOUR{self.id}:APPL:{shape}{suffix}")
 
+    def _apply_periodic(
+        self,
+        shape: str,
+        maximum_frequency: float,
+        frequency: float | None,
+        amplitude: float | None,
+        offset: float | None,
+        phase: float | None,
+    ) -> None:
+        if frequency is not None:
+            frequency = strict_range(frequency, [0.1, maximum_frequency])
+        if phase is not None:
+            phase = strict_range(phase, [0, 360])
+        self._apply(shape, frequency, amplitude, offset, phase)
+
     def apply_noise(self, amplitude: float | None = None, offset: float | None = None) -> None:
-        """Apply noise with optional amplitude and offset."""
+        """Apply noise with optional sequential parameters.
+
+        :param amplitude: Optional amplitude in Volts peak-to-peak; the valid range depends on
+            output impedance.
+        :param offset: Optional DC offset in Volts; the valid range depends on impedance and
+            amplitude.
+        """
         self._apply("NOIS", amplitude, offset)
 
-    def apply_pulse(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
-        """Apply a pulse waveform with sequential optional parameters."""
-        self._apply("PULS", frequency, amplitude, offset, phase)
+    def apply_pulse(
+        self,
+        frequency: float | None = None,
+        amplitude: float | None = None,
+        offset: float | None = None,
+        phase: float | None = None,
+    ) -> None:
+        """Apply a pulse waveform with sequential optional parameters.
 
-    def apply_ramp(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
-        """Apply a ramp waveform with sequential optional parameters."""
-        self._apply("RAMP", frequency, amplitude, offset, phase)
+        :param frequency: Optional frequency in Hertz from 0.1 to 1 MHz, inclusive.
+        :param amplitude: Optional amplitude in Volts peak-to-peak; range depends on impedance.
+        :param offset: Optional DC offset in Volts; range depends on impedance and amplitude.
+        :param phase: Optional start phase in degrees from 0 to 360, inclusive.
+        """
+        self._apply_periodic("PULS", 1e6, frequency, amplitude, offset, phase)
 
-    def apply_sine(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
-        """Apply a sine waveform with sequential optional parameters."""
-        self._apply("SIN", frequency, amplitude, offset, phase)
+    def apply_ramp(
+        self,
+        frequency: float | None = None,
+        amplitude: float | None = None,
+        offset: float | None = None,
+        phase: float | None = None,
+    ) -> None:
+        """Apply a ramp waveform with sequential optional parameters.
 
-    def apply_square(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
-        """Apply a square waveform with sequential optional parameters."""
-        self._apply("SQU", frequency, amplitude, offset, phase)
+        :param frequency: Optional frequency in Hertz from 0.1 to 100 kHz, inclusive.
+        :param amplitude: Optional amplitude in Volts peak-to-peak; range depends on impedance.
+        :param offset: Optional DC offset in Volts; range depends on impedance and amplitude.
+        :param phase: Optional start phase in degrees from 0 to 360, inclusive.
+        """
+        self._apply_periodic("RAMP", 100e3, frequency, amplitude, offset, phase)
 
-    def apply_user(self, frequency=None, amplitude=None, offset=None, phase=None) -> None:
-        """Apply the selected arbitrary waveform with sequential optional parameters."""
-        self._apply("USER", frequency, amplitude, offset, phase)
+    def apply_sine(
+        self,
+        frequency: float | None = None,
+        amplitude: float | None = None,
+        offset: float | None = None,
+        phase: float | None = None,
+    ) -> None:
+        """Apply a sine waveform with sequential optional parameters.
+
+        :param frequency: Optional frequency in Hertz from 0.1 to 25 MHz, inclusive.
+        :param amplitude: Optional amplitude in Volts peak-to-peak; range depends on impedance.
+        :param offset: Optional DC offset in Volts; range depends on impedance and amplitude.
+        :param phase: Optional start phase in degrees from 0 to 360, inclusive.
+        """
+        self._apply_periodic("SIN", 25e6, frequency, amplitude, offset, phase)
+
+    def apply_square(
+        self,
+        frequency: float | None = None,
+        amplitude: float | None = None,
+        offset: float | None = None,
+        phase: float | None = None,
+    ) -> None:
+        """Apply a square waveform with sequential optional parameters.
+
+        :param frequency: Optional frequency in Hertz from 0.1 to 15 MHz, inclusive.
+        :param amplitude: Optional amplitude in Volts peak-to-peak; range depends on impedance.
+        :param offset: Optional DC offset in Volts; range depends on impedance and amplitude.
+        :param phase: Optional start phase in degrees from 0 to 360, inclusive.
+        """
+        self._apply_periodic("SQU", 15e6, frequency, amplitude, offset, phase)
+
+    def apply_user(
+        self,
+        frequency: float | None = None,
+        amplitude: float | None = None,
+        offset: float | None = None,
+        phase: float | None = None,
+    ) -> None:
+        """Apply the selected arbitrary waveform with sequential optional parameters.
+
+        :param frequency: Optional frequency in Hertz from 0.1 to 10 MHz, inclusive.
+        :param amplitude: Optional amplitude in Volts peak-to-peak; range depends on impedance.
+        :param offset: Optional DC offset in Volts; range depends on impedance and amplitude.
+        :param phase: Optional start phase in degrees from 0 to 360, inclusive.
+        """
+        self._apply_periodic("USER", 10e6, frequency, amplitude, offset, phase)
 
     def upload_waveform(self, data: bytes) -> None:
-        """Upload 4 to 32768 raw DAC16 bytes with definite-block framing."""
+        """Upload 4 to 32768 raw DAC16 bytes with definite-block framing.
+
+        :param data: Even-length raw DAC16 payload containing 4 to 32768 bytes.
+        """
         if not isinstance(data, bytes):
             raise TypeError("Waveform data must be bytes.")
         if not 4 <= len(data) <= 32768 or len(data) % 2:
@@ -2369,7 +2531,7 @@ class QuickSubsystem(Channel):
 class DigitalChannel(Channel):
     """Represent one MSO5000 digital input channel."""
 
-    display = Channel.control(
+    display_enabled = Channel.control(
         ":LA:DIG:DISP? D{ch}",
         ":LA:DIG:DISP D{ch},%d",
         """Control whether this digital channel is displayed (bool).""",
@@ -2399,7 +2561,7 @@ class DigitalChannel(Channel):
 class LogicPod(Channel):
     """Represent one eight-channel MSO5000 logic pod."""
 
-    display = Channel.control(
+    display_enabled = Channel.control(
         ":LA:POD{ch}:DISP?",
         ":LA:POD{ch}:DISP %d",
         """Control whether this logic pod is displayed (bool).""",
@@ -2422,7 +2584,7 @@ class LogicPod(Channel):
 class LogicAnalyzerSubsystem(Channel):
     """Represent global MSO5000 logic-analyzer configuration."""
 
-    state = Channel.control(
+    enabled = Channel.control(
         ":LA:STAT?",
         ":LA:STAT %d",
         """Control whether logic-analyzer acquisition is enabled (bool).""",
@@ -2441,7 +2603,7 @@ class LogicAnalyzerSubsystem(Channel):
         cast=str,
     )
 
-    auto_sort = Channel.setting(
+    auto_sort_enabled = Channel.setting(
         ":LA:AUTOS %d",
         """Set whether new logic groups are sorted automatically (bool).""",
         validator=strict_discrete_set,
@@ -2469,23 +2631,37 @@ class LogicAnalyzerSubsystem(Channel):
     )
 
     def set_display(self, source: str, enabled: bool) -> None:
-        """Set whether a digital channel, group, or pod is displayed."""
+        """Set whether a digital channel, group, or pod is displayed.
+
+        :param source: Digital channel, user-defined group, or logic-pod name.
+        :param enabled: Whether the selected source is displayed.
+        """
         source = strict_discrete_set(source, LOGIC_DISPLAY_SOURCES)
         strict_discrete_set(enabled, [True, False])
         self.write(f":LA:DISP {source},{int(enabled)}")
 
-    def display(self, source: str) -> bool:
-        """Return whether a digital channel, group, or pod is displayed."""
+    def is_displayed(self, source: str) -> bool:
+        """Return whether a digital channel, group, or pod is displayed.
+
+        :param source: Digital channel, user-defined group, or logic-pod name.
+        """
         source = strict_discrete_set(source, LOGIC_DISPLAY_SOURCES)
         return bool(int(self.ask(f":LA:DISP? {source}")))
 
     def delete_group(self, group: str) -> None:
-        """Delete one user-defined logic group."""
+        """Delete one user-defined logic group.
+
+        :param group: User-defined group from ``"GRO1"`` to ``"GRO4"``.
+        """
         group = strict_discrete_set(group, LOGIC_GROUPS)
         self.write(f":LA:DEL {group}")
 
     def append_group(self, group: str, *digital_channels: str) -> None:
-        """Append one to sixteen digital channels to a user-defined group."""
+        """Append one to sixteen digital channels to a user-defined group.
+
+        :param group: User-defined group from ``"GRO1"`` to ``"GRO4"``.
+        :param digital_channels: One to sixteen channel names from ``"D0"`` to ``"D15"``.
+        """
         group = strict_discrete_set(group, LOGIC_GROUPS)
         if not 1 <= len(digital_channels) <= 16:
             raise ValueError("A logic group append requires one to sixteen digital channels.")
@@ -2505,7 +2681,7 @@ class BusChannel(Channel):
         cast=str,
     )
 
-    display = Channel.control(
+    display_enabled = Channel.control(
         ":BUS{ch}:DISP?",
         ":BUS{ch}:DISP %d",
         """Control the display state (bool).""",
@@ -2524,7 +2700,7 @@ class BusChannel(Channel):
         cast=str,
     )
 
-    event = Channel.control(
+    event_table_enabled = Channel.control(
         ":BUS{ch}:EVEN?",
         ":BUS{ch}:EVEN %d",
         """Control the event-table display state (bool).""",
@@ -2552,7 +2728,7 @@ class BusChannel(Channel):
         cast=str,
     )
 
-    label = Channel.control(
+    label_enabled = Channel.control(
         ":BUS{ch}:LAB?",
         ":BUS{ch}:LAB %d",
         """Control the label display state (bool).""",
@@ -2644,7 +2820,7 @@ class BusChannel(Channel):
         cast=str,
     )
 
-    parallel_noise_reject = Channel.control(
+    parallel_noise_rejection_enabled = Channel.control(
         ":BUS{ch}:PAR:NREJ?",
         ":BUS{ch}:PAR:NREJ %d",
         """Control the parallel noise rejection state (bool).""",
@@ -2735,7 +2911,7 @@ class BusChannel(Channel):
         cast=str,
     )
 
-    rs232_packet = Channel.control(
+    rs232_packet_enabled = Channel.control(
         ":BUS{ch}:RS232:PACK?",
         ":BUS{ch}:RS232:PACK %d",
         """Control the RS232 packet decoding state (bool).""",
@@ -3062,12 +3238,19 @@ class BusChannel(Channel):
     )
 
     def set_threshold(self, threshold_type: str, value: float) -> None:
-        """Set the threshold in Volts for one documented decoding source type."""
+        """Set the threshold in Volts for one documented decoding source type.
+
+        :param threshold_type: Documented bus threshold source type.
+        :param value: Threshold in Volts.
+        """
         threshold_type = strict_discrete_set(threshold_type, BUS_THRESHOLD_TYPES)
         self.write(f":BUS{self.id}:THR {value:g},{threshold_type}")
 
     def threshold(self, threshold_type: str) -> float:
-        """Return the threshold in Volts for one documented decoding source type."""
+        """Return the threshold in Volts for one documented decoding source type.
+
+        :param threshold_type: Documented bus threshold source type.
+        """
         threshold_type = strict_discrete_set(threshold_type, BUS_THRESHOLD_TYPES)
         return float(self.ask(f":BUS{self.id}:THR? {threshold_type}"))
 
@@ -3077,7 +3260,10 @@ class BusChannel(Channel):
         return _parse_ieee_block(response.encode(), "Bus event table response").decode()
 
     def export_events(self, path: str) -> None:
-        """Export the decoded event table to an instrument file path."""
+        """Export the decoded event table to an instrument file path.
+
+        :param path: Destination path on the instrument filesystem.
+        """
         if not isinstance(path, str):
             raise TypeError("Event export path must be a string.")
         self.write(f":BUS{self.id}:EEXP {path}")
@@ -3758,7 +3944,7 @@ class MSO5000(RigolOscilloscope):
 
     This driver supports the MSO5072, MSO5074, MSO5102, MSO5104, MSO5204,
     and MSO5354 models. It provides analog-channel, acquisition, measurement,
-    timebase, trigger, waveform-transfer, system, and storage controls.
+    timebase, trigger, waveform-transfer, network, system, and storage controls.
 
     :param adapter: VISA resource name or adapter object used to communicate with the instrument.
     :param name: Human-readable instrument name.
@@ -4742,22 +4928,36 @@ class MSO5000(RigolOscilloscope):
         return int(self.ask("*ESR?"))
 
     def set_pattern_trigger_level(self, source: str, level: float) -> None:
-        """Set the Pattern-trigger level for an analog or digital channel."""
+        """Set the Pattern-trigger level for an analog or digital channel.
+
+        :param source: Analog or digital trigger source.
+        :param level: Trigger threshold in the source's units.
+        """
         source = strict_discrete_set(source, TRIGGER_SOURCES)
         self.write(f":TRIG:PATT:LEV {source},{level:g}")
 
     def get_pattern_trigger_level(self, source: str) -> float:
-        """Return the Pattern-trigger level for an analog or digital channel."""
+        """Return the Pattern-trigger level for an analog or digital channel.
+
+        :param source: Analog or digital trigger source.
+        """
         source = strict_discrete_set(source, TRIGGER_SOURCES)
         return float(self.ask(f":TRIG:PATT:LEV? {source}"))
 
     def set_duration_trigger_level(self, source: str, level: float) -> None:
-        """Set the Duration-trigger level for an analog or digital channel."""
+        """Set the Duration-trigger level for an analog or digital channel.
+
+        :param source: Analog or digital trigger source.
+        :param level: Trigger threshold in the source's units.
+        """
         source = strict_discrete_set(source, TRIGGER_SOURCES)
         self.write(f":TRIG:DUR:LEV {source},{level:g}")
 
     def get_duration_trigger_level(self, source: str) -> float:
-        """Return the Duration-trigger level for an analog or digital channel."""
+        """Return the Duration-trigger level for an analog or digital channel.
+
+        :param source: Analog or digital trigger source.
+        """
         source = strict_discrete_set(source, TRIGGER_SOURCES)
         return float(self.ask(f":TRIG:DUR:LEV? {source}"))
 
@@ -4770,7 +4970,10 @@ class MSO5000(RigolOscilloscope):
         return payload
 
     def save_state(self, register: int) -> None:
-        """Save the current instrument state to a register from 0 to 49."""
+        """Save the current instrument state to a register from 0 to 49.
+
+        :param register: Internal state register from 0 to 49.
+        """
         register = strict_range(register, [0, 49])
         self.write(f"*SAV {register}")
 
@@ -4779,39 +4982,64 @@ class MSO5000(RigolOscilloscope):
         self.write("*RCL")
 
     def save_reference_waveform(self, reference: int) -> None:
-        """Save a reference waveform to an internal reference slot from 1 to 10."""
+        """Save a reference waveform to an internal reference slot from 1 to 10.
+
+        :param reference: Reference slot number from 1 to 10.
+        """
         reference = strict_range(reference, [1, 10])
         self.write(f":REF:SAVE {reference}")
 
     def save_csv(self, path: str) -> None:
-        """Save the displayed waveform data as a CSV file at ``path``."""
+        """Save the displayed waveform data as a CSV file at ``path``.
+
+        :param path: Destination path on the instrument filesystem.
+        """
         self.write(f":SAVE:CSV {path}")
 
     def set_csv_channel_enabled(self, channel: str, enabled: bool) -> None:
-        """Set whether ``channel`` is included in saved CSV files."""
+        """Set whether ``channel`` is included in saved CSV files.
+
+        :param channel: Analog-channel or logic-pod name.
+        :param enabled: Whether the channel is included in CSV exports.
+        """
         channel = strict_discrete_set(channel, CSV_CHANNELS)
         enabled = strict_discrete_set(enabled, [True, False])
         self.write(f":SAVE:CSV:CHAN {channel},{int(enabled)}")
 
     def get_csv_channel_enabled(self, channel: str) -> bool:
-        """Return whether ``channel`` is included in saved CSV files."""
+        """Return whether ``channel`` is included in saved CSV files.
+
+        :param channel: Analog-channel or logic-pod name.
+        """
         channel = strict_discrete_set(channel, CSV_CHANNELS)
         return bool(int(self.ask(f":SAVE:CSV:CHAN? {channel}")))
 
     def save_image(self, path: str) -> None:
-        """Save the current display image at ``path``."""
+        """Save the current display image at ``path``.
+
+        :param path: Destination path on the instrument filesystem.
+        """
         self.write(f":SAVE:IMAG {path}")
 
     def save_setup(self, path: str) -> None:
-        """Save the current oscilloscope setup at ``path``."""
+        """Save the current oscilloscope setup at ``path``.
+
+        :param path: Destination path on the instrument filesystem.
+        """
         self.write(f":SAVE:SET {path}")
 
     def save_waveform(self, path: str) -> None:
-        """Save waveform data at ``path``."""
+        """Save waveform data at ``path``.
+
+        :param path: Destination path on the instrument filesystem.
+        """
         self.write(f":SAVE:WAV {path}")
 
     def load_setup(self, path: str) -> None:
-        """Load an oscilloscope setup from ``path``."""
+        """Load an oscilloscope setup from ``path``.
+
+        :param path: Source path on the instrument filesystem.
+        """
         self.write(f":LOAD:SET {path}")
 
     def download_setup(self) -> bytes:
@@ -4820,7 +5048,10 @@ class MSO5000(RigolOscilloscope):
         return self._read_ieee_block("Setup response")
 
     def upload_setup(self, setup_data: bytes) -> None:
-        """Upload setup data previously returned by :meth:`download_setup`."""
+        """Upload setup data previously returned by :meth:`download_setup`.
+
+        :param setup_data: Raw setup payload without IEEE block framing.
+        """
         if not isinstance(setup_data, bytes):
             raise TypeError("Setup data must be bytes.")
         length = str(len(setup_data))
@@ -4834,17 +5065,27 @@ class MSO5000(RigolOscilloscope):
         return int(self.ask("*TST?"))
 
     def option_status(self, option: str) -> bool:
-        """Return whether an oscilloscope option is installed."""
+        """Return whether an oscilloscope option is installed.
+
+        :param option: Documented MSO5000 option identifier.
+        """
         option = strict_discrete_set(option, OPTION_TYPES)
         return bool(int(self.ask(f":SYST:OPT:STAT? {option}")))
 
     def press_key(self, key: str) -> None:
-        """Emulate pressing a documented front-panel key."""
+        """Emulate pressing a documented front-panel key.
+
+        :param key: Documented front-panel key name.
+        """
         key = strict_discrete_set(key, SYSTEM_KEYS)
         self.write(f":SYST:KEY:PRES {key}")
 
     def increase_key(self, key: str, steps: int = 1) -> None:
-        """Rotate a documented front-panel knob clockwise."""
+        """Rotate a documented front-panel knob clockwise.
+
+        :param key: Documented front-panel knob name.
+        :param steps: Integer number of rotation steps; omitted on the wire when equal to 1.
+        """
         key = strict_discrete_set(key, SYSTEM_KNOBS)
         if not isinstance(steps, int):
             raise TypeError("Knob steps must be an integer.")
@@ -4852,7 +5093,11 @@ class MSO5000(RigolOscilloscope):
         self.write(f":SYST:KEY:INCR {key}{suffix}")
 
     def decrease_key(self, key: str, steps: int = 1) -> None:
-        """Rotate a documented front-panel knob counterclockwise."""
+        """Rotate a documented front-panel knob counterclockwise.
+
+        :param key: Documented front-panel knob name.
+        :param steps: Integer number of rotation steps; omitted on the wire when equal to 1.
+        """
         key = strict_discrete_set(key, SYSTEM_KNOBS)
         if not isinstance(steps, int):
             raise TypeError("Knob steps must be an integer.")
@@ -4868,6 +5113,9 @@ class MSO5000(RigolOscilloscope):
 
         This convenience method delegates to :attr:`measurements`. Use the child
         interface directly for math, digital, or dual-source measurements.
+
+        :param item: Documented automatic-measurement item.
+        :param channel: Analog channel number from 1 to 4.
         """
         channel = strict_range(channel, [1, 4])
         return self.measurements.item(item, f"CHAN{channel}")
