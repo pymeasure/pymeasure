@@ -92,7 +92,12 @@ TRIGGER_MODES = [
 def _parse_ieee_block(
     response: bytes, data_name: str, *, require_terminator: bool = False
 ) -> bytes:
-    """Remove and validate the definite-length IEEE block framing."""
+    """Remove and validate the definite-length IEEE block framing.
+
+    :param response: Complete response including the IEEE block framing.
+    :param data_name: Human-readable name used in validation errors.
+    :param require_terminator: Whether the response must end with a newline.
+    """
     if len(response) < 2 or response[:1] != b"#" or not response[1:2].isdigit():
         raise ValueError(f"{data_name} does not start with an IEEE block header.")
     digit_count = int(response[1:2])
@@ -187,7 +192,13 @@ class RigolOscilloscopeChannel(Channel):
 
 
 class RigolOscilloscope(SCPIMixin, Instrument):
-    """Provide the SCPI core shared by supported Rigol oscilloscope families."""
+    """Provide the SCPI core shared by supported Rigol oscilloscope families.
+
+    :param adapter: Adapter object or resource identifier used for communication.
+    :param name: Name of the instrument.
+    :param kwargs: Additional arguments passed to :class:`~pymeasure.adapters.VISAAdapter` when
+        ``adapter`` is a string or integer; discarded when it is an Adapter object.
+    """
 
     def __init__(self, adapter: AdapterType, name: str = "Rigol oscilloscope", **kwargs):
         super().__init__(adapter, name, **kwargs)
