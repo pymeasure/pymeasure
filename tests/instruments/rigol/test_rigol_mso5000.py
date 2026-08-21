@@ -1988,3 +1988,287 @@ def test_advanced_scope_controls_reject_invalid_values():
             instrument.references.source(11)
         with pytest.raises(ValueError):
             instrument.search.value(1001)
+
+
+@pytest.mark.parametrize(
+    "name, command, value, reply",
+    [
+        ("state", "STAT", True, "1"),
+        ("active_channel", "ACT", "D7", "D7"),
+        ("size", "SIZE", "MED", "MED"),
+    ],
+)
+def test_logic_analyzer_controls(name, command, value, reply):
+    wire = int(value) if isinstance(value, bool) else value
+    with expected_protocol(
+        MSO5000,
+        [(f":LA:{command} {wire}", None), (f":LA:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.logic_analyzer, name, value)
+        assert getattr(instrument.logic_analyzer, name) == value
+
+
+def test_logic_analyzer_setting_measurement_and_actions():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":LA:AUTOS 1", None),
+            (":LA:TCAL?", "2.5E-9"),
+            (":LA:DISP GRO2,1", None),
+            (":LA:DISP? GRO2", "1"),
+            (":LA:DEL GRO3", None),
+            (":LA:GRO:APP GRO1,D0,D7,D15", None),
+        ],
+    ) as instrument:
+        instrument.logic_analyzer.auto_sort = True
+        assert instrument.logic_analyzer.time_calibration == pytest.approx(2.5e-9)
+        instrument.logic_analyzer.set_display("GRO2", True)
+        assert instrument.logic_analyzer.display("GRO2") is True
+        instrument.logic_analyzer.delete_group("GRO3")
+        instrument.logic_analyzer.append_group("GRO1", "D0", "D7", "D15")
+
+
+def test_digital_channel_controls_and_channel_ids():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":LA:DIG:DISP D7,1", None),
+            (":LA:DIG:DISP? D7", "1"),
+            (":LA:DIG:POS D7,12", None),
+            (":LA:DIG:POS? D7", "12"),
+            (":LA:DIG:LAB D7,clock", None),
+            (":LA:DIG:LAB? D7", "clock"),
+        ],
+    ) as instrument:
+        instrument.d_7.display = True
+        assert instrument.d_7.display is True
+        instrument.d_7.position = 12
+        assert instrument.d_7.position == 12
+        instrument.d_7.label = "clock"
+        assert instrument.d_7.label == "clock"
+        assert instrument.digital_channels[7] is instrument.d_7
+
+
+def test_logic_pod_controls_and_channel_ids():
+    with expected_protocol(
+        MSO5000,
+        [
+            (":LA:POD2:DISP 1", None),
+            (":LA:POD2:DISP?", "1"),
+            (":LA:POD2:THR 1.4", None),
+            (":LA:POD2:THR?", "1.4E+0"),
+        ],
+    ) as instrument:
+        instrument.pod_2.display = True
+        assert instrument.pod_2.display is True
+        instrument.pod_2.threshold = 1.4
+        assert instrument.pod_2.threshold == pytest.approx(1.4)
+
+
+@pytest.mark.parametrize(
+    "catalog_id, name, command, value, reply",
+    [
+        ("BUSN.MODE", "mode", "MODE", "PAR", "PAR"),
+        ("BUSN.DISPLAY", "display", "DISP", True, "1"),
+        ("BUSN.FORMAT", "format", "FORM", "HEX", "HEX"),
+        ("BUSN.EVENT", "event", "EVEN", True, "1"),
+        ("BUSN.EVENT.FORMAT", "event_format", "EVEN:FORM", "ASC", "ASC"),
+        ("BUSN.EVENT.VIEW", "event_view", "EVEN:VIEW", "DET", "DET"),
+        ("BUSN.LABEL", "label", "LAB", False, "0"),
+        ("BUSN.POSITION", "position", "POS", 25, "25"),
+        ("BUSN.PARALLEL.BUS", "parallel_bus", "PAR:BUS", "D7D0", "D7D0"),
+        ("BUSN.PARALLEL.CLK", "parallel_clk", "PAR:CLK", "CHAN2", "CHAN2"),
+        ("BUSN.PARALLEL.SLOPE", "parallel_slope", "PAR:SLOP", "BOTH", "BOTH"),
+        ("BUSN.PARALLEL.WIDTH", "parallel_width", "PAR:WIDT", 8, "8"),
+        ("BUSN.PARALLEL.BITX", "parallel_bitx", "PAR:BITX", 3, "3"),
+        ("BUSN.PARALLEL.SOURCE", "parallel_source", "PAR:SOUR", "D7", "D7"),
+        ("BUSN.PARALLEL.POLARITY", "parallel_polarity", "PAR:POL", "NEG", "NEG"),
+        ("BUSN.PARALLEL.NREJECT", "parallel_noise_reject", "PAR:NREJ", True, "1"),
+        ("BUSN.PARALLEL.NRTIME", "parallel_noise_reject_time", "PAR:NRT", 1e-06, "1E-6"),
+        ("BUSN.RS232.TX", "rs232_tx", "RS232:TX", "CHAN2", "CHAN2"),
+        ("BUSN.RS232.RX", "rs232_rx", "RS232:RX", "OFF", "OFF"),
+        ("BUSN.RS232.POLARITY", "rs232_polarity", "RS232:POL", "NEG", "NEG"),
+        ("BUSN.RS232.ENDIAN", "rs232_endian", "RS232:END", "LSB", "LSB"),
+        ("BUSN.RS232.BAUD", "rs232_baud", "RS232:BAUD", 9600, "9600"),
+        ("BUSN.RS232.DBITS", "rs232_data_bits", "RS232:DBIT", 8, "8"),
+        ("BUSN.RS232.SBITS", "rs232_stop_bits", "RS232:SBIT", 1.5, "1.5"),
+        ("BUSN.RS232.PARITY", "rs232_parity", "RS232:PAR", "EVEN", "EVEN"),
+        ("BUSN.RS232.PACKET", "rs232_packet", "RS232:PACK", True, "1"),
+        ("BUSN.RS232.PEND", "rs232_pend", "RS232:PEND", "CR", "CR"),
+        ("BUSN.IIC.SCLK.SOURCE", "iic_clock_source", "IIC:SCLK:SOUR", "CHAN1", "CHAN1"),
+        ("BUSN.IIC.SDA.SOURCE", "iic_data_source", "IIC:SDA:SOUR", "CHAN2", "CHAN2"),
+        ("BUSN.IIC.ADDRESS", "iic_address", "IIC:ADDR", "RW", "RW"),
+        ("BUSN.SPI.SCLK.SOURCE", "spi_clock_source", "SPI:SCLK:SOUR", "CHAN1", "CHAN1"),
+        ("BUSN.SPI.SCLK.SLOPE", "spi_clock_slope", "SPI:SCLK:SLOP", "NEG", "NEG"),
+        ("BUSN.SPI.MISO.SOURCE", "spi_miso_source", "SPI:MISO:SOUR", "CHAN2", "CHAN2"),
+        ("BUSN.SPI.MISO.POLARITY", "spi_miso_polarity", "SPI:MISO:POL", "LOW", "LOW"),
+        ("BUSN.SPI.MOSI.SOURCE", "spi_mosi_source", "SPI:MOSI:SOUR", "OFF", "OFF"),
+        ("BUSN.SPI.MOSI.POLARITY", "spi_mosi_polarity", "SPI:MOSI:POL", "HIGH", "HIGH"),
+        ("BUSN.SPI.DBITS", "spi_data_bits", "SPI:DBIT", 16, "16"),
+        ("BUSN.SPI.ENDIAN", "spi_endian", "SPI:END", "MSB", "MSB"),
+        ("BUSN.SPI.MODE", "spi_mode", "SPI:MODE", "TIM", "TIM"),
+        ("BUSN.SPI.TIMEOUT.TIME", "spi_timeout_time", "SPI:TIM:TIME", 1e-06, "1E-6"),
+        ("BUSN.SPI.SS.SOURCE", "spi_ss_source", "SPI:SS:SOUR", "CHAN3", "CHAN3"),
+        ("BUSN.SPI.SS.POLARITY", "spi_ss_polarity", "SPI:SS:POL", "LOW", "LOW"),
+        ("BUSN.CAN.SOURCE", "can_source", "CAN:SOUR", "CHAN1", "CHAN1"),
+        ("BUSN.CAN.STYPE", "can_source_type", "CAN:STYP", "DIFF", "DIFF"),
+        ("BUSN.CAN.BAUD", "can_baud", "CAN:BAUD", 1000000, "1000000"),
+        ("BUSN.CAN.SPOINT", "can_sample_point", "CAN:SPO", 50, "50"),
+        ("BUSN.FLEXRAY.BAUD", "flexray_baud", "FLEX:BAUD", 10000000, "10000000"),
+        ("BUSN.FLEXRAY.SOURCE", "flexray_source", "FLEX:SOUR", "CHAN1", "CHAN1"),
+        ("BUSN.FLEXRAY.SPOINT", "flexray_sample_point", "FLEX:SPO", 50, "50"),
+        ("BUSN.FLEXRAY.STYPE", "flexray_source_type", "FLEX:STYP", "BP", "BP"),
+        ("BUSN.LIN.BAUD", "lin_baud", "LIN:BAUD", 19200, "19200"),
+        ("BUSN.LIN.POLARITY", "lin_polarity", "LIN:POL", False, "0"),
+        ("BUSN.LIN.SOURCE", "lin_source", "LIN:SOUR", "CHAN2", "CHAN2"),
+        ("BUSN.LIN.STANDARD", "lin_standard", "LIN:STAN", "MIX", "MIX"),
+        ("BUSN.IIS.SOURCE.CLOCK", "iis_source_clock", "IIS:SOUR:CLOC", "CHAN1", "CHAN1"),
+        ("BUSN.IIS.SOURCE.DATA", "iis_source_data", "IIS:SOUR:DATA", "CHAN3", "CHAN3"),
+        ("BUSN.IIS.SOURCE.WSELECT", "iis_source_word_select", "IIS:SOUR:WSEL", "CHAN2", "CHAN2"),
+        ("BUSN.IIS.ALIGNMENT", "iis_alignment", "IIS:ALIG", "IIS", "IIS"),
+        ("BUSN.IIS.CLOCK.SLOPE", "iis_clock_slope", "IIS:CLOC:SLOP", "POS", "POS"),
+        ("BUSN.IIS.RWIDTH", "iis_right_width", "IIS:RWID", 24, "24"),
+        ("BUSN.M1553.SOURCE", "m1553_source", "M1553:SOUR", "CHAN4", "CHAN4"),
+    ],
+    ids=lambda value: value if isinstance(value, str) and "." in value else None,
+)
+def test_bus_controls(catalog_id, name, command, value, reply):
+    del catalog_id
+    wire = int(value) if isinstance(value, bool) else value
+    separator = " "
+    with expected_protocol(
+        MSO5000,
+        [
+            (f":BUS2:{command}{separator}{wire}", None),
+            (f":BUS2:{command}?", reply),
+        ],
+    ) as instrument:
+        setattr(instrument.bus_2, name, value)
+        result = getattr(instrument.bus_2, name)
+        if isinstance(value, float):
+            assert result == pytest.approx(value)
+        else:
+            assert result == value
+
+
+def test_bus_threshold():
+    with expected_protocol(
+        MSO5000,
+        [(":BUS3:THR 0.5,CAN", None), (":BUS3:THR? CAN", "5E-1")],
+    ) as instrument:
+        instrument.bus_3.set_threshold("CAN", 0.5)
+        assert instrument.bus_3.threshold("CAN") == pytest.approx(0.5)
+
+
+def test_bus_read_events():
+    payload = "RS232,Time,Data,,0s,55"
+    response = f"#9{len(payload):09d}{payload}"
+    with expected_protocol(MSO5000, [(":BUS1:DATA?", response)]) as instrument:
+        assert instrument.bus_1.read_events() == payload
+
+
+def test_bus_export_events():
+    with expected_protocol(MSO5000, [(r":BUS4:EEXP D:\events.csv", None)]) as instrument:
+        instrument.bus_4.export_events(r"D:\events.csv")
+
+
+@pytest.mark.parametrize(
+    "catalog_id, name, command, value, reply",
+    [
+        ("TRIGGER.RS232.SOURCE", "rs232_source", "RS232:SOUR", "CHAN2", "CHAN2"),
+        ("TRIGGER.RS232.WHEN", "rs232_when", "RS232:WHEN", "DATA", "DATA"),
+        ("TRIGGER.RS232.PARITY", "rs232_parity", "RS232:PAR", "EVEN", "EVEN"),
+        ("TRIGGER.RS232.STOP", "rs232_stop", "RS232:STOP", 1.5, "1.5"),
+        ("TRIGGER.RS232.DATA", "rs232_data", "RS232:DATA", 85, "85"),
+        ("TRIGGER.RS232.WIDTH", "rs232_width", "RS232:WIDT", 8, "8"),
+        ("TRIGGER.RS232.BAUD", "rs232_baud", "RS232:BAUD", 9600, "9600"),
+        ("TRIGGER.RS232.LEVEL", "rs232_level", "RS232:LEV", 0.5, "5E-1"),
+        ("TRIGGER.IIC.SCL", "iic_clock_source", "IIC:SCL", "CHAN1", "CHAN1"),
+        ("TRIGGER.IIC.SDA", "iic_data_source", "IIC:SDA", "CHAN2", "CHAN2"),
+        ("TRIGGER.IIC.WHEN", "iic_when", "IIC:WHEN", "ADDR", "ADDR"),
+        ("TRIGGER.IIC.AWIDTH", "iic_address_width", "IIC:AWID", 7, "7"),
+        ("TRIGGER.IIC.ADDRESS", "iic_address", "IIC:ADDR", 85, "85"),
+        ("TRIGGER.IIC.DIRECTION", "iic_direction", "IIC:DIR", "READ", "READ"),
+        ("TRIGGER.IIC.DATA", "iic_data", "IIC:DATA", 4660, "4660"),
+        ("TRIGGER.IIC.CLEVEL", "iic_clock_level", "IIC:CLEV", 0.5, "5E-1"),
+        ("TRIGGER.IIC.DLEVEL", "iic_data_level", "IIC:DLEV", 0.6, "6E-1"),
+        ("TRIGGER.IIC.DBYTES", "iic_data_bytes", "IIC:DBYT", 2, "2"),
+        ("TRIGGER.CAN.BAUD", "can_baud", "CAN:BAUD", 500000, "500000"),
+        ("TRIGGER.CAN.SOURCE", "can_source", "CAN:SOUR", "CHAN2", "CHAN2"),
+        ("TRIGGER.CAN.STYPE", "can_source_type", "CAN:STYP", "RXTX", "RXTX"),
+        ("TRIGGER.CAN.WHEN", "can_when", "CAN:WHEN", "IDR", "IDR"),
+        ("TRIGGER.CAN.SPOINT", "can_sample_point", "CAN:SPO", 60, "60"),
+        ("TRIGGER.CAN.LEVEL", "can_level", "CAN:LEV", 0.7, "7E-1"),
+        ("TRIGGER.SPI.SCL", "spi_clock_source", "SPI:SCL", "CHAN1", "CHAN1"),
+        ("TRIGGER.SPI.SDA", "spi_data_source", "SPI:SDA", "CHAN2", "CHAN2"),
+        ("TRIGGER.SPI.WHEN", "spi_when", "SPI:WHEN", "CS", "CS"),
+        ("TRIGGER.SPI.WIDTH", "spi_width", "SPI:WIDT", 16, "16"),
+        ("TRIGGER.SPI.DATA", "spi_data", "SPI:DATA", 4660, "4660"),
+        ("TRIGGER.SPI.TIMEOUT", "spi_timeout", "SPI:TIM", 1e-06, "1E-6"),
+        ("TRIGGER.SPI.SLOPE", "spi_slope", "SPI:SLOP", "NEG", "NEG"),
+        ("TRIGGER.SPI.CLEVEL", "spi_clock_level", "SPI:CLEV", 0.5, "5E-1"),
+        ("TRIGGER.SPI.DLEVEL", "spi_data_level", "SPI:DLEV", 0.6, "6E-1"),
+        ("TRIGGER.SPI.SLEVEL", "spi_select_level", "SPI:SLEV", 0.7, "7E-1"),
+        ("TRIGGER.SPI.MODE", "spi_mode", "SPI:MODE", "LOW", "LOW"),
+        ("TRIGGER.SPI.CS", "spi_cs", "SPI:CS", "CHAN3", "CHAN3"),
+        ("TRIGGER.FLEXRAY.BAUD", "flexray_baud", "FLEX:BAUD", 5000000, "5000000"),
+        ("TRIGGER.FLEXRAY.LEVEL", "flexray_level", "FLEX:LEV", 0.5, "5E-1"),
+        ("TRIGGER.FLEXRAY.SOURCE", "flexray_source", "FLEX:SOUR", "CHAN1", "CHAN1"),
+        ("TRIGGER.FLEXRAY.WHEN", "flexray_when", "FLEX:WHEN", "FRAM", "FRAM"),
+        ("TRIGGER.IIS.ALIGNMENT", "iis_alignment", "IIS:ALIG", "LJ", "LJ"),
+        ("TRIGGER.IIS.CLOCK.SLOPE", "iis_clock_slope", "IIS:CLOC:SLOP", "NEG", "NEG"),
+        ("TRIGGER.IIS.SOURCE.CLOCK", "iis_source_clock", "IIS:SOUR:CLOC", "CHAN1", "CHAN1"),
+        ("TRIGGER.IIS.SOURCE.DATA", "iis_source_data", "IIS:SOUR:DATA", "CHAN3", "CHAN3"),
+        ("TRIGGER.IIS.SOURCE.WSELECT", "iis_source_word_select", "IIS:SOUR:WSEL", "CHAN2", "CHAN2"),
+        ("TRIGGER.IIS.WHEN", "iis_when", "IIS:WHEN", "INR", "INR"),
+        ("TRIGGER.IIS.AUDIO", "iis_audio", "IIS:AUD", "LEFT", "LEFT"),
+        ("TRIGGER.IIS.DATA", "iis_data", "IIS:DATA", 4660, "4660"),
+        ("TRIGGER.LIN.SOURCE", "lin_source", "LIN:SOUR", "CHAN2", "CHAN2"),
+        ("TRIGGER.LIN.ID", "lin_id", "LIN:ID", 10, "10"),
+        ("TRIGGER.LIN.BAUD", "lin_baud", "LIN:BAUD", 19200, "19200"),
+        ("TRIGGER.LIN.STANDARD", "lin_standard", "LIN:STAN", "BOTH", "BOTH"),
+        ("TRIGGER.LIN.SAMPLEPOINT", "lin_sample_point", "LIN:SAMP", 50, "50"),
+        ("TRIGGER.LIN.WHEN", "lin_when", "LIN:WHEN", "IDD", "IDD"),
+        ("TRIGGER.LIN.LEVEL", "lin_level", "LIN:LEV", 0.5, "5E-1"),
+        ("TRIGGER.M1553.SOURCE", "m1553_source", "M1553:SOUR", "CHAN4", "CHAN4"),
+        ("TRIGGER.M1553.WHEN", "m1553_when", "M1553:WHEN", "DATA", "DATA"),
+        ("TRIGGER.M1553.POLARITY", "m1553_polarity", "M1553:POL", "POS", "POS"),
+        ("TRIGGER.M1553.ALEVEL", "m1553_alevel", "M1553:ALEV", 1.0, "1E+0"),
+        ("TRIGGER.M1553.BLEVEL", "m1553_blevel", "M1553:BLEV", -1.0, "-1E+0"),
+    ],
+    ids=lambda value: value if isinstance(value, str) and value.startswith("TRIGGER.") else None,
+)
+def test_protocol_trigger_controls(catalog_id, name, command, value, reply):
+    del catalog_id
+    wire = f"{value:g}" if isinstance(value, float) else value
+    with expected_protocol(
+        MSO5000,
+        [(f":TRIG:{command} {wire}", None), (f":TRIG:{command}?", reply)],
+    ) as instrument:
+        setattr(instrument.protocol_trigger, name, value)
+        result = getattr(instrument.protocol_trigger, name)
+        if isinstance(value, float):
+            assert result == pytest.approx(value)
+        else:
+            assert result == value
+
+
+def test_mixed_signal_controls_reject_invalid_values():
+    with expected_protocol(MSO5000, []) as instrument:
+        invalid = [
+            (instrument.d_0, "position", 32),
+            (instrument.pod_1, "threshold", 15.1),
+            (instrument.bus_1, "can_baud", 9_999),
+            (instrument.bus_1, "spi_data_bits", 33),
+            (instrument.protocol_trigger, "iic_data_bytes", 0),
+            (instrument.protocol_trigger, "lin_id", 64),
+        ]
+        for child, name, value in invalid:
+            with pytest.raises(ValueError):
+                setattr(child, name, value)
+        with pytest.raises(ValueError):
+            instrument.logic_analyzer.set_display("POD3", True)
+        with pytest.raises(ValueError):
+            instrument.logic_analyzer.append_group("GRO1")
+        with pytest.raises(ValueError):
+            instrument.bus_1.threshold("UNKNOWN")

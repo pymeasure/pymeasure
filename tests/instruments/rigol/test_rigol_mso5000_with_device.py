@@ -572,3 +572,158 @@ def test_search_readback(scope):
     assert isinstance(scope.search.slope_threshold2, float)
     if scope.search.count:
         assert isinstance(scope.search.value(0), float)
+
+
+def test_logic_analyzer_readback(scope):
+    """Read logic-analyzer configuration with a connected active logic probe."""
+    assert isinstance(scope.logic_analyzer.state, bool)
+    assert scope.logic_analyzer.active_channel in [*[f"D{number}" for number in range(16)], "NONE"]
+    assert scope.logic_analyzer.size in ["SMAL", "MED", "LARG"]
+    assert isinstance(scope.logic_analyzer.time_calibration, float)
+    assert isinstance(scope.logic_analyzer.display("D0"), bool)
+    assert isinstance(scope.d_0.display, bool)
+    assert 0 <= scope.d_0.position <= 31
+    assert isinstance(scope.d_0.label, str)
+    assert isinstance(scope.pod_1.display, bool)
+    assert -15 <= scope.pod_1.threshold <= 15
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "mode",
+        "display",
+        "format",
+        "event",
+        "event_format",
+        "event_view",
+        "label",
+        "position",
+        "parallel_bus",
+        "parallel_clk",
+        "parallel_slope",
+        "parallel_width",
+        "parallel_bitx",
+        "parallel_source",
+        "parallel_polarity",
+        "parallel_noise_reject",
+        "parallel_noise_reject_time",
+        "rs232_tx",
+        "rs232_rx",
+        "rs232_polarity",
+        "rs232_endian",
+        "rs232_baud",
+        "rs232_data_bits",
+        "rs232_stop_bits",
+        "rs232_parity",
+        "rs232_packet",
+        "rs232_pend",
+        "iic_clock_source",
+        "iic_data_source",
+        "iic_address",
+        "spi_clock_source",
+        "spi_clock_slope",
+        "spi_miso_source",
+        "spi_miso_polarity",
+        "spi_mosi_source",
+        "spi_mosi_polarity",
+        "spi_data_bits",
+        "spi_endian",
+        "spi_mode",
+        "spi_timeout_time",
+        "spi_ss_source",
+        "spi_ss_polarity",
+        "can_source",
+        "can_source_type",
+        "can_baud",
+        "can_sample_point",
+        "flexray_baud",
+        "flexray_source",
+        "flexray_sample_point",
+        "flexray_source_type",
+        "lin_baud",
+        "lin_polarity",
+        "lin_source",
+        "lin_standard",
+        "iis_source_clock",
+        "iis_source_data",
+        "iis_source_word_select",
+        "iis_alignment",
+        "iis_clock_slope",
+        "iis_right_width",
+        "m1553_source",
+    ],
+)
+def test_bus_decoder_readback(scope, name):
+    """Read one decoder setting with the matching decoder option installed."""
+    assert getattr(scope.bus_1, name) is not None
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "rs232_source",
+        "rs232_when",
+        "rs232_parity",
+        "rs232_stop",
+        "rs232_data",
+        "rs232_width",
+        "rs232_baud",
+        "rs232_level",
+        "iic_clock_source",
+        "iic_data_source",
+        "iic_when",
+        "iic_address_width",
+        "iic_address",
+        "iic_direction",
+        "iic_data",
+        "iic_clock_level",
+        "iic_data_level",
+        "iic_data_bytes",
+        "can_baud",
+        "can_source",
+        "can_source_type",
+        "can_when",
+        "can_sample_point",
+        "can_level",
+        "spi_clock_source",
+        "spi_data_source",
+        "spi_when",
+        "spi_width",
+        "spi_data",
+        "spi_timeout",
+        "spi_slope",
+        "spi_clock_level",
+        "spi_data_level",
+        "spi_select_level",
+        "spi_mode",
+        "spi_cs",
+        "flexray_baud",
+        "flexray_level",
+        "flexray_source",
+        "flexray_when",
+        "iis_alignment",
+        "iis_clock_slope",
+        "iis_source_clock",
+        "iis_source_data",
+        "iis_source_word_select",
+        "iis_when",
+        "iis_audio",
+        "iis_data",
+        "lin_source",
+        "lin_id",
+        "lin_baud",
+        "lin_standard",
+        "lin_sample_point",
+        "lin_when",
+        "lin_level",
+        "m1553_source",
+        "m1553_when",
+        "m1553_polarity",
+        "m1553_alevel",
+        "m1553_blevel",
+    ],
+)
+def test_protocol_trigger_readback(scope, name):
+    """Read one protocol-trigger setting with the matching trigger option installed."""
+    assert getattr(scope.protocol_trigger, name) is not None

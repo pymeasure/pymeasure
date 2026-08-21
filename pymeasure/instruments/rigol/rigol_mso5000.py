@@ -161,6 +161,34 @@ TRIGGER_SOURCES = [
 
 CSV_CHANNELS = ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "POD1", "POD2"]
 
+
+DIGITAL_SOURCES = [f"D{number}" for number in range(16)]
+PROTOCOL_SOURCES = [*DIGITAL_SOURCES, *ANALOG_SOURCES]
+PROTOCOL_SOURCES_WITH_OFF = [*PROTOCOL_SOURCES, "OFF"]
+LOGIC_DISPLAY_SOURCES = [
+    *DIGITAL_SOURCES,
+    *[f"GRO{number}" for number in range(1, 5)],
+    "POD1",
+    "POD2",
+]
+LOGIC_GROUPS = [f"GRO{number}" for number in range(1, 5)]
+BUS_THRESHOLD_TYPES = [
+    "PAL",
+    "TX",
+    "RX",
+    "SCL",
+    "SDA",
+    "CS",
+    "CLK",
+    "MISO",
+    "MOSI",
+    "LIN",
+    "CAN",
+    "CANSUB1",
+    "FLEX",
+    "1553",
+]
+
 SYSTEM_KEYS = [
     "CH1",
     "CH2",
@@ -1743,6 +1771,1259 @@ class SearchSubsystem(Channel):
         return float(self.ask(f":SEAR:VAL? {event}"))
 
 
+class DigitalChannel(Channel):
+    """Represent one MSO5000 digital input channel."""
+
+    display = Channel.control(
+        ":LA:DIG:DISP? D{ch}",
+        ":LA:DIG:DISP D{ch},%d",
+        """Control whether this digital channel is displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    position = Channel.control(
+        ":LA:DIG:POS? D{ch}",
+        ":LA:DIG:POS D{ch},%d",
+        """Control this digital channel position (int from 0 to 31).""",
+        validator=strict_range,
+        values=[0, 31],
+        cast=int,
+    )
+
+    label = Channel.control(
+        ":LA:DIG:LAB? D{ch}",
+        ":LA:DIG:LAB D{ch},%s",
+        """Control this digital channel label (str).""",
+        cast=str,
+    )
+
+
+class LogicPod(Channel):
+    """Represent one eight-channel MSO5000 logic pod."""
+
+    display = Channel.control(
+        ":LA:POD{ch}:DISP?",
+        ":LA:POD{ch}:DISP %d",
+        """Control whether this logic pod is displayed (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    threshold = Channel.control(
+        ":LA:POD{ch}:THR?",
+        ":LA:POD{ch}:THR %g",
+        """Control this logic pod threshold in Volts (float from -15 to 15).""",
+        validator=strict_range,
+        values=[-15, 15],
+        cast=float,
+    )
+
+
+class LogicAnalyzerSubsystem(Channel):
+    """Represent global MSO5000 logic-analyzer configuration."""
+
+    state = Channel.control(
+        ":LA:STAT?",
+        ":LA:STAT %d",
+        """Control whether logic-analyzer acquisition is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    active_channel = Channel.control(
+        ":LA:ACT?",
+        ":LA:ACT %s",
+        """Control the active digital channel, or NONE (str).""",
+        validator=strict_discrete_set,
+        values=[*DIGITAL_SOURCES, "NONE"],
+        cast=str,
+    )
+
+    auto_sort = Channel.setting(
+        ":LA:AUTOS %d",
+        """Set whether new logic groups are sorted automatically (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    size = Channel.control(
+        ":LA:SIZE?",
+        ":LA:SIZE %s",
+        """Control the digital waveform display size: SMAL, MED, or LARG.""",
+        validator=strict_discrete_set,
+        values=["SMAL", "MED", "LARG"],
+        cast=str,
+    )
+
+    time_calibration = Channel.measurement(
+        ":LA:TCAL?",
+        """Measure the logic-analyzer delay calibration in seconds (float).
+
+        The corresponding write command is intentionally not exposed because it changes
+        calibration state.
+        """,
+        cast=float,
+    )
+
+    def set_display(self, source: str, enabled: bool) -> None:
+        """Set whether a digital channel, group, or pod is displayed."""
+        source = strict_discrete_set(source, LOGIC_DISPLAY_SOURCES)
+        strict_discrete_set(enabled, [True, False])
+        self.write(f":LA:DISP {source},{int(enabled)}")
+
+    def display(self, source: str) -> bool:
+        """Return whether a digital channel, group, or pod is displayed."""
+        source = strict_discrete_set(source, LOGIC_DISPLAY_SOURCES)
+        return bool(int(self.ask(f":LA:DISP? {source}")))
+
+    def delete_group(self, group: str) -> None:
+        """Delete one user-defined logic group."""
+        group = strict_discrete_set(group, LOGIC_GROUPS)
+        self.write(f":LA:DEL {group}")
+
+    def append_group(self, group: str, *digital_channels: str) -> None:
+        """Append one to sixteen digital channels to a user-defined group."""
+        group = strict_discrete_set(group, LOGIC_GROUPS)
+        if not 1 <= len(digital_channels) <= 16:
+            raise ValueError("A logic group append requires one to sixteen digital channels.")
+        channels = [strict_discrete_set(channel, DIGITAL_SOURCES) for channel in digital_channels]
+        self.write(f":LA:GRO:APP {group},{','.join(channels)}")
+
+
+class BusChannel(Channel):
+    """Represent one MSO5000 serial or parallel decoding bus."""
+
+    mode = Channel.control(
+        ":BUS{ch}:MODE?",
+        ":BUS{ch}:MODE %s",
+        """Control the decoding mode (str).""",
+        validator=strict_discrete_set,
+        values=["PAR", "RS232", "SPI", "IIC", "IIS", "LIN", "CAN", "FLEX", "M1553"],
+        cast=str,
+    )
+
+    display = Channel.control(
+        ":BUS{ch}:DISP?",
+        ":BUS{ch}:DISP %d",
+        """Control the display state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    format = Channel.control(
+        ":BUS{ch}:FORM?",
+        ":BUS{ch}:FORM %s",
+        """Control the display format (str).""",
+        validator=strict_discrete_set,
+        values=["HEX", "ASC", "DEC", "BIN"],
+        cast=str,
+    )
+
+    event = Channel.control(
+        ":BUS{ch}:EVEN?",
+        ":BUS{ch}:EVEN %d",
+        """Control the event-table display state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    event_format = Channel.control(
+        ":BUS{ch}:EVEN:FORM?",
+        ":BUS{ch}:EVEN:FORM %s",
+        """Control the event-table format (str).""",
+        validator=strict_discrete_set,
+        values=["HEX", "ASC", "DEC", "BIN"],
+        cast=str,
+    )
+
+    event_view = Channel.control(
+        ":BUS{ch}:EVEN:VIEW?",
+        ":BUS{ch}:EVEN:VIEW %s",
+        """Control the event-table view (str).""",
+        validator=strict_discrete_set,
+        values=["PACK", "DET", "PAYL"],
+        cast=str,
+    )
+
+    label = Channel.control(
+        ":BUS{ch}:LAB?",
+        ":BUS{ch}:LAB %d",
+        """Control the label display state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    position = Channel.control(
+        ":BUS{ch}:POS?",
+        ":BUS{ch}:POS %d",
+        """Control the vertical position (int).""",
+        validator=strict_range,
+        values=[-250, 250],
+        cast=int,
+    )
+
+    parallel_bus = Channel.control(
+        ":BUS{ch}:PAR:BUS?",
+        ":BUS{ch}:PAR:BUS %s",
+        """Control the parallel bus source (str).""",
+        validator=strict_discrete_set,
+        values=[
+            "CH1",
+            "CH2",
+            "CH3",
+            "CH4",
+            "D7D0",
+            "D15D8",
+            "D15D0",
+            "D0D7",
+            "D8D15",
+            "D0D15",
+            "USER",
+        ],
+        cast=str,
+    )
+
+    parallel_clk = Channel.control(
+        ":BUS{ch}:PAR:CLK?",
+        ":BUS{ch}:PAR:CLK %s",
+        """Control the parallel clock source (str).""",
+        validator=strict_discrete_set,
+        values=[*PROTOCOL_SOURCES, "OFF"],
+        cast=str,
+    )
+
+    parallel_slope = Channel.control(
+        ":BUS{ch}:PAR:SLOP?",
+        ":BUS{ch}:PAR:SLOP %s",
+        """Control the parallel clock slope (str).""",
+        validator=strict_discrete_set,
+        values=["POS", "NEG", "BOTH"],
+        cast=str,
+    )
+
+    parallel_width = Channel.control(
+        ":BUS{ch}:PAR:WIDT?",
+        ":BUS{ch}:PAR:WIDT %d",
+        """Control the parallel data width (int).""",
+        validator=strict_range,
+        values=[0, 20],
+        cast=int,
+    )
+
+    parallel_bitx = Channel.control(
+        ":BUS{ch}:PAR:BITX?",
+        ":BUS{ch}:PAR:BITX %d",
+        """Control the selected parallel bit (int).""",
+        cast=int,
+    )
+
+    parallel_source = Channel.control(
+        ":BUS{ch}:PAR:SOUR?",
+        ":BUS{ch}:PAR:SOUR %s",
+        """Control the parallel bit source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    parallel_polarity = Channel.control(
+        ":BUS{ch}:PAR:POL?",
+        ":BUS{ch}:PAR:POL %s",
+        """Control the parallel polarity (str).""",
+        validator=strict_discrete_set,
+        values=["NEG", "POS"],
+        cast=str,
+    )
+
+    parallel_noise_reject = Channel.control(
+        ":BUS{ch}:PAR:NREJ?",
+        ":BUS{ch}:PAR:NREJ %d",
+        """Control the parallel noise rejection state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    parallel_noise_reject_time = Channel.control(
+        ":BUS{ch}:PAR:NRT?",
+        ":BUS{ch}:PAR:NRT %g",
+        """Control the parallel noise rejection time in seconds (float).""",
+        validator=strict_range,
+        values=[0, 1],
+        cast=float,
+    )
+
+    rs232_tx = Channel.control(
+        ":BUS{ch}:RS232:TX?",
+        ":BUS{ch}:RS232:TX %s",
+        """Control the RS232 transmit source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES_WITH_OFF,
+        cast=str,
+    )
+
+    rs232_rx = Channel.control(
+        ":BUS{ch}:RS232:RX?",
+        ":BUS{ch}:RS232:RX %s",
+        """Control the RS232 receive source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES_WITH_OFF,
+        cast=str,
+    )
+
+    rs232_polarity = Channel.control(
+        ":BUS{ch}:RS232:POL?",
+        ":BUS{ch}:RS232:POL %s",
+        """Control the RS232 polarity (str).""",
+        validator=strict_discrete_set,
+        values=["POS", "NEG"],
+        cast=str,
+    )
+
+    rs232_endian = Channel.control(
+        ":BUS{ch}:RS232:END?",
+        ":BUS{ch}:RS232:END %s",
+        """Control the RS232 bit order (str).""",
+        validator=strict_discrete_set,
+        values=["MSB", "LSB"],
+        cast=str,
+    )
+
+    rs232_baud = Channel.control(
+        ":BUS{ch}:RS232:BAUD?",
+        ":BUS{ch}:RS232:BAUD %d",
+        """Control the RS232 baud rate in bits per second (int).""",
+        validator=strict_range,
+        values=[1, 20_000_000],
+        cast=int,
+    )
+
+    rs232_data_bits = Channel.control(
+        ":BUS{ch}:RS232:DBIT?",
+        ":BUS{ch}:RS232:DBIT %d",
+        """Control the RS232 data-bit count (int).""",
+        validator=strict_discrete_set,
+        values=[5, 6, 7, 8, 9],
+        cast=int,
+    )
+
+    rs232_stop_bits = Channel.control(
+        ":BUS{ch}:RS232:SBIT?",
+        ":BUS{ch}:RS232:SBIT %g",
+        """Control the RS232 stop-bit count (float).""",
+        validator=strict_discrete_set,
+        values=[1, 1.5, 2],
+        cast=float,
+    )
+
+    rs232_parity = Channel.control(
+        ":BUS{ch}:RS232:PAR?",
+        ":BUS{ch}:RS232:PAR %s",
+        """Control the RS232 parity (str).""",
+        validator=strict_discrete_set,
+        values=["NONE", "ODD", "EVEN"],
+        cast=str,
+    )
+
+    rs232_packet = Channel.control(
+        ":BUS{ch}:RS232:PACK?",
+        ":BUS{ch}:RS232:PACK %d",
+        """Control the RS232 packet decoding state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    rs232_pend = Channel.control(
+        ":BUS{ch}:RS232:PEND?",
+        ":BUS{ch}:RS232:PEND %s",
+        """Control the RS232 packet terminator (str).""",
+        validator=strict_discrete_set,
+        values=["NULL", "LF", "CR", "SP"],
+        cast=str,
+    )
+
+    iic_clock_source = Channel.control(
+        ":BUS{ch}:IIC:SCLK:SOUR?",
+        ":BUS{ch}:IIC:SCLK:SOUR %s",
+        """Control the I2C clock source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    iic_data_source = Channel.control(
+        ":BUS{ch}:IIC:SDA:SOUR?",
+        ":BUS{ch}:IIC:SDA:SOUR %s",
+        """Control the I2C data source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    iic_address = Channel.control(
+        ":BUS{ch}:IIC:ADDR?",
+        ":BUS{ch}:IIC:ADDR %s",
+        """Control the I2C address display mode (str).""",
+        validator=strict_discrete_set,
+        values=["NORM", "RW"],
+        cast=str,
+    )
+
+    spi_clock_source = Channel.control(
+        ":BUS{ch}:SPI:SCLK:SOUR?",
+        ":BUS{ch}:SPI:SCLK:SOUR %s",
+        """Control the SPI clock source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    spi_clock_slope = Channel.control(
+        ":BUS{ch}:SPI:SCLK:SLOP?",
+        ":BUS{ch}:SPI:SCLK:SLOP %s",
+        """Control the SPI clock slope (str).""",
+        validator=strict_discrete_set,
+        values=["POS", "NEG"],
+        cast=str,
+    )
+
+    spi_miso_source = Channel.control(
+        ":BUS{ch}:SPI:MISO:SOUR?",
+        ":BUS{ch}:SPI:MISO:SOUR %s",
+        """Control the SPI MISO source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES_WITH_OFF,
+        cast=str,
+    )
+
+    spi_miso_polarity = Channel.control(
+        ":BUS{ch}:SPI:MISO:POL?",
+        ":BUS{ch}:SPI:MISO:POL %s",
+        """Control the SPI MISO polarity (str).""",
+        validator=strict_discrete_set,
+        values=["HIGH", "LOW"],
+        cast=str,
+    )
+
+    spi_mosi_source = Channel.control(
+        ":BUS{ch}:SPI:MOSI:SOUR?",
+        ":BUS{ch}:SPI:MOSI:SOUR %s",
+        """Control the SPI MOSI source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES_WITH_OFF,
+        cast=str,
+    )
+
+    spi_mosi_polarity = Channel.control(
+        ":BUS{ch}:SPI:MOSI:POL?",
+        ":BUS{ch}:SPI:MOSI:POL %s",
+        """Control the SPI MOSI polarity (str).""",
+        validator=strict_discrete_set,
+        values=["HIGH", "LOW"],
+        cast=str,
+    )
+
+    spi_data_bits = Channel.control(
+        ":BUS{ch}:SPI:DBIT?",
+        ":BUS{ch}:SPI:DBIT %d",
+        """Control the SPI data-bit count (int).""",
+        validator=strict_range,
+        values=[4, 32],
+        cast=int,
+    )
+
+    spi_endian = Channel.control(
+        ":BUS{ch}:SPI:END?",
+        ":BUS{ch}:SPI:END %s",
+        """Control the SPI bit order (str).""",
+        validator=strict_discrete_set,
+        values=["MSB", "LSB"],
+        cast=str,
+    )
+
+    spi_mode = Channel.control(
+        ":BUS{ch}:SPI:MODE?",
+        ":BUS{ch}:SPI:MODE %s",
+        """Control the SPI framing mode (str).""",
+        validator=strict_discrete_set,
+        values=["CS", "TIM"],
+        cast=str,
+    )
+
+    spi_timeout_time = Channel.control(
+        ":BUS{ch}:SPI:TIM:TIME?",
+        ":BUS{ch}:SPI:TIM:TIME %g",
+        """Control the SPI timeout in seconds (float).""",
+        validator=strict_range,
+        values=[8e-9, 10],
+        cast=float,
+    )
+
+    spi_ss_source = Channel.control(
+        ":BUS{ch}:SPI:SS:SOUR?",
+        ":BUS{ch}:SPI:SS:SOUR %s",
+        """Control the SPI slave-select source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    spi_ss_polarity = Channel.control(
+        ":BUS{ch}:SPI:SS:POL?",
+        ":BUS{ch}:SPI:SS:POL %s",
+        """Control the SPI slave-select polarity (str).""",
+        validator=strict_discrete_set,
+        values=["HIGH", "LOW"],
+        cast=str,
+    )
+
+    can_source = Channel.control(
+        ":BUS{ch}:CAN:SOUR?",
+        ":BUS{ch}:CAN:SOUR %s",
+        """Control the CAN source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    can_source_type = Channel.control(
+        ":BUS{ch}:CAN:STYP?",
+        ":BUS{ch}:CAN:STYP %s",
+        """Control the CAN source type (str).""",
+        validator=strict_discrete_set,
+        values=["TX", "RX", "CANH", "CANL", "DIFF"],
+        cast=str,
+    )
+
+    can_baud = Channel.control(
+        ":BUS{ch}:CAN:BAUD?",
+        ":BUS{ch}:CAN:BAUD %d",
+        """Control the CAN baud rate in bits per second (int).""",
+        validator=strict_range,
+        values=[10_000, 5_000_000],
+        cast=int,
+    )
+
+    can_sample_point = Channel.control(
+        ":BUS{ch}:CAN:SPO?",
+        ":BUS{ch}:CAN:SPO %d",
+        """Control the CAN sample point in percent (int).""",
+        validator=strict_range,
+        values=[10, 90],
+        cast=int,
+    )
+
+    flexray_baud = Channel.control(
+        ":BUS{ch}:FLEX:BAUD?",
+        ":BUS{ch}:FLEX:BAUD %d",
+        """Control the FlexRay baud rate in bits per second (int).""",
+        validator=strict_discrete_set,
+        values=[2_500_000, 5_000_000, 10_000_000],
+        cast=int,
+    )
+
+    flexray_source = Channel.control(
+        ":BUS{ch}:FLEX:SOUR?",
+        ":BUS{ch}:FLEX:SOUR %s",
+        """Control the FlexRay source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    flexray_sample_point = Channel.control(
+        ":BUS{ch}:FLEX:SPO?",
+        ":BUS{ch}:FLEX:SPO %d",
+        """Control the FlexRay sample point in percent (int).""",
+        validator=strict_range,
+        values=[10, 90],
+        cast=int,
+    )
+
+    flexray_source_type = Channel.control(
+        ":BUS{ch}:FLEX:STYP?",
+        ":BUS{ch}:FLEX:STYP %s",
+        """Control the FlexRay source type (str).""",
+        validator=strict_discrete_set,
+        values=["BP", "BM", "RT"],
+        cast=str,
+    )
+
+    lin_baud = Channel.control(
+        ":BUS{ch}:LIN:BAUD?",
+        ":BUS{ch}:LIN:BAUD %d",
+        """Control the LIN baud rate in bits per second (int).""",
+        validator=strict_range,
+        values=[2_400, 20_000_000],
+        cast=int,
+    )
+
+    lin_polarity = Channel.control(
+        ":BUS{ch}:LIN:POL?",
+        ":BUS{ch}:LIN:POL %d",
+        """Control the LIN polarity state (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    lin_source = Channel.control(
+        ":BUS{ch}:LIN:SOUR?",
+        ":BUS{ch}:LIN:SOUR %s",
+        """Control the LIN source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    lin_standard = Channel.control(
+        ":BUS{ch}:LIN:STAN?",
+        ":BUS{ch}:LIN:STAN %s",
+        """Control the LIN standard (str).""",
+        validator=strict_discrete_set,
+        values=["V1X", "V2X", "MIX"],
+        cast=str,
+    )
+
+    iis_source_clock = Channel.control(
+        ":BUS{ch}:IIS:SOUR:CLOC?",
+        ":BUS{ch}:IIS:SOUR:CLOC %s",
+        """Control the I2S clock source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    iis_source_word_select = Channel.control(
+        ":BUS{ch}:IIS:SOUR:WSEL?",
+        ":BUS{ch}:IIS:SOUR:WSEL %s",
+        """Control the I2S word-select source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    iis_alignment = Channel.control(
+        ":BUS{ch}:IIS:ALIG?",
+        ":BUS{ch}:IIS:ALIG %s",
+        """Control the I2S alignment (str).""",
+        validator=strict_discrete_set,
+        values=["IIS", "RJ", "LJ"],
+        cast=str,
+    )
+
+    iis_clock_slope = Channel.control(
+        ":BUS{ch}:IIS:CLOC:SLOP?",
+        ":BUS{ch}:IIS:CLOC:SLOP %s",
+        """Control the I2S clock slope (str).""",
+        validator=strict_discrete_set,
+        values=["NEG", "POS"],
+        cast=str,
+    )
+
+    iis_right_width = Channel.control(
+        ":BUS{ch}:IIS:RWID?",
+        ":BUS{ch}:IIS:RWID %d",
+        """Control the I2S right-channel width (int).""",
+        validator=strict_range,
+        values=[4, 32],
+        cast=int,
+    )
+
+    m1553_source = Channel.control(
+        ":BUS{ch}:M1553:SOUR?",
+        ":BUS{ch}:M1553:SOUR %s",
+        """Control the MIL-STD-1553 source (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    iis_source_data = Channel.control(
+        ":BUS{ch}:IIS:SOUR:DATA?",
+        ":BUS{ch}:IIS:SOUR:DATA %s",
+        """Control the I2S data source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    def set_threshold(self, threshold_type: str, value: float) -> None:
+        """Set the threshold in Volts for one documented decoding source type."""
+        threshold_type = strict_discrete_set(threshold_type, BUS_THRESHOLD_TYPES)
+        self.write(f":BUS{self.id}:THR {value:g},{threshold_type}")
+
+    def threshold(self, threshold_type: str) -> float:
+        """Return the threshold in Volts for one documented decoding source type."""
+        threshold_type = strict_discrete_set(threshold_type, BUS_THRESHOLD_TYPES)
+        return float(self.ask(f":BUS{self.id}:THR? {threshold_type}"))
+
+    def read_events(self) -> str:
+        """Return the decoded event table with its decoding-type prefix."""
+        response = self.ask(f":BUS{self.id}:DATA?")
+        return _parse_ieee_block(response.encode(), "Bus event table response").decode()
+
+    def export_events(self, path: str) -> None:
+        """Export the decoded event table to an instrument file path."""
+        if not isinstance(path, str):
+            raise TypeError("Event export path must be a string.")
+        self.write(f":BUS{self.id}:EEXP {path}")
+
+
+class TriggerSubsystem(Channel):
+    """Represent MSO5000 serial-protocol trigger configuration."""
+
+    rs232_source = Channel.control(
+        ":TRIG:RS232:SOUR?",
+        ":TRIG:RS232:SOUR %s",
+        """Control the RS232 source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    rs232_when = Channel.control(
+        ":TRIG:RS232:WHEN?",
+        ":TRIG:RS232:WHEN %s",
+        """Control the RS232 trigger condition (str).""",
+        validator=strict_discrete_set,
+        values=["STAR", "ERR", "CERR", "DATA"],
+        cast=str,
+    )
+
+    rs232_parity = Channel.control(
+        ":TRIG:RS232:PAR?",
+        ":TRIG:RS232:PAR %s",
+        """Control the RS232 parity (str).""",
+        validator=strict_discrete_set,
+        values=["EVEN", "ODD", "NONE"],
+        cast=str,
+    )
+
+    rs232_stop = Channel.control(
+        ":TRIG:RS232:STOP?",
+        ":TRIG:RS232:STOP %g",
+        """Control the RS232 stop-bit count (float).""",
+        validator=strict_discrete_set,
+        values=[1, 1.5, 2],
+        cast=float,
+    )
+
+    rs232_data = Channel.control(
+        ":TRIG:RS232:DATA?",
+        ":TRIG:RS232:DATA %d",
+        """Control the RS232 trigger data (int).""",
+        validator=strict_range,
+        values=[0, 255],
+        cast=int,
+    )
+
+    rs232_width = Channel.control(
+        ":TRIG:RS232:WIDT?",
+        ":TRIG:RS232:WIDT %d",
+        """Control the RS232 data width (int).""",
+        validator=strict_discrete_set,
+        values=[5, 6, 7, 8],
+        cast=int,
+    )
+
+    rs232_baud = Channel.control(
+        ":TRIG:RS232:BAUD?",
+        ":TRIG:RS232:BAUD %d",
+        """Control the RS232 baud rate in bits per second (int).""",
+        validator=strict_range,
+        values=[1, 20_000_000],
+        cast=int,
+    )
+
+    rs232_level = Channel.control(
+        ":TRIG:RS232:LEV?",
+        ":TRIG:RS232:LEV %g",
+        """Control the RS232 trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    iic_clock_source = Channel.control(
+        ":TRIG:IIC:SCL?",
+        ":TRIG:IIC:SCL %s",
+        """Control the I2C clock source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    iic_data_source = Channel.control(
+        ":TRIG:IIC:SDA?",
+        ":TRIG:IIC:SDA %s",
+        """Control the I2C data source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    iic_when = Channel.control(
+        ":TRIG:IIC:WHEN?",
+        ":TRIG:IIC:WHEN %s",
+        """Control the I2C trigger condition (str).""",
+        validator=strict_discrete_set,
+        values=["STAR", "REST", "STOP", "NACK", "ADDR", "DATA", "ADAT"],
+        cast=str,
+    )
+
+    iic_address_width = Channel.control(
+        ":TRIG:IIC:AWID?",
+        ":TRIG:IIC:AWID %d",
+        """Control the I2C address width (int).""",
+        validator=strict_discrete_set,
+        values=[7, 8, 10],
+        cast=int,
+    )
+
+    iic_address = Channel.control(
+        ":TRIG:IIC:ADDR?",
+        ":TRIG:IIC:ADDR %d",
+        """Control the I2C address (int).""",
+        validator=strict_range,
+        values=[0, 1023],
+        cast=int,
+    )
+
+    iic_direction = Channel.control(
+        ":TRIG:IIC:DIR?",
+        ":TRIG:IIC:DIR %s",
+        """Control the I2C transfer direction (str).""",
+        validator=strict_discrete_set,
+        values=["READ", "WRIT", "RWR"],
+        cast=str,
+    )
+
+    iic_data = Channel.control(
+        ":TRIG:IIC:DATA?",
+        ":TRIG:IIC:DATA %d",
+        """Control the I2C trigger data (int).""",
+        validator=strict_range,
+        values=[0, 2**40 - 1],
+        cast=int,
+    )
+
+    iic_clock_level = Channel.control(
+        ":TRIG:IIC:CLEV?",
+        ":TRIG:IIC:CLEV %g",
+        """Control the I2C clock trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    iic_data_level = Channel.control(
+        ":TRIG:IIC:DLEV?",
+        ":TRIG:IIC:DLEV %g",
+        """Control the I2C data trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    iic_data_bytes = Channel.control(
+        ":TRIG:IIC:DBYT?",
+        ":TRIG:IIC:DBYT %d",
+        """Control the I2C trigger data-byte count (int).""",
+        validator=strict_range,
+        values=[1, 5],
+        cast=int,
+    )
+
+    can_baud = Channel.control(
+        ":TRIG:CAN:BAUD?",
+        ":TRIG:CAN:BAUD %d",
+        """Control the CAN baud rate in bits per second (int).""",
+        validator=strict_range,
+        values=[10_000, 5_000_000],
+        cast=int,
+    )
+
+    can_source = Channel.control(
+        ":TRIG:CAN:SOUR?",
+        ":TRIG:CAN:SOUR %s",
+        """Control the CAN source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    can_source_type = Channel.control(
+        ":TRIG:CAN:STYP?",
+        ":TRIG:CAN:STYP %s",
+        """Control the CAN source type (str).""",
+        validator=strict_discrete_set,
+        values=["H", "L", "RXTX", "DIFF"],
+        cast=str,
+    )
+
+    can_when = Channel.control(
+        ":TRIG:CAN:WHEN?",
+        ":TRIG:CAN:WHEN %s",
+        """Control the CAN trigger condition (str).""",
+        validator=strict_discrete_set,
+        values=[
+            "SOF",
+            "EOF",
+            "IDR",
+            "OVER",
+            "IDFR",
+            "DAT",
+            "IDD",
+            "ERFR",
+            "ERAN",
+            "ERCH",
+            "ERF",
+            "ERR",
+            "ERB",
+        ],
+        cast=str,
+    )
+
+    can_sample_point = Channel.control(
+        ":TRIG:CAN:SPO?",
+        ":TRIG:CAN:SPO %d",
+        """Control the CAN sample point in percent (int).""",
+        validator=strict_range,
+        values=[10, 90],
+        cast=int,
+    )
+
+    can_level = Channel.control(
+        ":TRIG:CAN:LEV?",
+        ":TRIG:CAN:LEV %g",
+        """Control the CAN trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    spi_clock_source = Channel.control(
+        ":TRIG:SPI:SCL?",
+        ":TRIG:SPI:SCL %s",
+        """Control the SPI clock source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    spi_data_source = Channel.control(
+        ":TRIG:SPI:SDA?",
+        ":TRIG:SPI:SDA %s",
+        """Control the SPI data source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    spi_when = Channel.control(
+        ":TRIG:SPI:WHEN?",
+        ":TRIG:SPI:WHEN %s",
+        """Control the SPI trigger condition (str).""",
+        validator=strict_discrete_set,
+        values=["CS", "TIM"],
+        cast=str,
+    )
+
+    spi_width = Channel.control(
+        ":TRIG:SPI:WIDT?",
+        ":TRIG:SPI:WIDT %d",
+        """Control the SPI data width (int).""",
+        validator=strict_range,
+        values=[4, 32],
+        cast=int,
+    )
+
+    spi_data = Channel.control(
+        ":TRIG:SPI:DATA?",
+        ":TRIG:SPI:DATA %d",
+        """Control the SPI trigger data (int).""",
+        validator=strict_range,
+        values=[0, 2**32 - 1],
+        cast=int,
+    )
+
+    spi_timeout = Channel.control(
+        ":TRIG:SPI:TIM?",
+        ":TRIG:SPI:TIM %g",
+        """Control the SPI timeout in seconds (float).""",
+        validator=strict_range,
+        values=[8e-9, 10],
+        cast=float,
+    )
+
+    spi_slope = Channel.control(
+        ":TRIG:SPI:SLOP?",
+        ":TRIG:SPI:SLOP %s",
+        """Control the SPI clock slope (str).""",
+        validator=strict_discrete_set,
+        values=["POS", "NEG"],
+        cast=str,
+    )
+
+    spi_clock_level = Channel.control(
+        ":TRIG:SPI:CLEV?",
+        ":TRIG:SPI:CLEV %g",
+        """Control the SPI clock trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    spi_data_level = Channel.control(
+        ":TRIG:SPI:DLEV?",
+        ":TRIG:SPI:DLEV %g",
+        """Control the SPI data trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    spi_select_level = Channel.control(
+        ":TRIG:SPI:SLEV?",
+        ":TRIG:SPI:SLEV %g",
+        """Control the SPI slave-select trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    spi_mode = Channel.control(
+        ":TRIG:SPI:MODE?",
+        ":TRIG:SPI:MODE %s",
+        """Control the SPI slave-select polarity (str).""",
+        validator=strict_discrete_set,
+        values=["HIGH", "LOW"],
+        cast=str,
+    )
+
+    spi_cs = Channel.control(
+        ":TRIG:SPI:CS?",
+        ":TRIG:SPI:CS %s",
+        """Control the SPI slave-select source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    flexray_baud = Channel.control(
+        ":TRIG:FLEX:BAUD?",
+        ":TRIG:FLEX:BAUD %d",
+        """Control the FlexRay baud rate in bits per second (int).""",
+        validator=strict_discrete_set,
+        values=[2_500_000, 5_000_000, 10_000_000],
+        cast=int,
+    )
+
+    flexray_level = Channel.control(
+        ":TRIG:FLEX:LEV?",
+        ":TRIG:FLEX:LEV %g",
+        """Control the FlexRay trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    flexray_source = Channel.control(
+        ":TRIG:FLEX:SOUR?",
+        ":TRIG:FLEX:SOUR %s",
+        """Control the FlexRay source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    flexray_when = Channel.control(
+        ":TRIG:FLEX:WHEN?",
+        ":TRIG:FLEX:WHEN %s",
+        """Control the FlexRay trigger condition (str).""",
+        validator=strict_discrete_set,
+        values=["FRAM", "SYMB", "ERR", "TSS"],
+        cast=str,
+    )
+
+    iis_alignment = Channel.control(
+        ":TRIG:IIS:ALIG?",
+        ":TRIG:IIS:ALIG %s",
+        """Control the I2S alignment (str).""",
+        validator=strict_discrete_set,
+        values=["LJ", "RJ", "IIS"],
+        cast=str,
+    )
+
+    iis_clock_slope = Channel.control(
+        ":TRIG:IIS:CLOC:SLOP?",
+        ":TRIG:IIS:CLOC:SLOP %s",
+        """Control the I2S clock slope (str).""",
+        validator=strict_discrete_set,
+        values=["NEG", "POS"],
+        cast=str,
+    )
+
+    iis_source_clock = Channel.control(
+        ":TRIG:IIS:SOUR:CLOC?",
+        ":TRIG:IIS:SOUR:CLOC %s",
+        """Control the I2S clock source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    iis_source_data = Channel.control(
+        ":TRIG:IIS:SOUR:DATA?",
+        ":TRIG:IIS:SOUR:DATA %s",
+        """Control the I2S data source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    iis_source_word_select = Channel.control(
+        ":TRIG:IIS:SOUR:WSEL?",
+        ":TRIG:IIS:SOUR:WSEL %s",
+        """Control the I2S word-select source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    iis_when = Channel.control(
+        ":TRIG:IIS:WHEN?",
+        ":TRIG:IIS:WHEN %s",
+        """Control the I2S trigger comparison (str).""",
+        validator=strict_discrete_set,
+        values=["EQU", "NOT", "LESS", "GRE", "INR", "OUTR"],
+        cast=str,
+    )
+
+    iis_audio = Channel.control(
+        ":TRIG:IIS:AUD?",
+        ":TRIG:IIS:AUD %s",
+        """Control the I2S audio channel (str).""",
+        validator=strict_discrete_set,
+        values=["RIGH", "LEFT", "EITH"],
+        cast=str,
+    )
+
+    iis_data = Channel.control(
+        ":TRIG:IIS:DATA?",
+        ":TRIG:IIS:DATA %d",
+        """Control the I2S trigger data (int).""",
+        validator=strict_range,
+        values=[0, 2**32 - 1],
+        cast=int,
+    )
+
+    lin_source = Channel.control(
+        ":TRIG:LIN:SOUR?",
+        ":TRIG:LIN:SOUR %s",
+        """Control the LIN source (str).""",
+        validator=strict_discrete_set,
+        values=PROTOCOL_SOURCES,
+        cast=str,
+    )
+
+    lin_id = Channel.control(
+        ":TRIG:LIN:ID?",
+        ":TRIG:LIN:ID %d",
+        """Control the LIN identifier (int).""",
+        validator=strict_range,
+        values=[0, 63],
+        cast=int,
+    )
+
+    lin_baud = Channel.control(
+        ":TRIG:LIN:BAUD?",
+        ":TRIG:LIN:BAUD %d",
+        """Control the LIN baud rate in bits per second (int).""",
+        validator=strict_range,
+        values=[1_000, 20_000_000],
+        cast=int,
+    )
+
+    lin_standard = Channel.control(
+        ":TRIG:LIN:STAN?",
+        ":TRIG:LIN:STAN %s",
+        """Control the LIN standard (str).""",
+        validator=strict_discrete_set,
+        values=["1X", "2X", "BOTH"],
+        cast=str,
+    )
+
+    lin_sample_point = Channel.control(
+        ":TRIG:LIN:SAMP?",
+        ":TRIG:LIN:SAMP %d",
+        """Control the LIN sample point in percent (int).""",
+        validator=strict_range,
+        values=[10, 90],
+        cast=int,
+    )
+
+    lin_when = Channel.control(
+        ":TRIG:LIN:WHEN?",
+        ":TRIG:LIN:WHEN %s",
+        """Control the LIN trigger condition (str).""",
+        validator=strict_discrete_set,
+        values=["SYNC", "ID", "DATA", "IDD", "SLE", "WAK", "ERR"],
+        cast=str,
+    )
+
+    lin_level = Channel.control(
+        ":TRIG:LIN:LEV?",
+        ":TRIG:LIN:LEV %g",
+        """Control the LIN trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    m1553_source = Channel.control(
+        ":TRIG:M1553:SOUR?",
+        ":TRIG:M1553:SOUR %s",
+        """Control the MIL-STD-1553 source (str).""",
+        validator=strict_discrete_set,
+        values=ANALOG_SOURCES,
+        cast=str,
+    )
+
+    m1553_when = Channel.control(
+        ":TRIG:M1553:WHEN?",
+        ":TRIG:M1553:WHEN %s",
+        """Control the MIL-STD-1553 trigger condition (str).""",
+        validator=strict_discrete_set,
+        values=["SYNC", "DATA", "CMD", "STAT", "ERR"],
+        cast=str,
+    )
+
+    m1553_polarity = Channel.control(
+        ":TRIG:M1553:POL?",
+        ":TRIG:M1553:POL %s",
+        """Control the MIL-STD-1553 polarity (str).""",
+        validator=strict_discrete_set,
+        values=["POS", "NEG"],
+        cast=str,
+    )
+
+    m1553_alevel = Channel.control(
+        ":TRIG:M1553:ALEV?",
+        ":TRIG:M1553:ALEV %g",
+        """Control the MIL-STD-1553 upper trigger level in Volts (float).""",
+        cast=float,
+    )
+
+    m1553_blevel = Channel.control(
+        ":TRIG:M1553:BLEV?",
+        ":TRIG:M1553:BLEV %g",
+        """Control the MIL-STD-1553 lower trigger level in Volts (float).""",
+        cast=float,
+    )
+
+
 class MSO5000Channel(RigolOscilloscopeChannel):
     """Represent an analog input channel of a Rigol MSO5000 oscilloscope."""
 
@@ -1791,6 +3072,15 @@ class MSO5000(RigolOscilloscope):
     recording = Instrument.ChannelCreator(RecordingSubsystem)
     references = Instrument.ChannelCreator(ReferenceSubsystem)
     search = Instrument.ChannelCreator(SearchSubsystem)
+    logic_analyzer = Instrument.ChannelCreator(LogicAnalyzerSubsystem)
+    digital_channels = Instrument.MultiChannelCreator(DigitalChannel, list(range(16)), prefix="d_")
+    pod_1 = Instrument.ChannelCreator(LogicPod, 1)
+    pod_2 = Instrument.ChannelCreator(LogicPod, 2)
+    bus_1 = Instrument.ChannelCreator(BusChannel, 1)
+    bus_2 = Instrument.ChannelCreator(BusChannel, 2)
+    bus_3 = Instrument.ChannelCreator(BusChannel, 3)
+    bus_4 = Instrument.ChannelCreator(BusChannel, 4)
+    protocol_trigger = Instrument.ChannelCreator(TriggerSubsystem)
 
     acquisition_memory_depth_values = [
         "AUTO",
