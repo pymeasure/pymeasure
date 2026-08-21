@@ -104,7 +104,7 @@ def unique_filename(
     datetimeformat: str = "%Y-%m-%d",
     procedure: Procedure | None = None,
 ) -> str:
-    """Returns a unique filename based on the directory and prefix"""
+    """Return a unique filename based on the directory and prefix."""
     now = datetime.now()
     _directory = os.path.abspath(directory)
 

@@ -75,8 +75,6 @@ class Experiment(QtCore.QObject):
         self.data_filename = self.results.data_filename
         self.procedure = self.results.procedure
         self.curve_list = curve_list
-        if browser_item is None:
-            raise TypeError("Parameter 'browser_item' has to be defined.")
         self.browser_item = browser_item
 
 

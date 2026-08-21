@@ -309,7 +309,7 @@ class SequencerTreeView(QtWidgets.QTreeView):
     def model(self) -> SequencerTreeModel | None:
         return cast(SequencerTreeModel | None, super().model())
 
-    def setModel(self, model: SequencerTreeModel | None) -> None: # pyright: ignore[reportIncompatibleMethodOverride]
+    def setModel(self, model: SequencerTreeModel | None) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         super().setModel(model)
         self.setColumnWidth(0, int(0.7 * self.viewport_width))
         self.setColumnWidth(1, int(0.9 * self.viewport_width))
