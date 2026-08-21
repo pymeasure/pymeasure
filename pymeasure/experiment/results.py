@@ -461,7 +461,7 @@ class Results:
                 self.reload()
             except Exception:  # noqa: BLE001
                 # Empty dataframe
-                self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
+                self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)  # pyright: ignore[reportArgumentType]  # pandas accepts list[str] at runtime
         else:  # Concatenate additional data, if any, to already loaded data
             # Get current filesize, if same as _last_file_size, return data
             try:
