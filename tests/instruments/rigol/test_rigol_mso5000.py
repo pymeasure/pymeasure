@@ -2486,6 +2486,69 @@ def test_awg_upload_waveform():
         instrument.awg_2.upload_waveform(data)
 
 
+@pytest.mark.parametrize(
+    "name, command, value, reply",
+    [
+        ("dhcp_enabled", "DHCP", True, "1"),
+        ("auto_ip_enabled", "AUT", False, "0"),
+        ("static_ip_enabled", "MAN", True, "1"),
+        ("mdns_enabled", "MDNS", False, "0"),
+    ],
+)
+def test_network_boolean_controls(name, command, value, reply):
+    with expected_protocol(
+        MSO5000, [(f":LAN:{command} {int(value)}", None), (f":LAN:{command}?", reply)]
+    ) as instrument:
+        setattr(instrument.network, name, value)
+        assert getattr(instrument.network, name) is value
+
+
+@pytest.mark.parametrize(
+    "name, command, value",
+    [
+        ("gateway", "GAT", "192.168.1.1"),
+        ("dns", "DNS", "192.168.1.1"),
+        ("ip_address", "IPAD", "192.168.1.207"),
+        ("subnet_mask", "SMAS", "255.255.255.0"),
+        ("host_name", "HOST:NAME", "RIGOL_TEST"),
+        ("description", "DESC", "LAB_SCOPE"),
+    ],
+)
+def test_network_string_controls(name, command, value):
+    with expected_protocol(
+        MSO5000, [(f":LAN:{command} {value}", None), (f":LAN:{command}?", value)]
+    ) as instrument:
+        setattr(instrument.network, name, value)
+        assert getattr(instrument.network, name) == value
+
+
+@pytest.mark.parametrize(
+    "name, command, reply",
+    [
+        ("mac_address", "MAC", "00:19:AF:00:11:22"),
+        ("dhcp_server", "DSE", "192.168.1.1"),
+        ("status", "STAT", "CONFIGURED"),
+        ("visa_address", "VISA", "TCPIP::192.168.1.207::INSTR"),
+    ],
+)
+def test_network_measurements(name, command, reply):
+    with expected_protocol(MSO5000, [(f":LAN:{command}?", reply)]) as instrument:
+        assert getattr(instrument.network, name) == reply
+
+
+def test_network_apply():
+    with expected_protocol(MSO5000, [(":LAN:APPL", None)]) as instrument:
+        instrument.network.apply()
+
+
+@pytest.mark.parametrize(
+    "name", ["dhcp_enabled", "auto_ip_enabled", "static_ip_enabled", "mdns_enabled"]
+)
+def test_network_boolean_controls_reject_invalid_values(name):
+    with expected_protocol(MSO5000, []) as instrument, pytest.raises(ValueError):
+        setattr(instrument.network, name, 2)
+
+
 def test_integrated_functions_reject_invalid_values():
     with expected_protocol(MSO5000, []) as instrument:
         for child, name, value in [

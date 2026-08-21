@@ -3083,6 +3083,123 @@ class BusChannel(Channel):
         self.write(f":BUS{self.id}:EEXP {path}")
 
 
+class NetworkSubsystem(Channel):
+    """Represent MSO5000 network configuration and status."""
+
+    dhcp_enabled = Channel.control(
+        ":LAN:DHCP?",
+        ":LAN:DHCP %d",
+        """Control whether DHCP configuration is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    auto_ip_enabled = Channel.control(
+        ":LAN:AUT?",
+        ":LAN:AUT %d",
+        """Control whether automatic IP configuration is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    gateway = Channel.control(
+        ":LAN:GAT?",
+        ":LAN:GAT %s",
+        """Control the default gateway address (str).""",
+        cast=str,
+    )
+
+    dns = Channel.control(
+        ":LAN:DNS?",
+        ":LAN:DNS %s",
+        """Control the DNS server address (str).""",
+        cast=str,
+    )
+
+    mac_address = Channel.measurement(
+        ":LAN:MAC?",
+        """Measure the instrument MAC address (str).""",
+        cast=str,
+    )
+
+    dhcp_server = Channel.measurement(
+        ":LAN:DSE?",
+        """Measure the DHCP server address (str).""",
+        cast=str,
+    )
+
+    static_ip_enabled = Channel.control(
+        ":LAN:MAN?",
+        ":LAN:MAN %d",
+        """Control whether static IP configuration is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    ip_address = Channel.control(
+        ":LAN:IPAD?",
+        ":LAN:IPAD %s",
+        """Control the instrument IP address (str).""",
+        cast=str,
+    )
+
+    subnet_mask = Channel.control(
+        ":LAN:SMAS?",
+        ":LAN:SMAS %s",
+        """Control the subnet mask (str).""",
+        cast=str,
+    )
+
+    status = Channel.measurement(
+        ":LAN:STAT?",
+        """Measure the current network configuration status (str).""",
+        cast=str,
+    )
+
+    visa_address = Channel.measurement(
+        ":LAN:VISA?",
+        """Measure the instrument VISA address (str).""",
+        cast=str,
+    )
+
+    mdns_enabled = Channel.control(
+        ":LAN:MDNS?",
+        ":LAN:MDNS %d",
+        """Control whether multicast DNS is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+        cast=int,
+    )
+
+    host_name = Channel.control(
+        ":LAN:HOST:NAME?",
+        ":LAN:HOST:NAME %s",
+        """Control the network host name (str).""",
+        cast=str,
+    )
+
+    description = Channel.control(
+        ":LAN:DESC?",
+        ":LAN:DESC %s",
+        """Control the network description (str).""",
+        cast=str,
+    )
+
+    def apply(self) -> None:
+        """Apply the pending network configuration.
+
+        This may interrupt the current connection if an address or configuration mode changes.
+        """
+        self.write(":LAN:APPL")
+
+
 class TriggerSubsystem(Channel):
     """Represent MSO5000 serial-protocol trigger configuration."""
 
@@ -3675,6 +3792,7 @@ class MSO5000(RigolOscilloscope):
     awg_1 = Instrument.ChannelCreator(AWGChannel, 1)
     awg_2 = Instrument.ChannelCreator(AWGChannel, 2)
     logic_analyzer = Instrument.ChannelCreator(LogicAnalyzerSubsystem)
+    network = Instrument.ChannelCreator(NetworkSubsystem)
     digital_channels = Instrument.MultiChannelCreator(DigitalChannel, list(range(16)), prefix="d_")
     pod_1 = Instrument.ChannelCreator(LogicPod, 1)
     pod_2 = Instrument.ChannelCreator(LogicPod, 2)

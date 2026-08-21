@@ -26,9 +26,10 @@
 
 Invoke this module with ``--device-address``. Most tests only query the current
 configuration. ``test_waveform_data_transfer`` temporarily changes waveform
-transfer settings and restores them before returning. The suite does not issue
-reset, autoscale, self-test, front-panel emulation, setup upload/recall, or
-instrument-file write commands.
+transfer settings, and ``test_network_description_write_readback`` temporarily
+changes the inactive network description; both restore the previous values before
+returning. The suite does not apply network configuration or issue reset, autoscale,
+self-test, front-panel emulation, setup upload/recall, or instrument-file write commands.
 """
 
 import pytest
@@ -777,3 +778,39 @@ def test_awg_readback(scope):
     ]
     assert isinstance(scope.awg_1.output_enabled, bool)
     assert len(scope.awg_1.get_applied_waveform()) == 5
+
+
+def test_network_description_write_readback(scope):
+    saved = scope.network.description
+    try:
+        scope.network.description = "PYMEASURE_TEST"
+        assert scope.network.description == "PYMEASURE_TEST"
+    finally:
+        scope.network.description = saved
+    assert scope.network.description == saved
+
+
+def test_network_readback(scope):
+    assert isinstance(scope.network.dhcp_enabled, bool)
+    assert isinstance(scope.network.auto_ip_enabled, bool)
+    assert isinstance(scope.network.static_ip_enabled, bool)
+    assert isinstance(scope.network.mdns_enabled, bool)
+    assert isinstance(scope.network.gateway, str)
+    assert isinstance(scope.network.dns, str)
+    assert isinstance(scope.network.ip_address, str)
+    assert isinstance(scope.network.subnet_mask, str)
+    assert isinstance(scope.network.mac_address, str)
+    assert scope.network.status in [
+        "UNLINK",
+        "CONNECTED",
+        "INIT",
+        "IPCONFLICT",
+        "BUSY",
+        "CONFIGURED",
+        "DHCPFAILED",
+        "INVALIDIP",
+        "IPLOSE",
+    ]
+    assert isinstance(scope.network.visa_address, str)
+    assert isinstance(scope.network.host_name, str)
+    assert isinstance(scope.network.description, str)
