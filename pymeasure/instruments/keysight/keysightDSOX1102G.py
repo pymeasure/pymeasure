@@ -28,7 +28,7 @@ from typing import Literal
 
 import numpy as np
 
-from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin, cast_or_str
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -420,17 +420,17 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         return self._waveform_preamble()
 
     @property
-    def waveform_data(self):
+    def waveform_data(self) -> list[float]:
         """ Get the binary block of sampled data points transmitted using the IEEE 488.2 arbitrary
         block data format."""
         # Other waveform formats raise UnicodeDecodeError
         self.waveform_format = "ascii"
 
-        data = self.values(":waveform:data?", cast=cast_or_str(float))
+        raw_data = self.values(":waveform:data?", cast=str)
         # Strip header from first data element
-        data[0] = float(data[0][10:])
+        raw_data[0] = raw_data[0][10:]
 
-        return data
+        return [float(element) for element in raw_data]
 
     ################
     # System Setup #

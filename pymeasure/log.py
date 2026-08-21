@@ -22,24 +22,28 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
+
 import logging
 import logging.handlers
 from logging.handlers import QueueHandler
-from queue import Queue
+from multiprocessing import Queue
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class QueueListener(logging.handlers.QueueListener):
-    def is_alive(self):
+    def is_alive(self) -> bool:
         try:
-            return self._thread.is_alive()
+            return self._thread is not None and self._thread.is_alive()
         except AttributeError:
             return False
 
 
-def console_log(logger, level=logging.INFO, queue=None):
+def console_log(
+    logger: logging.Logger, level: int = logging.INFO, queue: Queue | None = None
+) -> Scribe:
     """Create a console log handler. Return a scribe thread object."""
     if queue is None:
         queue = Queue()
@@ -55,7 +59,13 @@ def console_log(logger, level=logging.INFO, queue=None):
     return scribe
 
 
-def file_log(logger, log_filename, level=logging.INFO, queue=None, **kwargs):
+def file_log(
+    logger: logging.Logger,
+    log_filename: str,
+    level: int = logging.INFO,
+    queue: Queue | None = None,
+    **kwargs,
+) -> Scribe:
     """Create a file log handler. Return a scribe thread object."""
     if queue is None:
         queue = Queue()
@@ -75,16 +85,24 @@ class Scribe(QueueListener):
 
     :param queue: The multiprocessing queue which the scriber will listen to.
     """
+    queue: Queue
 
-    def __init__(self, queue):
+    def __init__(self, queue: Queue):
         super().__init__(queue)
 
-    def handle(self, record):
+    def handle(self, record: logging.LogRecord) -> None:
         logging.getLogger(record.name).handle(record)
 
 
-def setup_logging(logger=None, console=False, console_level='INFO', filename=None,
-                  file_level='DEBUG', queue=None, file_kwargs=None):
+def setup_logging(
+    logger: logging.Logger | None = None,
+    console: bool = False,
+    console_level: str = "INFO",
+    filename: str | None = None,
+    file_level: str = "DEBUG",
+    queue: Queue | None = None,
+    file_kwargs: dict | None = None,
+) -> Scribe:
     """Setup logging for console and/or file logging. Returns a scribe thread object.
     Defaults to no logging."""
     if queue is None:
@@ -111,5 +129,5 @@ class TopicQueueHandler(QueueHandler):
         super().__init__(queue)
         self.topic = topic
 
-    def prepare(self, record):
+    def prepare(self, record: logging.LogRecord) -> tuple[str, logging.LogRecord]:
         return self.topic, record

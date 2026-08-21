@@ -53,9 +53,9 @@ class _InstanceValueDescriptor(Generic[T]):
     def __get__(self, obj: None, objtype: type) -> _InstanceValueDescriptor[T]: ...
 
     @overload
-    def __get__(self, obj: object, objtype: type) -> T | None: ...
+    def __get__(self, obj: object, objtype: type) -> T: ...
 
-    def __get__(self, obj, objtype=None):
+    def __get__(self, obj: None | object, objtype: type | None = None):
         """Return the parameter value, or ``self`` for class-level access.
 
         When no parameter container (or no matching entry) is present, fall
@@ -296,7 +296,7 @@ class IntegerParameter(Parameter[int]):
                 f"units={self.units},default={self.default})>")
 
 
-class BooleanParameter(Parameter[bool]):
+class BooleanParameter(Parameter[bool | np.bool_]):
     """ :class:`.Parameter` sub-class that uses the boolean type to
     store the value.
 

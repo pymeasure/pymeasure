@@ -368,7 +368,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
             )
 
     @property
-    def data_variables(self):
+    def data_variables(self) -> list[str]:
         """
         Get a string list of data variables for which measured data is available.
 
@@ -387,7 +387,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         varlist = dlist + dvar
         return list(filter(None, varlist))
 
-    def get_data(self, path=None):
+    def get_data(self, path: str | None = None) -> pd.DataFrame:
         """
         Get the measurement data from the instrument after completion.
 
@@ -404,6 +404,8 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         """
         if int(self.ask('*OPC?')):
             header = self.data_variables
+        else:
+            raise PermissionError("Not possible to read data during measurement.")
         self.write(":FORM:DATA ASC")
         # recursively get data for each variable
         for i, listvar in enumerate(header):
@@ -415,7 +417,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
                 data = np.column_stack((lastdata, data))
                 lastdata = data
 
-        df = pd.DataFrame(data=data, columns=header, index=None)
+        df = pd.DataFrame(data=data, columns=header, index=None)  # pyright: ignore[reportArgumentType]  # pandas accepts list[str] at runtime
         if path is not None:
             _, ext = os.path.splitext(path)
             if ext != ".csv":
