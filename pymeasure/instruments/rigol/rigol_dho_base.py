@@ -271,7 +271,7 @@ class DHOBase(RigolOscilloscope):
             "count": preamble["count"],
             "xincrement": preamble["x_increment"],
             "xorigin": preamble["x_origin"],
-            "xreference": preamble["x_reference"],
+            "xreference": int(preamble["x_reference"]),
             "yincrement": preamble["y_increment"],
             "yorigin": float(preamble["y_origin"]),
             "yreference": preamble["y_reference"],

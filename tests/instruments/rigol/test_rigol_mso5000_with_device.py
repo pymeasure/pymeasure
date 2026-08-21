@@ -46,13 +46,14 @@ SUPPORTED_MODELS = {"MSO5072", "MSO5074", "MSO5102", "MSO5104", "MSO5204", "MSO5
 def scope(connected_device_address):
     """Connect to an MSO5000 and verify that the requested model is supported."""
     instrument = MSO5000(connected_device_address)
-    identification = instrument.id
-    manufacturer, model, *_ = identification.split(",")
-    if manufacturer != "RIGOL TECHNOLOGIES" or model not in SUPPORTED_MODELS:
+    try:
+        identification = instrument.id
+        manufacturer, model, *_ = identification.split(",")
+        if manufacturer != "RIGOL TECHNOLOGIES" or model not in SUPPORTED_MODELS:
+            pytest.fail(f"Expected a supported Rigol MSO5000, received {identification!r}.")
+        yield instrument
+    finally:
         instrument.shutdown()
-        pytest.fail(f"Expected a supported Rigol MSO5000, received {identification!r}.")
-    yield instrument
-    instrument.shutdown()
 
 
 def test_acquisition_readback(scope):
@@ -218,22 +219,22 @@ def test_measurement_readback(scope):
 def test_reference_signal_measurement(scope):
     """Measure the 1 kHz, approximately 3 V reference output connected to CH1."""
     channel = scope.ch_1
-    saved_channel = (
-        channel.display_enabled,
-        channel.coupling,
-        channel.scale,
-        channel.offset,
-    )
-    saved_scope = (
-        scope.timebase_mode,
-        scope.timebase_scale,
-        scope.trigger_mode,
-        scope.edge_trigger_source,
-        scope.edge_trigger_slope,
-        scope.edge_trigger_level,
-        scope.trigger_sweep,
-        scope.trigger_status != "STOP",
-    )
+    saved_channel = {
+        "display_enabled": channel.display_enabled,
+        "coupling": channel.coupling,
+        "scale": channel.scale,
+        "offset": channel.offset,
+    }
+    saved_scope = {
+        "timebase_scale": scope.timebase_scale,
+        "timebase_mode": scope.timebase_mode,
+        "edge_trigger_source": scope.edge_trigger_source,
+        "edge_trigger_slope": scope.edge_trigger_slope,
+        "edge_trigger_level": scope.edge_trigger_level,
+        "trigger_sweep": scope.trigger_sweep,
+        "trigger_mode": scope.trigger_mode,
+    }
+    was_running = scope.trigger_status != "STOP"
 
     try:
         channel.display_enabled = True
@@ -261,18 +262,11 @@ def test_reference_signal_measurement(scope):
         assert second_frequency == pytest.approx(first_frequency, rel=0.01)
         assert second_amplitude == pytest.approx(first_amplitude, rel=0.1)
     finally:
-        channel.display_enabled = saved_channel[0]
-        channel.coupling = saved_channel[1]
-        channel.scale = saved_channel[2]
-        channel.offset = saved_channel[3]
-        scope.timebase_scale = saved_scope[1]
-        scope.timebase_mode = saved_scope[0]
-        scope.edge_trigger_source = saved_scope[3]
-        scope.edge_trigger_slope = saved_scope[4]
-        scope.edge_trigger_level = saved_scope[5]
-        scope.trigger_sweep = saved_scope[6]
-        scope.trigger_mode = saved_scope[2]
-        if saved_scope[7]:
+        for name, value in saved_channel.items():
+            setattr(channel, name, value)
+        for name, value in saved_scope.items():
+            setattr(scope, name, value)
+        if was_running:
             scope.run()
         else:
             scope.stop()
@@ -723,7 +717,31 @@ def test_logic_analyzer_readback(scope):
 )
 def test_bus_decoder_readback(scope, name):
     """Read one decoder setting with the matching decoder option installed."""
-    assert getattr(scope.bus_1, name) is not None
+    expected_type = {
+        "display_enabled": bool,
+        "event_table_enabled": bool,
+        "label_enabled": bool,
+        "parallel_noise_rejection_enabled": bool,
+        "rs232_packet_enabled": bool,
+        "lin_polarity": bool,
+        "position": int,
+        "parallel_width": int,
+        "parallel_bitx": int,
+        "rs232_baud": int,
+        "rs232_data_bits": int,
+        "spi_data_bits": int,
+        "can_baud": int,
+        "can_sample_point": int,
+        "flexray_baud": int,
+        "flexray_sample_point": int,
+        "lin_baud": int,
+        "iis_right_width": int,
+        "parallel_noise_reject_time": float,
+        "rs232_stop_bits": float,
+        "spi_timeout_time": float,
+    }.get(name, str)
+    result = getattr(scope.bus_1, name)
+    assert type(result) is expected_type
 
 
 @pytest.mark.parametrize(
@@ -793,7 +811,39 @@ def test_bus_decoder_readback(scope, name):
 )
 def test_protocol_trigger_readback(scope, name):
     """Read one protocol-trigger setting with the matching trigger option installed."""
-    assert getattr(scope.protocol_trigger, name) is not None
+    expected_type = {
+        "rs232_data": int,
+        "rs232_width": int,
+        "rs232_baud": int,
+        "iic_address_width": int,
+        "iic_address": int,
+        "iic_data": int,
+        "iic_data_bytes": int,
+        "can_baud": int,
+        "can_sample_point": int,
+        "spi_width": int,
+        "spi_data": int,
+        "flexray_baud": int,
+        "iis_data": int,
+        "lin_id": int,
+        "lin_baud": int,
+        "lin_sample_point": int,
+        "rs232_stop": float,
+        "rs232_level": float,
+        "iic_clock_level": float,
+        "iic_data_level": float,
+        "can_level": float,
+        "spi_timeout": float,
+        "spi_clock_level": float,
+        "spi_data_level": float,
+        "spi_select_level": float,
+        "flexray_level": float,
+        "lin_level": float,
+        "m1553_alevel": float,
+        "m1553_blevel": float,
+    }.get(name, str)
+    result = getattr(scope.protocol_trigger, name)
+    assert type(result) is expected_type
 
 
 def test_quick_operation_readback(scope):
@@ -850,32 +900,32 @@ def test_awg_loopback_control(scope):
     """Control G1 and verify its 1 kHz, 1 Vpp sine through the CH2 loopback."""
     awg = scope.awg_1
     channel = scope.ch_2
-    saved_awg = (
-        awg.output_enabled,
-        awg.output_impedance,
-        awg.function_shape,
-        awg.frequency_fixed,
-        awg.voltage_level_immediate_amplitude,
-        awg.voltage_level_immediate_offset,
-        awg.phase_adjust,
-    )
-    saved_channel = (
-        channel.display_enabled,
-        channel.coupling,
-        channel.probe,
-        channel.scale,
-        channel.offset,
-    )
-    saved_scope = (
-        scope.timebase_mode,
-        scope.timebase_scale,
-        scope.trigger_mode,
-        scope.edge_trigger_source,
-        scope.edge_trigger_slope,
-        scope.edge_trigger_level,
-        scope.trigger_sweep,
-        scope.trigger_status != "STOP",
-    )
+    saved_awg = {
+        "output_enabled": awg.output_enabled,
+        "output_impedance": awg.output_impedance,
+        "function_shape": awg.function_shape,
+        "frequency_fixed": awg.frequency_fixed,
+        "voltage_level_immediate_amplitude": awg.voltage_level_immediate_amplitude,
+        "voltage_level_immediate_offset": awg.voltage_level_immediate_offset,
+        "phase_adjust": awg.phase_adjust,
+    }
+    saved_channel = {
+        "display_enabled": channel.display_enabled,
+        "coupling": channel.coupling,
+        "probe": channel.probe,
+        "scale": channel.scale,
+        "offset": channel.offset,
+    }
+    saved_scope = {
+        "timebase_scale": scope.timebase_scale,
+        "timebase_mode": scope.timebase_mode,
+        "edge_trigger_source": scope.edge_trigger_source,
+        "edge_trigger_slope": scope.edge_trigger_slope,
+        "edge_trigger_level": scope.edge_trigger_level,
+        "trigger_sweep": scope.trigger_sweep,
+        "trigger_mode": scope.trigger_mode,
+    }
+    was_running = scope.trigger_status != "STOP"
 
     try:
         awg.output_enabled = False
@@ -907,30 +957,19 @@ def test_awg_loopback_control(scope):
         assert scope.measurements.item("VPP", "CHAN2") == pytest.approx(1, rel=0.3)
     finally:
         awg.output_enabled = False
-        awg.output_impedance = saved_awg[1]
-        awg.function_shape = saved_awg[2]
-        awg.frequency_fixed = saved_awg[3]
-        awg.voltage_level_immediate_amplitude = saved_awg[4]
-        awg.voltage_level_immediate_offset = saved_awg[5]
-        awg.phase_adjust = saved_awg[6]
+        for name, value in saved_awg.items():
+            if name != "output_enabled":
+                setattr(awg, name, value)
 
-        channel.display_enabled = saved_channel[0]
-        channel.coupling = saved_channel[1]
-        channel.probe = saved_channel[2]
-        channel.scale = saved_channel[3]
-        channel.offset = saved_channel[4]
-        scope.timebase_scale = saved_scope[1]
-        scope.timebase_mode = saved_scope[0]
-        scope.edge_trigger_source = saved_scope[3]
-        scope.edge_trigger_slope = saved_scope[4]
-        scope.edge_trigger_level = saved_scope[5]
-        scope.trigger_sweep = saved_scope[6]
-        scope.trigger_mode = saved_scope[2]
-        if saved_scope[7]:
+        for name, value in saved_channel.items():
+            setattr(channel, name, value)
+        for name, value in saved_scope.items():
+            setattr(scope, name, value)
+        if was_running:
             scope.run()
         else:
             scope.stop()
-        awg.output_enabled = saved_awg[0]
+        awg.output_enabled = saved_awg["output_enabled"]
         # Firmware 00.01.03.03.00 drops queries sent immediately after AWG restoration.
         time.sleep(1)
 

@@ -70,3 +70,19 @@ def test_read_ieee_block_rejects_zero_digit_count():
         inst.write(":WAV:DATA?")
         with pytest.raises(ValueError, match="invalid IEEE block header"):
             inst._read_ieee_block("Test response")
+
+
+def test_read_ieee_block_does_not_drain_after_data_beyond_declared_length(monkeypatch):
+    responses = iter([b"#1", b"4", b"data", b"x"])
+    calls = []
+
+    def read_bytes(count, break_on_termchar=False):
+        calls.append((count, break_on_termchar))
+        return next(responses)
+
+    with expected_protocol(RigolOscilloscope, []) as inst:
+        monkeypatch.setattr(inst, "read_bytes", read_bytes)
+        with pytest.raises(ValueError, match="beyond its declared IEEE block length"):
+            inst._read_ieee_block("Test response")
+
+    assert calls == [(2, False), (1, False), (4, False), (1, False)]
