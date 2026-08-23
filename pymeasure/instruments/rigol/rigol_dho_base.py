@@ -553,9 +553,7 @@ class DHOBase(SCPIMixin, Instrument):
         # Check status for MAX/RAW mode
         was_running = self.trigger_status != "STOP"
         if mode in ("MAX", "RAW") and was_running:
-            raise RuntimeError(
-                f"Scope must be in STOP state to acquire data in {mod} mode!"
-            )
+            raise RuntimeError(f"Scope must be in STOP state to acquire data in {mode} mode!")
 
         self._set_waveform_source(channel)
         self.write(f":WAV:MODE {mode}")
