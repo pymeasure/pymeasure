@@ -524,8 +524,8 @@ class DHOBase(SCPIMixin, Instrument):
     def get_waveform(self, channel=1, mode="NORM", fmt="BYTE"):
         """Download a waveform from the oscilloscope.
 
-        For ``"MAX"`` and ``"RAW"`` mode, the scope is automatically stopped
-        before reading and restarted afterwards if it was running.
+        For ``"MAX"`` and ``"RAW"`` mode, the scope needs to be stopped
+        before reading.
 
         :param channel: Channel number 1-4.
         :param mode: Waveform mode:
@@ -550,46 +550,34 @@ class DHOBase(SCPIMixin, Instrument):
         chunk_size = 1000
         dtype = "H" if fmt == "WORD" else "B"
 
-        # Stop scope if needed, remember state to restore later
+        # Check status for MAX/RAW mode
         was_running = self.trigger_status != "STOP"
         if mode in ("MAX", "RAW") and was_running:
-            self.stop()
-            time.sleep(0.1)  # wait for scope to be stopped
+            raise RuntimeError(
+                f"Scope must be in STOP state to acquire data in {mod} mode!"
+            )
 
-        try:
-            self._set_waveform_source(channel)
-            self.write(f":WAV:MODE {mode}")
-            self.write(f":WAV:FORM {fmt}")
+        self._set_waveform_source(channel)
+        self.write(f":WAV:MODE {mode}")
+        self.write(f":WAV:FORM {fmt}")
 
-            pre = self.get_waveform_preamble(channel)
+        pre = self.get_waveform_preamble(channel)
 
-            if mode in ("MAX", "RAW"):
-                try:
-                    n_total = int(float(self.ask(":ACQ:MDEP?")))
-                except (ValueError, TypeError):
-                    # safe fallback for AUTO or unexpected response
-                    n_total = pre["points"]
-            else:
+        if mode in ("MAX", "RAW"):
+            try:
+                n_total = int(float(self.ask(":ACQ:MDEP?")))
+            except (ValueError, TypeError):
+                # safe fallback for AUTO or unexpected response
                 n_total = pre["points"]
+        else:
+            n_total = pre["points"]
 
-            all_samples = []
-
-            if mode in ("MAX", "RAW"):
-                for start in range(1, n_total + 1, chunk_size):
-                    stop = min(start + chunk_size - 1, n_total)
-                    self.write(f":WAV:STAR {start}")
-                    self.write(f":WAV:STOP {stop}")
-                    self.write(":WAV:DATA?")
-                    header = self.read_bytes(2)
-                    n_digits = int(chr(header[1]))
-                    n_data_bytes = int(self.read_bytes(n_digits))
-                    raw = self.read_bytes(n_data_bytes)
-                    self.read_bytes(1)  # trailing terminator
-                    all_samples.append(
-                        np.frombuffer(raw, dtype=np.dtype(f"<{dtype}")))
-            else:
-                self.write(":WAV:STAR 1")
-                self.write(f":WAV:STOP {min(n_total, chunk_size)}")
+        all_samples = []
+        if mode in ("MAX", "RAW"):
+            for start in range(1, n_total + 1, chunk_size):
+                stop = min(start + chunk_size - 1, n_total)
+                self.write(f":WAV:STAR {start}")
+                self.write(f":WAV:STOP {stop}")
                 self.write(":WAV:DATA?")
                 header = self.read_bytes(2)
                 n_digits = int(chr(header[1]))
@@ -598,15 +586,20 @@ class DHOBase(SCPIMixin, Instrument):
                 self.read_bytes(1)  # trailing terminator
                 all_samples.append(
                     np.frombuffer(raw, dtype=np.dtype(f"<{dtype}")))
-
-        # Restore previous state
-        finally:
-            if mode in ("MAX", "RAW") and was_running:
-                self.run()
+        else:
+            self.write(":WAV:STAR 1")
+            self.write(f":WAV:STOP {min(n_total, chunk_size)}")
+            self.write(":WAV:DATA?")
+            header = self.read_bytes(2)
+            n_digits = int(chr(header[1]))
+            n_data_bytes = int(self.read_bytes(n_digits))
+            raw = self.read_bytes(n_data_bytes)
+            self.read_bytes(1)  # trailing terminator
+            all_samples.append(
+                np.frombuffer(raw, dtype=np.dtype(f"<{dtype}")))
 
         samples = np.concatenate(all_samples)
-        voltage = ((samples - pre["yorigin"] - pre["yreference"])
-                   * pre["yincrement"])
+        voltage = ((samples - pre["yorigin"] - pre["yreference"]) * pre["yincrement"])
         t = np.arange(len(samples)) * pre["xincrement"] + pre["xorigin"]
         return t, voltage
 
