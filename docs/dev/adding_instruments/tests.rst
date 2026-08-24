@@ -227,6 +227,51 @@ It is also possible to define derived fixtures, for example to put the device in
 
 In this case, do not specify the fixture's scope, so it is called again for every test function using it.
 
+Generating protocol tests from device tests
+-------------------------------------------
+
+If the driver works with a connected device, the :class:`~pymeasure.generator.Generator`
+can wrap the instrument in the device fixture and record the communication exercised by the
+device tests. A module-scoped generator fixture can then write the recorded communication as
+protocol tests after all device tests have finished:
+
+.. code-block:: python
+
+    from pathlib import Path
+
+    import pytest
+
+    from pymeasure.generator import Generator
+    from pymeasure.instruments.extreme5000 import Extreme5000
+
+
+    @pytest.fixture(scope="module")
+    def generator():
+        generator = Generator()
+        yield generator
+        output = Path(__file__).with_name("test_extreme5000.py")
+        generator.write_file(str(output))
+
+
+    @pytest.fixture(scope="module")
+    def extreme5000(connected_device_address, generator):
+        return generator.instantiate(
+            Extreme5000,
+            connected_device_address,
+            "extreme5000",
+            adapter_kwargs={},
+        )
+
+
+    def test_voltage(extreme5000):
+        extreme5000.voltage = 0.345
+        assert extreme5000.voltage == 0.3
+
+The wrapped instrument is used like a regular instrument. Property access and method calls are
+recorded while the device tests run, and the generated file uses
+:func:`~pymeasure.test.expected_protocol` so it can run later without a connected device.
+The generator overwrites its output file, so review the generated changes before committing them.
+
 To run the test, specify the address of the device to be used via the :code:`--device-address` command line argument and limit pytest to the relevant tests.
 You can filter tests with the :code:`-k` option or you can specify the filename.
 For example, if your tests are in a file called :code:`test_extreme5000_with_device.py`, invoke pytest with :code:`pytest -k extreme5000 --device-address "TCPIP::192.168.0.123::INSTR"`.
