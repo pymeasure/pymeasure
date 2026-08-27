@@ -94,8 +94,8 @@ class UNITUDP6933B(SCPIMixin, Instrument):
         strict_range(voltage, (0, 150))
         strict_range(current_limit, (0, 5))
 
-        # Unlike the GW Instek example, the UDP6933B has no general two-argument APPLy command. Its
-        # documented APPLy command recalls stored presets, so voltage and current are sent
-        # separately.
+        # Unlike the GW Instek example, the UDP6933B has no general two-argument APPLy
+        # command. Its documented APPLy command recalls stored presets, so voltage and
+        # current are sent separately.
         self.voltage_setpoint = voltage
         self.current_limit = current_limit
