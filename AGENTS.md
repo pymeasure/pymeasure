@@ -32,7 +32,9 @@ This file provides guidance to agents when working with code in this repository.
 - CamelCase should only be used for class names, unless working with Qt, where its use is common
 - It is recommended to use `ruff format` for code formatting
 - You may add type hints as you see fit, adhering to the guidelines set out in the typing package
+- Changes must keep the `pyright` check green in CI; do not silence type errors by removing annotations or casting unsoundly — fix the underlying types or add precise annotations instead
 - For typing use Python types like dict, list, if applicable
+- In Markdown files, start each sentence on a new line (semantic line breaks) so diffs show which sentence is affected; this applies to prose, not code blocks or tables
 
 ### Instrument drivers
 
@@ -53,7 +55,7 @@ This file provides guidance to agents when working with code in this repository.
 
 #### Property Creator Details
 
-- Use validators (strict_range, truncated_range, strict_discrete_set, truncated_discrete_set) to restrict property values
+- Use validators (strict_range, strict_discrete_set, etc.) to restrict property values; prefer strict validators by default, as truncated validators silently clip out-of-range values without feedback (only use a truncated validator when silent clipping is genuinely desired and documented in the property docstring)
 - Use map_values parameter when instrument commands require non-physical values
 - Implement boolean properties using maps with True/False values
 - Use set_process and get_process functions for value transformations (e.g., unit conversions)
@@ -82,11 +84,15 @@ This file provides guidance to agents when working with code in this repository.
 ## Documentation Standards
 
 - PyMeasure documents code using reStructuredText and the Sphinx documentation generator
-- All functions, classes, and methods should be documented in the code using a docstring
+- All functions, classes, and (public) methods should be documented in the code using a docstring
+- Private methods may omit a docstring when their name and signature (including type hints) make their behavior self-evident
+- Test methods (`test_*`) do not need a docstring; their name and body make their intent clear
 - Descriptive and specific docstrings are important for users to quickly understand properties and methods
 - Use triple-quoted strings (`"""`) to delimit docstrings
 - Start with one short summary line in imperative voice, with a period at the end
 - Optionally, after a blank line, include more detailed information
+- Do not add a docstring to `__init__` methods; document the class instead (per PEP257, the class docstring covers constructor behavior, including parameters)
+- Property setters do not need a docstring; only the getter's docstring is exposed as `__doc__` on the property
 - For functions and methods, add documentation on their parameters using the reStructuredText docstring format
 - For properties, start them with "Control", "Get", "Measure", or "Set" to indicate the kind of property
 - Add type and information about validators (if applicable) at the end of the summary line

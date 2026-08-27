@@ -23,9 +23,11 @@
 #
 
 import logging
+from collections.abc import Sequence
 
 import pyqtgraph as pg
 
+from ...experiment.results import Results
 from ..curves import ResultsCurve
 from ..Qt import QtCore, QtWidgets
 from .plot_frame import PlotFrame
@@ -40,9 +42,18 @@ class PlotWidget(TabWidget[ResultsCurve], QtWidgets.QWidget):
     to allow different columns of the data to be dynamically chosen
     """
 
-    def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, linewidth=1, parent=None):
-        super().__init__(name, parent)
+    def __init__(
+        self,
+        name: str,
+        columns: Sequence[str],
+        x_axis: str | None = None,
+        y_axis: str | None = None,
+        refresh_time: float = 0.2,
+        check_status: bool = True,
+        linewidth: float = 1,
+        parent: QtWidgets.QWidget | None = None,
+    ):
+        super().__init__(name=name, parent=parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -56,7 +67,7 @@ class PlotWidget(TabWidget[ResultsCurve], QtWidgets.QWidget):
             self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
             self.plot_frame.change_y_axis(y_axis)
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.columns_x_label = QtWidgets.QLabel(self)
         self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_x_label.setText('X Axis:')
@@ -84,7 +95,7 @@ class PlotWidget(TabWidget[ResultsCurve], QtWidgets.QWidget):
         self.columns_x.setCurrentIndex(0)
         self.columns_y.setCurrentIndex(1)
 
-    def _layout(self):
+    def _layout(self) -> None:
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
@@ -100,10 +111,10 @@ class PlotWidget(TabWidget[ResultsCurve], QtWidgets.QWidget):
         vbox.addWidget(self.plot_frame)
         self.setLayout(vbox)
 
-    def sizeHint(self):
+    def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(300, 600)
 
-    def new_curve(self, results, color=DEFAULT_COLOR, **kwargs) -> ResultsCurve:
+    def new_curve(self, results: Results, color=DEFAULT_COLOR, **kwargs) -> ResultsCurve:
         if 'pen' not in kwargs:
             kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
         if 'antialias' not in kwargs:
@@ -114,21 +125,21 @@ class PlotWidget(TabWidget[ResultsCurve], QtWidgets.QWidget):
                              y=self.plot_frame.y_axis,
                              **kwargs,
                              )
-        curve.setSymbol(None)
+        curve.setSymbol(None)  # type: ignore[arg-type]  # pyqtgraph supports None to disable scatter
         curve.setSymbolBrush(None)
         return curve
 
-    def update_x_column(self, index):
+    def update_x_column(self, index: int) -> None:
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
 
-    def update_y_column(self, index):
+    def update_y_column(self, index: int) -> None:
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
 
     def load(self, curve: ResultsCurve) -> None:
-        curve.x = self.columns_x.currentText()
-        curve.y = self.columns_y.currentText()
+        curve.x_label = self.columns_x.currentText()
+        curve.y_label = self.columns_y.currentText()
         curve.update_data()
         self.plot.addItem(curve)
 
@@ -139,7 +150,7 @@ class PlotWidget(TabWidget[ResultsCurve], QtWidgets.QWidget):
         """ Change the color of the pen of the curve """
         curve.set_color(color)
 
-    def preview_widget(self, parent=None):
+    def preview_widget(self, parent: QtWidgets.QWidget | None = None) -> "PlotWidget":
         """ Return a widget suitable for preview during loading """
         return PlotWidget("Plot preview",
                           self.columns,

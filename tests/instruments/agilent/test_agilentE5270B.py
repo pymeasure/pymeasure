@@ -112,7 +112,7 @@ class TestSMU:
         with expected_protocol(
             AgilentE5270B,
             [INITIALIZATION,
-             ("TI1", "NAI+1.234e-6"),
+             ("TI1,11", "NAI+1.234e-6"),
              ]
         ) as inst:
             assert 1.234e-6 == inst.smu1.current
@@ -131,7 +131,7 @@ class TestSMU:
         with expected_protocol(
             AgilentE5270B,
             [INITIALIZATION,
-             ("TV1", "NAV-1.234e-6"),
+             ("TV1,0", "NAV-1.234e-6"),
              ]
         ) as inst:
             assert -1.234e-6 == inst.smu1.voltage

@@ -27,7 +27,7 @@ from typing import Literal
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, cast_or_str
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
 
@@ -70,6 +70,10 @@ class LakeShore421(Instrument):
         )
         self.last_write_time = time()
 
+    @staticmethod
+    def _raw_value_reader(read: str) -> float | Literal["OL"]:
+        return read if read == "OL" else float(read)
+
     def _raw_to_field(self, field_raw: float | Literal["OL"], multiplier_name: str) -> float:
         if field_raw != "OL":
             multiplier = getattr(self, multiplier_name)
@@ -87,7 +91,7 @@ class LakeShore421(Instrument):
         "FIELD?",
         """ Get the field in the current units and multiplier
         """,
-        cast=cast_or_str(float),
+        cast=_raw_value_reader,
     )
 
     field_multiplier: InstrumentProperty[float] = Instrument.measurement(
@@ -232,6 +236,7 @@ class LakeShore421(Instrument):
         display. Valid values are 0 (dimmest) to 7 (brightest). """,
         validator=strict_discrete_set,
         values=range(8),
+        cast=int,
     )
 
     # MAX HOLD
@@ -249,7 +254,7 @@ class LakeShore421(Instrument):
         """ Get the largest field since the last reset in the current units
         and multiplier.
         """,
-        cast=cast_or_str(float),
+        cast=_raw_value_reader,
     )
 
     max_hold_multiplier = Instrument.measurement(
@@ -262,7 +267,7 @@ class LakeShore421(Instrument):
     )
 
     @property
-    def max_hold_field(self):
+    def max_hold_field(self) -> float:
         """ Get the largest field since the last reset in the current units.
         This property takes into account the field multiplier. Returns np.nan if
         field is out of range.
@@ -287,7 +292,7 @@ class LakeShore421(Instrument):
         "RELR?",
         """ Get the relative field in the current units and the current
         multiplier. """,
-        cast=cast_or_str(float),
+        cast=_raw_value_reader,
     )
 
     relative_multiplier = Instrument.measurement(

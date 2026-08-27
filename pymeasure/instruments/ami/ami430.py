@@ -50,7 +50,7 @@ class AMI430(SCPIMixin, Instrument):
         magnet.ramp_rate_field = 0.0422         # Sets the ramp rate in kGauss/s
         magnet.ramp                             # Initiates the ramping
         magnet.pause                            # Pauses the ramping
-        magnet.status                           # Returns the status of the magnet
+        magnet.magnet_status                    # Returns the status of the magnet
 
         magnet.ramp_to_current(5)             # Ramps the current to 5 A
 
@@ -141,7 +141,7 @@ class AMI430(SCPIMixin, Instrument):
 
     def has_persistent_switch_enabled(self):
         """ Returns a boolean if the persistent switch is enabled. """
-        return bool(self.ask("PSwitch?"))
+        return int(self.ask("PSwitch?")) == 1
 
     def enable_persistent_switch(self):
         """ Enables the persistent switch. """

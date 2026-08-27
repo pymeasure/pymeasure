@@ -16,6 +16,7 @@ Deprecated
 - Deprecate Thermotron 3800 :code:`initalize_oven`, use :code:`initialize_oven` instead.
 - Deprecate :code:`discreteTruncate` validator, use :code:`truncated_discrete_set_positive` instead.
 - Deprecate :code:`Procedure.refresh_parameters` as it is a no-op now.
+- Deprecate unused :code:`console.py` module with :code:`ProgressBar` and :code:`display`.
 
 Changed
 -------
@@ -27,6 +28,7 @@ Changed
   ``Procedure.refresh_parameters`` is now a deprecated no-op (retained for API compatibility).
   ``UnknownProcedure`` now returns empty ``parameter_objects``/``metadata_objects`` dicts so loading an unimportable procedure no longer raises.
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
+- Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
 
 Version 0.16.0 (2026-05-20)
 ===========================

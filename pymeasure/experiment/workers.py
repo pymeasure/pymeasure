@@ -27,7 +27,7 @@ import logging
 import time
 import traceback
 from collections.abc import Sequence
-from queue import Queue
+from multiprocessing import Queue
 from typing import Any
 
 import numpy as np
@@ -55,10 +55,13 @@ class Worker(StoppableThread):
     thread, a Recorder is run to write the results to
     """
 
-    def __init__(self, results, log_queue=None, log_level=logging.INFO, port=None):
-        """ Constructs a Worker to perform the Procedure
-        defined in the file at the filepath
-        """
+    def __init__(
+        self,
+        results: Results,
+        log_queue: Queue | None = None,
+        log_level: int = logging.INFO,
+        port: int | None = None,
+    ):
         super().__init__()
 
         self.port = port
@@ -68,7 +71,6 @@ class Worker(StoppableThread):
         self.results.procedure.check_parameters()
         self.results.procedure.status = ProcedureStatus.QUEUED
 
-        self.recorder = None
         self.recorder_queue = Queue()
 
         self.monitor_queue = Queue()
@@ -100,7 +102,7 @@ class Worker(StoppableThread):
                 self.context = None
                 self.publisher = None
 
-    def join(self, timeout: int = 0):
+    def join(self, timeout: float | None = None) -> None:
         try:
             super().join(timeout)
         except (KeyboardInterrupt, SystemExit):
@@ -108,15 +110,16 @@ class Worker(StoppableThread):
             self.stop()
             super().join(0)
 
-    def emit(self, topic: str, record: Any):
+    def emit(self, topic: str, record: Any) -> None:
         """ Emits data of some topic over TCP """
         log.debug("Emitting message: %s %s", topic, record)
 
         try:
-            self.publisher.send_serialized(
-                record,
-                serialize=lambda rec: (topic.encode(), cloudpickle.dumps(rec)),
-            )
+            if self.publisher is not None:
+                self.publisher.send_serialized(
+                    record,
+                    serialize=lambda rec: (topic.encode(), cloudpickle.dumps(rec)),
+                )
         except (NameError, AttributeError):
             pass  # No dumps defined
         if topic == 'results':
@@ -126,10 +129,10 @@ class Worker(StoppableThread):
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
 
-    def handle_record(self, record: dict[str, Any]):
-        self.recorder.handle(record)
+    def handle_record(self, record: dict[str, Any]) -> None:
+        self.recorder.handle(record)  # type: ignore
 
-    def handle_batch_record(self, record: Any):
+    def handle_batch_record(self, record: Any) -> None:
         if self._is_dictionary_of_sequences(record):
             lengths = [len(value) for value in record.values()]
             if not all(length == lengths[0] for length in lengths):
@@ -162,11 +165,11 @@ class Worker(StoppableThread):
             in record.values()
         )
 
-    def handle_abort(self):
+    def handle_abort(self) -> None:
         log.exception("User stopped Worker execution prematurely")
         self.update_status(ProcedureStatus.ABORTED)
 
-    def handle_error(self):
+    def handle_error(self) -> None:
         log.exception("Worker caught an error on %r", self.procedure)
         traceback_str = traceback.format_exc()
         self.emit('error', traceback_str)
@@ -179,7 +182,7 @@ class Worker(StoppableThread):
         self.procedure.status = status
         self.emit('status', status)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.procedure.shutdown()
 
         if self.should_stop() and self.procedure.status == ProcedureStatus.RUNNING:
@@ -194,10 +197,11 @@ class Worker(StoppableThread):
             # Cleanly close down ZMQ context and associated socket
             # For some reason, we need to close the socket before the
             # context, otherwise context termination hangs.
-            self.publisher.close()
+            if self.publisher is not None:
+                self.publisher.close()
             self.context.term()
 
-    def run(self):
+    def run(self) -> None:
         log.info("Worker thread started")
 
         self.procedure = self.results.procedure
@@ -233,6 +237,6 @@ class Worker(StoppableThread):
             self.shutdown()
             self.stop()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"<{self.__class__.__name__}(port={self.port},"
                 f"procedure={self.procedure.__class__.__name__},should_stop={self.should_stop()})>")
