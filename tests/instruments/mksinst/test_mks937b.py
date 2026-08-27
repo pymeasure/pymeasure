@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.mksinst.mks937b import MKS937B, Unit
+from pymeasure.test import expected_protocol
 
 
 def test_pressure():
@@ -52,9 +52,8 @@ def test_ion_gauge_status_invalid_channel():
     with expected_protocol(
         MKS937B,
         [],
-    ) as inst:
-        with pytest.raises(AttributeError):
-            inst.ch_2.ion_gauge_status
+    ) as inst, pytest.raises(AttributeError):
+        _ = inst.ch_2.ion_gauge_status
 
 
 def test_unit_setter():

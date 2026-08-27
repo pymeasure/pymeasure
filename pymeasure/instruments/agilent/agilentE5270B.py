@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -162,9 +162,13 @@ class SMUChannel(Channel):
     )
 
     current = Channel.measurement(
-        "TI{ch}",
-        """Measure the current in Amps (float).""",
+        "TI{ch},11",
+        """Measure the current in Amps (float).
+
+        The measurement is performed with 1nA limited auto ranging.
+        """,
         get_process=lambda v: float(v[3:]),
+        cast=str,
     )
 
     voltage_setpoint = Instrument.setting(
@@ -192,9 +196,13 @@ class SMUChannel(Channel):
     )
 
     voltage = Instrument.measurement(
-        "TV{ch}",
-        """Measure the voltage in Volts (float).""",
+        "TV{ch},0",
+        """Measure the voltage in Volts (float).
+
+        The measurement is performed with auto ranging.
+        """,
         get_process=lambda v: float(v[3:]),
+        cast=str,
     )
 
 
@@ -273,5 +281,6 @@ class AgilentE5270B(SCPIMixin, Instrument):
 
         """,
         maxsplit=0,
-        get_process=lambda v: v.split(";")
+        get_process=lambda v: v.split(";"),
+        cast=str,
     )

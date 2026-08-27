@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 import logging
-from logging import StreamHandler, FileHandler
+from logging import FileHandler, StreamHandler
 
 from ..log import QueueListener
 from ..thread import StoppableThread
@@ -32,8 +32,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    import zmq
     import cloudpickle
+    import zmq
 except ImportError:
     zmq = None
     cloudpickle = None
@@ -65,13 +65,15 @@ class Listener(StoppableThread):
 
         self.port = port
         self.topic = topic
+        if zmq is None:
+            raise ImportError("ZMQ required for Listener.")
         self.context = zmq.Context()
         log.debug(f"{self.__class__.__name__} has ZMQ Context: {self.context!r}")
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
-        self.subscriber.connect('tcp://localhost:%d' % port)
-        log.info("%s connected to '%s' topic on tcp://localhost:%d" % (
-            self.__class__.__name__, topic, port))
+        self.subscriber.connect(f'tcp://localhost:{port}')
+        log.info(
+            f"{self.__class__.__name__} connected to '{topic}' topic on tcp://localhost:{port}")
 
         self.poller = zmq.Poller()
         self.poller.register(self.subscriber, zmq.POLLIN)
@@ -86,11 +88,11 @@ class Listener(StoppableThread):
 
     def message_waiting(self):
         """Check if we have a message, wait at most until timeout."""
-        return self.poller.poll(self.timeout * 1000)  # poll timeout is in ms
+        return self.poller.poll(round(self.timeout * 1000))  # poll timeout is in ms
 
     def __repr__(self):
-        return "<{}(port={},topic={},should_stop={})>".format(
-            self.__class__.__name__, self.port, self.topic, self.should_stop())
+        return (f"<{self.__class__.__name__}(port={self.port},topic={self.topic},"
+                f"should_stop={self.should_stop()})>")
 
 
 class Recorder(QueueListener):

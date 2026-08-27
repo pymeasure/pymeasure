@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,8 @@
 #
 
 import logging
-
-from threading import Thread, Event
-from time import time
+from threading import Event, Thread
+from time import monotonic
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -38,14 +37,19 @@ class InterruptableEvent(Event):
     wait of an Event to be interrupted by a KeyboardInterrupt.
     """
 
-    def wait(self, timeout=None):
+    def wait(self, timeout: float | None = None) -> bool:
         if timeout is None:
             while not super().wait(0.1):
                 pass
+            return True
         else:
-            timeout_start = time()
-            while not super().wait(0.1) and time() <= timeout_start + timeout:
-                pass
+            deadline = monotonic() + timeout
+            while True:
+                remaining = deadline - monotonic()
+                if remaining <= 0:
+                    return self.is_set()
+                if super().wait(min(remaining, 0.1)):
+                    return True
 
 
 class StoppableThread(Thread):
@@ -58,7 +62,7 @@ class StoppableThread(Thread):
         self._should_stop = InterruptableEvent()
         self._should_stop.clear()
 
-    def join(self, timeout=0):
+    def join(self, timeout: float | None = 0) -> None:
         """ Joins the current thread and forces it to stop after
         the timeout if necessary
 
@@ -69,12 +73,11 @@ class StoppableThread(Thread):
             self.stop()
         return super().join(0)
 
-    def stop(self):
+    def stop(self) -> None:
         self._should_stop.set()
 
-    def should_stop(self):
+    def should_stop(self) -> bool:
         return self._should_stop.is_set()
 
-    def __repr__(self):
-        return "<{}(should_stop={})>".format(
-            self.__class__.__name__, self.should_stop())
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}(should_stop={self.should_stop()})>"

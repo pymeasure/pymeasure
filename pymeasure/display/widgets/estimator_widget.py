@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,11 @@
 #
 
 import logging
-
-from inspect import signature
 from datetime import datetime, timedelta
+from inspect import signature
 
-from ..thread import StoppableQThread
 from ..Qt import QtCore, QtWidgets
+from ..thread import StoppableQThread
 from .sequencer_widget import SequenceEvaluationError
 
 log = logging.getLogger(__name__)
@@ -113,10 +112,12 @@ class EstimatorWidget(QtWidgets.QWidget):
 
         # Check if the output of the function is acceptable
         raise_error = True
-        if isinstance(estimates, (list, tuple)):
-            if all([isinstance(est, (tuple, list)) for est in estimates]):
-                if all([len(est) == 2 for est in estimates]):
-                    raise_error = False
+        if (
+            isinstance(estimates, (list, tuple))
+            and all(isinstance(est, (tuple, list)) for est in estimates)
+            and all(len(est) == 2 for est in estimates)
+        ):
+            raise_error = False
 
         if raise_error:
             raise TypeError(
@@ -131,7 +132,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         self.number_of_estimates = len(estimates)
 
     def _setup_ui(self):
-        self.line_edits = list()
+        self.line_edits = []
         for idx in range(self.number_of_estimates):
             qlb = QtWidgets.QLabel(self)
 
@@ -167,7 +168,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         # Make a procedure
         procedure = self._parent.make_procedure()
 
-        kwargs = dict()
+        kwargs = {}
 
         sequence = None
         sequence_length = None
@@ -209,7 +210,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         if len(estimates) != self.number_of_estimates:
             raise ValueError(
                 "Number of estimates changed after initialisation "
-                "(from %d to %d)." % (self.number_of_estimates, len(estimates))
+                f"(from {self.number_of_estimates} to {len(estimates)})."
             )
 
         for idx, estimate in enumerate(estimates):
@@ -217,13 +218,13 @@ class EstimatorWidget(QtWidgets.QWidget):
             self.line_edits[idx][1].setText(estimate[1])
 
     def _estimates_from_duration(self, duration, sequence_length):
-        estimates = list()
+        estimates = []
 
-        estimates.append(("Duration", "%d s" % int(duration)))
+        estimates.append(("Duration", f"{int(duration)} s"))
 
         if hasattr(self._parent, "sequencer"):
             estimates.append(("Sequence length", str(sequence_length)))
-            estimates.append(("Sequence duration", "%d s" % int(sequence_length * duration)))
+            estimates.append(("Sequence duration", f"{int(sequence_length * duration)} s"))
 
         estimates.append(('Measurement finished at', str(datetime.now() + timedelta(
             seconds=duration))[:-7]))

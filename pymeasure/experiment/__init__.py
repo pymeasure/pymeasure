@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,19 @@
 # THE SOFTWARE.
 #
 
-from .parameters import (Parameter, IntegerParameter, FloatParameter,
-                         VectorParameter, ListParameter, BooleanParameter,
-                         Measurable, Metadata)
-from .procedure import Procedure, UnknownProcedure
-from .results import Results, unique_filename, replace_placeholders
-from .workers import Worker
-from .listeners import Listener, Recorder
 from .config import get_config
 from .experiment import Experiment, get_array, get_array_steps, get_array_zero
+from .listeners import Listener, Recorder
+from .parameters import (
+                         BooleanParameter,
+                         FloatParameter,
+                         IntegerParameter,
+                         ListParameter,
+                         Measurable,
+                         Metadata,
+                         Parameter,
+                         VectorParameter,
+)
+from .procedure import Procedure, UnknownProcedure
+from .results import Results, replace_placeholders, unique_filename
+from .workers import Worker

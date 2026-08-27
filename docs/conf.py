@@ -11,8 +11,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath('..'))  # Allow modules to be found
 from pymeasure import __version__
@@ -39,7 +39,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest'
+    'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest', 'sphinx_autodoc_typehints'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'PyMeasure'
-copyright = '2013-2025, PyMeasure Developers'
+copyright = '2013-2026, PyMeasure Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -270,6 +270,12 @@ texinfo_documents = [
 autodoc_mock_imports = ['zmq', 'cloudpickle', 'pyvirtualbench']
 
 
+# -- Options for sphinx_autodoc_typehints ---------------------------------
+
+typehints_use_rtype = False
+typehints_defaults = "braces-after"
+
+
 def setup(app):
     app.connect('autodoc-process-docstring', gen_channel_docs)
 
@@ -286,7 +292,7 @@ def gen_channel_docs(app, what, name, obj, options, lines):
     Generate channel documentation for instruments with channels
     """
     if hasattr(obj, '__bases__') and issubclass(obj, Instrument):
-        for attr, channel_class in obj.get_channels(obj):
+        for attr, channel_class in obj.get_channels():
             if isinstance(channel_class, CommonBase.ChannelCreator):
                 channel_name = get_class_name(channel_class.pairs[0][0])
                 lines += ['.. py:attribute:: ' + attr, '', ]

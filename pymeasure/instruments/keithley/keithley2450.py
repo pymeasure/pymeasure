@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,9 @@ from warnings import warn
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.common_base import identity
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+
 from .buffer import KeithleyBuffer
 
 # Setup logging
@@ -275,25 +277,29 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     means = Instrument.measurement(
         ":TRACe:STATistics:AVERage?",
         """Get the calculated means (averages) for voltage,
-        current, and resistance from the buffer data  as a list. """
+        current, and resistance from the buffer data  as a list. """,
+        get_process_list=identity,
     )
 
     maximums = Instrument.measurement(
         ":TRACe:STATistics:MAXimum?",
         """ Get the calculated maximums for voltage, current, and
-        resistance from the buffer data as a list. """
+        resistance from the buffer data as a list. """,
+        get_process_list=identity,
     )
 
     minimums = Instrument.measurement(
         ":TRACe:STATistics:MINimum?",
         """ Get the calculated minimums for voltage, current, and
-        resistance from the buffer data as a list. """
+        resistance from the buffer data as a list. """,
+        get_process_list=identity,
     )
 
     standard_devs = Instrument.measurement(
         ":TRACe:STATistics:STDDev?",
         """ Get the calculated standard deviations for voltage,
-        current, and resistance from the buffer data as a list. """
+        current, and resistance from the buffer data as a list. """,
+        get_process_list=identity,
     )
 
     ###########
@@ -396,7 +402,7 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         """
         log.info("%s is measuring resistance.", self.name)
         self.write(":SENS:FUNC 'RES';"
-                   ":SENS:RES:NPLC %f;" % nplc)
+                   f":SENS:RES:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:RES:RANG:AUTO 1;")
         else:
@@ -412,7 +418,7 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         """
         log.info("%s is measuring voltage.", self.name)
         self.write(":SENS:FUNC 'VOLT';"
-                   ":SENS:VOLT:NPLC %f;" % nplc)
+                   f":SENS:VOLT:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:VOLT:RANG:AUTO 1;")
         else:
@@ -428,7 +434,7 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         """
         log.info("%s is measuring current.", self.name)
         self.write(":SENS:FUNC 'CURR';"
-                   ":SENS:CURR:NPLC %f;" % nplc)
+                   f":SENS:CURR:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO 1;")
         else:

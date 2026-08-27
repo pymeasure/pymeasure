@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,8 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
-                                                truncated_range
-
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -45,7 +43,7 @@ class TemperatureSensor(Channel):
     Therefore loop control is kept with other temperature sensor properties.
     """
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """The MercuryiTC responds to every communication (get and set).
         This simply reads back on setting a property."""
         try:
@@ -78,7 +76,8 @@ class TemperatureSensor(Channel):
         preprocess_reply=lambda v: v.split(":")[-1],
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     control_loop_P = Channel.control(
@@ -147,7 +146,8 @@ class TemperatureSensor(Channel):
         preprocess_reply=lambda v: v.split(":")[-1],
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
 
@@ -161,7 +161,7 @@ class Heater(Channel):
     loop, or otherwise set to operate in open-loop configuration.
     """
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """The MercuryiTC responds to every communication (get and set).
         This simply reads back on setting a property."""
         try:
@@ -270,13 +270,13 @@ class MercuryiTC(Instrument):
             name=name,
             read_termination="\n",
             write_termination="\n",
-            includeSCPI=False,
             **kwargs
         )
 
     identity = Instrument.measurement(
         "*IDN?",
-        """Get identity of unit."""
+        """Get identity of unit.""",
+        cast=str,
     )
 
     TS_MB = Instrument.ChannelCreator(

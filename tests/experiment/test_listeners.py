@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 # import time
-# from queue import Queue
+# from multiprocessing import Queue
 
 # from pymeasure.experiment.listeners import Listener, Recorder
 # from pymeasure.experiment.results import Results

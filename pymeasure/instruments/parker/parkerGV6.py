@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from time import sleep
 import re
+from time import sleep
+
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 
 
 class ParkerGV6(SCPIUnknownMixin, Instrument):
@@ -186,8 +187,8 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         """ Set the software limits for motion based on
         the count unit where 4000 counts is 1 revolution
         """
-        self.write("LSPOS%d" % int(positive))
-        self.write("LSNEG%d" % int(negative))
+        self.write(f"LSPOS{int(positive)}")
+        self.write(f"LSNEG{int(negative)}")
 
     @property
     def echo(self):
@@ -206,7 +207,7 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         """ Set the acceleration setpoint in revolutions per second
         squared.
         """
-        pass  # TODO: Implement acceleration return value
+        # TODO: Implement acceleration return value
 
     @acceleration.setter
     def acceleration(self, acceleration):
@@ -217,7 +218,7 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         """ Set the average acceleration setpoint in revolutions
         per second squared.
         """
-        pass  # TODO: Implement average_acceleration return value
+        # TODO: Implement average_acceleration return value
 
     @average_acceleration.setter
     def average_acceleration(self, acceleration):
@@ -226,7 +227,7 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
     @property
     def velocity(self):
         """ Set the velocity setpoint in revolutions per second."""
-        pass  # TODO: Implement velocity return value
+        # TODO: Implement velocity return value
 
     @velocity.setter
     def velocity(self, velocity):  # in revs/s

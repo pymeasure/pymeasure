@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,12 @@
 #
 
 import logging
-
 import sys
 import time
 
+from ..thread import StoppableThread
 from .Qt import QtWidgets
 from .windows import PlotterWindow
-from ..thread import StoppableThread
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -68,7 +67,6 @@ class Plotter(StoppableThread):
 
         .. _PlotItem: https://pyqtgraph.readthedocs.io/en/latest/graphicsItems/plotitem.html
         """
-        pass
 
     def wait_for_close(self, check_time=0.1):
         while not self.should_stop():

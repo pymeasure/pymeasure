@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ class DirectoryLineEdit(QtWidgets.QLineEdit):
 
         browse_action = QtGui.QAction(self)
         browse_action.setIcon(self.style().standardIcon(
-            getattr(QtWidgets.QStyle.StandardPixmap, 'SP_DialogOpenButton')))
+            QtWidgets.QStyle.StandardPixmap.SP_DialogOpenButton))
         browse_action.triggered.connect(self.browse_triggered)
 
         self.addAction(browse_action, QtWidgets.QLineEdit.ActionPosition.TrailingPosition)

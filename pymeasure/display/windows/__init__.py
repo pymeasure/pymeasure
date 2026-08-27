@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,6 @@
 # THE SOFTWARE.
 #
 
-from .plotter_window import PlotterWindow
-from .managed_window import ManagedWindowBase, ManagedWindow
 from .managed_image_window import ManagedImageWindow
+from .managed_window import ManagedWindow, ManagedWindowBase
+from .plotter_window import PlotterWindow

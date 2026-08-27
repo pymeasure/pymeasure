@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,21 +25,22 @@
 import logging
 from warnings import warn
 
-from .instrument import Instrument
+from .common_base import CommonBase, cast_or_str, identity
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class SCPIMixin:
-    """Mixin class for SCPI instruments with the default implementation of base SCPI commands."""
+class IEEE4882Mixin(CommonBase):
+    """Mixin class for IEEE 488.2 protocol instruments with
+    the default implementation of base commands.
+    """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("includeSCPI", False)  # in order not to trigger the deprecation warning
         super().__init__(*args, **kwargs)
 
-    # SCPI default properties
-    complete = Instrument.measurement(
+    # IEEE 488.2 default properties
+    complete = CommonBase.measurement(
         "*OPC?",
         """Get the synchronization bit.
 
@@ -50,47 +51,55 @@ class SCPIMixin:
         cast=str,
     )
 
-    status = Instrument.measurement(
+    status = CommonBase.measurement(
         "*STB?",
         """Get the status byte and Master Summary Status bit.""",
         cast=str,
     )
 
-    options = Instrument.measurement(
+    options = CommonBase.measurement(
         "*OPT?",
         """Get the device options installed.""",
         cast=str,
     )
 
-    id = Instrument.measurement(
+    id = CommonBase.measurement(
         "*IDN?",
         """Get the identification of the instrument.""",
         cast=str,
         maxsplit=0,
     )
 
-    next_error = Instrument.measurement(
+    # IEEE 488.2 default method
+    def clear(self) -> None:
+        """Clear the instrument status byte."""
+        self.write("*CLS")
+
+    def reset(self) -> None:
+        """Reset the instrument."""
+        self.write("*RST")
+
+
+class SCPIMixin(IEEE4882Mixin):
+    """Mixin class for SCPI instruments with the default implementation of base SCPI commands."""
+
+    # SCPI default properties
+    next_error = CommonBase.measurement(
         "SYST:ERR?",
         """Get the next error in the queue.
         If you want to read and log all errors, use :meth:`check_errors` instead.
         """,
+        cast=cast_or_str(float),
+        get_process_list=identity,
     )
 
     # SCPI default methods
-    def clear(self):
-        """Clear the instrument status byte."""
-        self.write("*CLS")
-
-    def reset(self):
-        """Reset the instrument."""
-        self.write("*RST")
-
-    def check_errors(self):
-        """ Read all errors from the instrument.
+    def check_errors(self) -> list[list[float | str]]:
+        """Read all errors from the instrument.
 
         :return: List of error entries.
         """
-        errors = []
+        errors: list = []
         while True:
             err = self.next_error
             if int(err[0]) != 0:

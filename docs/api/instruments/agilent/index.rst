@@ -27,3 +27,4 @@ If the instrument you are looking for is not here, also check :doc:`HP<../hp/ind
    agilent4284A
    agilentB298x
    agilentE5270B
+   agilentN8975A

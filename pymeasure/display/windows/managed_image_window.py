@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,8 @@
 #
 
 import logging
+
+from pymeasure.experiment.procedure import Procedure
 
 from ..widgets import (
     ImageWidget,
@@ -53,7 +55,14 @@ class ManagedImageWindow(ManagedWindow):
 
     """
 
-    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, **kwargs):
+    def __init__(
+        self,
+        procedure_class: type[Procedure],
+        x_axis: str,
+        y_axis: str,
+        z_axis: str | None = None,
+        **kwargs,
+    ):
         self.z_axis = z_axis
         self.image_widget = ImageWidget(
             "Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)

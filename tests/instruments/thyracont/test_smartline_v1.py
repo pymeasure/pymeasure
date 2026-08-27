@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,13 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.thyracont import SmartlineV1
 from pymeasure.instruments.thyracont.smartline_v1 import calculate_checksum
+from pymeasure.test import expected_protocol
 
 
 def test_calculate_checksum_basics():
-    for i in range(0, 64):
+    for i in range(64):
         assert (i + 64) == ord(calculate_checksum(chr(i)))
     for i in range(64, 128):
         assert i == ord(calculate_checksum(chr(i)))
@@ -77,9 +77,8 @@ def test_cathode_enable_error():
     with expected_protocol(
         SmartlineV1,
         [("001i0j", "001NO_DEF\\"), ],
-    ) as inst:
-        with pytest.raises(ConnectionError):
-            inst.cathode_enabled = False
+    ) as inst, pytest.raises(ConnectionError):
+        inst.cathode_enabled = False
 
 
 def test_display_unit():

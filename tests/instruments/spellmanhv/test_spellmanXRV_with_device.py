@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,8 @@
 # The test does not enable the high voltage output.
 
 import pytest
-from pymeasure.instruments.spellmanhv.spellmanXRV import SpellmanXRV, StatusCode, ErrorCode
+
+from pymeasure.instruments.spellmanhv.spellmanXRV import ErrorCode, SpellmanXRV, StatusCode
 
 
 @pytest.fixture(scope="module")
@@ -184,7 +185,7 @@ class TestUnscaledData:
     def test_analog_monitor(self, spellman):
         analog_monitor = spellman.unscaled.analog_monitor
         assert type(analog_monitor) is dict
-        for key in analog_monitor.keys():
+        for key in analog_monitor:
             assert type(analog_monitor[key]) is int
             assert analog_monitor[key] in range(4096)
 
@@ -201,5 +202,5 @@ class TestUnscaledData:
     def test_system_voltages(self, spellman):
         system_voltages = spellman.unscaled.system_voltages
         assert type(system_voltages) is dict
-        for key in system_voltages.keys():
+        for key in system_voltages:
             assert system_voltages[key] in range(4096)

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,19 +24,43 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-from pymeasure.adapters import ProtocolAdapter
-from pymeasure.instruments.generic_types import SCPIMixin, SCPIUnknownMixin
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.generic_types import IEEE4882Mixin, SCPIMixin
+from pymeasure.test import expected_protocol
+
+
+class Test_IEEE4882Mixin:
+    class IEEE4882Instrument(IEEE4882Mixin, Instrument):
+        pass
+
+    @pytest.mark.parametrize("method, write, reply", (
+        ("id", "*IDN?", "xyz, abc"),
+        ("complete", "*OPC?", "1"),
+        ("status", "*STB?", "189"),
+        ("options", "*OPT?", "a9"),
+    ))
+    def test_IEEE4882_properties(self, method, write, reply):
+        with expected_protocol(
+                self.IEEE4882Instrument,
+                [(write, reply)],
+                name="test") as inst:
+            assert getattr(inst, method) == reply
+
+    @pytest.mark.parametrize("method, write", (
+        ("clear", "*CLS"),
+        ("reset", "*RST"),
+    ))
+    def test_IEEE4882_write_commands(self, method, write):
+        with expected_protocol(
+                self.IEEE4882Instrument,
+                [(write, None)],
+                name="test") as inst:
+            getattr(inst, method)()
 
 
 class Test_SCPIMixin:
     class SCPIInstrument(SCPIMixin, Instrument):
         pass
-
-    def test_init(self):
-        inst = self.SCPIInstrument(ProtocolAdapter(), "test")
-        assert inst.SCPI is False  # should not be set by the new init
 
     @pytest.mark.parametrize("method, write, reply", (
         ("id", "*IDN?", "xyz, abc"),
@@ -80,10 +104,5 @@ class Test_SCPIMixin:
                                            [-222, '"Data out of range"']]
 
 
-def test_SCPIunknownMixin():
-    class SCPIunknownInstrument(SCPIUnknownMixin, Instrument):
-        pass
-
-    with pytest.warns(FutureWarning):
-        inst = SCPIunknownInstrument(ProtocolAdapter(), "test")
-    assert inst.SCPI is False
+def test_SCPIMixin_inherits_IEEE4882Mixin():
+    assert issubclass(SCPIMixin, IEEE4882Mixin)

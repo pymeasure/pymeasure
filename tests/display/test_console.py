@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,17 @@
 
 import pytest
 
-from pymeasure.experiment.parameters import (BooleanParameter,
-                                             ListParameter,
-                                             FloatParameter,
-                                             IntegerParameter,
-                                             Parameter,
-                                             VectorParameter,
-                                             PhysicalParameter)
-from pymeasure.experiment.procedure import Procedure
 from pymeasure.display.console import ConsoleArgumentParser
+from pymeasure.experiment.parameters import (
+    BooleanParameter,
+    FloatParameter,
+    IntegerParameter,
+    ListParameter,
+    Parameter,
+    PhysicalParameter,
+    VectorParameter,
+)
+from pymeasure.experiment.procedure import Procedure
 
 
 class TestArgParsing:

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,9 @@
 #
 
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.hp import HP8116A
 from pymeasure.instruments.hp.hp8116a import Status
+from pymeasure.test import expected_protocol
 
 
 class HP8116AWithMockStatus(HP8116A):
@@ -59,7 +58,7 @@ def test_duty_cycle_setter():
             HP8116AWithMockStatus,
             init_comm + [(b"DTY 34.5 %", None)],
     ) as instr:
-        instr.duty_cycle = 34.5
+        instr.duty_cycle = 34.5  # type: ignore
 
 
 def test_sweep_time():

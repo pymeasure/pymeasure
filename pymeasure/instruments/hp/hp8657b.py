@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 
 import logging
 from enum import IntEnum
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -41,7 +42,6 @@ class HP8657B(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             send_end=True,
             **kwargs,
         )
@@ -56,15 +56,16 @@ class HP8657B(Instrument):
         OFF = 4
         DC_FM = 5
 
-    def check_errors(self):
+    def check_errors(self) -> list:
         """
         Method to read the error status register
         as the 8657B does not support any readout of values, this will return 0 and log a warning
 
         """
         log.warning("HP8657B Does not support error status readout")
+        return []
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Reset the instrument to power-on default settings
 
@@ -122,7 +123,7 @@ class HP8657B(Instrument):
         "FM %3.1fKZ",
         """
         Set the peak deviation in kHz for the FM function,
-        useable range 0.1 - 400 kHz
+        usable range 0.1 - 400 kHz
 
         *NOTE*:
             the maximum usable deviation is depending on the output frequency, refer to the

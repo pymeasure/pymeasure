@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,10 @@
 #
 
 
+from pyvisa.errors import VisaIOError
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pyvisa.errors import VisaIOError
 
 
 class AgilentE4980(SCPIUnknownMixin, Instrument):
@@ -106,7 +107,7 @@ Select trigger source; accept the values:
         # format: output ascii
         self.write("FORM ASC")
 
-    def freq_sweep(self, freq_list, return_freq=False):
+    def freq_sweep(self, freq_list: list[float], return_freq: bool = False):
         """
         Run frequency list sweep using sequential trigger.
 
@@ -122,8 +123,8 @@ Select trigger source; accept the values:
         self.write("FORM ASC")
         # trigger in sequential mode
         self.write("LIST:MODE SEQ")
-        lista_str = ",".join(['%e' % f for f in freq_list])
-        self.write("LIST:FREQ %s" % lista_str)
+        lista_str = ",".join([f'{f:e}' for f in freq_list])
+        self.write(f"LIST:FREQ {lista_str}")
         # trigger
         self.write("INIT:CONT ON")
         self.write(":TRIG:IMM")
@@ -147,7 +148,7 @@ Select trigger source; accept the values:
             return a_data, b_data
 
     # TODO: maybe refactor as property?
-    def aperture(self, time=None, averages=1):
+    def aperture(self, time: str | None = None, averages: int = 1) -> tuple[str, int] | None:
         """
         Set and get aperture.
 
@@ -162,4 +163,4 @@ Select trigger source; accept the values:
             if time.upper() in ["SHORT", "MED", "LONG"]:
                 self.write(f":APER {time}, {averages}")
             else:
-                raise Exception("Time must be a string: SHORT, MED, LONG")
+                raise TypeError("Time must be a string: SHORT, MED, LONG")

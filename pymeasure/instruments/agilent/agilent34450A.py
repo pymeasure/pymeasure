@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 
-import re
 import logging
+import re
+from typing import Literal
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIUnknownMixin, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -58,19 +59,19 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
              'capacitance': 'CAP'}
 
     @property
-    def mode(self):
+    def mode(self) -> str:
         """ Control the measurement mode of the multimeter. Can be "current",
         "ac current", "voltage", "ac voltage", "resistance", "4w resistance", "current frequency",
         "voltage frequency", "continuity", "diode", "temperature", or "capacitance"."""
         get_command = ":configure?"
-        vals = self._conf_parser(self.values(get_command))
+        vals = self._conf_parser(self.values(get_command, cast=str))
         # Return only the mode parameter
         inv_modes = {v: k for k, v in self.MODES.items()}
-        mode = inv_modes[vals[0]]
+        mode = inv_modes[str(vals[0])]
         return mode
 
     @mode.setter
-    def mode(self, value):
+    def mode(self, value: str) -> None:
         if value in self.MODES:
             if value not in ['current frequency', 'voltage frequency']:
                 self.write(':configure:' + self.MODES[value])
@@ -102,7 +103,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         as well as "MIN", "MAX", or "DEF" (100 mA).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[100E-6, 1E-3, 10E-3, 100E-3, 1, 10, "MIN", "DEF", "MAX"]
+        values=[100E-6, 1E-3, 10E-3, 100E-3, 1, 10, "MIN", "DEF", "MAX"],
+        cast=cast_or_str(float),
     )
     current_auto_range = Instrument.control(
         ":SENS:CURR:RANG:AUTO?", ":SENS:CURR:RANG:AUTO %d",
@@ -117,7 +119,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
         as well as "MIN", "MAX", and "DEF" (3.00E-5). """,
         validator=strict_discrete_set,
-        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
+        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
     current_ac_range = Instrument.control(
         ":SENS:CURR:AC:RANG?", ":SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG %s",
@@ -125,7 +128,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         values 10E-3, 100E-3, 1, 10, as well as "MIN", "MAX", or "DEF" (100 mA).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[10E-3, 100E-3, 1, 10, "MIN", "MAX", "DEF"]
+        values=[10E-3, 100E-3, 1, 10, "MIN", "MAX", "DEF"],
+        cast=cast_or_str(float),
     )
     current_ac_auto_range = Instrument.control(
         ":SENS:CURR:AC:RANG:AUTO?", ":SENS:CURR:AC:RANG:AUTO %d",
@@ -138,9 +142,10 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         ":SENS:CURR:AC:RES?", ":SENS:CURR:AC:RES %s",
         """ Control the resolution in the AC current
         readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
-        as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
+        as well as "MIN", "MAX", and "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
-        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
+        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
 
     ###############
@@ -161,7 +166,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         can take values 100E-3, 1, 10, 100, 1000, as well as "MIN", "MAX", or
         "DEF" (10 V). Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[100E-3, 1, 10, 100, 1000, "MAX", "MIN", "DEF"]
+        values=[100E-3, 1, 10, 100, 1000, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
     voltage_auto_range = Instrument.control(
         ":SENS:VOLT:RANG:AUTO?", ":SENS:VOLT:RANG:AUTO %d",
@@ -176,16 +182,18 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
         as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
-        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
+        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
     voltage_ac_range = Instrument.control(
-        ":SENS:VOLT:AC:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %s",
+        ":SENS:VOLT:AC:RANG?", ":SENS:VOLT:AC:RANG:AUTO 0;:SENS:VOLT:AC:RANG %s",
         """ Control the AC voltage range in Volts, which can
         take values 100E-3, 1, 10, 100, 750, as well as "MIN", "MAX", or "DEF"
         (10 V).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[100E-3, 1, 10, 100, 750, "MAX", "MIN", "DEF"]
+        values=[100E-3, 1, 10, 100, 750, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
     voltage_ac_auto_range = Instrument.control(
         ":SENS:VOLT:AC:RANG:AUTO?", ":SENS:VOLT:AC:RANG:AUTO %d",
@@ -200,7 +208,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
         as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
-        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
+        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
 
     ####################
@@ -224,7 +233,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         or "DEF" (1E3).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, "MAX", "MIN", "DEF"]
+        values=[100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
     resistance_auto_range = Instrument.control(
         ":SENS:RES:RANG:AUTO?", ":SENS:RES:RANG:AUTO %d",
@@ -237,9 +247,10 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         ":SENS:RES:RES?", ":SENS:RES:RES %s",
         """ Control the resolution in the 2-wire
         resistance readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
-        as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
+        as well as "MIN", "MAX", and "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
-        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
+        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
     resistance_4w_range = Instrument.control(
         ":SENS:FRES:RANG?", ":SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG %s",
@@ -248,7 +259,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         as well as "MIN", "MAX", or "DEF" (1E3).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, "MAX", "MIN", "DEF"]
+        values=[100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
     resistance_4w_auto_range = Instrument.control(
         ":SENS:FRES:RANG:AUTO?", ":SENS:FRES:RANG:AUTO %d",
@@ -261,9 +273,10 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         ":SENS:FRES:RES?", ":SENS:FRES:RES %s",
         """ Control the resolution in the 4-wire
         resistance readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
-        as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
+        as well as "MIN", "MAX", and "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
-        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
+        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
 
     ##################
@@ -281,7 +294,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         "MAX", or "DEF" (100 mA).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[10E-3, 100E-3, 1, 10, "MIN", "MAX", "DEF"]
+        values=[10E-3, 100E-3, 1, 10, "MIN", "MAX", "DEF"],
+        cast=cast_or_str(float),
     )
     frequency_current_auto_range = Instrument.control(
         ":SENS:FREQ:CURR:RANG:AUTO?", ":SENS:FREQ:CURR:RANG:AUTO %d",
@@ -297,7 +311,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         as well as "MIN", "MAX", or "DEF" (10 V).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[100E-3, 1, 10, 100, 750, "MAX", "MIN", "DEF"]
+        values=[100E-3, 1, 10, 100, 750, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
     frequency_voltage_auto_range = Instrument.control(
         ":SENS:FREQ:VOLT:RANG:AUTO?", ":SENS:FREQ:VOLT:RANG:AUTO %d",
@@ -312,7 +327,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         which sets the integration period and measurement speed. Takes values
         100 ms, 1 s, as well as "MIN", "MAX", or "DEF" (1 s). """,
         validator=strict_discrete_set,
-        values=[100E-3, 1, "MIN", "MAX", "DEF"]
+        values=[100E-3, 1, "MIN", "MAX", "DEF"],
+        cast=cast_or_str(float),
     )
 
     ###################
@@ -351,7 +367,8 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         1E-3, 10E-3, as well as "MIN", "MAX", or "DEF" (1E-6).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[1E-9, 10E-9, 100E-9, 1E-6, 10E-6, 100E-6, 1E-3, 10E-3, "MAX", "MIN", "DEF"]
+        values=[1E-9, 10E-9, 100E-9, 1E-6, 10E-6, 100E-6, 1E-3, 10E-3, "MAX", "MIN", "DEF"],
+        cast=cast_or_str(float),
     )
     capacitance_auto_range = Instrument.control(
         ":SENS:CAP:RANG:AUTO?", ":SENS:CAP:RANG:AUTO %d",
@@ -370,14 +387,14 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
                                         based on the active :attr:`~.Agilent34450A.mode`. """
                                         )
 
-    def __init__(self, adapter, name="HP/Agilent/Keysight 34450A Multimeter", **kwargs):
+    def __init__(self, adapter, name: str = "HP/Agilent/Keysight 34450A Multimeter", **kwargs):
         super().__init__(
             adapter, name, timeout=10000, **kwargs
         )
         # Configuration changes can necessitate up to 8.8 secs (per datasheet)
         self.check_errors()
 
-    def configure_voltage(self, voltage_range="AUTO", ac=False, resolution="DEF"):
+    def configure_voltage(self, voltage_range="AUTO", ac: bool = False, resolution="DEF") -> None:
         """ Configures the instrument to measure voltage.
 
         :param voltage_range: A voltage in Volts to set the voltage range.
@@ -405,7 +422,7 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         else:
             raise TypeError('Value of ac should be a boolean.')
 
-    def configure_current(self, current_range="AUTO", ac=False, resolution="DEF"):
+    def configure_current(self, current_range="AUTO", ac: bool = False, resolution="DEF") -> None:
         """ Configures the instrument to measure current.
 
         :param current_range: A current in Amps to set the current range.
@@ -433,8 +450,13 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         else:
             raise TypeError('Value of ac should be a boolean.')
 
-    def configure_resistance(self, resistance_range="AUTO", wires=2, resolution="DEF"):
-        """ Configures the instrument to measure resistance.
+    def configure_resistance(
+        self,
+        resistance_range: float | str = "AUTO",
+        wires: Literal[2, 4] = 2,
+        resolution: float | str = "DEF",
+    ) -> None:
+        """Configures the instrument to measure resistance.
 
         :param resistance_range: A resistance in Ohms to set the resistance range, can be 100,
                 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, as well as "MIN", "MAX", "DEF" (1E3), or "AUTO".
@@ -460,9 +482,13 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
             raise ValueError("Incorrect wires value, Agilent 34450A only supports 2 or 4 wire"
                              "resistance measurement.")
 
-    def configure_frequency(self, measured_from="voltage_ac",
-                            measured_from_range="AUTO", aperture="DEF"):
-        """ Configures the instrument to measure frequency.
+    def configure_frequency(
+        self,
+        measured_from: Literal["voltage_ac", "current_ac"] = "voltage_ac",
+        measured_from_range: float | str = "AUTO",
+        aperture: float | str = "DEF",
+    ) -> None:
+        """Configures the instrument to measure frequency.
 
         :param measured_from: "voltage_ac" or "current_ac"
         :param measured_from_range: range of measured_from. AC voltage can have ranges 100E-3,
@@ -489,17 +515,17 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
                              '"voltage_ac" or "current_ac".')
         self.frequency_aperture = aperture
 
-    def configure_temperature(self):
+    def configure_temperature(self) -> None:
         """ Configures the instrument to measure temperature.
         """
         self.mode = 'temperature'
 
-    def configure_diode(self):
+    def configure_diode(self) -> None:
         """ Configures the instrument to measure diode voltage.
         """
         self.mode = 'diode'
 
-    def configure_capacitance(self, capacitance_range="AUTO"):
+    def configure_capacitance(self, capacitance_range: float | str = "AUTO") -> None:
         """ Configures the instrument to measure capacitance.
 
         :param capacitance_range: A capacitance in Farads to set the capacitance range, can be
@@ -512,17 +538,22 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         else:
             self.capacitance_range = capacitance_range
 
-    def configure_continuity(self):
+    def configure_continuity(self) -> None:
         """ Configures the instrument to measure continuity.
         """
         self.mode = 'continuity'
 
-    def beep(self):
+    def beep(self) -> None:
         """ Sounds a system beep.
         """
         self.write(":SYST:BEEP")
 
-    def _conf_parser(self, conf_values):
+    def local(self) -> None:
+        """ Set the instrument to local mode and return control to its front panel.
+        """
+        self.write(":SYST:LOC")
+
+    def _conf_parser(self, conf_values: list[str] | str) -> list[str | float]:
         """
         Parse the string of configuration parameters read from Agilent34450A with
         command ":configure?" and returns a list of parameters.

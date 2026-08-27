@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,8 @@
 import logging
 
 from ..Qt import QtCore, QtWidgets
-from .filename_widget import FilenameLineEdit
 from .directory_widget import DirectoryLineEdit
+from .filename_widget import FilenameLineEdit
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,40 +24,20 @@
 
 import logging
 import time
-import numpy as np
 from enum import Enum, IntFlag
-from pymeasure.instruments import Instrument
+from typing import Any
+
+import numpy as np
+
+from pymeasure.instruments import AdapterType, Instrument, cast_or_str
 from pymeasure.instruments.validators import (
-    strict_discrete_set, strict_range, truncated_discrete_set
+    strict_discrete_set,
+    strict_range,
+    truncated_discrete_set,
 )
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
-# for Python>3.9, these two methods can be static methods in the class
-def _generate_1_2_5_sequence(min, max):
-    """ Generate a list of a 1-2-5 sequence between min and max. """
-    exp_min = int(np.log10(min))
-    exp_max = int(np.log10(max))
-
-    seq_1_2_5 = np.array([1, 2, 5])
-    sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min - 1, exp_max + 1)])
-    sequence = sequence.flatten()
-    sequence = sequence[(sequence >= min) & (sequence <= max)]
-
-    return list(sequence)
-
-
-def _boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
-    return Instrument.control(
-        'CST', identifier + '%d', docs,
-        validator=strict_discrete_set,
-        values=[True, False],
-        get_process_list=lambda x: inverted ^ bool(int(x[state_index][1])),
-        set_process=lambda x: int(inverted ^ x),
-        **kwargs
-    )
 
 
 class Status(IntFlag):
@@ -81,17 +61,42 @@ class HP8116A(Instrument):
     The resolution for all floating point instrument parameters is 3 digits.
     """
 
-    def __init__(self, adapter, name="Hewlett-Packard 8116A", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Hewlett-Packard 8116A", **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('write_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
         self.has_option_001 = self._check_has_option_001()
+
+    @staticmethod
+    def _generate_1_2_5_sequence(min: float, max: float) -> list[float]:
+        """ Generate a list of a 1-2-5 sequence between min and max. """
+        exp_min = int(np.log10(min))
+        exp_max = int(np.log10(max))
+
+        seq_1_2_5 = np.array([1, 2, 5])
+        sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min - 1, exp_max + 1)])
+        sequence = sequence.flatten()
+        sequence = sequence[(sequence >= min) & (sequence <= max)]
+
+        return list(sequence)
+
+    @staticmethod
+    def _boolean_control(identifier: str, state_index: int, docs: str,
+                         inverted: bool = False, **kwargs: Any) -> Any:
+        return Instrument.control(
+            'CST', identifier + '%d', docs,
+            validator=strict_discrete_set,
+            values=[True, False],
+            cast=str,
+            get_process_list=lambda x: inverted ^ bool(int(x[state_index][1])),
+            set_process=lambda x: int(inverted ^ x),
+            **kwargs
+        )
 
     class Digit(Enum):
         """ Enum of the digits used with the autovernier
@@ -170,7 +175,7 @@ class HP8116A(Instrument):
         'no_prefix': 'S',
     }
 
-    _si_prefixes = {
+    _si_prefixes: dict[str, float] = {
         'nano': 1e-9,
         'micro': 1e-6,
         'milli': 1e-3,
@@ -180,7 +185,7 @@ class HP8116A(Instrument):
     }
 
     @staticmethod
-    def _get_value_with_unit(value, units):
+    def _get_value_with_unit(value: float, units: dict[str, str]) -> str:
         """ Convert a floating point value to a string with 3 digits resolution
         and the appropriate unit.
 
@@ -204,7 +209,7 @@ class HP8116A(Instrument):
         return value_str
 
     @staticmethod
-    def _parse_value_with_unit(value_str, units):
+    def _parse_value_with_unit(value_str: str, units: dict[str, str]) -> float:
         """ Convert a string with a value and a unit as returned by the HP8116A to a float.
 
         :param value_str: The string to parse.
@@ -224,15 +229,15 @@ class HP8116A(Instrument):
 
     # Instrument communication #
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """ Write a command to the instrument and wait until the 8116A has interpreted it. """
-        super().write(command)
+        super().write(command, **kwargs)
 
         # We need to read the status byte and wait until the buffer_not_empty bit
         # is cleared because some older units lock up if we don't.
         self._wait_for_commands_processed()
 
-    def ask(self, command, num_bytes=None):
+    def ask(self, command: str, num_bytes: int | None = None) -> str:  # type: ignore[override]
         """ Write a command to the instrument, read the response, and return the response as ASCII text.
 
         :param command: The command to send to the instrument.
@@ -249,6 +254,10 @@ class HP8116A(Instrument):
                 num_bytes = 29
             elif command[0] == 'I':
                 num_bytes = 14
+            else:
+                raise ValueError(
+                    "`num_bytes` must be specified unless command is 'CST' or starts with 'I'"
+                )
 
         # The first character is always a space or a leftover character from the previous command,
         # when the number of bytes read was too large or too small.
@@ -265,6 +274,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=OPERATING_MODES,
         map_values=True,
+        cast=cast_or_str(float),
         get_process_list=lambda x: HP8116A.OPERATING_MODES_INV[x[0]]
     )
 
@@ -276,6 +286,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=CONTROL_MODES,
         map_values=True,
+        cast=cast_or_str(float),
         get_process_list=lambda x: HP8116A.CONTROL_MODES_INV[x[1]]
     )
 
@@ -287,6 +298,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=TRIGGER_SLOPES,
         map_values=True,
+        cast=cast_or_str(float),
         get_process_list=lambda x: HP8116A.TRIGGER_SLOPES_INV[x[2]]
     )
 
@@ -298,6 +310,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=SHAPES,
         map_values=True,
+        cast=cast_or_str(float),
         get_process_list=lambda x: HP8116A.SHAPES_INV[x[3]]
     )
 
@@ -336,6 +349,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
@@ -359,6 +373,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[8e-9, 999.001e-3],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_time),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_time)
     )
@@ -370,6 +385,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[10e-3, 16.001],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
@@ -381,6 +397,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[-7.95, 7.95001],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
@@ -392,6 +409,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[-7.9, 8.001],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
@@ -403,6 +421,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[-8, 7.9001],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
@@ -414,6 +433,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1, 1999],
+        cast=str,
         get_process=lambda x: int(x[4:8])
     )
 
@@ -424,6 +444,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[20e-9, 999.001e-3],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_time),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_time)
     )
@@ -435,6 +456,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
@@ -445,6 +467,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
@@ -457,6 +480,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
@@ -468,30 +492,33 @@ class HP8116A(Instrument):
         """,
         validator=truncated_discrete_set,
         values=_generate_1_2_5_sequence(10e-3, 500),
+        cast=str,
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_time),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_time)
     )
 
     @property
-    def status(self):
+    def status(self) -> Status:
         """Get the status byte of the 8116A as a :class:`Status` IntFlag-type enum."""
         return Status(self.adapter.connection.read_stb())
 
     @property
-    def complete(self):
+    def complete(self) -> bool:
         """Get whether the measurement is complete (bool)."""
         return not (self.status & Status.buffer_not_empty)
 
     @property
-    def options(self):
+    def options(self) -> list[str]:
         """Get the device options installed. The only possible option is 001."""
         if self.has_option_001:
             return ['001']
         else:
             return []
 
-    def start_autovernier(self, control, digit, direction, start_value=None):
-        """ Start the autovernier on the specified control.
+    def start_autovernier(
+        self, control, digit: Digit, direction: Direction, start_value: float | None = None
+    ) -> None:
+        """Start the autovernier on the specified control.
 
         :param control: The control to change, pass as :code:`HP8116A.some_control`. Allowed
                         controls are frequency, amplitude, offset, duty_cycle, and pulse_width
@@ -515,22 +542,22 @@ class HP8116A(Instrument):
 
         self.write(digit.value + direction.value)
 
-    def GPIB_trigger(self):
+    def GPIB_trigger(self) -> None:
         """ Initiate trigger via low-level GPIB-command (aka GET - group execute trigger). """
         self.adapter.connection.assert_trigger()
 
-    def reset(self):
+    def reset(self) -> None:
         """ Initatiate a reset (like a power-on reset) of the 8116A. """
         self.adapter.connection.clear()
         self._wait_for_commands_processed()
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """ Gracefully close the connection to the 8116A. """
         self.adapter.connection.clear()
         self.adapter.close()
         super().shutdown()
 
-    def check_errors(self):
+    def check_errors(self) -> list[str]:
         """ Check for errors in the 8116A.
 
         :return: list of error entries or empty list if no error occurred.
@@ -546,7 +573,7 @@ class HP8116A(Instrument):
                 log.error(f'{self.name}: {error}')
             return errors
 
-    def _wait_for_commands_processed(self, timeout=1):
+    def _wait_for_commands_processed(self, timeout: float = 1) -> None:
         """ Wait until the commands have been processed by the 8116A. """
         start = time.time()
         while not self.complete:
@@ -554,7 +581,7 @@ class HP8116A(Instrument):
             if time.time() - start > timeout:
                 raise RuntimeError('Timeout waiting for commands to be processed.')
 
-    def _check_has_option_001(self):
+    def _check_has_option_001(self) -> bool:
         """ Return True if the 8116A has option 001 and False otherwise.
 
         This is done by checking the length of the response to the CST (current status) command

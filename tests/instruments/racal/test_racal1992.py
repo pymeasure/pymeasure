@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.racal import Racal1992
+from pymeasure.test import expected_protocol
 
 # ============================================================
 # TESTS
@@ -35,6 +35,17 @@ def test_self_check():
             Racal1992,
             [
                 (' CK', 'CK+010.00000000E+06'),
+            ],
+    ) as instr:
+        instr.operating_mode = 'self_check'
+        assert instr.measured_value == 10000000.0
+
+
+def test_self_check_with_termination_in_string():
+    with expected_protocol(
+            Racal1992,
+            [
+                (' CK', 'CK+010.00000000E+06\r\n'),
             ],
     ) as instr:
         instr.operating_mode = 'self_check'

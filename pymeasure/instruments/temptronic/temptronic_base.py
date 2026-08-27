@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,13 +39,10 @@ No automatic safety measures are part of this driver implementation.
 """
 import logging
 import time
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_range,
-                                              strict_range
-                                              )
-
 from enum import IntFlag
+
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 log = logging.getLogger(__name__)  # https://docs.python.org/3/howto/logging.html#library-config
 log.addHandler(logging.NullHandler())
@@ -782,7 +779,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
         :returns: :class:`ErrorCode`
         """
         code = self.error_code
-        if not code == 0:
+        if code != 0:
             log.warning('%s', code)
         return code
 

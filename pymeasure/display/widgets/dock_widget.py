@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,24 +21,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import logging
-
-from os import path
 import json
+import logging
+from collections.abc import Sequence
+from os import PathLike, path
 
+import pyqtgraph as pg
 from pyqtgraph.dockarea import Dock, DockArea
 from pyqtgraph.dockarea.Dock import DockLabel
-import pyqtgraph as pg
+from qtpy.QtGui import QContextMenuEvent
 
-from .plot_widget import PlotWidget, PlotFrame
+from ...experiment.procedure import Procedure
+from ...experiment.results import Results
 from ..Qt import QtWidgets
-from .tab_widget import TabWidget
+from .plot_widget import PlotFrame, PlotWidget
+from .tab_widget import DEFAULT_COLOR, TabWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class DockWidget(TabWidget, QtWidgets.QWidget):
+class DockWidget(TabWidget[list], QtWidgets.QWidget):
     """
     Widget that contains a DockArea with a number of Docks as determined by the length of
     the longest x_axis_labels or y_axis_labels list.
@@ -58,9 +61,18 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
     :param parent: Passed on to QtWidgets.QWidget. Default is None
     """
 
-    def __init__(self, name, procedure_class, x_axis_labels=None, y_axis_labels=None, linewidth=1,
-                 layout_path='./', layout_filename='', parent=None):
-        super().__init__(name, parent)
+    def __init__(
+        self,
+        name: str,
+        procedure_class: type[Procedure],
+        x_axis_labels: Sequence[str],
+        y_axis_labels: Sequence[str],
+        linewidth: float = 1,
+        layout_path: PathLike | str = "./",
+        layout_filename: PathLike | str = "",
+        parent: QtWidgets.QWidget | None = None,
+    ):
+        super().__init__(name=name, parent=parent)
 
         self.procedure_class = procedure_class
         if layout_filename:
@@ -70,7 +82,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
                                                   procedure_class.__name__ + '_dock_layout.json')
         self.x_axis_labels = x_axis_labels
         self.y_axis_labels = y_axis_labels
-        self.num_plots = max(len(self.x_axis_labels), len(self.y_axis_labels))
+        self.num_plots = max(len(self.x_axis_labels), len(self.y_axis_labels))  # type: ignore
         self.linewidth = linewidth
 
         self.dock_area = DockArea()
@@ -80,7 +92,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         self._setup_ui()
         self._layout()
 
-    def save_dock_layout(self):
+    def save_dock_layout(self) -> None:
         """
         Save the current layout of the docks and the plot settings.
         When running the GUI you can access this function by right-clicking in the
@@ -93,23 +105,25 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         }
         with open(self.dock_layout_filename, 'w') as f:
             f.write(json.dumps(layout))
-        log.info('Saved dock layout to file %s' % self.dock_layout_filename)
+        log.info(f'Saved dock layout to file {self.dock_layout_filename}')
 
-    def save_dock_action(self):
+    def save_dock_action(self) -> QtWidgets.QWidgetAction:
         save_dock_action = QtWidgets.QWidgetAction(self)
         save_dock_action.setText("Save Dock Layout")
         save_dock_action.triggered.connect(self.save_dock_layout)
         return save_dock_action
 
-    def contextMenuEvent(self, event):
-        position = event.pos()
+    def contextMenuEvent(self, a0: QContextMenuEvent | None) -> None:
+        if a0 is None:
+            return
+        position = a0.pos()
         # Create menu outside pyqtgraph.PlotWidget position
         if isinstance(self.childAt(position), (PlotWidget, DockLabel, QtWidgets.QLabel, PlotFrame)):
             menu = QtWidgets.QMenu(self)
             menu.addAction(self.save_dock_action())
             menu.exec(self.mapToGlobal(position))
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         for i in range(self.num_plots):
             # Set the default label for current dock from x_axis_labels and y_axis_labels
             # However, if list is shorter than num_plots, repeat last item in the list.
@@ -126,16 +140,16 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             dock.addWidget(self.plot_frames[i])
             self.docks.append(dock)
 
-    def _layout(self):
+    def _layout(self) -> None:
 
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
-        vbox.addWidget(self.dock_area)
+        vbox.addWidget(self.dock_area)  # pyright: ignore[reportArgumentType]
         self.setLayout(vbox)
 
         # Load dock layout file if it exists in the directory of the current procedure
         if path.exists(self.dock_layout_filename):
-            with open(self.dock_layout_filename, 'r') as f:
+            with open(self.dock_layout_filename) as f:
                 dock_layout = f.read()
             layout = json.loads(dock_layout)
             docks = layout['docks']
@@ -145,13 +159,13 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
                 self.dock_area.restoreState(docks)
                 for idx, i in enumerate(self.plot_frames):
                     i.plot_frame.plot_widget.restoreState(plots[idx])
-                log.info('Loaded dock layout from file %s' % self.dock_layout_filename)
+                log.info(f'Loaded dock layout from file {self.dock_layout_filename}')
             else:
                 log.warning(
-                    'Number of displayed docks does not match number of docks in layout file %s'
-                    % self.dock_layout_filename)
+                    "Number of displayed docks does not match number of docks in layout file "
+                    f"{self.dock_layout_filename}")
 
-    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+    def new_curve(self, results: Results, color=DEFAULT_COLOR, **kwargs):
         if 'pen' not in kwargs:
             kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
         if 'antialias' not in kwargs:
@@ -161,6 +175,6 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             curves.append(self.plot_frames[i].new_curve(results, color=color, **kwargs))
         return curves
 
-    def clear(self):
+    def clear(self) -> None:
         for i in range(self.num_plots):
             self.plot_frames[i].plot.clear()

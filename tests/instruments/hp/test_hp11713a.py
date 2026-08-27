@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +21,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.test import expected_protocol
+import pytest
 
 from pymeasure.instruments.hp.hp11713a import HP11713A, Attenuator_110dB
-
-import pytest
+from pymeasure.test import expected_protocol
 
 
 class TestHP11713A:
-    @pytest.mark.parametrize("channel", list(range(0, 9)))
+    @pytest.mark.parametrize("channel", list(range(9)))
     def test_channels(self, channel):
         with expected_protocol(
                 HP11713A,

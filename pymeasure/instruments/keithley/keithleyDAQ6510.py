@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,13 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+
 from .buffer import KeithleyBuffer
-import logging
 
 # Set up logging
 log = logging.getLogger(__name__)

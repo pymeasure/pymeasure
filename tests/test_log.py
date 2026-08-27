@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,11 @@
 import time
 from unittest import mock
 
-from pymeasure.process import context
 from pymeasure.log import Scribe, setup_logging
-
+from pymeasure.process import context
 
 # TODO: Add tests for logging convenience functions and TopicQueueHandler
+
 
 def test_scribe_stop():
     q = context.Queue()

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,16 +34,23 @@ python gui_table.py
 
 """
 
-import sys
-import random
-from time import sleep
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results, unique_filename
-from pymeasure.display.Qt import QtWidgets
-from pymeasure.display.windows import ManagedWindowBase
-from pymeasure.display.widgets import TableWidget, LogWidget
-
 import logging
+import random
+import sys
+from time import sleep
+
+from pymeasure.display.Qt import QtWidgets
+from pymeasure.display.widgets import LogWidget, TableWidget
+from pymeasure.display.windows import ManagedWindowBase
+from pymeasure.experiment import (
+    FloatParameter,
+    IntegerParameter,
+    Parameter,
+    Procedure,
+    Results,
+    unique_filename,
+)
+
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
@@ -67,7 +74,7 @@ class TestProcedure(Procedure):
                 'Iteration': i,
                 'Random Number': random.random()
             }
-            log.debug("Produced numbers: %s" % data)
+            log.debug(f"Produced numbers: {data}")
             self.emit('results', data)
             self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
@@ -82,12 +89,12 @@ class TestProcedure(Procedure):
 class MainWindow(ManagedWindowBase):
 
     def __init__(self):
-        widget_list = (TableWidget("Experiment Table",
+        widget_list = [TableWidget("Experiment Table",
                                    TestProcedure.DATA_COLUMNS,
                                    by_column=True,
                                    ),
                        LogWidget("Experiment Log"),
-                       )
+                       ]
 
         super().__init__(
             procedure_class=TestProcedure,

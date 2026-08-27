@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,9 +28,9 @@
 # $ pytest test_keithley4200_with_device.py --device-address "TCPIP::192.168.1.20::1225::SOCKET"
 
 import pytest
+
 from pymeasure.instruments.keithley import Keithley4200
 from pymeasure.instruments.keithley.keithley4200 import StatusCode
-
 
 ###########
 # FIXTURE #

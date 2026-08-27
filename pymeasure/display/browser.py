@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,15 @@
 #
 
 import logging
-
+from collections.abc import Iterable
 from os.path import basename
+from typing import cast
 
+from pymeasure.display.manager import Experiment
+from pymeasure.experiment.results import Results
+
+from ..experiment.procedure import Procedure, ProcedureStatus
 from .Qt import QtCore, QtGui, QtWidgets
-
-from ..experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -39,22 +42,17 @@ class BaseBrowserItem:
     for displaying progress of an experiment to the user.
     """
 
-    status_label = {
-        Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
-        Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted',
-        Procedure.FINISHED: 'Finished'}
-
-    def setStatus(self, status):
+    def setStatus(self, status: ProcedureStatus) -> None:
         raise NotImplementedError('Must be reimplemented by subclasses')
 
-    def setProgress(self, status):
+    def setProgress(self, progress: float) -> None:
         raise NotImplementedError('Must be reimplemented by subclasses')
 
 
 class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
     """ Represent a row in the :class:`~pymeasure.display.browser.Browser` tree widget """
 
-    def __init__(self, results, color, parent=None):
+    def __init__(self, results: Results, color, parent: QtWidgets.QTreeWidget | None = None):
         super().__init__(parent)
 
         pixelmap = QtGui.QPixmap(24, 24)
@@ -70,10 +68,10 @@ class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
         self.progressbar.setRange(0, 100)
         self.progressbar.setValue(0)
 
-    def setStatus(self, status):
-        self.setText(3, self.status_label[status])
+    def setStatus(self, status: ProcedureStatus) -> None:
+        self.setText(3, status)
 
-        if status == Procedure.FAILED or status == Procedure.ABORTED:
+        if status == ProcedureStatus.FAILED or status == ProcedureStatus.ABORTED:
             # Set progress bar color to red
             return  # Commented this out
             self.progressbar.setStyleSheet("""
@@ -87,7 +85,7 @@ class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
             }
             """)
 
-    def setProgress(self, progress):
+    def setProgress(self, progress: float) -> None:
         self.progressbar.setValue(int(progress))
 
 
@@ -101,8 +99,14 @@ class Browser(QtWidgets.QTreeWidget):
     `measured_quantities` of the Browser.
     """
 
-    def __init__(self, procedure_class, display_parameters,
-                 measured_quantities, sort_by_filename=False, parent=None):
+    def __init__(
+        self,
+        procedure_class: type[Procedure],
+        display_parameters: Iterable[str],
+        measured_quantities: Iterable[str],
+        sort_by_filename: bool = False,
+        parent: QtWidgets.QWidget | None = None,
+    ):
         super().__init__(parent)
         self.display_parameters = display_parameters
         self.procedure_class = procedure_class
@@ -115,13 +119,14 @@ class Browser(QtWidgets.QTreeWidget):
         self.setColumnCount(len(header_labels))
         self.setHeaderLabels(header_labels)
         self.setSortingEnabled(True)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
         if sort_by_filename:
             self.sortItems(1, QtCore.Qt.SortOrder.AscendingOrder)
 
         for i, width in enumerate([80, 140]):
             self.header().resizeSection(i, width)
 
-    def add(self, experiment):
+    def add(self, experiment: Experiment) -> BaseBrowserItem | None:
         """Add a :class:`Experiment<pymeasure.display.manager.Experiment>` object
         to the Browser. This function checks to make sure that the Experiment
         measures the appropriate quantities to warrant its inclusion, and then
@@ -133,8 +138,8 @@ class Browser(QtWidgets.QTreeWidget):
 
         for measured_quantity in self.measured_quantities:
             if measured_quantity not in experiment.procedure.DATA_COLUMNS:
-                raise Exception("Procedure does not measure the"
-                                " %s quantity." % measured_quantity)
+                raise ValueError("Procedure does not measure the"
+                                f" {measured_quantity} quantity.")
 
         # Set the relevant fields within the BrowserItem if
         # that Parameter is implemented
@@ -143,6 +148,7 @@ class Browser(QtWidgets.QTreeWidget):
             if column in experiment_parameter_names:
                 item.setText(i + 4, str(experiment_parameters[column]))
 
-        self.addTopLevelItem(item)
-        self.setItemWidget(item, 2, item.progressbar)
+        tree_item = cast(QtWidgets.QTreeWidgetItem, item)
+        self.addTopLevelItem(tree_item)
+        self.setItemWidget(tree_item, 2, item.progressbar)
         return item

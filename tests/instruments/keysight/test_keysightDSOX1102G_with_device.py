@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,15 +22,20 @@
 # THE SOFTWARE.
 #
 
-from time import sleep
 import logging
+from time import sleep
 
-import pytest
 import numpy as np
-from pymeasure.instruments.keysight.keysightDSOX1102G import KeysightDSOX1102G
+import pytest
 from pyvisa.errors import VisaIOError
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
+from pymeasure.instruments.keysight.keysightDSOX1102G import KeysightDSOX1102G
+
+
+@pytest.fixture(scope="module")
+def device(connected_device_address):
+    device = KeysightDSOX1102G(connected_device_address)
+    return device
 
 
 class TestKeysightDSOX1102G:
@@ -42,11 +47,6 @@ class TestKeysightDSOX1102G:
         - The device's address must be set in the RESOURCE constant;
         - A probe on Channel 1 must be connected to the Demo output of the oscilloscope.
     """
-
-    ##################################################
-    # KeysightDSOX1102G device address goes here:
-    RESOURCE = "USB0::10893::6039::CN57266430::INSTR"
-    ##################################################
 
     #########################
     # PARAMETRIZATION CASES #
@@ -70,14 +70,13 @@ class TestKeysightDSOX1102G:
     DOWNLOAD_SOURCES = ["channel1", "channel2", "function", "fft", "ext"]
     CHANNELS = [1, 2]
 
-    SCOPE = KeysightDSOX1102G(RESOURCE)
-
     ############
     # FIXTURES #
     ############
 
     @pytest.fixture
-    def make_reseted_cleared_scope(self):
+    def make_reseted_cleared_scope(self, device: KeysightDSOX1102G):
+        self.SCOPE = device
         self.SCOPE.reset()
         self.SCOPE.clear_status()
         return self.SCOPE

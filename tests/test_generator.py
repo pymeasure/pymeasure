@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,20 @@
 
 import io
 import logging
+
 import pytest
 
 from pymeasure.adapters import ProtocolAdapter
+from pymeasure.generator import (
+    ByteStreamHandler,
+    Generator,
+    parse_stream,
+    write_parametrized_method_test,
+    write_parametrized_test,
+    write_test,
+)
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.hcp import TC038, TC038D
-
-from pymeasure.generator import (write_test, write_parametrized_test,
-                                 write_parametrized_method_test,
-                                 parse_stream, Generator, ByteStreamHandler)
 
 
 class FakeChildChannel(Channel):
@@ -252,7 +257,7 @@ class Test_generator:
         adapter = ProtocolAdapter(
             [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")])
         TC038.string_test = TC038.control("test?", "test %s",  # type: ignore
-                                          "Control some string.", cast=str,  # type: ignore
+                                          "Control some string.", cast=str,
                                           get_process=lambda v: v[7:-1])
         generator.instantiate(TC038, adapter, "hcp")
         return generator
@@ -282,7 +287,7 @@ def test_init():
             [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")])
         # add a control with a str for test purposes.
         TC038.string_test = TC038.control("test?", "test %s",  # type: ignore
-                                          "Control some string.",  cast=str,  # type: ignore
+                                          "Control some string.",  cast=str,
                                           get_process=lambda v: v[7:-1])
         generator.instantiate(TC038, adapter, "hcp", some_kwarg=5.7, other_kwarg=True,
                               str_kwarg="abc")

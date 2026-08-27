@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,16 @@
 #
 
 import pytest
+
 from pymeasure.instruments.validators import (
-    strict_range, strict_discrete_range, strict_discrete_set,
-    truncated_range, truncated_discrete_set,
-    modular_range, modular_range_bidirectional,
-    joined_validators
+    joined_validators,
+    modular_range,
+    modular_range_bidirectional,
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+    truncated_discrete_set,
+    truncated_range,
 )
 
 

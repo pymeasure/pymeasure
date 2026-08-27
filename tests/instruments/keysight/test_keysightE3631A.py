@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.keysight.keysightE3631A import KeysightE3631A
+from pymeasure.test import expected_protocol
 
 
 def test_voltage_setpoint():
@@ -54,9 +55,8 @@ def test_current_limit_validator():
     with expected_protocol(
         KeysightE3631A,
         [],
-    ) as inst:
-        with pytest.raises(ValueError, match="not in range"):
-            inst.ch_1.current_limit = 7
+    ) as inst, pytest.raises(ValueError, match="not in range"):
+        inst.ch_1.current_limit = 7
 
 
 def test_output_enabled():

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@
 
 import pandas as pd
 
+from pymeasure.instruments.keithley.keithley2281S import _PLC_RANGE, Keithley2281S
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.keithley.keithley2281S import Keithley2281S, _PLC_RANGE
 
 init_comm = [(":SYST:LFR?", "50")]  # communication during init for 50Hz line
 init_comm_us = [(":SYST:LFR?", "60")]  # communication during init for 60Hz line

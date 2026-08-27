@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,19 +23,10 @@
 #
 
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.validators import strict_discrete_set
 
 from .mksinst import MKSInstrument, RelayChannel
-
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        """Until StrEnum is broadly available from the standard library"""
-        # Python>3.10 remove it.
 
 
 class Unit(StrEnum):
@@ -58,6 +49,7 @@ class Relay(RelayChannel):
                 "piezo": "PZ",
                 "cold cathode": "CC",
                 },
+        cast=str,
         check_set_errors=True,
     )
 
@@ -152,6 +144,7 @@ class MKS974B(MKSInstrument):
                 "pressure dose setpoint exceeded": "R",
                 "Cold Cathode On": "G",
                 },
+        cast=str,
     )
 
     pirani_pressure = Instrument.measurement(
@@ -177,7 +170,8 @@ class MKS974B(MKSInstrument):
         Allowed units are Unit.Torr, Unit.mbar, Unit.Pa.""",
         validator=strict_discrete_set,
         map_values=True,
-        values={u: u.value for u in Unit},
+        values={u: u.value for u in Unit},  # type: ignore
+        cast=str,
         check_set_errors=True,
     )
 
@@ -196,5 +190,6 @@ class MKS974B(MKSInstrument):
         values={True: "ON",
                 False: "OFF",
                 },
+        cast=str,
         check_set_errors=True,
     )

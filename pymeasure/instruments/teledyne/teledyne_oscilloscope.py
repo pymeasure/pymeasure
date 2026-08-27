@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,33 @@
 # THE SOFTWARE.
 #
 
-from abc import ABCMeta
 import re
 import sys
 import time
+from abc import ABCMeta
+from collections.abc import Callable, Sequence
 from decimal import Decimal
+from typing import Any, Literal, cast
+
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
-    strict_discrete_range
+from pymeasure.adapters.adapter import Adapter
+from pymeasure.instruments import (
+    AdapterType,
+    Channel,
+    Instrument,
+    InstrumentProperty,
+    SCPIUnknownMixin,
+    cast_or_str,
+)
+from pymeasure.instruments.validators import (
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+)
 
 
-def sanitize_source(source):
+def sanitize_source(source: str) -> str:
     """Parse source string.
 
     :param source: can be "cX", "ch X", "chan X", "channel X", "math" or "line", where X is
@@ -55,12 +69,12 @@ def sanitize_source(source):
     return source
 
 
-def _trigger_select_num_pars(value):
+def _trigger_select_num_pars(value: Sequence) -> Literal[3, 4, 5, 0]:
     """Find the expected number of parameters for the trigger_select property.
 
     :param value: input parameters as a tuple
     """
-    value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+    value = tuple(v.upper() if isinstance(v, str) else v for v in value)
     num_expected_pars = 0
     if 3 <= len(value) <= 5:
         if value[0] == "EDGE":
@@ -72,39 +86,44 @@ def _trigger_select_num_pars(value):
         elif value[0] == "DROP":
             num_expected_pars = 4
     else:
-        raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
     return num_expected_pars
 
 
-def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num_pars):
+def _trigger_select_validator(
+    value: tuple[str | float, ...] | list[str | float],
+    values: dict[str, tuple[list[str], list[str], list[float]]],
+    num_pars_finder: Callable[..., int] = _trigger_select_num_pars,
+) -> tuple[str | float, ...]:
     """Validate the input of the trigger_select property.
 
-    :param value: input parameters as a tuple
+    :param value: input parameters
     :param values: allowed space for each parameter
     :param num_pars_finder: function to find the number of expected parameters
     """
-    if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+    if not isinstance(value, (tuple, list)):
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple or list')
     if len(value) < 3 or len(value) > 5:
-        raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
-    value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
-    value = list(value)
-    value[1] = sanitize_source(value[1])
-    value = tuple(value)
-    if value[0] not in values.keys():
-        raise ValueError('Value {} not in the discrete set {}'.format(value[0], values.keys()))
+        raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
+
+    value_list = [v.upper() if isinstance(v, str) else v for v in value]
+    value_list[1] = sanitize_source(cast(str, value_list[1]))
+
+    if value_list[0] not in values:
+        raise ValueError(f'Value {value_list[0]} not in the discrete set {values.keys()}')
+
     num_expected_pars = num_pars_finder(value)
-    if len(value) != num_expected_pars:
-        raise ValueError('Number of parameters {} != {}'.format(len(value), num_expected_pars))
-    for i, element in enumerate(value[1:], start=1):
+    if len(value_list) != num_expected_pars:
+        raise ValueError(f'Number of parameters {len(value_list)} != {num_expected_pars}')
+    for i, element in enumerate(value_list[1:], start=1):
         if i < 3:
-            strict_discrete_set(element, values=values[value[0]][i - 1])
+            strict_discrete_set(element, values=values[value_list[0]][i - 1])
         else:
-            strict_range(element, values=values[value[0]][i - 1])
-    return value
+            strict_range(cast(float, element), values=values[value_list[0]][i - 1])
+    return tuple(value_list)
 
 
-def _trigger_select_get_process(value):
+def _trigger_select_get_process(value: list[str]) -> list[str | float]:
     """Process the output of the trigger_select property.
 
     The format of the input list is
@@ -131,7 +150,7 @@ def _trigger_select_get_process(value):
     return output
 
 
-def _results_list_to_dict(results):
+def _results_list_to_dict(results: list[str]) -> dict[str, str]:
     """Turn a list into a dict, using the uneven indices as keys.
 
     E.g. turn ['C1', 'OFF', 'C2', 'OFF'] into {'C1': 'OFF', 'C2': 'OFF'}
@@ -141,27 +160,26 @@ def _results_list_to_dict(results):
     return dict(zip(keys, values))
 
 
-def _remove_unit(value):
+def _remove_unit(value: float | str) -> float:
     """Remove a unit from the returned string and cast to float."""
-    if isinstance(value, float):
+    if isinstance(value, (float, int)):
         return value
 
-    if value.endswith(" V"):
-        value = value[:-2]
+    value = value.removesuffix(" V")
 
     return float(value)
 
 
-def _intensity_validator(value, values):
+def _intensity_validator(value: tuple[float, float], values) -> tuple[float, float]:
     """Validate the input of the intensity property (grid intensity and trace intensity).
 
     :param value: input parameters as a 2-element tuple
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 2:
-        raise ValueError('Number of parameters {} different from 2'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} different from 2')
     for i in range(2):
         strict_discrete_range(value=value[i], values=values[i], step=1)
     return value
@@ -178,7 +196,7 @@ class _ChunkResizer:
 
     """
 
-    def __init__(self, adapter, chunk_size):
+    def __init__(self, adapter: Adapter, chunk_size: int | None):
         """Just initialize the object attributes.
 
         :param adapter: Adapter of the instrument. This is usually accessed through the
@@ -191,11 +209,13 @@ class _ChunkResizer:
 
     def __enter__(self):
         """Only resize the chunk size if the adapter support this feature."""
-        if (self.adapter.connection is not None
-                and hasattr(self.adapter.connection, "chunk_size")):
-            if self.new_chunk_size > self.adapter.connection.chunk_size:
-                self.old_chunk_size = self.adapter.connection.chunk_size
-                self.adapter.connection.chunk_size = self.new_chunk_size
+        if (
+            self.adapter.connection is not None
+            and hasattr(self.adapter.connection, "chunk_size")
+            and self.new_chunk_size > self.adapter.connection.chunk_size
+        ):
+            self.old_chunk_size = self.adapter.connection.chunk_size
+            self.adapter.connection.chunk_size = self.new_chunk_size  # type: ignore
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.old_chunk_size is not None:
@@ -219,7 +239,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
                                    r"(?P<value>[^,]*)\s*"
                                    r"(?:,(?P<state>\w+)\s*)?$")
 
-    bwlimit = Instrument.control(
+    bwlimit: InstrumentProperty[str | dict[str, str]] = Instrument.control(
         "BWL?", "BWL %s",
         """Control the internal low-pass filter for this channel.
 
@@ -229,6 +249,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         values=BANDWIDTH_LIMITS,
         get_process_list=_results_list_to_dict,
         dynamic=True,
+        cast=str,
     )
 
     coupling = Instrument.control(
@@ -236,7 +257,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """Control the coupling with a string parameter ("ac 1M", "dc 1M", "ground").""",
         validator=strict_discrete_set,
         values={"ac 1M": "A1M", "dc 1M": "D1M", "ground": "GND"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     display = Instrument.control(
@@ -244,7 +266,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """Control the display enabled state. (strict bool)""",
         validator=strict_discrete_set,
         values=_BOOLS,
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     offset = Instrument.control(
@@ -282,7 +305,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """,
         validator=strict_discrete_set,
         values={"ac": "AC", "dc": "DC", "lowpass": "HFREJ", "highpass": "LFREJ"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     trigger_level = Instrument.control(
@@ -322,13 +346,14 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         values=TRIGGER_SLOPES,
         map_values=True,
         dynamic=True,
+        cast=str,
     )
 
     _measurable_parameters = ["PKPK", "MAX", "MIN", "AMPL", "TOP", "BASE", "CMEAN", "MEAN", "RMS",
                               "CRMS", "OVSN", "FPRE", "OVSP", "RPRE", "PER", "FREQ", "PWID",
                               "NWID", "RISE", "FALL", "WID", "DUTY", "NDUTY", "ALL"]
 
-    display_parameter = Instrument.setting(
+    display_parameter: InstrumentProperty[str] = Instrument.setting(
         "PACU %s",
         """Set the waveform processing of this channel with the specified algorithm and the result
         is displayed on the front panel.
@@ -368,13 +393,13 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         values=_measurable_parameters
     )
 
-    def measure_parameter(self, parameter: str):
+    def measure_parameter(self, parameter: str) -> float:
         """Process a waveform with the selected algorithm and returns the specified measurement.
 
         :param parameter: same as the display_parameter property
         """
         parameter = strict_discrete_set(value=parameter, values=self._measurable_parameters)
-        output = self.ask("PAVA? %s" % parameter)
+        output = self.ask(f"PAVA? {parameter}")
         match = self._re_pava_response.match(output)
         if match:
             if match.group('parameter') != parameter:
@@ -385,17 +410,17 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         else:
             raise ValueError(f"Cannot extract value from output {output}")
 
-    def insert_id(self, command):
+    def insert_id(self, command: str) -> str:
         # only in case of the BWL and PACU commands the syntax is different. Why? SIGLENT Why?
         if command[0:4] == "BWL ":
-            return "BWL C%d,%s" % (self.id, command[4:])
+            return f"BWL C{self.id},{command[4:]}"
         elif command[0:5] == "PACU ":
-            return "PACU %s,C%d" % (command[5:], self.id)
+            return f"PACU {command[5:]},C{self.id}"
         else:
-            return "C%d:%s" % (self.id, command)
+            return f"C{self.id}:{command}"
 
     # noinspection PyIncorrectDocstring
-    def setup(self, **kwargs):
+    def setup(self, **kwargs) -> None:
         """Setup channel. Unspecified settings are not modified.
 
         Modifying values such as probe attenuation will modify offset, range, etc. Refer to
@@ -420,7 +445,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
             setattr(self, key, value)
 
     @property
-    def current_configuration(self):
+    def current_configuration(self) -> dict[str, Any]:
         """Get channel configuration as a dict containing the following keys:
 
         - "channel": channel number (int)
@@ -488,7 +513,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
 
     ch_4 = Instrument.ChannelCreator(TeledyneOscilloscopeChannel, 4)
 
-    def __init__(self, adapter, name="Teledyne Oscilloscope", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Teledyne Oscilloscope", **kwargs):
         super().__init__(adapter, name=name, **kwargs)
         if self.adapter.connection is not None:
             self.adapter.connection.timeout = 3000
@@ -503,7 +528,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     # System Setup #
     ################
 
-    def default_setup(self):
+    def default_setup(self) -> None:
         """ Set up the oscilloscope for remote operation.
 
         The COMM_HEADER command controls the
@@ -517,7 +542,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """
         self._comm_header = "OFF"
 
-    def ch(self, source):
+    def ch(self, source: int | str) -> "TeledyneOscilloscope | TeledyneOscilloscopeChannel":
         """ Get channel object from its index or its name. Or if source is "math", just return the
         scope object.
 
@@ -533,11 +558,11 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         else:
             return getattr(self, f"ch_{source if isinstance(source, int) else source[-1]}")
 
-    def autoscale(self):
+    def autoscale(self) -> None:
         """ Autoscale displayed channels."""
         self.write("ASET")
 
-    def write(self, command, **kwargs):
+    def write(self, command: str, **kwargs) -> None:
         """Write the command to the instrument through the adapter.
 
         Note: if the last command was sent less than WRITE_INTERVAL_S before, this method blocks for
@@ -562,6 +587,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         • OFF — header is omitted from the response and units in numbers are suppressed.""",
         validator=strict_discrete_set,
         values=["OFF", "SHORT", "LONG"],
+        cast=str,
     )
 
     ###########
@@ -575,6 +601,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         values=TeledyneOscilloscopeChannel.BANDWIDTH_LIMITS,
         get_process_list=_results_list_to_dict,
         dynamic=True,
+        cast=str,
     )
 
     ##################
@@ -596,7 +623,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     )
 
     @property
-    def timebase(self):
+    def timebase(self) -> dict[str, float]:
         """Get timebase setup as a dict containing the following keys:
 
             - "timebase_scale": horizontal scale in seconds/div (float)
@@ -609,7 +636,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         }
         return tb_setup
 
-    def timebase_setup(self, scale=None, offset=None):
+    def timebase_setup(self, scale: float | None = None, offset: float | None = None) -> None:
         """Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to timebase_setup if needed.
@@ -627,18 +654,18 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     # Acquisition #
     ###############
 
-    def run(self):
+    def run(self) -> None:
         """Starts repetitive acquisitions.
 
         This is the same as pressing the Run key on the front panel.
         """
         self.trigger_mode = "normal"
 
-    def stop(self):
+    def stop(self) -> None:
         """ Stops the acquisition. This is the same as pressing the Stop key on the front panel."""
         self.write("STOP")
 
-    def single(self):
+    def single(self) -> None:
         """Causes the instrument to acquire a single trigger of data.
 
         This is the same as pressing the Single key on the front panel.
@@ -649,6 +676,14 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     #    Waveform    #
     ##################
 
+    @staticmethod
+    def _extract_value_generator(key: str) -> Callable[[list[str | int]], int]:
+        """Generate a method to extract a certain member of a list as int."""
+        def extract_value(values: list[str | int]) -> int:
+            index = values.index(key) + 1
+            return cast(int, values[index])
+        return extract_value
+
     waveform_points = Instrument.control(
         "WFSU?", "WFSU NP,%d",
         """Control the number of waveform points to be transferred with
@@ -657,8 +692,9 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         Note that the oscilloscope may provide less than the specified nb of points.
         """,
         validator=strict_range,
-        get_process_list=lambda vals: vals[vals.index("NP") + 1],
-        values=[0, sys.maxsize]
+        get_process_list=_extract_value_generator("NP"),
+        values=[0, sys.maxsize],
+        cast=cast_or_str(int),
     )
 
     waveform_sparsing = Instrument.control(
@@ -669,8 +705,9 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
                SP = 4 sends 1 point every 4 data points.
         """,
         validator=strict_range,
-        get_process_list=lambda vals: vals[vals.index("SP") + 1],
-        values=[0, sys.maxsize]
+        get_process_list=_extract_value_generator("SP"),
+        values=[0, sys.maxsize],
+        cast=cast_or_str(int),
     )
 
     waveform_first_point = Instrument.control(
@@ -679,8 +716,9 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         For waveforms acquired in sequence mode, this refers to the relative address in the
         given segment. The first data point starts at zero and is strictly positive.""",
         validator=strict_range,
-        get_process_list=lambda vals: vals[vals.index("FP") + 1],
-        values=[0, sys.maxsize]
+        get_process_list=_extract_value_generator("FP"),
+        values=[0, sys.maxsize],
+        cast=cast_or_str(int),
     )
 
     ##################
@@ -693,7 +731,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         Assign for example 500, 100e6, "100K", "25MA".
 
         The reply will always be a float.
-        """
+        """,
     )
 
     @property
@@ -715,7 +753,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         - "yoffset": value that is represented at center of screen in Volts
 
         """
-        vals = self.values("WFSU?")
+        vals = self.values("WFSU?", cast=cast_or_str(float))
         preamble = {
             "sparsing": vals[vals.index("SP") + 1],
             "requested_points": vals[vals.index("NP") + 1],
@@ -729,7 +767,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         }
         return self._fill_yaxis_preamble(preamble)
 
-    def _fill_yaxis_preamble(self, preamble=None):
+    def _fill_yaxis_preamble(self, preamble: dict | None = None) -> dict:
         """Fill waveform preamble section concerning the Y-axis.
         :param preamble: waveform preamble to be filled
         :return: filled preamble
@@ -744,7 +782,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
             preamble["yoffset"] = self.ch(self.waveform_source).offset
         return preamble
 
-    def _digitize(self, src, num_bytes=None):
+    def _digitize(self, src: str, num_bytes: int | None = None):
         """Acquire waveforms according to the settings of the acquire commands.
         Note.
         If the requested number of bytes is not specified, the default chunk size is used,
@@ -761,7 +799,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
             raise BufferError(f"read bytes ({len(binary_values)}) != requested bytes ({num_bytes})")
         return binary_values
 
-    def _header_footer_sanity_checks(self, message):
+    def _header_footer_sanity_checks(self, message) -> None:
         """Check that the header follows the predefined format.
         The format of the header is DAT2,#9XXXXXXX where XXXXXXX is the number of acquired
         points, and it is zero padded.
@@ -775,7 +813,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         if message_footer != "\n\n":
             raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
 
-    def _npoints_sanity_checks(self, message):
+    def _npoints_sanity_checks(self, message) -> None:
         """Check that the number of transmitted points is consistent with the message length.
         :param message: raw bytes received from the scope """
         message_header = bytes(message[0:self._header_size]).decode("ascii")
@@ -819,7 +857,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
             # number of points still to read
             remaining_points = expected_points - read_points
             # number of points requested in a single chunk
-            requested_points = chunk_points if remaining_points > chunk_points else remaining_points
+            requested_points = min(remaining_points, chunk_points)
             self.waveform_points = requested_points
             # number of bytes requested in a single chunk
             requested_bytes = requested_points + self._header_size + self._footer_size
@@ -842,7 +880,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     # Download data #
     #################
 
-    def download_image(self):
+    def download_image(self) -> bytearray:
         """Get a BMP image of oscilloscope screen in bytearray of specified file format.
         """
         # Using binary_values query because default interface does not support binary transfer
@@ -850,7 +888,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
             img = self.binary_values("SCDP", dtype=np.uint8)
         return bytearray(img)
 
-    def _process_data(self, ydata, preamble):
+    def _process_data(self, ydata, preamble: dict[str, Any]) -> tuple[Any, Any, dict[str, Any]]:
         """Apply scale and offset to the data points acquired from the scope.
         - Y axis : the scale is ydiv / 25 and the offset -yoffset. the
         offset is not applied for the MATH source.
@@ -878,7 +916,9 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         time_points = np.vectorize(_scale_time)(np.arange(len(data_points)))
         return data_points, time_points, preamble
 
-    def download_waveform(self, source, requested_points=None, sparsing=None):
+    def download_waveform(
+        self, source: str, requested_points: int | None = None, sparsing: int | None = None
+    ) -> tuple[Any, Any, dict[str, Any]]:
         """Get data points from the specified source of the oscilloscope.
 
         The returned objects are two np.ndarray of data and time points and a dict with the
@@ -901,7 +941,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         if requested_points is None:
             requested_points = self.waveform_points
         self.waveform_source = sanitize_source(source)
-        # Acquire the Y data and the preable
+        # Acquire the Y data and the preamble
         ydata, preamble = self._acquire_data(requested_points, sparsing)
         # Update the preamble with info about actually acquired data
         preamble["transmitted_points"] = len(ydata)
@@ -915,7 +955,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     #   Trigger   #
     ###############
 
-    trigger_mode = Instrument.control(
+    trigger_mode: InstrumentProperty[str] = Instrument.control(
         "TRMD?", "TRMD %s",
         """Control the trigger sweep mode (string).
 
@@ -947,10 +987,11 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """,
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
-    _trigger_select_vals = {
+    _trigger_select_vals: dict[str, list[list[float] | list[str]]] = {
         "EDGE": [["C1", "C2", "C3", "C4", "LINE"], ["TI", "OFF"], [80e-9, 1.5]],
         "DROP": [["C1", "C2", "C3", "C4"], ["TI"], [2e-9, 4.2]],
         "GLIT": [["C1", "C2", "C3", "C4"], ["PS", "PL", "P2", "P1"], [2e-9, 4.2], [2e-9, 4.2]],
@@ -963,21 +1004,22 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     _trigger_select_normal_command = "TRSE %s,SR,%s,HT,%s,HV,%.2E"
     _trigger_select_extended_command = "TRSE %s,SR,%s,HT,%s,HV,%.2E,HV2,%.2E"
 
-    _trigger_select = Instrument.control(
+    _trigger_select: InstrumentProperty[list[str | float]] = Instrument.control(
         "TRSE?", _trigger_select_normal_command,
         """Control the trigger, see :meth:`~trigger_select()` documentation.""",
         get_process_list=_trigger_select_get_process,
         validator=_trigger_select_validator,
         values=_trigger_select_vals,
-        dynamic=True
+        dynamic=True,
+        cast=cast_or_str(float),
     )
 
-    def center_trigger(self):
+    def center_trigger(self) -> None:
         """Set the trigger levels to center of the trigger source waveform."""
         self.write("SET50")
 
     @property
-    def trigger_select(self):
+    def trigger_select(self) -> list[str | float]:
         """Control the condition that will trigger the acquisition of waveforms (string).
 
         Depending on the trigger type, additional parameters must be specified. These additional
@@ -1014,7 +1056,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
 
     # noinspection PyAttributeOutsideInit
     @trigger_select.setter
-    def trigger_select(self, value):
+    def trigger_select(self, value: list[str | float] | tuple[float | str, ...]) -> None:
         num_expected_pars = _trigger_select_num_pars(value)
         if num_expected_pars == 3:
             self._trigger_select_set_command = self._trigger_select_short_command
@@ -1024,9 +1066,19 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
             self._trigger_select_set_command = self._trigger_select_extended_command
         self._trigger_select = value
 
-    def trigger_setup(self, mode=None, source=None, trigger_type=None, hold_type=None,
-                      hold_value1=None, hold_value2=None, coupling=None, level=None, level2=None,
-                      slope=None):
+    def trigger_setup(
+        self,
+        mode: str | None = None,
+        source: str | None = None,
+        trigger_type: str | None = None,
+        hold_type=None,
+        hold_value1=None,
+        hold_value2=None,
+        coupling=None,
+        level=None,
+        level2=None,
+        slope=None,
+    ) -> None:
         """Set up trigger.
 
         Unspecified parameters are not modified. Modifying a single parameter
@@ -1037,9 +1089,9 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         :param source: trigger source [c1, c2, c3, c4, line]
         :param trigger_type: condition that will trigger the acquisition of waveforms
                [edge,slew,glit,intv,runt,drop]
-        :param hold_type: hold type (refer to page 172 of programing guide)
-        :param hold_value1: hold value1 (refer to page 172 of programing guide)
-        :param hold_value2: hold value2 (refer to page 172 of programing guide)
+        :param hold_type: hold type (refer to page 172 of programming guide)
+        :param hold_value1: hold value1 (refer to page 172 of programming guide)
+        :param hold_value2: hold value2 (refer to page 172 of programming guide)
         :param coupling: input coupling for the selected trigger sources
         :param level: trigger level voltage for the active trigger source
         :param level2: trigger lower level voltage for the active trigger source (only slew/runt
@@ -1071,16 +1123,16 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
                 ch.trigger_slope = slope
 
     @property
-    def trigger(self):
+    def trigger(self) -> dict[str, Any]:
         """Get trigger setup as a dict containing the following keys:
 
         - "mode": trigger sweep mode [auto, normal, single, stop]
         - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
           slew,glit,intv,runt,drop]
         - "source": trigger source [c1,c2,c3,c4]
-        - "hold_type": hold type (refer to page 172 of programing guide)
-        - "hold_value1": hold value1 (refer to page 172 of programing guide)
-        - "hold_value2": hold value2 (refer to page 172 of programing guide)
+        - "hold_type": hold type (refer to page 172 of programming guide)
+        - "hold_value1": hold value1 (refer to page 172 of programming guide)
+        - "hold_value2": hold value2 (refer to page 172 of programming guide)
         - "coupling": input coupling for the selected trigger sources
         - "level": trigger level voltage for the active trigger source
         - "level2": trigger lower level voltage for the active trigger source (only slew/runt
@@ -1089,7 +1141,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
 
         """
         trigger_select = self.trigger_select
-        ch = self.ch(trigger_select[1])
+        ch = self.ch(cast((int | str), trigger_select[1]))
         tb_setup = {
             "mode": self.trigger_mode,
             "trigger_type": trigger_select[0],
@@ -1112,16 +1164,15 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     #   Measure   #
     ###############
 
-    def display_parameter(self, parameter, channel):
+    def display_parameter(self, parameter: str, channel: int | str) -> None:
         """Same as the display_parameter method in the Channel subclass."""
-        self.ch(channel).display_parameter = parameter
+        self.ch(channel).display_parameter = parameter  # type: ignore
 
-    def measure_parameter(self, parameter, channel):
+    def measure_parameter(self, parameter: str, channel: int | str) -> float:
         """
         Same as the measure_parameter method in the Channel subclass
         """
-        # noinspection PyArgumentList
-        return self.ch(channel).measure_parameter(parameter)
+        return self.ch(channel).measure_parameter(parameter)  # type: ignore
 
     ###############
     #   Display   #
@@ -1132,5 +1183,6 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """Set the intensity level of the grid or the trace in percent """,
         validator=_intensity_validator,
         values=[[0, 100], [0, 100]],
-        get_process_list=lambda v: {v[0]: v[1], v[2]: v[3]}
+        cast=cast_or_str(float),
+        get_process_list=lambda v: {v[0]: v[1], v[2]: v[3]},
     )

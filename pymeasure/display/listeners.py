@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,17 +23,19 @@
 #
 
 import logging
+from multiprocessing import Queue
+from typing import Any
 
+from ..experiment.procedure import ProcedureStatus
 from .Qt import QtCore
 from .thread import StoppableQThread
-from ..experiment.procedure import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    import zmq
     import cloudpickle
+    import zmq
 except ImportError:
     zmq = None
     cloudpickle = None
@@ -46,7 +48,7 @@ class QListener(StoppableQThread):
     method call
     """
 
-    def __init__(self, port, topic='', timeout=0.01):
+    def __init__(self, port: int, topic: str = '', timeout: float = 0.01):
         """ Constructs the Listener object with a subscriber port
         over which to listen for messages
 
@@ -54,6 +56,8 @@ class QListener(StoppableQThread):
         :param topic: Topic to listen on
         :param timeout: Timeout in seconds to recheck stop flag
         """
+        if zmq is None:
+            raise ModuleNotFoundError("QListener needs ZMQ installed for TCP communication.")
         super().__init__()
 
         self.port = port
@@ -61,28 +65,28 @@ class QListener(StoppableQThread):
         self.context = zmq.Context()
         log.debug(f"{self.__class__.__name__} has ZMQ Context: {self.context!r}")
         self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect('tcp://localhost:%d' % port)
+        self.subscriber.connect(f'tcp://localhost:{port}')
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
-        log.info("%s connected to '%s' topic on tcp://localhost:%d" % (
-            self.__class__.__name__, topic, port))
+        log.info(
+            f"{self.__class__.__name__} connected to '{topic}' topic on tcp://localhost:{port}")
 
         self.poller = zmq.Poller()
         self.poller.register(self.subscriber, zmq.POLLIN)
-        self.timeout = timeout
+        self.timeout = round(timeout * 1000)
 
-    def receive(self, flags=0):
+    def receive(self, flags: int = 0) -> tuple[str, Any]:
         topic, record = self.subscriber.recv_serialized(
             deserialize=lambda msg: (msg[0].decode(), cloudpickle.loads(msg[1])),
             flags=flags
         )
         return topic, record
 
-    def message_waiting(self):
+    def message_waiting(self) -> list[tuple[Any, int]]:
         return self.poller.poll(self.timeout)
 
-    def __repr__(self):
-        return "<{}(port={},topic={},should_stop={})>".format(
-            self.__class__.__name__, self.port, self.topic, self.should_stop())
+    def __repr__(self) -> str:
+        return (f"<{self.__class__.__name__}(port={self.port},topic={self.topic},"
+                f"should_stop={self.should_stop()})>")
 
 
 class Monitor(QtCore.QThread):
@@ -91,7 +95,7 @@ class Monitor(QtCore.QThread):
     are losts
     """
 
-    status = QtCore.Signal(int)
+    status = QtCore.Signal(ProcedureStatus)
     progress = QtCore.Signal(float)
     log = QtCore.Signal(object)
     worker_running = QtCore.Signal()
@@ -99,11 +103,11 @@ class Monitor(QtCore.QThread):
     worker_finished = QtCore.Signal()  # Distinguished from QThread.finished
     worker_abort_returned = QtCore.Signal()
 
-    def __init__(self, queue):
+    def __init__(self, queue: Queue):
         super().__init__()
         self.queue = queue
 
-    def run(self):
+    def run(self) -> None:
         while True:
             data = self.queue.get()
             if data is None:
@@ -111,13 +115,13 @@ class Monitor(QtCore.QThread):
             topic, data = data
             if topic == 'status':
                 self.status.emit(data)
-                if data == Procedure.RUNNING:
+                if data == ProcedureStatus.RUNNING:
                     self.worker_running.emit()
-                elif data == Procedure.FAILED:
+                elif data == ProcedureStatus.FAILED:
                     self.worker_failed.emit()
-                elif data == Procedure.FINISHED:
+                elif data == ProcedureStatus.FINISHED:
                     self.worker_finished.emit()
-                elif data == Procedure.ABORTED:
+                elif data == ProcedureStatus.ABORTED:
                     self.worker_abort_returned.emit()
             elif topic == 'progress':
                 self.progress.emit(data)

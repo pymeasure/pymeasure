@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -32,7 +32,9 @@ class PLChannel(Channel):
     Channels of the power supply. The channels are number from right-to-left, starting at 1.
     """
 
-    def __init__(self, parent, id, voltage_range: list = None, current_range: list = None):
+    def __init__(
+        self, parent, id, voltage_range: list | None = None, current_range: list | None = None
+    ):
         super().__init__(parent, id)
         self.voltage_setpoint_values = voltage_range
         self.current_limit_values = current_range
@@ -46,6 +48,7 @@ class PLChannel(Channel):
         values=[0, 6],
         dynamic=True,
         get_process=lambda x: float(x[3:]),
+        cast=str,
     )
 
     current_limit = Channel.control(
@@ -55,18 +58,21 @@ class PLChannel(Channel):
         values=[0, 1.5],
         dynamic=True,
         get_process=lambda x: float(x[3:]),
+        cast=str,
     )
 
     voltage = Channel.measurement(
         "V{ch}O?",
         """ Measure the output readback voltage for this output channel in Volts.""",
         get_process=lambda x: float(x[:-1]),
+        cast=str,
     )
 
     current = Channel.measurement(
         "I{ch}O?",
         """ Measure the output readback current for this output channel in Amps.""",
         get_process=lambda x: float(x[:-1]),
+        cast=str,
     )
 
     current_range = Channel.control(
@@ -130,7 +136,7 @@ class PLBase(SCPIUnknownMixin, Instrument):
 
 
 class PL068P(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 6], current_range=[0, 8]
     )
 
@@ -139,7 +145,7 @@ class PL068P(PLBase):
 
 
 class PL155P(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 15], current_range=[0, 5]
     )
 
@@ -148,7 +154,7 @@ class PL155P(PLBase):
 
 
 class PL303P(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3]
     )
 
@@ -157,7 +163,7 @@ class PL303P(PLBase):
 
 
 class PL601P(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 60], current_range=[0, 1.5]
     )
 
@@ -166,10 +172,10 @@ class PL601P(PLBase):
 
 
 class PL303QMDP(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3]
     )
-    ch_2: PLChannel = Instrument.ChannelCreator(
+    ch_2 = Instrument.ChannelCreator(
         PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3]
     )
 
@@ -178,13 +184,13 @@ class PL303QMDP(PLBase):
 
 
 class PL303QMTP(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3]
     )
-    ch_2: PLChannel = Instrument.ChannelCreator(
+    ch_2 = Instrument.ChannelCreator(
         PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3]
     )
-    ch_3: PLChannel = Instrument.ChannelCreator(
+    ch_3 = Instrument.ChannelCreator(
         PLChannel, "3", voltage_range=[0, 30], current_range=[0, 3]
     )
 

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,6 @@ def fake():
 
 
 def test_init(adapter):
-    assert adapter.connection is None
     assert adapter.log == logging.getLogger("Adapter")
 
 
@@ -88,9 +87,9 @@ def test_not_implemented_methods(adapter, method, args):
 
 
 @pytest.mark.parametrize("response, options, result", (
-    ("1,2", dict(dtype=int, sep=","), [1, 2]),
-    (b"\x01\x02", dict(dtype=np.uint8), [1, 2]),
-    (b'\x01\x02\x03\x04\x05', dict(dtype=np.uint8, count=3), [1, 2, 3]),
+    ("1,2", {"dtype": int, "sep": ","}, [1, 2]),
+    (b"\x01\x02", {"dtype": np.uint8}, [1, 2]),
+    (b'\x01\x02\x03\x04\x05', {"dtype": np.uint8, "count": 3}, [1, 2, 3]),
     ("abcdefgh", {}, [1.6777999e+22, 4.371022e+24]),
 ))
 def test_read_binary_values(response, options, result):

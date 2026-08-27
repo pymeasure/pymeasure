@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,9 +46,9 @@
 # 100-4
 
 from enum import IntFlag
+
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_range
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 OPERATING_MODES = ['VOLT', 'CURR']
 

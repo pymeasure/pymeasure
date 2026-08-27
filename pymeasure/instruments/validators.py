@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,26 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
+
+from collections.abc import Callable, Iterable, Sequence
 from decimal import Decimal
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
+from warnings import warn
+
+T = TypeVar("T")
+NumericT = TypeVar("NumericT", bound=(float | int | Decimal))
+ValidatorFunc = Callable[[Any, Any], Any]
 
 
-def strict_range(value, values):
-    """ Provides a validator function that returns the value
+if TYPE_CHECKING:
+    import numpy as np
+
+    NumericSeq = Sequence[NumericT] | np.ndarray
+
+
+def strict_range(value: NumericT, values: NumericSeq) -> NumericT:
+    """Provides a validator function that returns the value
     if its value is less than or equal to the maximum and
     greater than or equal to the minimum of ``values``.
     Otherwise it raises a ValueError.
@@ -38,13 +53,25 @@ def strict_range(value, values):
     if min(values) <= value <= max(values):
         return value
     else:
-        raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
-            value, min(values), max(values)
-        ))
+        raise ValueError(f'Value of {value:g} is not in range [{min(values):g},{max(values):g}]')
 
 
-def strict_discrete_range(value, values, step):
-    """ Provides a validator function that returns the value
+@overload
+def strict_discrete_range(
+    value: int, values: list[int] | tuple[int, int], step: int
+) -> int: ...
+
+
+@overload
+def strict_discrete_range(
+    value: NumericT, values: NumericSeq, step: NumericT
+) -> NumericT: ...
+
+
+def strict_discrete_range(
+    value: NumericT, values: NumericSeq, step: NumericT
+) -> NumericT:
+    """Provides a validator function that returns the value
     if its value is less than the maximum and greater than the
     minimum of the range and is a multiple of step.
     Otherwise it raises a ValueError.
@@ -60,12 +87,10 @@ def strict_discrete_range(value, values, step):
             Decimal(str(value)) % Decimal(str(step)) == 0):
         return value
     else:
-        raise ValueError('Value of {:g} is not a multiple of {:g}'.format(
-            value, step
-        ))
+        raise ValueError(f'Value of {value:g} is not a multiple of {step:g}')
 
 
-def strict_discrete_set(value, values):
+def strict_discrete_set(value: T, values: Iterable[T] | dict[T, Any]) -> T:
     """ Provides a validator function that returns the value
     if it is in the discrete set. Otherwise it raises a ValueError.
 
@@ -76,18 +101,24 @@ def strict_discrete_set(value, values):
     if value in values:
         return value
     else:
-        raise ValueError('Value of {} is not in the discrete set {}'.format(
-            value, values
-        ))
+        raise ValueError(f'Value of {value} is not in the discrete set {values}')
 
 
-def truncated_range(value, values):
+def truncated_range(value: NumericT, values: NumericSeq) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the closest
     range bound.
 
     :param value: A value to test
     :param values: A set of values that are valid
+
+    .. note::
+
+        Out-of-range values are silently clipped to the closest range bound
+        without raising an error or otherwise informing the user.
+        The value actually sent to the device may therefore differ from the value the user set.
+        Prefer :func:`strict_range` by default and only use a truncated validator when
+        silent clipping is genuinely desired and the property docstring documents this behavior.
     """
     if min(values) <= value <= max(values):
         return value
@@ -97,7 +128,7 @@ def truncated_range(value, values):
         return min(values)
 
 
-def modular_range(value, values):
+def modular_range(value: NumericT, values: NumericSeq) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the value,
     modulo the max of the range.
@@ -108,7 +139,7 @@ def modular_range(value, values):
     return value % max(values)
 
 
-def modular_range_bidirectional(value, values):
+def modular_range_bidirectional(value: NumericT, values: NumericSeq) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the value,
     modulo the max of the range. Allows negative values.
@@ -122,25 +153,33 @@ def modular_range_bidirectional(value, values):
         return -1 * (abs(value) % max(values))
 
 
-def truncated_discrete_set(value, values):
+def truncated_discrete_set(value: NumericT, values: Iterable[NumericT]) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the discrete set. Otherwise, it returns the smallest
     value that is larger than the value.
 
     :param value: A value to test
     :param values: A set of values that are valid
+
+    .. note::
+
+        Values not in the discrete set are silently mapped without raising an
+        error or otherwise informing the user. The value actually sent to
+        the device may therefore differ from the value the user set.
+        Prefer :func:`strict_discrete_set` by default and only use a truncated
+        validator when silent clipping is genuinely desired and the property
+        docstring documents this behavior.
     """
     # Force the values to be sorted
-    values = list(values)
-    values.sort()
+    values = sorted(values)
     for v in values:
-        if value <= v:
+        if value <= v:  # type: ignore[operator]
             return v
 
     return values[-1]
 
 
-def joined_validators(*validators):
+def joined_validators(*validators: ValidatorFunc) -> ValidatorFunc:
     """Returns a validator function that represents a list of validators joined together.
 
     A value passed to the validator is returned if it passes any validator (not all of them).
@@ -167,7 +206,7 @@ def joined_validators(*validators):
     :param validators: an iterable of other validators
     """
 
-    def validate(value, values):
+    def validate(value: Any, values: Any) -> Any:
         for validator, vals in zip(validators, values):
             try:
                 return validator(value, vals)
@@ -178,14 +217,39 @@ def joined_validators(*validators):
     return validate
 
 
-def discreteTruncate(number, discreteSet):
-    """ Truncates the number to the closest element in the positive discrete set.
+def truncated_discrete_set_positive(
+    number: NumericT, discrete_set: NumericSeq
+) -> NumericT | Literal[False]:
+    """Truncates the number to the closest element in the positive discrete set.
     Returns False if the number is larger than the maximum value or negative.
+
+    .. note::
+
+        Invalid values are silently mapped without raising an error or
+        otherwise informing the user. The value actually sent to the device
+        (or the resulting no-op) may therefore differ from what the user set.
+        Prefer :func:`strict_discrete_set` by default and only use a truncated validator when
+        silent clipping is genuinely desired and the property docstring documents this behavior.
     """
     if number < 0:
         return False
-    discreteSet.sort()
-    for item in discreteSet:
+    discrete_set = sorted(discrete_set)
+    for item in discrete_set:
         if number <= item:
             return item
     return False
+
+
+def discreteTruncate(number: NumericT, discreteSet: NumericSeq) -> NumericT | Literal[False]:
+    """Truncates the number to the closest element in the positive discrete set.
+    Returns False if the number is larger than the maximum value or negative.
+
+    .. deprecated:: 0.17.0
+        Use :func:`truncated_discrete_set_positive` instead.
+    """
+    warn(
+        "The 'discreteTruncate' validator is deprecated, "
+        "use 'truncated_discrete_set_positive' instead.",
+        FutureWarning,
+    )
+    return truncated_discrete_set_positive(number=number, discrete_set=discreteSet)

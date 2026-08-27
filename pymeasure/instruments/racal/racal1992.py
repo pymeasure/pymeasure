@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,8 @@
 
 import logging
 import time
+from collections.abc import Iterable
+from typing import Literal
 
 from pymeasure.instruments import Instrument
 
@@ -53,7 +55,6 @@ class Racal1992(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
 
@@ -62,40 +63,40 @@ class Racal1992(Instrument):
                    'MX', 'MZ', 'LA', 'LB', 'FC', 'RC', 'DT', 'GS']
 
     channel_params = {
-        'A' : {                                                         # noqa
-            'coupling'      : { 'AC'   : 'AAC',  'DC'     : 'ADC' },    # noqa
-            'attenuation'   : { 'X1'   : 'AAD',  'X10'    : 'AAE' },    # noqa
-            'trigger'       : { 'auto' : 'AAU',  'manual' : 'AMN' },    # noqa
-            'impedance'     : { '50'   : 'ALI',  '1M'     : 'AHI' },    # noqa
-            'slope'         : { 'pos'  : 'APS',  'neg'    : 'ANS' },    # noqa
-            'filtering'     : { True   : 'AFE',  False    : 'AFD' },    # noqa
-            'trigger_level' : None,                                     # noqa
-            },
-        'B' : {                                                         # noqa
-            'coupling'      : { 'AC'        : 'BAC',  'DC'     : 'BDC' },    # noqa
-            'attenuation'   : { 'X1'        : 'BAD',  'X10'    : 'BAE' },    # noqa
-            'trigger'       : { 'auto'      : 'BAU',  'manual' : 'BMN' },    # noqa
-            'impedance'     : { '50'        : 'BLI',  '1M'     : 'BHI' },    # noqa
-            'slope'         : { 'pos'       : 'BPS',  'neg'    : 'BNS' },    # noqa
-            'input_select'  : { 'separate'  : 'BCS',  'common' : 'BCC' },    # noqa
-            'trigger_level' : None,                                     # noqa
+        'A' : {                                                         # noqa: E201,E202,E203
+            'coupling'      : { 'AC'   : 'AAC',  'DC'     : 'ADC' },    # noqa: E201,E202,E203
+            'attenuation'   : { 'X1'   : 'AAD',  'X10'    : 'AAE' },    # noqa: E201,E202,E203
+            'trigger'       : { 'auto' : 'AAU',  'manual' : 'AMN' },    # noqa: E201,E202,E203
+            'impedance'     : { '50'   : 'ALI',  '1M'     : 'AHI' },    # noqa: E201,E202,E203
+            'slope'         : { 'pos'  : 'APS',  'neg'    : 'ANS' },    # noqa: E201,E202,E203
+            'filtering'     : { True   : 'AFE',  False    : 'AFD' },    # noqa: E201,E202,E203
+            'trigger_level' : None,                                     # noqa: E201,E202,E203
+        },
+        'B' : {                                                         # noqa: E201,E202,E203
+            'coupling'      : { 'AC'        : 'BAC',  'DC'     : 'BDC' },    # noqa: E201,E202,E203
+            'attenuation'   : { 'X1'        : 'BAD',  'X10'    : 'BAE' },    # noqa: E201,E202,E203
+            'trigger'       : { 'auto'      : 'BAU',  'manual' : 'BMN' },    # noqa: E201,E202,E203
+            'impedance'     : { '50'        : 'BLI',  '1M'     : 'BHI' },    # noqa: E201,E202,E203
+            'slope'         : { 'pos'       : 'BPS',  'neg'    : 'BNS' },    # noqa: E201,E202,E203
+            'input_select'  : { 'separate'  : 'BCS',  'common' : 'BCC' },    # noqa: E201,E202,E203
+            'trigger_level' : None,                                     # noqa: E201,E202,E203
             },
     }
 
     operating_modes = {
-        'self_check'      : 'CK',    # noqa
-        'frequency_a'     : 'FA',    # noqa
-        'period_a'        : 'PA',    # noqa
-        'phase_a_rel_b'   : 'PH',    # noqa
-        'ratio_a_to_b'    : 'RA',    # noqa
-        'ratio_c_to_b'    : 'RC',    # noqa
-        'interval_a_to_b' : 'TI',    # noqa
-        'total_a_by_b'    : 'TA',    # noqa
-        'frequency_c'     : 'FC',    # noqa
+        'self_check'      : 'CK',    # noqa: E201,E202,E203
+        'frequency_a'     : 'FA',    # noqa: E201,E202,E203
+        'period_a'        : 'PA',    # noqa: E201,E202,E203
+        'phase_a_rel_b'   : 'PH',    # noqa: E201,E202,E203
+        'ratio_a_to_b'    : 'RA',    # noqa: E201,E202,E203
+        'ratio_c_to_b'    : 'RC',    # noqa: E201,E202,E203
+        'interval_a_to_b' : 'TI',    # noqa: E201,E202,E203
+        'total_a_by_b'    : 'TA',    # noqa: E201,E202,E203
+        'frequency_c'     : 'FC',    # noqa: E201,E202,E203
     }
 
     @staticmethod
-    def decode(v, allowed_types=None):
+    def decode(v: str, allowed_types: Iterable[str] | str | None = None) -> float | int:
         """Decode received message.
 
         All values returned follow the same format: 2 letters to indicate
@@ -104,7 +105,9 @@ class Racal1992(Instrument):
         This here, for example, is math constant Z: MZ+001.00000000E+00
         """
         if len(v) != 19:
-            raise ReturnValueError("Length of instrument response must always be 19 characters")
+            raise ReturnValueError(
+                f"Length of instrument response must always be 19 characters, '{v}'"
+            )
 
         val_type = v[0:2]
         val = float(v[2:19])
@@ -118,6 +121,10 @@ class Racal1992(Instrument):
             return val
         else:
             raise ValueError("Unsupported return type")
+
+    @staticmethod
+    def _map_operating_mode(mode: str) -> str:
+        return Racal1992.operating_modes[mode]
 
     operating_mode = Instrument.setting(
             "%s",
@@ -134,7 +141,7 @@ class Racal1992(Instrument):
                 'total_a_by_b',
                 'frequency_c'
             """,
-            set_process=(lambda mode: Racal1992.operating_modes[mode]),
+            set_process=_map_operating_mode,
         )
 
     resolution = Instrument.control(
@@ -142,7 +149,8 @@ class Racal1992(Instrument):
             "SRS %d",
             """Control the resolution of the counter with an integer from 3 to 10 that
             specifies the number of significant digits. """,
-            get_process=(lambda v: Racal1992.decode(v, "RS"))
+            get_process=(lambda v: Racal1992.decode(v, "RS")),
+            cast=str,
         )
 
     delay_enable = Instrument.setting(
@@ -156,7 +164,8 @@ class Racal1992(Instrument):
             "RDT",
             "SDT %f",
             """Control delay time.""",
-            get_process=(lambda v: Racal1992.decode(v, "DT"))
+            get_process=(lambda v: Racal1992.decode(v, "DT")),
+            cast=str,
         )
 
     special_function_enable = Instrument.setting(
@@ -171,33 +180,38 @@ class Racal1992(Instrument):
             "RSF",
             "S%d",
             """Control special function.""",
-            get_process=(lambda v: Racal1992.decode(v, "SF"))
+            get_process=(lambda v: Racal1992.decode(v, "SF")),
+            cast=str,
         )
 
     # FIXME: not tested on real instrument!
     total_so_far = Instrument.measurement(
             "RF",
             """Get total number of events so far.""",
-            get_process=(lambda v: Racal1992.decode(v, "RF"))
+            get_process=(lambda v: Racal1992.decode(v, "RF")),
+            cast=str,
         )
 
     software_version = Instrument.measurement(
             "RMS",
             "Get instrument software version",
-            get_process=(lambda v: Racal1992.decode(v, "MS"))
+            get_process=(lambda v: Racal1992.decode(v, "MS")),
+            cast=str,
         )
 
     gpib_software_version = Instrument.measurement(
             "RGS",
             "Get GPIB software version",
-            get_process=(lambda v: Racal1992.decode(v, "GS"))
+            get_process=(lambda v: Racal1992.decode(v, "GS")),
+            cast=str,
         )
 
     device_type = Instrument.measurement(
             "RUT",
             """Get unit device type. Should return 1992 for a Racal-Dana 1992
             or 1991 for a Racal-Dana 1991.""",
-            get_process=(lambda v: Racal1992.decode(v, "UT"))
+            get_process=(lambda v: Racal1992.decode(v, "UT")),
+            cast=str,
         )
 
     math_mode = Instrument.setting(
@@ -211,50 +225,54 @@ class Racal1992(Instrument):
             "RMX",
             "SMX %f",
             """Control math constant X.""",
-            get_process=(lambda v: Racal1992.decode(v, "MX"))
+            get_process=(lambda v: Racal1992.decode(v, "MX")),
+            cast=str,
         )
 
     math_z = Instrument.control(
             "RMZ",
             "SMZ %f",
             """Control math constant Z.""",
-            get_process=(lambda v: Racal1992.decode(v, "MZ"))
+            get_process=(lambda v: Racal1992.decode(v, "MZ")),
+            cast=str,
         )
 
     trigger_level_a = Instrument.control(
             "RLA",
             "SLA %f",
             """Control trigger level for channel A""",
-            get_process=(lambda v: Racal1992.decode(v, "LA"))
+            get_process=(lambda v: Racal1992.decode(v, "LA")),
+            cast=str,
         )
 
     trigger_level_b = Instrument.control(
             "RLB",
             "SLB %f",
             """Control trigger level for channel B""",
-            get_process=(lambda v: Racal1992.decode(v, "LB"))
+            get_process=(lambda v: Racal1992.decode(v, "LB")),
+            cast=str,
         )
 
-    def read(self):
-        return self.read_bytes(21).decode('utf-8')
+    def read(self, **kwargs) -> str:
+        return self.read_bytes(21, **kwargs).decode('utf-8').strip("\r\n")
 
-    def write(self, s):
+    def write(self, command: str, **kwargs) -> None:
         """Add a space in front of all commands that are sent to the
         instrument to work around weird model issue.
 
         It shouldn't be needed on almost all devices, but it also doesn't hurt.
         And it fixes a real issue that's seen on a few devices."""
-        super().write(' ' + s)
+        super().write(' ' + command, **kwargs)
 
-    def read_and_decode(self, allowed_types=None):
-        v = self.read_bytes(21).decode('utf-8')
+    def read_and_decode(self, allowed_types: Iterable[str] | str | None = None) -> float | int:
+        v = self.read()
         return Racal1992.decode(v, allowed_types)
 
     # ============================================================
     # Channel-specific settings
     # ============================================================
-    def channel_settings(self, channel_name, **settings):
-        """Set channel configuration paramters.
+    def channel_settings(self, channel_name: Literal["A", "B"], **settings) -> None:
+        """Set channel configuration parameters.
 
         :param channel_name: 'A' or 'B'
         :param settings: one or multiple of the following:
@@ -303,29 +321,28 @@ class Racal1992(Instrument):
     # ============================================================
     # IP - Instrument Preset
     # ============================================================
-    def preset(self):
+    def preset(self) -> None:
         """Configure instrument with default presets."""
         self.write('IP')
 
     # ============================================================
     # RE - Reset measurement
     # ============================================================
-    def reset_measurement(self):
+    def reset_measurement(self) -> None:
         """Reset ongoing measurement."""
         self.write('RE')
 
     # ============================================================
     # Wait for measurement value
     # ============================================================
-    def wait_for_measurement(self, timeout=None, progressDots=False):
+    def wait_for_measurement(self, timeout: float | None = None, progressDots: bool = False):
         """Wait until a new measurement is available.
 
         :param timeout: number of seconds to wait before timeout exception.
         :param progressDots: when true, print '.' after each ready-check
 
         """
-        if timeout is not None:
-            end_time = time.time() + timeout
+        end_time = time.time() + timeout if timeout is not None else float("inf")
 
         while True:
             if progressDots:
@@ -335,8 +352,8 @@ class Racal1992(Instrument):
             if stb & 0x10:
                 break
 
-            if timeout is not None and time.time() > end_time:
-                raise Exception("Timeout while waiting for measurement")
+            if time.time() > end_time:
+                raise TimeoutError("Timeout while waiting for measurement")
 
         return stb
 
@@ -344,7 +361,7 @@ class Racal1992(Instrument):
     # Measured value
     # ============================================================
     @property
-    def measured_value(self):
+    def measured_value(self) -> float:
         """Get measured value.
 
         A Racal-Dana 1992 doesn't return measurement data after a request for

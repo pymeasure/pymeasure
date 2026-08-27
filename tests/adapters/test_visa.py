@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -67,7 +67,7 @@ def test_nested_adapter():
 
 def test_ProtocolAdapter():
     with expected_protocol(
-            VISAAdapter,
+            VISAAdapter,  # type: ignore
             [(b"some bytes written", b"Response")]
     ) as adapter:
         adapter.write_bytes(b"some bytes written")
@@ -96,14 +96,14 @@ class TestClose:
         assert adapterC.connection.session is not None
         adapterC.close()
         with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
-            adapterC.connection.session
+            _ = adapterC.connection.session
 
     def test_manager_session_closed(self, adapterC):
         # Verify first, that it works before closing
         assert adapterC.manager.session is not None
         adapterC.close()
         with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
-            adapterC.manager.session
+            _ = adapterC.manager.session
 
 
 def test_write_read(adapter):

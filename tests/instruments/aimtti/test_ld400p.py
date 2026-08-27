@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.aimtti.ld400p import LD400P
+from pymeasure.test import expected_protocol
 
 
 def test_mode():
@@ -41,9 +41,8 @@ def test_mode():
 
 
 def test_mode_write_invalid():
-    with expected_protocol(LD400P, []) as inst:
-        with pytest.raises(ValueError):
-            inst.mode = "X"
+    with expected_protocol(LD400P, []) as inst, pytest.raises(ValueError):
+        inst.mode = "X"
 
 
 def test_level_select():
@@ -119,6 +118,5 @@ def test_options():
     with expected_protocol(
         LD400P,
         [],
-    ) as inst:
-        with pytest.raises(AttributeError):
-            _ = inst.options
+    ) as inst, pytest.raises(AttributeError):
+        _ = inst.options

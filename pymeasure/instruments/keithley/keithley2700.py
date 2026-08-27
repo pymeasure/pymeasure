@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,14 +23,14 @@
 #
 
 import logging
+import time
 from warnings import warn
+
+import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 
 from .buffer import KeithleyBuffer
-
-import numpy as np
-import time
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -53,7 +53,7 @@ def clist_validator(value, values):
     elif isinstance(value, (list, tuple, np.ndarray, range)):
         clist = [f"{x:d}" for x in value]
     else:
-        raise ValueError(f"Type of value ({type(value)}) not valid")
+        raise TypeError(f"Type of value ({type(value)}) not valid")
 
     # Pad numbers to length (if required)
     clist = [c.rjust(2, "0") for c in clist]
@@ -121,7 +121,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         check_set_errors=True,
         separator=None,
         get_process=lambda v: [
-            int(vv) for vv in (v.strip(" ()@,").split(",")) if not vv == ""
+            int(vv) for vv in (v.strip(" ()@,").split(",")) if vv != ""
         ],
     )
 
@@ -141,7 +141,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         :param channels: a list of channel numbers, or single channel number
         """
         clist = clist_validator(channels, self.CLIST_VALUES)
-        state = self.ask("ROUTe:MULTiple:STATe? %s" % clist)
+        state = self.ask(f"ROUTe:MULTiple:STATe? {clist}")
 
         return state
 
@@ -216,10 +216,10 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         """
 
         if slot is not None and self.cards[slot] != "7709":
-            raise ValueError("No 7709 card installed in slot %g" % slot)
+            raise ValueError(f"No 7709 card installed in slot {slot:g}")
 
         if isinstance(rows, str) and isinstance(columns, str):
-            raise ValueError("Only one parameter can be 'all'")
+            raise TypeError("Only one parameter can be 'all'")
         elif isinstance(rows, str) and rows == "all":
             rows = list(range(1, 7))
         elif isinstance(columns, str) and columns == "all":
@@ -298,7 +298,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         "*OPT?",
         """Get the lists of the installed cards in the Keithley 2700.
         Returns a dict with the integer card numbers on the position.""",
-        cast=False
+        cast=str
     )
 
     ###########

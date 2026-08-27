@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,15 @@
 import pytest
 
 from pymeasure.display.Qt import QtCore
-from pymeasure.experiment import Procedure, BooleanParameter, Parameter, FloatParameter, \
-    IntegerParameter, ListParameter
 from pymeasure.display.widgets import InputsWidget
+from pymeasure.experiment import (
+    BooleanParameter,
+    FloatParameter,
+    IntegerParameter,
+    ListParameter,
+    Parameter,
+    Procedure,
+)
 
 
 @pytest.mark.parametrize(
@@ -47,7 +53,7 @@ def test_input_toggling(qtbot, hide_groups, exp_visible, exp_enabled):
         toggle_par = BooleanParameter('toggle', default=True)
         x = Parameter('X', default='value', group_by='toggle_par')
 
-    wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'), hide_groups=hide_groups)
+    wdg = InputsWidget(TestProcedure, inputs=['toggle_par', 'x'], hide_groups=hide_groups)
     qtbot.addWidget(wdg)
 
     assert wdg.toggle_par.isChecked() is True
@@ -151,7 +157,7 @@ def test_input_toggling_boolean(qtbot, condition):
         toggle_par = BooleanParameter('toggle', default=True)
         x = Parameter('X', default='value', group_by='toggle_par', group_condition=condition)
 
-    wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'))
+    wdg = InputsWidget(TestProcedure, inputs=['toggle_par', 'x'])
     qtbot.addWidget(wdg)
 
     assert wdg.toggle_par.isChecked() is True
@@ -186,7 +192,7 @@ def test_input_toggling_various_inputs(qtbot, partype, default, condition, kwarg
         toggle_par = partype('toggle', default=default, **kwargs)
         x = Parameter('X', default='value', group_by='toggle_par', group_condition=condition)
 
-    wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'))
+    wdg = InputsWidget(TestProcedure, inputs=['toggle_par', 'x'])
     qtbot.addWidget(wdg)
 
     assert wdg.x.isVisibleTo(wdg) is False

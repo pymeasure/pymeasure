@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.keithley.keithley2182 import Keithley2182
+from pymeasure.test import expected_protocol
 
 
 def test_voltage_read():
@@ -82,12 +82,11 @@ def test_thermocouple():
 def test_setup_voltage():
     with expected_protocol(
         Keithley2182,
-        [(":SENS:CHAN 1;"
-          ":SENS:FUNC 'VOLT';"
-          ":SENS:VOLT:NPLC 5;", None),
-         (":SENS:VOLT:RANG:AUTO 1", None),
-         ("SYST:ERR?", '0,"No error"'),
-         ],
+        [
+            (":SENS:CHAN 1;:SENS:FUNC 'VOLT';:SENS:VOLT:NPLC 5;", None),
+            (":SENS:VOLT:RANG:AUTO 1", None),
+            ("SYST:ERR?", '0,"No error"'),
+        ],
     ) as inst:
         inst.ch_1.setup_voltage()
 
@@ -95,10 +94,9 @@ def test_setup_voltage():
 def test_setup_temperature():
     with expected_protocol(
         Keithley2182,
-        [(":SENS:CHAN 2;"
-          ":SENS:FUNC 'TEMP';"
-          ":SENS:TEMP:NPLC 5", None),
-         ("SYST:ERR?", '0,"No error"'),
-         ],
+        [
+            (":SENS:CHAN 2;:SENS:FUNC 'TEMP';:SENS:TEMP:NPLC 5", None),
+            ("SYST:ERR?", '0,"No error"'),
+        ],
     ) as inst:
         inst.ch_2.setup_temperature()

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,15 +22,16 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import discreteTruncate
-from pymeasure.errors import RangeException
-from pyvisa import VisaIOError
+import re
+import warnings
+from io import BytesIO
 
 import numpy as np
-import re
-from io import BytesIO
-import warnings
+from pyvisa import VisaIOError
+
+from pymeasure.errors import RangeException
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import truncated_discrete_set_positive
 
 
 class Agilent8722ES(SCPIUnknownMixin, Instrument):
@@ -91,17 +92,16 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
     @property
     def parameter(self):
         for parameter in Agilent8722ES.SCATTERING_PARAMETERS:
-            if int(self.values("%s?" % parameter)) == 1:
+            if int(self.values(f"{parameter}?")[0]) == 1:
                 return parameter
         return None
 
     @parameter.setter
     def parameter(self, value):
         if value in Agilent8722ES.SCATTERING_PARAMETERS:
-            self.write("%s" % value)
+            self.write(f"{value}")
         else:
-            raise Exception("Invalid scattering parameter requested"
-                            " for Agilent 8722ES")
+            raise ValueError("Invalid scattering parameter requested for Agilent 8722ES")
 
     @property
     def scan_points(self):
@@ -112,17 +112,16 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
         if search:
             return int(float(search.group()))
         else:
-            raise Exception("Improper message returned for the"
-                            " number of points")
+            raise ValueError("Improper message returned for the number of points")
 
     @scan_points.setter
     def scan_points(self, points):
         """ Sets the number of scan points, truncating to an allowed
         value if not properly provided
         """
-        points = discreteTruncate(points, Agilent8722ES.SCAN_POINT_VALUES)
+        points = truncated_discrete_set_positive(points, Agilent8722ES.SCAN_POINT_VALUES)
         if points:
-            self.write("POIN%d" % points)
+            self.write(f"POIN{points}")
         else:
             raise RangeException("Maximum scan points (1601) for"
                                  " Agilent 8722ES exceeded")
@@ -130,9 +129,9 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
     def set_IF_bandwidth(self, bandwidth):
         """ Sets the resolution bandwidth (IF bandwidth) """
         allowedBandwidth = [10, 30, 100, 300, 1000, 3000, 3700, 6000]
-        bandwidth = discreteTruncate(bandwidth, allowedBandwidth)
+        bandwidth = truncated_discrete_set_positive(bandwidth, allowedBandwidth)
         if bandwidth:
-            self.write("IFBW%d" % bandwidth)
+            self.write(f"IFBW{bandwidth}")
         else:
             raise RangeException("Maximum IF bandwidth (6000) for Agilent "
                                  "8722ES exceeded")
@@ -186,14 +185,14 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
                 self.ask("NOOP?")
             except VisaIOError as e:
                 if e.abbreviation != "VI_ERROR_TMO":
-                    raise e
+                    raise
             else:
                 break
 
     def scan_single(self):
         """ Initiates a single scan """
         if self.averaging_enabled:
-            self.write("NUMG%d" % self.averages)
+            self.write(f"NUMG{self.averages}")
         else:
             self.write("SING")
 

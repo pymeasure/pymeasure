@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.tcpowerconversion import CXN
+from pymeasure.test import expected_protocol
 
 
 def test_id():
@@ -93,8 +93,8 @@ def test_power_limit():
         [
             (
                 b"C\x00Gp\x00\x00\x00\x00\x00\xfa",
-                b"\x2aR\x00\x00\x144\xf8\x0b\xb8\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                b"4\xf8\x02\xbc\x10\x33",
+                (b"\x2aR\x00\x00\x144\xf8\x0b\xb8\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                b"4\xf8\x02\xbc\x10\x33"),
             ),
         ],
     ) as inst:

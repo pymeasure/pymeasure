@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #
 
 import logging
+
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -176,14 +177,13 @@ class Sound_Channel:
         """ Reads a set of values from the instrument through the adapter,
         passing on any keyword arguments.
         """
-        return self.instrument.values("SOUR:TEL:MOD:SOUN%d:%s" % (
-                                      self.number, command), **kwargs)
+        return self.instrument.values(f"SOUR:TEL:MOD:SOUN{self.number}:{command}", **kwargs)
 
     def ask(self, command):
-        self.instrument.ask("SOUR:TEL:MOD:SOUN:%d:%s" % (self.number, command))
+        self.instrument.ask(f"SOUR:TEL:MOD:SOUN:{self.number}:{command}")
 
     def write(self, command):
-        self.instrument.write("SOUR:TEL:MOD:SOUN:%d:%s" % (self.number, command))
+        self.instrument.write(f"SOUR:TEL:MOD:SOUN:{self.number}:{command}")
 
     def read(self):
         self.instrument.read()
@@ -220,15 +220,11 @@ class SFM(SCPIMixin, Instrument):
 
         """
         if subsystem is None:
-            self.write("CAL:MOD%d" % (number))
+            self.write(f"CAL:MOD{number}")
         else:
             self.write(
-                "CAL:MOD%d:%s" % (
-                    number,
-                    strict_discrete_set(subsystem,
-                                        ["NIC", "NICAM", "VIS", "VISION", "SOUN1",
-                                         "SOUND1", "SOUN2", "SOUND2", "COD", "CODER"])
-                )
+                f"CAL:MOD{number}:"
+                f"{strict_discrete_set(subsystem, ['NIC', 'NICAM', 'VIS', 'VISION', 'SOUN1', 'SOUND1', 'SOUN2', 'SOUND2', 'COD', 'CODER'])}"  # noqa: E501
             )
 
     # INST (Manual 3.6.4)
@@ -570,7 +566,8 @@ class SFM(SCPIMixin, Instrument):
         LOWD    low distortion mode   +0 dBm
         ======  ====================  =================
 
-        Contiuous mode allows up to 14 dB of level setting without use of the mechanical attenuator.
+        Continuous mode allows up to 14 dB of level setting without use of the
+        mechanical attenuator.
         """,
         validator=strict_discrete_set,
         values=["NORM", "LOWN", "CONT", "LOWD"]

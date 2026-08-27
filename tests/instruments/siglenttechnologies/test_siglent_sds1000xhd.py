@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,8 @@ import struct
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.siglenttechnologies import SDS1000XHD
+from pymeasure.test import expected_protocol
 
 """
 Siglent SDS1000XHD Oscilloscope Test Coverage
@@ -1335,6 +1335,7 @@ def test_timebase_scale_boundary_values():
 def test_parse_preamble_descriptor_basic():
     """Test parsing preamble descriptor with simplified mock binary data."""
     import pytest
+
     from pymeasure.instruments.siglenttechnologies import SDS1000XHD
     from pymeasure.test import expected_protocol
 

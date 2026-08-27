@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -56,8 +56,8 @@ class MultiprotocolInstrument(Instrument):
 
         super().__init__(adapter,
                          name=name,
-                         gpib=dict(enable_repeat_addressing=False,
-                                   read_termination='\r'),
+                         gpib={"enable_repeat_addressing": False,
+                                   "read_termination": '\r'},
                          asrl={'baud_rate': baud_rate,
                                'read_termination': '\r\n'},
                          **kwargs,  # all others/generally valid kwargs

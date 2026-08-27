@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,22 +26,23 @@ from __future__ import annotations
 import logging
 import time
 import traceback
-from queue import Queue
-from typing import Any, Sequence
+from collections.abc import Sequence
+from multiprocessing import Queue
+from typing import Any
 
 import numpy as np
 
-from .listeners import Recorder
-from .procedure import Procedure
-from .results import Results
 from ..thread import StoppableThread
+from .listeners import Recorder
+from .procedure import ProcedureStatus
+from .results import Results
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    import zmq
     import cloudpickle
+    import zmq
 except ImportError:
     zmq = None
     cloudpickle = None
@@ -54,20 +55,22 @@ class Worker(StoppableThread):
     thread, a Recorder is run to write the results to
     """
 
-    def __init__(self, results, log_queue=None, log_level=logging.INFO, port=None):
-        """ Constructs a Worker to perform the Procedure
-        defined in the file at the filepath
-        """
+    def __init__(
+        self,
+        results: Results,
+        log_queue: Queue | None = None,
+        log_level: int = logging.INFO,
+        port: int | None = None,
+    ):
         super().__init__()
 
         self.port = port
         if not isinstance(results, Results):
-            raise ValueError("Invalid Results object during Worker construction")
+            raise TypeError("Invalid Results object during Worker construction")
         self.results = results
         self.results.procedure.check_parameters()
-        self.results.procedure.status = Procedure.QUEUED
+        self.results.procedure.status = ProcedureStatus.QUEUED
 
-        self.recorder = None
         self.recorder_queue = Queue()
 
         self.monitor_queue = Queue()
@@ -88,10 +91,10 @@ class Worker(StoppableThread):
         if self.port is not None and zmq is not None:
             try:
                 self.context = zmq.Context()
-                log.debug("Worker ZMQ Context: %r" % self.context)
+                log.debug(f"Worker ZMQ Context: {self.context!r}")
                 self.publisher = self.context.socket(zmq.PUB)
-                self.publisher.bind('tcp://*:%d' % self.port)
-                log.info("Worker connected to tcp://*:%d" % self.port)
+                self.publisher.bind(f'tcp://*:{self.port}')
+                log.info(f"Worker connected to tcp://*:{self.port}")
                 # wait so that the socket will be ready before starting to emit messages
                 time.sleep(0.3)
             except Exception:
@@ -99,7 +102,7 @@ class Worker(StoppableThread):
                 self.context = None
                 self.publisher = None
 
-    def join(self, timeout: int = 0):
+    def join(self, timeout: float | None = None) -> None:
         try:
             super().join(timeout)
         except (KeyboardInterrupt, SystemExit):
@@ -107,15 +110,16 @@ class Worker(StoppableThread):
             self.stop()
             super().join(0)
 
-    def emit(self, topic: str, record: Any):
+    def emit(self, topic: str, record: Any) -> None:
         """ Emits data of some topic over TCP """
         log.debug("Emitting message: %s %s", topic, record)
 
         try:
-            self.publisher.send_serialized(
-                record,
-                serialize=lambda rec: (topic.encode(), cloudpickle.dumps(rec)),
-            )
+            if self.publisher is not None:
+                self.publisher.send_serialized(
+                    record,
+                    serialize=lambda rec: (topic.encode(), cloudpickle.dumps(rec)),
+                )
         except (NameError, AttributeError):
             pass  # No dumps defined
         if topic == 'results':
@@ -125,12 +129,12 @@ class Worker(StoppableThread):
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
 
-    def handle_record(self, record: dict[str, Any]):
-        self.recorder.handle(record)
+    def handle_record(self, record: dict[str, Any]) -> None:
+        self.recorder.handle(record)  # type: ignore
 
-    def handle_batch_record(self, record: Any):
+    def handle_batch_record(self, record: Any) -> None:
         if self._is_dictionary_of_sequences(record):
-            lengths = list(len(value) for value in record.values())
+            lengths = [len(value) for value in record.values()]
             if not all(length == lengths[0] for length in lengths):
                 log.error(
                     'Data loss detected: not all sequences in the batch have the same length.'
@@ -161,30 +165,30 @@ class Worker(StoppableThread):
             in record.values()
         )
 
-    def handle_abort(self):
+    def handle_abort(self) -> None:
         log.exception("User stopped Worker execution prematurely")
-        self.update_status(Procedure.ABORTED)
+        self.update_status(ProcedureStatus.ABORTED)
 
-    def handle_error(self):
+    def handle_error(self) -> None:
         log.exception("Worker caught an error on %r", self.procedure)
         traceback_str = traceback.format_exc()
         self.emit('error', traceback_str)
-        self.update_status(Procedure.FAILED)
+        self.update_status(ProcedureStatus.FAILED)
 
     def is_last(self):
         raise NotImplementedError('should be monkey patched by a manager')
 
-    def update_status(self, status: int):
+    def update_status(self, status: ProcedureStatus) -> None:
         self.procedure.status = status
         self.emit('status', status)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.procedure.shutdown()
 
-        if self.should_stop() and self.procedure.status == Procedure.RUNNING:
-            self.update_status(Procedure.ABORTED)
-        elif self.procedure.status == Procedure.RUNNING:
-            self.update_status(Procedure.FINISHED)
+        if self.should_stop() and self.procedure.status == ProcedureStatus.RUNNING:
+            self.update_status(ProcedureStatus.ABORTED)
+        elif self.procedure.status == ProcedureStatus.RUNNING:
+            self.update_status(ProcedureStatus.FINISHED)
             self.emit('progress', 100.)
 
         self.recorder.stop()
@@ -193,10 +197,11 @@ class Worker(StoppableThread):
             # Cleanly close down ZMQ context and associated socket
             # For some reason, we need to close the socket before the
             # context, otherwise context termination hangs.
-            self.publisher.close()
+            if self.publisher is not None:
+                self.publisher.close()
             self.context.term()
 
-    def run(self):
+    def run(self) -> None:
         log.info("Worker thread started")
 
         self.procedure = self.results.procedure
@@ -212,25 +217,26 @@ class Worker(StoppableThread):
         self.procedure.is_last = self.is_last
 
         log.info("Worker started running an instance of %r", self.procedure.__class__.__name__)
-        self.update_status(Procedure.RUNNING)
+        self.update_status(ProcedureStatus.RUNNING)
         self.emit('progress', 0.)
 
         try:
             self.procedure.startup()
+
+            if self.should_stop():
+                return
+
             self.procedure.evaluate_metadata()
             self.results.store_metadata()
             self.procedure.execute()
         except (KeyboardInterrupt, SystemExit):
             self.handle_abort()
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.handle_error()
         finally:
             self.shutdown()
             self.stop()
 
-    def __repr__(self):
-        return "<{}(port={},procedure={},should_stop={})>".format(
-            self.__class__.__name__, self.port,
-            self.procedure.__class__.__name__,
-            self.should_stop()
-        )
+    def __repr__(self) -> str:
+        return (f"<{self.__class__.__name__}(port={self.port},"
+                f"procedure={self.procedure.__class__.__name__},should_stop={self.should_stop()})>")

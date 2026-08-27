@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,5 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .aimttiPL import PL068P, PL155P, PL303P, PL601P, PL303QMDP, PL303QMTP
+from .aimttiPL import PL068P, PL155P, PL303P, PL303QMDP, PL303QMTP, PL601P
 from .ld400p import LD400P

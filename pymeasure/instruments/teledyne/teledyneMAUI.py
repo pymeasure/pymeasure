@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,15 @@
 # THE SOFTWARE.
 #
 
+from typing import cast
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
-    TeledyneOscilloscopeChannel, _results_list_to_dict
+from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import (
+    TeledyneOscilloscope,
+    TeledyneOscilloscopeChannel,
+    _results_list_to_dict,
+)
 
 
 class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
@@ -80,7 +86,7 @@ class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
         ch_setup = {
             "channel": self.id,
             "attenuation": self.probe_attenuation,
-            "bandwidth_limit": self.bwlimit[f"C{self.id}"],
+            "bandwidth_limit": self.bwlimit[f"C{self.id}"],  # pyright: ignore[reportArgumentType]
             "coupling": self.coupling,
             "offset": self.offset,
             "display": self.display,
@@ -165,16 +171,16 @@ class TeledyneMAUI(TeledyneOscilloscope):
         - "trigger_type": condition that will trigger the acquisition of waveforms
           [edge,slew,glit,intv,runt,drop]
         - "source": trigger source [c1,c2,c3,c4]
-        - "hold_type": hold type (refer to page 172 of programing guide)
-        - "hold_value1": hold value1 (refer to page 172 of programing guide)
-        - "hold_value2": hold value2 (refer to page 172 of programing guide)
+        - "hold_type": hold type (refer to page 172 of programming guide)
+        - "hold_value1": hold value1 (refer to page 172 of programming guide)
+        - "hold_value2": hold value2 (refer to page 172 of programming guide)
         - "coupling": input coupling for the selected trigger sources
         - "level": trigger level voltage for the active trigger source
         - "slope": trigger slope of the specified trigger source
 
         """
         trigger_select = self.trigger_select
-        ch = self.ch(trigger_select[1])
+        ch = self.ch(cast(str | int, trigger_select[1]))
         tb_setup = {
             "mode": self.trigger_mode,
             "trigger_type": trigger_select[0],
@@ -204,6 +210,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         "HCSU?",
         """Get current hardcopy config.""",
         get_process_list=_results_list_to_dict,
+        cast=cast_or_str(float),
     )
 
     def hardcopy_setup(self, **kwargs):

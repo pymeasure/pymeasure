@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,7 @@ import logging
 from time import sleep, time
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments.validators import truncated_range
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 from .base import OxfordInstrumentsBase
 
@@ -39,12 +38,10 @@ log.addHandler(logging.NullHandler())
 
 class MagnetError(ValueError):
     """ Exception that is raised for issues regarding the state of the magnet or power supply. """
-    pass
 
 
 class SwitchHeaterError(ValueError):
     """ Exception that is raised for issues regarding the state of the superconducting switch. """
-    pass
 
 
 class IPS120_10(OxfordInstrumentsBase):
@@ -140,6 +137,7 @@ class IPS120_10(OxfordInstrumentsBase):
     version = Instrument.measurement(
         "V",
         """ A string property that returns the version of the IPS. """,
+        cast=str,
     )
 
     control_mode = Instrument.control(
@@ -232,7 +230,7 @@ class IPS120_10(OxfordInstrumentsBase):
         if isinstance(status, str):
             raise SwitchHeaterError(
                 "IPS 120-10: switch heater status reported issue with "
-                "switch heater: %s" % status)
+                f"switch heater: {status}")
 
         return status
 
@@ -298,7 +296,7 @@ class IPS120_10(OxfordInstrumentsBase):
         try:
             heater_on = self.switch_heater_enabled
         except SwitchHeaterError as e:
-            log.error("IPS 120-10: Switch heater status reported issue: %s" % e)
+            log.error(f"IPS 120-10: Switch heater status reported issue: {e}")
             field = self.demand_field
         else:
             if heater_on:
@@ -365,7 +363,7 @@ class IPS120_10(OxfordInstrumentsBase):
             raise MagnetError("IPS 120-10: magnet not at rest; cannot disable persistent mode")
 
         # Check if the setpoint equals the persistent field
-        if not self.field == self.field_setpoint:
+        if self.field != self.field_setpoint:
             log.warning("IPS 120-10: field setpoint and persistent field not identical; "
                         "setting the setpoint to the persistent field.")
             self.field_setpoint = self.field
@@ -437,7 +435,7 @@ class IPS120_10(OxfordInstrumentsBase):
             return
 
         if self.switch_heater_enabled:
-            pass  # Magnet in demand mode
+            # Magnet in demand mode
             log.debug("Magnet in demand mode, continuing")
         else:
             # Magnet in persistent mode

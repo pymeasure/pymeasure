@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,12 +29,13 @@
 # Disconnect all loads from E5270B SMUs before test.
 
 import pytest
-from pymeasure.instruments.agilent.agilentE5270B import AgilentE5270B
 
+from pymeasure.instruments.agilent.agilentE5270B import AgilentE5270B
 
 ############
 # FIXTURES #
 ############
+
 
 @pytest.fixture(scope="module")
 def e5270b(connected_device_address,

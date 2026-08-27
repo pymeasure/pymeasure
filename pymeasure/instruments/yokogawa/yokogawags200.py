@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,12 @@
 #
 
 import logging
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
-    strict_discrete_set, truncated_discrete_set, truncated_range
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
 )
 
 log = logging.getLogger(__name__)
@@ -105,7 +108,7 @@ class YokogawaGS200(SCPIUnknownMixin, Instrument):
                 "error."
             )
         else:
-            self.write("SOURce:LEVel %g" % level)
+            self.write(f"SOURce:LEVel {level:g}")
 
     def trigger_ramp_to_level(self, level, ramp_time):
         """

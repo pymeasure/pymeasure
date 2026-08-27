@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,18 @@
 # THE SOFTWARE.
 #
 
-import logging
-import time
-import tempfile
 import gc
+import logging
+import tempfile
+import time
 
 import numpy as np
 
-from .results import unique_filename
+from pymeasure.log import console_log, setup_logging
+
 from .config import get_config, set_mpl_rcparams
-from pymeasure.log import setup_logging, console_log
-from pymeasure.experiment import Results, Worker
+from .results import Results, unique_filename
+from .workers import Worker
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -66,8 +67,8 @@ def create_filename(title):
     If no config is specified, create a temporary file.
     """
     config = get_config()
-    if 'Filename' in config._sections.keys():
-        filename = unique_filename(suffix='_%s' % title, **config._sections['Filename'])
+    if 'Filename' in config._sections:
+        filename = unique_filename(suffix=f'_{title}', **config._sections['Filename'])
     else:
         filename = tempfile.mktemp()
     return filename
@@ -115,14 +116,14 @@ class Experiment:
 
         config = get_config()
         set_mpl_rcparams(config)
-        if 'Logging' in config._sections.keys():
+        if 'Logging' in config._sections:
             self.scribe = setup_logging(log, **config._sections['Logging'])
         else:
             self.scribe = console_log(log)
         self.scribe.start()
 
         self.filename = create_filename(self.title)
-        log.info("Using data file: %s" % self.filename)
+        log.info(f"Using data file: {self.filename}")
 
         self.results = Results(self.procedure, self.filename)
         log.info("Set up Results")
@@ -191,7 +192,7 @@ class Experiment:
         """Update the plots in the plots list with new data from the experiment.data
         pandas dataframe."""
         try:
-            self.data
+            _ = self.data
             for plot in self.plots:
                 ax = plot['ax']
                 if plot['type'] == 'plot':

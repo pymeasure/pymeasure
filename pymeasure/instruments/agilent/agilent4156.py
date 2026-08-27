@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,19 +21,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import time
-import os
 import json
+import logging
+import os
+import time
 
 import numpy as np
 import pandas as pd
 
 from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_discrete_set,
-                                              strict_range)
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    strict_range,
+    truncated_discrete_set,
+)
 
-import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -366,7 +368,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
             )
 
     @property
-    def data_variables(self):
+    def data_variables(self) -> list[str]:
         """
         Get a string list of data variables for which measured data is available.
 
@@ -385,7 +387,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         varlist = dlist + dvar
         return list(filter(None, varlist))
 
-    def get_data(self, path=None):
+    def get_data(self, path: str | None = None) -> pd.DataFrame:
         """
         Get the measurement data from the instrument after completion.
 
@@ -402,6 +404,8 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         """
         if int(self.ask('*OPC?')):
             header = self.data_variables
+        else:
+            raise PermissionError("Not possible to read data during measurement.")
         self.write(":FORM:DATA ASC")
         # recursively get data for each variable
         for i, listvar in enumerate(header):
@@ -413,7 +417,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
                 data = np.column_stack((lastdata, data))
                 lastdata = data
 
-        df = pd.DataFrame(data=data, columns=header, index=None)
+        df = pd.DataFrame(data=data, columns=header, index=None)  # pyright: ignore[reportArgumentType]  # pandas accepts list[str] at runtime
         if path is not None:
             _, ext = os.path.splitext(path)
             if ext != ".csv":
@@ -451,6 +455,7 @@ class AgilentMeasurementChannel(Channel):
             instr.smu1.voltage_name = "Vbase"
         """,
         set_process=check_current_voltage_name,
+        cast=str,
     )
 
     def reset_settings(self):
@@ -482,6 +487,7 @@ class AgilentMeasurementChannel(Channel):
         check_get_errors=True,
         check_set_errors=True,
         dynamic=True,
+        cast=str,
     )
 
     channel_function = Channel.control(
@@ -495,6 +501,7 @@ class AgilentMeasurementChannel(Channel):
         check_set_errors=True,
         validator=strict_discrete_set,
         values=["VAR1", "VAR2", "VARD", "CONS"],
+        cast=str,
     )
 
 
@@ -525,6 +532,7 @@ class SMU(AgilentMeasurementChannel):
         check_set_errors=True,
         validator=strict_discrete_set,
         values=["0OHM", "10KOHM", "100KOHM", "1MOHM"],
+        cast=str,
     )
 
     @property
@@ -557,8 +565,7 @@ class SMU(AgilentMeasurementChannel):
         if self.parent.analyzer_mode == 'SWEEP':
             self.write(f":PAGE:MEAS:CONS:{{ch}} {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{} {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:SAMP:CONS:{self.channel} {value}")
         self.check_errors()
 
     @property
@@ -589,11 +596,9 @@ class SMU(AgilentMeasurementChannel):
         values = self.__validate_compl()
         value = validator(comp, values)
         if self.parent.analyzer_mode == 'SWEEP':
-            self.write(":PAGE:MEAS:CONS:{}:COMP {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:CONS:{self.channel}:COMP {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{}:COMP {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:SAMP:CONS:{self.channel}:COMP {value}")
         self.check_errors()
 
     current_name = Channel.control(
@@ -609,6 +614,7 @@ class SMU(AgilentMeasurementChannel):
             instr.smu1.voltage_name = "Vbase"
         """,
         set_process=check_current_voltage_name,
+        cast=str,
     )
 
     def __validate_cons(self):
@@ -683,8 +689,7 @@ class VSU(AgilentMeasurementChannel):
         if self.parent.analyzer_mode == 'SWEEP':
             self.write(f":PAGE:MEAS:CONS:{{ch}} {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{} {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:SAMP:CONS:{self.channel} {value}")
         self.check_errors()
 
 

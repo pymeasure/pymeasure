@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ class ThorlabsPro8000(SCPIUnknownMixin, Instrument):
 
     # Code for general purpose commands (mother board related)
     slot = Instrument.control(":SLOT?", ":SLOT %d",
-                              "Control slot selection. Allowed values are: {}""".format(SLOTS),
+                              f"Control slot selection. Allowed values are: {SLOTS}",
                               validator=strict_discrete_set,
                               values=SLOTS,
                               map_values=False)
@@ -66,8 +66,7 @@ class ThorlabsPro8000(SCPIUnknownMixin, Instrument):
 
     LDCStatus = Instrument.control(
         ":LASER?", ":LASER %s",
-        """Set laser diode status. Allowed values are: {}""".format(
-            STATUS),
+        f"""Set laser diode status. Allowed values are: {STATUS}""",
         validator=strict_discrete_set,
         values=STATUS,
         map_values=False

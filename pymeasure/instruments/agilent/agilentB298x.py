@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,10 @@
 # THE SOFTWARE.
 #
 
-import logging
+from typing import Any
 
-from pymeasure.instruments import SCPIMixin, Instrument
-
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              strict_range,
-                                              joined_validators
-                                              )
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from pymeasure.instruments import AdapterType, Instrument, SCPIMixin, cast_or_str
+from pymeasure.instruments.validators import joined_validators, strict_discrete_set, strict_range
 
 
 class BatteryMixin:
@@ -63,9 +56,10 @@ class AgilentB2981(SCPIMixin, Instrument):
 
     The B2981 is a Femto/Picoammeter."""
 
-    def __init__(self, adapter,
-                 name="Agilent/Keysight B2980A/B series",
-                 **kwargs):
+    def __init__(self,
+                 adapter: AdapterType,
+                 name: str = "Agilent/Keysight B2980A/B series",
+                 **kwargs: Any):
         super().__init__(
             adapter,
             name,
@@ -112,7 +106,8 @@ class AgilentB2981(SCPIMixin, Instrument):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``, ``UP``, ``DOWN``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF', 'UP', 'DOWN'], [2E-12, 20E-3]]
+        values=[['MIN', 'MAX', 'DEF', 'UP', 'DOWN'], [2E-12, 20E-3]],
+        cast=cast_or_str(float),
         )
 
     interlock_enabled = Instrument.measurement(
@@ -132,11 +127,11 @@ class AgilentB2981(SCPIMixin, Instrument):
 # Trigger system #
 ##################
 
-    def abort(self):
+    def abort(self) -> None:
         """Abort the all actions."""
         self.write(":ABOR:ALL")
 
-    def arm(self):
+    def arm(self) -> None:
         """Send an immediate arm trigger for all actions.
 
         When the status of all actions is initiated, the arm trigger
@@ -144,15 +139,15 @@ class AgilentB2981(SCPIMixin, Instrument):
         """
         self.write(":ARM:ALL")
 
-    def init(self):
+    def init(self) -> None:
         """Initiate a trigger for all actions."""
         self.write(":INIT:ALL")
 
-    def abort_acquisition(self):
+    def abort_acquisition(self) -> None:
         """Abort action 'ACQuire'."""
         self.write(":ABOR:ACQ")
 
-    def arm_acquisition(self):
+    def arm_acquisition(self) -> None:
         """Send an immediate arm trigger for action 'ACQuire'.
 
         When the status of action 'ACQuire' is initiated, the arm trigger
@@ -160,7 +155,7 @@ class AgilentB2981(SCPIMixin, Instrument):
         """
         self.write(":ARM:ACQ")
 
-    def init_acquisition(self):
+    def init_acquisition(self) -> None:
         """Initiate a trigger for action 'ACQuire'."""
         self.write(":INIT:ACQ")
 
@@ -174,7 +169,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 'ONCE', False: 'OFF'}
+        values={True: 'ONCE', False: 'OFF'},
+        cast=str,
         )
 
     arm_acquisition_count = Instrument.control(
@@ -187,7 +183,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         ``INF`` is equivalent to ``2147483647``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF', 'INF', 2147483647], [1, 100000]]
+        values=[['MIN', 'MAX', 'DEF', 'INF', 2147483647], [1, 100000]],
+        cast=cast_or_str(float),
         )
 
     arm_acquisition_delay = Instrument.control(
@@ -198,7 +195,8 @@ class AgilentB2981(SCPIMixin, Instrument):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF'], [0, 100000]]
+        values=[['MIN', 'MAX', 'DEF'], [0, 100000]],
+        cast=cast_or_str(float),
         )
 
     arm_acquisition_source = Instrument.control(
@@ -223,7 +221,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         values=['AINT', 'BUS', 'TIM', 'INT1', 'INT2', 'LAN', 'TIN',
-                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7']
+                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7'],
+        cast=str,
         )
 
     arm_acquisition_source_lan_id = Instrument.control(
@@ -233,7 +232,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         :type: str, strictly from ``LAN0`` to ``LAN7``
         """,
         validator=strict_discrete_set,
-        values=['LAN0', 'LAN1', 'LAN2', 'LAN3', 'LAN4', 'LAN5', 'LAN6', 'LAN7']
+        values=['LAN0', 'LAN1', 'LAN2', 'LAN3', 'LAN4', 'LAN5', 'LAN6', 'LAN7'],
+        cast=str,
         )
 
     arm_acquisition_timer = Instrument.control(
@@ -244,7 +244,8 @@ class AgilentB2981(SCPIMixin, Instrument):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF'], [1E-5, 1E5]]
+        values=[['MIN', 'MAX', 'DEF'], [1E-5, 1E5]],
+        cast=cast_or_str(float),
         )
 
     arm_acquisition_output_signal = Instrument.control(
@@ -264,7 +265,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         values=['INT1', 'INT2', 'LAN', 'TOUT',
-                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7']
+                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7'],
+        cast=str,
         )
 
     arm_acquisition_output_enabled = Instrument.control(
@@ -295,7 +297,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 'ONCE', False: 'OFF'}
+        values={True: 'ONCE', False: 'OFF'},
+        cast=str,
         )
 
     trigger_acquisition_count = Instrument.control(
@@ -308,7 +311,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         ``INF`` is equivalent to ``2147483647``.
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF', 'INF', 2147483647], [1, 100000]]
+        values=[['MIN', 'MAX', 'DEF', 'INF', 2147483647], [1, 100000]],
+        cast=cast_or_str(float),
         )
 
     trigger_acquisition_delay = Instrument.control(
@@ -319,7 +323,8 @@ class AgilentB2981(SCPIMixin, Instrument):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF'], [0, 100000]]
+        values=[['MIN', 'MAX', 'DEF'], [0, 100000]],
+        cast=cast_or_str(float),
         )
 
     trigger_acquisition_source = Instrument.control(
@@ -343,7 +348,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         values=['AINT', 'BUS', 'TIM', 'INT1', 'INT2', 'LAN', 'TIN',
-                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7']
+                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7'],
+        cast=str,
         )
 
     trigger_acquisition_source_lan_id = Instrument.control(
@@ -353,7 +359,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         :type: str, strictly from ``LAN0`` to ``LAN7``
         """,
         validator=strict_discrete_set,
-        values=['LAN0', 'LAN1', 'LAN2', 'LAN3', 'LAN4', 'LAN5', 'LAN6', 'LAN7']
+        values=['LAN0', 'LAN1', 'LAN2', 'LAN3', 'LAN4', 'LAN5', 'LAN6', 'LAN7'],
+        cast=str,
         )
 
     trigger_acquisition_timer = Instrument.control(
@@ -364,7 +371,8 @@ class AgilentB2981(SCPIMixin, Instrument):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF'], [1E-5, 1E5]]
+        values=[['MIN', 'MAX', 'DEF'], [1E-5, 1E5]],
+        cast=cast_or_str(float),
         )
 
     trigger_acquisition_output_signal = Instrument.control(
@@ -385,7 +393,8 @@ class AgilentB2981(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         values=['INT1', 'INT2', 'LAN', 'TOUT',
-                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7']
+                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7'],
+        cast=str,
         )
 
     trigger_acquisition_output_enabled = Instrument.control(
@@ -638,7 +647,6 @@ class AgilentB2983(AgilentB2981, BatteryMixin):
 
     The B2983 is a Femto/Picoammeterwith with battery operation.
     """
-    pass
 
 
 class AgilentB2985(AgilentB2981):
@@ -657,6 +665,7 @@ class AgilentB2985(AgilentB2981):
         values=['CURR', 'CHAR', 'VOLT', 'RES'],
         get_process=lambda v: v.strip('"'),
         get_process_list=lambda v: [x.strip('"') for x in v],
+        cast=str,
         )
 
     charge = Instrument.measurement(
@@ -675,7 +684,8 @@ class AgilentB2985(AgilentB2981):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``, ``UP``, ``DOWN``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF', 'UP', 'DOWN'], [2E-9, 2E-6]]
+        values=[['MIN', 'MAX', 'DEF', 'UP', 'DOWN'], [2E-9, 2E-6]],
+        cast=cast_or_str(float),
         )
 
     resistance = Instrument.measurement(
@@ -694,7 +704,8 @@ class AgilentB2985(AgilentB2981):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``, ``UP``, ``DOWN``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF', 'UP', 'DOWN'], [1E6, 1E15]]
+        values=[['MIN', 'MAX', 'DEF', 'UP', 'DOWN'], [1E6, 1E15]],
+        cast=cast_or_str(float),
         )
 
     voltage = Instrument.measurement(
@@ -713,7 +724,8 @@ class AgilentB2985(AgilentB2981):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``, ``UP``, ``DOWN``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF', 'UP', 'DOWN'], [2, 20]]
+        values=[['MIN', 'MAX', 'DEF', 'UP', 'DOWN'], [2, 20]],
+        cast=cast_or_str(float),
         )
 
     humidity = Instrument.measurement(
@@ -744,7 +756,8 @@ class AgilentB2985(AgilentB2981):
         - ``HSEN`` selects the temperature sensor within the humidity sensor.
         """,
         validator=strict_discrete_set,
-        values=['TC', 'HSEN']
+        values=['TC', 'HSEN'],
+        cast=str,
         )
 
     temperature_unit = Instrument.control(
@@ -760,18 +773,19 @@ class AgilentB2985(AgilentB2981):
         - ``K`` selects Kelvin.
         """,
         validator=strict_discrete_set,
-        values=['C', 'CEL', 'F', 'FAR', 'K']
+        values=['C', 'CEL', 'F', 'FAR', 'K'],
+        cast=str,
         )
 
 ############################################################
 # Trigger functions for action 'TRANsient' (voltage source)#
 ############################################################
 
-    def abort_transient(self):
+    def abort_transient(self) -> None:
         """Abort action 'TRANSient'."""
         self.write(":ABOR:TRAN")
 
-    def arm_transient(self):
+    def arm_transient(self) -> None:
         """Send an immediate arm trigger for action 'TRANSient'.
 
         When the status of the specified action is initiated, the arm trigger
@@ -779,7 +793,7 @@ class AgilentB2985(AgilentB2981):
         """
         self.write(":ARM:TRAN")
 
-    def init_transient(self):
+    def init_transient(self) -> None:
         """Initiate a trigger for action 'TRANSient'."""
         self.write(":INIT:TRAN")
 
@@ -794,7 +808,8 @@ class AgilentB2985(AgilentB2981):
         """,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 'ONCE', False: 'OFF'}
+        values={True: 'ONCE', False: 'OFF'},
+        cast=str,
         )
 
     arm_transient_count = Instrument.control(
@@ -807,18 +822,20 @@ class AgilentB2985(AgilentB2981):
         ``INF`` is equivalent to ``2147483647``.
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF', 'INF', 2147483647], [1, 100000]]
+        values=[['MIN', 'MAX', 'DEF', 'INF', 2147483647], [1, 100000]],
+        cast=cast_or_str(float),
         )
 
     arm_transient_delay = Instrument.control(
         ":ARM:TRAN:DEL?", ":ARM:TRAN:DEL %s",
         """Control the arm trigger delay for action 'TRANSient' in seconds.
 
-        :type: - float, strictly from ``0`` to ``1E5`` or
+        :type: - float, strictly from ``0`` to ``1E5`` or
                - str, strictly in ``MIN``, ``MAX``, ``DEF``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF'], [0, 100000]]
+        values=[['MIN', 'MAX', 'DEF'], [0, 100000]],
+        cast=cast_or_str(float),
         )
 
     arm_transient_source = Instrument.control(
@@ -842,7 +859,8 @@ class AgilentB2985(AgilentB2981):
         """,
         validator=strict_discrete_set,
         values=['AINT', 'BUS', 'TIM', 'INT1', 'INT2', 'LAN', 'TIN',
-                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7']
+                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7'],
+        cast=str,
         )
 
     arm_transient_source_lan_id = Instrument.control(
@@ -852,7 +870,8 @@ class AgilentB2985(AgilentB2981):
         :type: str, strictly from ``LAN0`` to ``LAN7``
         """,
         validator=strict_discrete_set,
-        values=['LAN0', 'LAN1', 'LAN2', 'LAN3', 'LAN4', 'LAN5', 'LAN6', 'LAN7']
+        values=['LAN0', 'LAN1', 'LAN2', 'LAN3', 'LAN4', 'LAN5', 'LAN6', 'LAN7'],
+        cast=str,
         )
 
     arm_transient_timer = Instrument.control(
@@ -863,7 +882,8 @@ class AgilentB2985(AgilentB2981):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF'], [1E-5, 1E5]]
+        values=[['MIN', 'MAX', 'DEF'], [1E-5, 1E5]],
+        cast=cast_or_str(float),
         )
 
     arm_transient_output_signal = Instrument.control(
@@ -883,7 +903,8 @@ class AgilentB2985(AgilentB2981):
         """,
         validator=strict_discrete_set,
         values=['INT1', 'INT2', 'LAN', 'TOUT',
-                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7']
+                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7'],
+        cast=str,
         )
 
     arm_transient_output_enabled = Instrument.control(
@@ -914,7 +935,8 @@ class AgilentB2985(AgilentB2981):
         """,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 'ONCE', False: 'OFF'}
+        values={True: 'ONCE', False: 'OFF'},
+        cast=str,
         )
 
     trigger_transient_count = Instrument.control(
@@ -927,7 +949,8 @@ class AgilentB2985(AgilentB2981):
         ``INF`` is equivalent to ``2147483647``.
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF', 'INF', 2147483647], [1, 100000]]
+        values=[['MIN', 'MAX', 'DEF', 'INF', 2147483647], [1, 100000]],
+        cast=cast_or_str(float),
         )
 
     trigger_transient_delay = Instrument.control(
@@ -938,7 +961,8 @@ class AgilentB2985(AgilentB2981):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF'], [0, 100000]]
+        values=[['MIN', 'MAX', 'DEF'], [0, 100000]],
+        cast=cast_or_str(float),
         )
 
     trigger_transient_source = Instrument.control(
@@ -963,7 +987,8 @@ class AgilentB2985(AgilentB2981):
         """,
         validator=strict_discrete_set,
         values=['AINT', 'BUS', 'TIM', 'INT1', 'INT2', 'LAN', 'TIN',
-                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7']
+                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7'],
+        cast=str,
         )
 
     trigger_transient_source_lan_id = Instrument.control(
@@ -973,7 +998,8 @@ class AgilentB2985(AgilentB2981):
         :type: str, strictly from ``LAN0`` to ``LAN7``
         """,
         validator=strict_discrete_set,
-        values=['LAN0', 'LAN1', 'LAN2', 'LAN3', 'LAN4', 'LAN5', 'LAN6', 'LAN7']
+        values=['LAN0', 'LAN1', 'LAN2', 'LAN3', 'LAN4', 'LAN5', 'LAN6', 'LAN7'],
+        cast=str,
         )
 
     trigger_transient_timer = Instrument.control(
@@ -984,7 +1010,8 @@ class AgilentB2985(AgilentB2981):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF'], [1E-5, 1E5]]
+        values=[['MIN', 'MAX', 'DEF'], [1E-5, 1E5]],
+        cast=cast_or_str(float),
         )
 
     trigger_transient_output_signal = Instrument.control(
@@ -1004,7 +1031,8 @@ class AgilentB2985(AgilentB2981):
         """,
         validator=strict_discrete_set,
         values=['INT1', 'INT2', 'LAN', 'TOUT',
-                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7']
+                'EXT1', 'EXT2', 'EXT3', 'EXT4', 'EXT5', 'EXT6', 'EXT7'],
+        cast=str,
         )
 
     trigger_transient_output_enabled = Instrument.control(
@@ -1040,7 +1068,8 @@ class AgilentB2985(AgilentB2981):
         - ``COMM``: low terminal is connected to Common.
         """,
         validator=strict_discrete_set,
-        values=['FLO', 'COMM']
+        values=['FLO', 'COMM'],
+        cast=str,
         )
 
     source_off_state = Instrument.control(
@@ -1061,7 +1090,8 @@ class AgilentB2985(AgilentB2981):
         +------------+--------------------------------------------------------------+
         """,
         validator=strict_discrete_set,
-        values=['ZERO', 'HIZ', 'NORM']
+        values=['ZERO', 'HIZ', 'NORM'],
+        cast=str,
         )
 
     source_voltage = Instrument.control(
@@ -1094,7 +1124,8 @@ class AgilentB2985(AgilentB2981):
                - str, strictly in ``MIN``, ``MAX``, ``DEF``
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[['MIN', 'MAX', 'DEF'], [-1000, 1000]]
+        values=[['MIN', 'MAX', 'DEF'], [-1000, 1000]],
+        cast=cast_or_str(float),
         )
 
 
@@ -1104,4 +1135,3 @@ class AgilentB2987(AgilentB2985, BatteryMixin):
     The B2987 is a Femto/Picoammeter and Electrometer/High Resistance Meter
     with battery operation.
     """
-    pass

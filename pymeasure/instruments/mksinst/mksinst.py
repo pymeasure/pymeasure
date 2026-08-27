@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,7 @@ class RelayChannel(Channel):
         "SS{ch}?",
         """Get the setpoint relay status""",
         values={True: "SET", False: "CLEAR"},
+        cast=str,
     )
 
     setpoint = Channel.control(
@@ -65,6 +66,7 @@ class RelayChannel(Channel):
         """Control the switching direction""",
         validator=strict_discrete_set,
         values=["ABOVE", "BELOW"],
+        cast=str,
         check_set_errors=True,
     )
 
@@ -92,7 +94,6 @@ class MKSInstrument(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             read_termination=";",  # in reality its ";FF"
             # which is, however, invalid for pyvisa. Therefore extra bytes have to
             # be read in the read() method and the terminators are hardcoded here.
@@ -103,9 +104,9 @@ class MKSInstrument(Instrument):
         # compiled regular expression for finding numerical values in reply strings
         self._re_response = compile(fr"@{self.address:03d}(?P<ack>ACK)?(?P<msg>.*)")
 
-    def _extract_reply(self, reply):
+    def _extract_reply(self, reply: str) -> str:
         """ preprocess_reply function which tries to extract <Response> from
-        '@<aaa>ACK<Response>;FF'. If <Response> can not be identified the orignal string
+        '@<aaa>ACK<Response>;FF'. If <Response> can not be identified the original string
         is returned.
         :param reply: reply string
         :returns: string with only the response, or the original string
@@ -115,45 +116,44 @@ class MKSInstrument(Instrument):
             return rvalue.group('msg')
         return reply
 
-    def _prepend_address(self, cmd):
+    def _prepend_address(self, cmd: str) -> str:
         """
         create command string by including the device address
         """
         return f"@{self.address:03d}{cmd}"
 
-    def _check_extra_termination(self):
+    def _check_extra_termination(self, **kwargs) -> None:
         """
         Check the read termination to correspond to the protocol
         """
-        t = super().read_bytes(2)  # read extra termination chars 'FF'
+        t = super().read_bytes(2, **kwargs)  # read extra termination chars 'FF'
         if t != b'FF':
             raise ValueError(f"unexpected termination string received {t}")
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """
         Reads from the instrument including the correct termination characters
         """
-        ret = super().read()
-        self._check_extra_termination()
+        ret = super().read(**kwargs)
+        self._check_extra_termination(**kwargs)
         return self._extract_reply(ret)
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """
         Write to the instrument including the device address.
 
         :param command: command string to be sent to the instrument
         """
-        super().write(self._prepend_address(command))
+        super().write(self._prepend_address(command), **kwargs)
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """
         Check reply string for acknowledgement string.
         """
         ret = super().read()  # use super read to get raw reply
         reply = self._re_response.search(ret)
-        if reply:
-            if reply.group('ack') == 'ACK':
-                self._check_extra_termination()
-                return []
+        if reply and reply.group('ack') == 'ACK':
+            self._check_extra_termination()
+            return []
         # no valid acknowledgement message found
         raise ValueError(f"invalid reply '{ret}' found in check_errors")

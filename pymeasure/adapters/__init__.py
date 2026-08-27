@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 import logging
 
 from .adapter import Adapter, FakeAdapter
-
 from .protocol import ProtocolAdapter
 
 log = logging.getLogger(__name__)
@@ -32,9 +31,10 @@ log.addHandler(logging.NullHandler())
 
 try:
     from pymeasure.adapters.visa import VISAAdapter
-    from pymeasure.adapters.prologix import PrologixAdapter
 except ImportError:
     log.warning("PyVISA library could not be loaded")
+else:
+    from pymeasure.adapters.prologix import PrologixAdapter
 
 try:
     from pymeasure.adapters.serial import SerialAdapter

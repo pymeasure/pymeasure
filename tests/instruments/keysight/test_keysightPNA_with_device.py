@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,10 +32,10 @@
 # This is the default case if Preset is set to Factory Preset.
 
 
-import pytest
 import numpy as np
-from pymeasure.instruments.keysight.keysightPNA import KeysightPNA
+import pytest
 
+from pymeasure.instruments.keysight.keysightPNA import KeysightPNA
 
 ############
 # FIXTURES #
@@ -53,7 +53,7 @@ def keysightPNA(connected_device_address):
     instr = KeysightPNA(connected_device_address, timeout=10000)
     instr.clear()
     instr.reset()  # also resets data_format to ascii
-    instr.complete
+    _ = instr.complete
     assert [] == instr.check_errors()
     return instr
 
@@ -99,7 +99,7 @@ class TestMeasurementChannel:
 
     def test_single(self, keysightPNA):
         keysightPNA.ch_1.single()
-        keysightPNA.complete
+        _ = keysightPNA.complete
         assert [] == keysightPNA.check_errors()
 
     def test_continuous(self, keysightPNA):

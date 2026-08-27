@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 #
 
-import pytest
 import numpy as np
+import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.keysight import KeysightPNA
+from pymeasure.test import expected_protocol
 
 # communication during class initialization:
 # - set the data format to real64
@@ -57,24 +57,22 @@ REAL64_DATA = b"\x00\x00\x00\x00\xd0\x12\x63\x41"
 
 class TestAttributeError:
     def test_undefined_channel(self):
-        with pytest.raises(AttributeError):
-            with expected_protocol(
-                KeysightPNA,
-                INITIALIZATION + [
-                 ("SYST:MEAS:CAT? 3", "6,8"),
-                 ],
-            ) as inst:
-                assert [6, 8] == inst.ch_3.measurements
+        with pytest.raises(AttributeError), expected_protocol(
+            KeysightPNA,
+            INITIALIZATION + [
+             ("SYST:MEAS:CAT? 3", "6,8"),
+             ],
+        ) as inst:
+            assert [6, 8] == inst.ch_3.measurements
 
     def test_undefined_trace(self):
-        with pytest.raises(AttributeError):
-            with expected_protocol(
-                KeysightPNA,
-                INITIALIZATION + [
-                 ("CALC1:MEAS3:X:AXIS:UNIT?", "FREQ"),
-                 ],
-            ) as inst:
-                assert "FREQ" == inst.ch_1.tr_3.x_unit
+        with pytest.raises(AttributeError), expected_protocol(
+            KeysightPNA,
+            INITIALIZATION + [
+             ("CALC1:MEAS3:X:AXIS:UNIT?", "FREQ"),
+             ],
+        ) as inst:
+            assert "FREQ" == inst.ch_1.tr_3.x_unit
 
 
 class TestMarker:
@@ -248,7 +246,7 @@ class TestTrace:
             assert "DBM" == inst.ch_1.tr_1.y_unit
 
 
-class TestMeasurementChannel():
+class TestMeasurementChannel:
     def test_initiate(self):
         with expected_protocol(
             KeysightPNA,
@@ -304,7 +302,7 @@ class TestMeasurementChannel():
             assert [1, 2, 3, 6, 8] == inst.ch_1.measurements
 
 
-class TestKeysightPNA():
+class TestKeysightPNA:
     def test_abort(self):
         with expected_protocol(
             KeysightPNA,

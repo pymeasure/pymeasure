@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,13 +25,13 @@
 import logging
 from warnings import warn
 
-from pymeasure.instruments.rohdeschwarz.fsseries import FSL
+from pymeasure.instruments.rohdeschwarz.fsseries import FSL as _FSLSeries
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class FSL(FSL):
+class FSL(_FSLSeries):
     def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
         warn(
             "Import `FSL` from `pymeasure.instruments.rohdeschwarz.fsl` is "

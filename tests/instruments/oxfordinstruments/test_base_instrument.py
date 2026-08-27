@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,24 +24,20 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
-
 from pymeasure.instruments.oxfordinstruments.base import OxfordInstrumentsBase, OxfordVISAError
+from pymeasure.test import expected_protocol
 
 
 def test_wrong_response():
     with expected_protocol(OxfordInstrumentsBase,
                            [("A", "B"), (None, "")],
                            max_attempts=1,
-                           ) as inst:
-        with pytest.raises(OxfordVISAError):
-            inst.ask("A")
+                           ) as inst, pytest.raises(OxfordVISAError):
+        inst.ask("A")
 
 
 def test_write_not_understood_command():
     with expected_protocol(OxfordInstrumentsBase,
                            [("A", "?B")],
-                           ) as inst:
-        with pytest.raises(OxfordVISAError):
-            inst.write("A")
+                           ) as inst, pytest.raises(OxfordVISAError):
+        inst.write("A")

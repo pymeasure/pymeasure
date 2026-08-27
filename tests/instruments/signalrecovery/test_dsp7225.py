@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,8 @@
 import pytest
 from pytest import raises
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.signalrecovery.dsp7225 import DSP7225
+from pymeasure.test import expected_protocol
 
 
 @pytest.mark.parametrize("frequency", [
@@ -48,9 +47,8 @@ def test_valid_frequency(frequency):
     1e14,
 ])
 def test_invalid_frequency(frequency):
-    with raises(ValueError):
-        with expected_protocol(
-                DSP7225,
-                [(b"OF. %g" % frequency, None)],
-        ) as instr:
-            instr.frequency = frequency
+    with raises(ValueError), expected_protocol(
+            DSP7225,
+            [(b"OF. %g" % frequency, None)],
+    ) as instr:
+        instr.frequency = frequency

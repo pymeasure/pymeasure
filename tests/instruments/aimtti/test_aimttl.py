@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@
 
 import pytest
 
+from pymeasure.instruments.aimtti.aimttiPL import PL303QMDP, PL303QMTP
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.aimtti.aimttiPL import PL303QMTP, PL303QMDP
 
 
 def test_voltage_setpoint():
@@ -112,6 +112,5 @@ def test_strict_range_error():
     with expected_protocol(
         PL303QMDP,
         [],
-    ) as inst:
-        with pytest.raises(ValueError):
-            inst.ch_1.voltage_setpoint = 31
+    ) as inst, pytest.raises(ValueError):
+        inst.ch_1.voltage_setpoint = 31

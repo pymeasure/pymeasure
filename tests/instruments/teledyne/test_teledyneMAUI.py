@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -81,11 +81,11 @@ def test_bwlimit():
              (b"BWL?", b"C1,ON"),
              ]
     ) as instr:
-        instr.ch_1.bwlimit = "OFF"
+        instr.ch_1.bwlimit = "OFF"  # type: ignore
         assert instr.bwlimit["C1"] == "OFF"
-        instr.ch_1.bwlimit = "200MHZ"
+        instr.ch_1.bwlimit = "200MHZ"  # type: ignore
         assert instr.bwlimit["C1"] == "200MHZ"
-        instr.ch_1.bwlimit = "ON"
+        instr.ch_1.bwlimit = "ON"  # type: ignore
         assert instr.bwlimit["C1"] == "ON"
 
 

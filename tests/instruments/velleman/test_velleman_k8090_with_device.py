@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,11 +29,13 @@ Test the instrument class for the Velleman F8090.
 This tests the instrument class with the real device connected.
 """
 
-import pytest
 from time import sleep
 
+import pytest
+
 from pymeasure.adapters import SerialAdapter
-from pymeasure.instruments.velleman import VellemanK8090, VellemanK8090Switches as Switches
+from pymeasure.instruments.velleman import VellemanK8090
+from pymeasure.instruments.velleman import VellemanK8090Switches as Switches
 
 
 @pytest.fixture()
@@ -59,7 +61,7 @@ def test_version(instrument):
 
 
 def test_status(instrument):
-    last_on, curr_on, time_on = instrument.status
+    _last_on, curr_on, _time_on = instrument.status
 
     assert isinstance(curr_on, Switches)
 

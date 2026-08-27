@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,11 @@
 #
 
 # Standard packages
+from collections.abc import Callable
 from typing import NamedTuple
 
 # third party packages
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import AdapterType, Instrument
 from pymeasure.instruments.validators import strict_range
 
 # local packages
@@ -37,9 +38,9 @@ def state_to_float(line: str) -> float:
     return float(line.split("=")[-1])
 
 
-def generate_state_extraction_method(index):
+def generate_state_extraction_method(index: int) -> Callable[[list[str]], float]:
     """Generate a method, which returns one of the states according to the index."""
-    def extract_state(values):
+    def extract_state(values: list[str]) -> float:
         return state_to_float(values[index])
     return extract_state
 
@@ -68,14 +69,19 @@ class Argos(Instrument):
     :param query_delay: Delay between write and read in seconds.
     """
 
-    def __init__(self, adapter, name="Argos 2400 OPO system", query_delay=0.01, **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Argos 2400 OPO system",
+        query_delay: float = 0.01,
+        **kwargs,
+    ):
         super().__init__(
             adapter,
             name,
             baud_rate=4800,
             write_termination="\n",
             read_termination="\n\rOPO>",
-            includeSCPI=False,
             **kwargs)
         """
         8 data bits, no parity, 1 stop bit, no flow control
@@ -83,14 +89,14 @@ class Argos(Instrument):
         self.query_delay = query_delay
         # read starts with space and ends with "\n\rOPO>"
 
-    def wait_for(self, query_delay=None):
+    def wait_for(self, query_delay: float | None = None) -> None:
         """Wait for some time. Used by 'ask' to wait before reading.
 
         :param query_delay: Delay between writing and reading in seconds. None is default delay.
         """
         super().wait_for(self.query_delay if query_delay is None else query_delay)
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Read after setting."""
         got = self.read()
         if "setting changed" not in got:
@@ -118,14 +124,14 @@ class Argos(Instrument):
                       seed_voltage=state_to_float(seed))
         return state
 
-    version = Instrument.measurement("ver", "Get the firmware version.", cast=str)  # type: ignore
+    version = Instrument.measurement("ver", "Get the firmware version.", cast=str)
 
     temperature_setpoint = Instrument.control(
         "state",
         "temp %.3f",
         "Control the crystal temperature setpoint in °C.",
         separator="\n\r",
-        cast=str,  # type: ignore
+        cast=str,
         get_process_list=generate_state_extraction_method(0),
         validator=strict_range,
         values=[30, 100],
@@ -137,7 +143,7 @@ class Argos(Instrument):
         "etalon %.3f",
         "Control the etalon angle in degrees.",
         separator="\n\r",
-        cast=str,  # type: ignore
+        cast=str,
         get_process_list=generate_state_extraction_method(1),
         validator=strict_range,
         values=[-12, 12],
@@ -149,7 +155,7 @@ class Argos(Instrument):
         "seed %.3f",
         "Control the seed source tuning voltage.",
         separator="\n\r",
-        cast=str,  # type: ignore
+        cast=str,
         get_process_list=generate_state_extraction_method(2),
         validator=strict_range,
         values=[0, 5],
@@ -160,6 +166,6 @@ class Argos(Instrument):
         "state",
         "Get the current crystal temperature in °C.",
         separator="\n\r",
-        cast=str,  # type: ignore
+        cast=str,
         get_process_list=generate_state_extraction_method(3),
     )

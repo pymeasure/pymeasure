@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,9 @@ This is not an integration test! This is software-only.
 """
 import pytest
 
+from pymeasure.instruments.velleman import VellemanK8090
+from pymeasure.instruments.velleman import VellemanK8090Switches as Switches
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.velleman import VellemanK8090, VellemanK8090Switches as Switches
 
 
 def test_version():
@@ -61,9 +62,8 @@ def test_version_bad_reply_short(reply, msg):
                 reply,
             )
         ],
-    ) as inst:
-        with pytest.raises(ConnectionError, match=msg):
-            _ = inst.version
+    ) as inst, pytest.raises(ConnectionError, match=msg):
+        _ = inst.version
 
 
 def test_status():

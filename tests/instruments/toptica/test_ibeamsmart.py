@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
-
 from pymeasure.instruments.toptica import IBeamSmart
+from pymeasure.test import expected_protocol
 
 # Note: This communication does not contain the first two device responses, as they are
 # ignored due to `adapter.flush_read_buffer()`.
@@ -70,9 +68,8 @@ def test_setting_failed():
     with expected_protocol(
             IBeamSmart,
             init_comm + [("la off", ""), (None, "abc"), (None, "[OK]")],
-    ) as inst:
-        with pytest.raises(ValueError):
-            inst.laser_enabled = False
+    ) as inst, pytest.raises(ValueError):
+        inst.emission = False
 
 
 def test_enable_channel():
@@ -88,24 +85,6 @@ def test_enable_channel():
         assert inst.ch_3.enabled is True
         inst.ch_2.enabled = False
         assert inst.ch_2.enabled is False
-
-
-def test_channel1_enabled_getter():
-    with expected_protocol(
-            IBeamSmart,
-            init_comm + [("sta ch 1", ""), (None, "ON"), (None, "[OK]")],
-    ) as inst:
-        with pytest.warns(FutureWarning):
-            assert inst.channel1_enabled is True
-
-
-def test_channel1_enabled_setter():
-    with expected_protocol(
-            IBeamSmart,
-            init_comm + [("en 1", ""), (None, "[OK]")],
-    ) as inst:
-        with pytest.warns(FutureWarning):
-            inst.channel1_enabled = True
 
 
 def test_channel_power():

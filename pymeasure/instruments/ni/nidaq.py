@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,13 +25,14 @@
 # Requires 'instrumental' package: https://github.com/mabuchilab/Instrumental
 
 from instrumental.drivers.daq import ni
+
 from pymeasure.instruments import Instrument
 
 
 def get_dict_attr(obj, attr):
-    for obj in [obj] + obj.__class__.mro():
-        if attr in obj.__dict__:
-            return obj.__dict__[attr]
+    for obj_element in [obj] + obj.__class__.mro():
+        if attr in obj_element.__dict__:
+            return obj_element.__dict__[attr]
     raise AttributeError
 
 
@@ -43,9 +44,8 @@ class NIDAQ(Instrument):
     def __init__(self, name='Dev1', *args, **kwargs):
         self._daq = ni.NIDAQ(name)
         super().__init__(
-            None,
+            None,  # type: ignore
             "NIDAQ",
-            includeSCPI=False,
             **kwargs)
         for chan in self._daq.get_AI_channels():
             self.add_property(chan)
@@ -55,17 +55,17 @@ class NIDAQ(Instrument):
     def add_property(self, chan, set=False):
         if set:
             def fset(self, value): return self.set_chan(chan, value)
-            def fget(self): return getattr(self, '_%s' % chan)
-            setattr(self, '_%s' % chan, None)
-            setattr(self.__class__, chan, property(fset=fset, fget=fget))
+            def fget1(self): return getattr(self, f'_{chan}')
+            setattr(self, f'_{chan}', None)
+            setattr(self.__class__, chan, property(fset=fset, fget=fget1))
         else:
-            def fget(self): return self.get_chan(chan)
-            setattr(self.__class__, chan, property(fget=fget))
+            def fget2(self): return self.get_chan(chan)
+            setattr(self.__class__, chan, property(fget=fget2))
         setattr(self.get, chan, lambda: getattr(self, chan))
 
     def get_chan(self, chan):
         return getattr(self._daq, chan).read().magnitude
 
     def set_chan(self, chan, value):
-        setattr(self, '_%s' % chan, value)
-        getattr(self._daq, chan).write('%sV' % value)
+        setattr(self, f'_{chan}', value)
+        getattr(self._daq, chan).write(f'{value}V')

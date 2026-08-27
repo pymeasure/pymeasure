@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ def set_file(filename):
 
 
 def get_config(filename='default_config.ini'):
-    if 'CONFIG' in os.environ.keys():
+    if 'CONFIG' in os.environ:
         filename = os.environ['CONFIG']
     config = configparser.ConfigParser()
     config.read(filename)
@@ -44,7 +44,7 @@ def get_config(filename='default_config.ini'):
 
 # noinspection PyProtectedMember
 def set_mpl_rcparams(config):
-    if 'matplotlib.rcParams' in config._sections.keys():
+    if 'matplotlib.rcParams' in config._sections:
         import matplotlib
         for key in config._sections['matplotlib.rcParams']:
             matplotlib.rcParams[key] = eval(config._sections['matplotlib.rcParams'][key])

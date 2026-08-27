@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@
 
 import ctypes
 import logging
-
 from enum import Enum
+
 from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -262,7 +262,7 @@ class HP6632A(HPLegacyInstrument):
         map_values=True
     )
 
-    @output_enabled.getter
+    @output_enabled.getter  # pyright: ignore[reportGeneralTypeIssues]
     def output_enabled(self):
         """
         A bool property which controls if the output is enabled
@@ -299,7 +299,7 @@ class HP6632A(HPLegacyInstrument):
     voltage = HPLegacyInstrument.control(
         "VOUT?", "VSET %g",
         """
-        A floating point proptery that controls the output voltage of the device.
+        A floating point property that controls the output voltage of the device.
 
         """,
         dynamic=True,

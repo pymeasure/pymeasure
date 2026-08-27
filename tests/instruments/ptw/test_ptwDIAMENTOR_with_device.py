@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,9 +27,11 @@
 #
 
 
-import pytest
-from pymeasure.instruments.ptw.ptwDIAMENTOR import ptwDIAMENTOR
 from time import sleep
+
+import pytest
+
+from pymeasure.instruments.ptw.ptwDIAMENTOR import ptwDIAMENTOR
 
 BAUD_RATES = [9600, 19200, 38400, 57600, 115200]
 DAP_UNITS = ["cGycm2", "Gycm2", "uGym2", "Rcm2"]

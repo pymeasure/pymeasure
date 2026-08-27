@@ -110,3 +110,6 @@ settings.json
 
 # Vim
 *.swp
+
+# uv lock file
+uv.lock

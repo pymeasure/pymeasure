@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -182,6 +182,7 @@ class Keysight81160AChannel(Agilent33500Channel):
         ":DATA{ch}:NVOL:CAT?",
         """Get the available user waveforms in memory (list[str]).""",
         preprocess_reply=lambda v: v.replace('"', "").replace("\n", ""),
+        cast=str,
     )
 
     trigger_mode = Instrument.control(
@@ -191,6 +192,7 @@ class Keysight81160AChannel(Agilent33500Channel):
         validator=strict_discrete_set,
         values=TRIGGER_MODES,
         dynamic=True,
+        cast=str,
     )
 
     trigger_count = Instrument.control(
