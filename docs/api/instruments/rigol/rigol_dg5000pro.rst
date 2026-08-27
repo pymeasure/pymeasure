@@ -1,6 +1,6 @@
-##############################
+##################################
 Rigol DG5000Pro waveform generator
-##############################
+##################################
 
 .. autoclass:: pymeasure.instruments.rigol.DG5000Pro
     :members:

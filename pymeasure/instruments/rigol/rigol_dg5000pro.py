@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
-from pymeasure.instruments.validators import truncated_discrete_set
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 class VoltageChannel(Channel):
     """Represents a channel of the signal generator."""
@@ -33,7 +33,7 @@ class VoltageChannel(Channel):
         ":OUTPut{ch}:STATe %s",
         """Control the status of the channel.
          True if the channel is on and False if not.""",
-        validator=truncated_discrete_set,
+        validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
@@ -42,6 +42,8 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:FREQuency?",
         ":SOURce{ch}:FREQuency %f",
         """Control the output frequency (Hz) of the channel.""",
+        validator=strict_range,
+        values=(1e-6, 250e6),
     )
 
     amplitude = Channel.control(
@@ -54,12 +56,16 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:PHASe?",
         ":SOURce{ch}:PHASe %f",
         """Control channel phase""",
+        validator=strict_range,
+        values=(-360, 360),
     )
 
     function = Channel.control(
         ":SOURce{ch}:FUNCtion?",
         ":SOURce{ch}:FUNCtion %s",
         """Channel waveform (SIN,SQU,RAMP,PULS,NOIS,ARB,HARM,DC)""",
+        validator=strict_discrete_set,
+        values={"SIN", "SQU", "RAMP", "PULS", "NOIS", "ARB", "HARM", "DC"},
         cast=str
     )
 
@@ -73,6 +79,8 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:VOLTage:UNIT?",
         ":SOURce{ch}:VOLTage:UNIT %s",
         """Channel voltage unit (VPP/VRMS/DBM)""",
+        validator=strict_discrete_set,
+        values={"VPP", "VRMS", "DBM"},
         cast=str
     )
 
@@ -86,7 +94,7 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:PSKey:STATe?",
         ":SOURce{ch}:PSKey:STATe %s",
         """Channel PSK modulation (ON/OFF)""",
-       validator=truncated_discrete_set,
+       validator=strict_discrete_set,
        values={True: 1, False: 0},
        map_values=True,
     )
@@ -95,12 +103,16 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:PSKey:PHASe?",
         ":SOURce{ch}:PSKey:PHASe %f",
         """Channel PSK phase""",
+        validator=strict_range,
+        values=(0, 360),
     )
 
     psk_polarity = Channel.control(
         ":SOURce{ch}:PSKey:POLarity?",
         ":SOURce{ch}:PSKey:POLarity %s",
         """Channel PSK polarity (POS/NEG)""",
+        validator=strict_discrete_set,
+        values={"POS", "NEG"},
         cast=str
     )
 
@@ -108,6 +120,8 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:PSKey:PORT?",
         ":SOURce{ch}:PSKey:PORT %s",
         """Channel PSK Port (FRON/REAR)""",
+        validator=strict_discrete_set,
+        values={"FRON", "REAR"},
         cast=str
     )
 
@@ -115,6 +129,8 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:PSKey:SOURce?",
         ":SOURce{ch}:PSKey:SOURce %s",
         """Channel PSK source (INT/EXT)""",
+        validator=strict_discrete_set,
+        values={"INT", "EXT"},
         cast=str
     )
 
