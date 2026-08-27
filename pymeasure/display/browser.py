@@ -23,9 +23,14 @@
 #
 
 import logging
+from collections.abc import Iterable
 from os.path import basename
+from typing import cast
 
-from ..experiment.procedure import ProcedureStatus
+from pymeasure.display.manager import Experiment
+from pymeasure.experiment.results import Results
+
+from ..experiment.procedure import Procedure, ProcedureStatus
 from .Qt import QtCore, QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
@@ -47,7 +52,7 @@ class BaseBrowserItem:
 class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
     """ Represent a row in the :class:`~pymeasure.display.browser.Browser` tree widget """
 
-    def __init__(self, results, color, parent=None):
+    def __init__(self, results: Results, color, parent: QtWidgets.QTreeWidget | None = None):
         super().__init__(parent)
 
         pixelmap = QtGui.QPixmap(24, 24)
@@ -94,8 +99,14 @@ class Browser(QtWidgets.QTreeWidget):
     `measured_quantities` of the Browser.
     """
 
-    def __init__(self, procedure_class, display_parameters,
-                 measured_quantities, sort_by_filename=False, parent=None):
+    def __init__(
+        self,
+        procedure_class: type[Procedure],
+        display_parameters: Iterable[str],
+        measured_quantities: Iterable[str],
+        sort_by_filename: bool = False,
+        parent: QtWidgets.QWidget | None = None,
+    ):
         super().__init__(parent)
         self.display_parameters = display_parameters
         self.procedure_class = procedure_class
@@ -115,7 +126,7 @@ class Browser(QtWidgets.QTreeWidget):
         for i, width in enumerate([80, 140]):
             self.header().resizeSection(i, width)
 
-    def add(self, experiment):
+    def add(self, experiment: Experiment) -> BaseBrowserItem | None:
         """Add a :class:`Experiment<pymeasure.display.manager.Experiment>` object
         to the Browser. This function checks to make sure that the Experiment
         measures the appropriate quantities to warrant its inclusion, and then
@@ -137,6 +148,7 @@ class Browser(QtWidgets.QTreeWidget):
             if column in experiment_parameter_names:
                 item.setText(i + 4, str(experiment_parameters[column]))
 
-        self.addTopLevelItem(item)
-        self.setItemWidget(item, 2, item.progressbar)
+        tree_item = cast(QtWidgets.QTreeWidgetItem, item)
+        self.addTopLevelItem(tree_item)
+        self.setItemWidget(tree_item, 2, item.progressbar)
         return item

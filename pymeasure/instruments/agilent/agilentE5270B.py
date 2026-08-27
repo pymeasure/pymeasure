@@ -162,8 +162,11 @@ class SMUChannel(Channel):
     )
 
     current = Channel.measurement(
-        "TI{ch}",
-        """Measure the current in Amps (float).""",
+        "TI{ch},11",
+        """Measure the current in Amps (float).
+
+        The measurement is performed with 1nA limited auto ranging.
+        """,
         get_process=lambda v: float(v[3:]),
         cast=str,
     )
@@ -193,8 +196,11 @@ class SMUChannel(Channel):
     )
 
     voltage = Instrument.measurement(
-        "TV{ch}",
-        """Measure the voltage in Volts (float).""",
+        "TV{ch},0",
+        """Measure the voltage in Volts (float).
+
+        The measurement is performed with auto ranging.
+        """,
         get_process=lambda v: float(v[3:]),
         cast=str,
     )

@@ -53,7 +53,7 @@ def test_input_toggling(qtbot, hide_groups, exp_visible, exp_enabled):
         toggle_par = BooleanParameter('toggle', default=True)
         x = Parameter('X', default='value', group_by='toggle_par')
 
-    wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'), hide_groups=hide_groups)
+    wdg = InputsWidget(TestProcedure, inputs=['toggle_par', 'x'], hide_groups=hide_groups)
     qtbot.addWidget(wdg)
 
     assert wdg.toggle_par.isChecked() is True
@@ -157,7 +157,7 @@ def test_input_toggling_boolean(qtbot, condition):
         toggle_par = BooleanParameter('toggle', default=True)
         x = Parameter('X', default='value', group_by='toggle_par', group_condition=condition)
 
-    wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'))
+    wdg = InputsWidget(TestProcedure, inputs=['toggle_par', 'x'])
     qtbot.addWidget(wdg)
 
     assert wdg.toggle_par.isChecked() is True
@@ -192,7 +192,7 @@ def test_input_toggling_various_inputs(qtbot, partype, default, condition, kwarg
         toggle_par = partype('toggle', default=default, **kwargs)
         x = Parameter('X', default='value', group_by='toggle_par', group_condition=condition)
 
-    wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'))
+    wdg = InputsWidget(TestProcedure, inputs=['toggle_par', 'x'])
     qtbot.addWidget(wdg)
 
     assert wdg.x.isVisibleTo(wdg) is False

@@ -23,6 +23,7 @@
 #
 
 import logging
+from warnings import warn
 
 import numpy as np
 
@@ -35,11 +36,15 @@ log.warning('not implemented yet')
 class ProgressBar:
     """ ProgressBar keeps track of the progress, predicts the
     estimated time of arrival (ETA), and formats the bar for
-    display in the console
+    display in the console.
+
+    .. deprecated:: 0.17.0
+        Old stub, never used.
     """
 
     def __init__(self):
-        self.data = np.empty()
+        warn("ProgressBar is deprecated as it is unused.", FutureWarning)
+        self.data = np.empty()  # type: ignore
         self.progress_percentage = []
         self.progress_times = []
 
@@ -57,4 +62,8 @@ class ProgressBar:
 def display(log, port, level=logging.INFO):
     """ Displays the log to the console with a progress bar
     that always remains at the bottom of the screen and refreshes itself
+
+    .. deprecated:: 0.17.0
+        Old stub, never used.
     """
+    warn("`console.display` is deprecated as it is unused.", FutureWarning)

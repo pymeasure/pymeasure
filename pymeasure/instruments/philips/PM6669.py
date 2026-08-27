@@ -23,10 +23,8 @@
 #
 
 from enum import Enum, IntFlag
-from queue import Queue
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -80,7 +78,6 @@ class PM6669(Instrument):
         super().__init__(adapter, name, **kwargs)
         self.write("EOI ON")
         self.freerun_enabled = False
-        self.backlog = Queue()
 
     KEYWORDS = ["FRE", "PER", "WID", "RPM", "PWI", "MTI", "TOU", "MSR", "TOT"]
     MULTILINE_REPLIES = ["MTI", "MSR"]
@@ -180,8 +177,8 @@ class PM6669(Instrument):
         """Control the measurement time in seconds""",
         validator=strict_range,
         values=[0, 10],
-        cast=cast_or_str(float),
-        get_process_list=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") is True else 0,
+        cast=str,
+        get_process_list=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") else 0,
     )
 
     freerun_enabled = Instrument.control(
@@ -191,9 +188,9 @@ class PM6669(Instrument):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        cast=cast_or_str(float),
+        cast=str,
         get_process_list=lambda x: (x[1].split("\n")[0][5:] == " ON")
-        if x[0].startswith("MTIME") is True
+        if x[0].startswith("MTIME")
         else 0,
     )
 
@@ -205,15 +202,15 @@ class PM6669(Instrument):
             this timeout only has meaning when freerun is off.""",
         validator=strict_range,
         values=[0, 25.5],
-        cast=cast_or_str(float),
-        get_process_list=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") is True else 0,
+        cast=str,
+        get_process_list=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") else 0,
     )
 
     SRQMask = Instrument.control(
         "BUS?",
         "MSR %i",
         """Control the SRQ mask""",
-        cast=cast_or_str(float),
+        cast=str,
         get_process_list=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1])),
     )
 
