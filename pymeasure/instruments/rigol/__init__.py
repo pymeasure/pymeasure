@@ -23,5 +23,5 @@
 #
 
 from .rigol_dg800 import DG800
-from .rigol_dho_base import DHOBase
 from .rigol_dg5000pro import DG5000Pro
+from .rigol_dho_base import DHOBase

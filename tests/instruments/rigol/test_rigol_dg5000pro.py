@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.rigol import DG5000Pro
+from pymeasure.test import expected_protocol
 
 
 def test_init():
@@ -266,5 +266,3 @@ def test_channel_1_voltage_unit_getter():
             [(b':SOURce1:VOLTage:UNIT?', b'VPP\n')],
     ) as inst:
         assert inst.channel_1.voltage_unit == 'VPP'
-
-

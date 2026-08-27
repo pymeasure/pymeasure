@@ -25,6 +25,7 @@
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
+
 class VoltageChannel(Channel):
     """Represents a channel of the signal generator."""
 
@@ -43,7 +44,7 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:FREQuency %f",
         """Control the output frequency (Hz) of the channel.""",
         validator=strict_range,
-        values=(1e-6, 250e6),
+        values=(1e-6, 500e6),
     )
 
     amplitude = Channel.control(
@@ -63,7 +64,7 @@ class VoltageChannel(Channel):
     function = Channel.control(
         ":SOURce{ch}:FUNCtion?",
         ":SOURce{ch}:FUNCtion %s",
-        """Channel waveform (SIN,SQU,RAMP,PULS,NOIS,ARB,HARM,DC)""",
+        """Control Channel waveform (SIN,SQU,RAMP,PULS,NOIS,ARB,HARM,DC)""",
         validator=strict_discrete_set,
         values={"SIN", "SQU", "RAMP", "PULS", "NOIS", "ARB", "HARM", "DC"},
         cast=str
@@ -78,7 +79,7 @@ class VoltageChannel(Channel):
     voltage_unit = Channel.control(
         ":SOURce{ch}:VOLTage:UNIT?",
         ":SOURce{ch}:VOLTage:UNIT %s",
-        """Channel voltage unit (VPP/VRMS/DBM)""",
+        """Control Channel voltage unit (VPP/VRMS/DBM)""",
         validator=strict_discrete_set,
         values={"VPP", "VRMS", "DBM"},
         cast=str
@@ -87,13 +88,13 @@ class VoltageChannel(Channel):
     load = Channel.control(
         ":OUTPut{ch}:LOAD?",
         ":OUTPut{ch}:LOAD %s",
-        """channel load (1-10000 or Infinity)""",
+        """Control Channel load (1-10000 or Infinity)""",
     )
 
     psk_state = Channel.control(
         ":SOURce{ch}:PSKey:STATe?",
         ":SOURce{ch}:PSKey:STATe %s",
-        """Channel PSK modulation (ON/OFF)""",
+        """Control Channel PSK modulation (ON/OFF)""",
        validator=strict_discrete_set,
        values={True: 1, False: 0},
        map_values=True,
@@ -102,7 +103,7 @@ class VoltageChannel(Channel):
     psk_phase = Channel.control(
         ":SOURce{ch}:PSKey:PHASe?",
         ":SOURce{ch}:PSKey:PHASe %f",
-        """Channel PSK phase""",
+        """Control Channel PSK phase""",
         validator=strict_range,
         values=(0, 360),
     )
@@ -110,7 +111,7 @@ class VoltageChannel(Channel):
     psk_polarity = Channel.control(
         ":SOURce{ch}:PSKey:POLarity?",
         ":SOURce{ch}:PSKey:POLarity %s",
-        """Channel PSK polarity (POS/NEG)""",
+        """ Control Channel PSK polarity (POS/NEG)""",
         validator=strict_discrete_set,
         values={"POS", "NEG"},
         cast=str
@@ -119,7 +120,7 @@ class VoltageChannel(Channel):
     psk_port = Channel.control(
         ":SOURce{ch}:PSKey:PORT?",
         ":SOURce{ch}:PSKey:PORT %s",
-        """Channel PSK Port (FRON/REAR)""",
+        """Control Channel PSK Port (FRON/REAR)""",
         validator=strict_discrete_set,
         values={"FRON", "REAR"},
         cast=str
@@ -128,7 +129,7 @@ class VoltageChannel(Channel):
     psk_source = Channel.control(
         ":SOURce{ch}:PSKey:SOURce?",
         ":SOURce{ch}:PSKey:SOURce %s",
-        """Channel PSK source (INT/EXT)""",
+        """Control Channel PSK source (INT/EXT)""",
         validator=strict_discrete_set,
         values={"INT", "EXT"},
         cast=str
