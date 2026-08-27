@@ -114,6 +114,7 @@ need_init_communication = [
     "Keithley2281S",
     "SpellmanXRV",
     "YAR",
+    "NGPx",
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
