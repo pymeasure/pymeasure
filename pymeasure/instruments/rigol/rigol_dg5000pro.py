@@ -73,7 +73,7 @@ class VoltageChannel(Channel):
     offset = Channel.control(
         ":SOURce{ch}:VOLTage:OFFset?",
         ":SOURce{ch}:VOLTage:OFFset %f",
-        """Channel offset""",
+        """Control Channel offset""",
     )
 
     voltage_unit = Channel.control(
@@ -134,6 +134,7 @@ class VoltageChannel(Channel):
         values={"INT", "EXT"},
         cast=str
     )
+
 
 class DG5000Pro(SCPIMixin, Instrument):
     """Control the Rigol DG5000Pro waveform generator."""
