@@ -60,6 +60,7 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:FUNCtion?",
         ":SOURce{ch}:FUNCtion %s",
         """Channel waveform (SIN,SQU,RAMP,PULS,NOIS,ARB,HARM,DC)""",
+        cast=str
     )
 
     offset = Channel.control(
@@ -72,6 +73,7 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:VOLTage:UNIT?",
         ":SOURce{ch}:VOLTage:UNIT %s",
         """Channel voltage unit (VPP/VRMS/DBM)""",
+        cast=str
     )
 
     load = Channel.control(
@@ -99,18 +101,21 @@ class VoltageChannel(Channel):
         ":SOURce{ch}:PSKey:POLarity?",
         ":SOURce{ch}:PSKey:POLarity %s",
         """Channel PSK polarity (POS/NEG)""",
+        cast=str
     )
 
     psk_port = Channel.control(
         ":SOURce{ch}:PSKey:PORT?",
         ":SOURce{ch}:PSKey:PORT %s",
         """Channel PSK Port (FRON/REAR)""",
+        cast=str
     )
 
     psk_source = Channel.control(
         ":SOURce{ch}:PSKey:SOURce?",
         ":SOURce{ch}:PSKey:SOURce %s",
         """Channel PSK source (INT/EXT)""",
+        cast=str
     )
 
 class DG5000Pro(SCPIMixin, Instrument):
