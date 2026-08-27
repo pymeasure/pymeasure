@@ -24,12 +24,11 @@
 
 from typing import Literal, cast
 
-from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.adapters import Adapter
+from pymeasure.instruments import Instrument, SCPIMixin, cast_or_str
 from pymeasure.instruments.validators import (
     strict_discrete_set,
 )
-
 
 _FREQS_HZ = [
     100,
@@ -159,6 +158,7 @@ class LCR500(SCPIMixin, Instrument):
             """,
             validator=strict_discrete_set,
             values=_IMPA,
+            cast=str,
             get_process=lambda v: v.split("-")[-1],
         ),
     )
@@ -182,6 +182,7 @@ class LCR500(SCPIMixin, Instrument):
             """,
             validator=strict_discrete_set,
             values=_IMPB,
+            cast=str,
         ),
     )
 
@@ -198,6 +199,7 @@ class LCR500(SCPIMixin, Instrument):
             """,
             validator=strict_discrete_set,
             values=_RESIS_OHM,
+            cast=cast_or_str(float),
         ),
     )
 
@@ -223,7 +225,7 @@ class LCR500(SCPIMixin, Instrument):
             "FUNC:EQUI?",
             "FUNC:EQUI %s",
             """Control the equivalent circuit type.
-            
+
             :type: bool
 
             * ``True``: Series equivalent circuit
@@ -231,6 +233,7 @@ class LCR500(SCPIMixin, Instrument):
             """,
             validator=strict_discrete_set,
             map_values=True,
+            cast=str,
             values={True: "ser", False: "pal"},
         ),
     )

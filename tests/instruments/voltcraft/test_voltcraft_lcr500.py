@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.voltcraft import LCR500
+from pymeasure.test import expected_protocol
 
 
 def test_init():

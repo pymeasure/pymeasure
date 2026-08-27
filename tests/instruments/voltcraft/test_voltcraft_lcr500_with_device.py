@@ -34,6 +34,7 @@ import os
 from time import sleep
 
 import pytest
+
 from pymeasure.generator import Generator
 from pymeasure.instruments.voltcraft import LCR500
 
