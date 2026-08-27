@@ -452,3 +452,399 @@ def test_scale_out_of_range_rejected():
         pytest.raises(ValueError),
     ):
         instr.channel_1.scale = 20.0
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [
+        "SLOW",
+        "FAST",
+    ],
+)
+def test_acquisition_rate_mode_set(mode):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":ACQuire:AMODe {mode}", None)],
+    ) as instr:
+        instr.acquisition_rate_mode = mode
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [
+        "SLOW",
+        "FAST",
+    ],
+)
+def test_acquisition_rate_mode_get(mode):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:AMODe?", mode)],
+    ) as instr:
+        assert instr.acquisition_rate_mode == mode
+
+
+def test_acquisition_rate_mode_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.acquisition_rate_mode = "MEDIUM"
+
+
+def test_clear_sweep():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:CSWeep", None)],
+    ) as instr:
+        instr.clear_sweep()
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        (True, "ON"),
+        (False, "OFF"),
+    ],
+)
+def test_interpolation_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":ACQuire:INTerpolation {expected_command}", None)],
+    ) as instr:
+        instr.interpolation = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("ON", True),
+        ("OFF", False),
+    ],
+)
+def test_interpolation_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:INTerpolation?", response)],
+    ) as instr:
+        assert instr.interpolation is expected_value
+
+
+def test_interpolation_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.interpolation = "YES"  # type: ignore
+
+
+@pytest.mark.parametrize("value", ["YT", "XY", "ROLL"])
+def test_mode_set(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":ACQuire:MODE {value}", None)],
+    ) as instr:
+        instr.mode = value
+
+
+@pytest.mark.parametrize("value", ["YT", "XY", "ROLL"])
+def test_mode_get(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:MODE?", value)],
+    ) as instr:
+        assert instr.mode == value
+
+
+def test_mode_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.mode = "ZY"
+
+
+def test_memory_depth_single_channel_mode():
+    # Only C1 is on -> single-channel mode -> full value set available
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":CHANnel1:SWITch?", "ON"),
+            (":CHANnel2:SWITch?", "OFF"),
+            (":CHANnel3:SWITch?", "OFF"),
+            (":CHANnel4:SWITch?", "OFF"),
+            (":ACQuire:MDEPth 400M", None),
+        ],
+    ) as instr:
+        instr.memory_depth = 400e6
+
+
+def test_memory_depth_dual_channel_mode():
+    # One of C1/C2 and one of C3/C4 on -> dual-channel mode
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":CHANnel1:SWITch?", "ON"),
+            (":CHANnel2:SWITch?", "OFF"),
+            (":CHANnel3:SWITch?", "ON"),
+            (":CHANnel4:SWITch?", "OFF"),
+            (":ACQuire:MDEPth 200M", None),
+        ],
+    ) as instr:
+        instr.memory_depth = 200e6
+
+
+def test_memory_depth_quad_channel_mode():
+    # Three channels on -> quad-channel mode
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":CHANnel1:SWITch?", "ON"),
+            (":CHANnel2:SWITch?", "ON"),
+            (":CHANnel3:SWITch?", "ON"),
+            (":CHANnel4:SWITch?", "OFF"),
+            (":ACQuire:MDEPth 100M", None),
+        ],
+    ) as instr:
+        instr.memory_depth = 100e6
+
+
+def test_memory_depth_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:MDEPth?", "10k")],
+    ) as instr:
+        assert instr.memory_depth == 10e3
+
+
+def test_memory_depth_invalid_value_for_single_channel_mode_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [
+                (":CHANnel1:SWITch?", "ON"),
+                (":CHANnel2:SWITch?", "OFF"),
+                (":CHANnel3:SWITch?", "OFF"),
+                (":CHANnel4:SWITch?", "OFF"),
+            ],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.memory_depth = 999e6
+
+
+def test_points():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:POINts?", "1400")],
+    ) as instr:
+        assert instr.points == 1400.0
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        (True, "ON"),
+        (False, "OFF"),
+    ],
+)
+def test_sequence_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":ACQuire:SEQuence {expected_command}", None)],
+    ) as instr:
+        instr.sequence = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("ON", True),
+        ("OFF", False),
+    ],
+)
+def test_sequence_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:SEQuence?", response)],
+    ) as instr:
+        assert instr.sequence is expected_value
+
+
+def test_sequence_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.sequence = "YES"  # type: ignore
+
+
+def test_sequence_count_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:SEQuence:COUNt 10", None)],
+    ) as instr:
+        instr.sequence_count = 10
+
+
+def test_sequence_count_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:SEQuence:COUNt?", "10")],
+    ) as instr:
+        assert instr.sequence_count == 10
+
+
+def test_sample_rate():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:SRATe?", "2.0E+09")],
+    ) as instr:
+        assert instr.sample_rate == 2e9
+
+
+def test_acquisition_type_get_normal():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:TYPE?", "NORMal")],
+    ) as instr:
+        assert instr.acquisition_type == "NORMAL"
+
+
+def test_acquisition_type_get_peak():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:TYPE?", "PEAK")],
+    ) as instr:
+        assert instr.acquisition_type == "PEAK"
+
+
+def test_acquisition_type_get_average():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:TYPE?", "AVERage,16")],
+    ) as instr:
+        assert instr.acquisition_type == ("AVERAGE", 16.0)
+
+
+def test_acquisition_type_get_eres():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:TYPE?", "ERES,2.0")],
+    ) as instr:
+        assert instr.acquisition_type == ("ERES", 2.0)
+
+
+def test_acquisition_type_set_normal():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:TYPE NORMal", None)],
+    ) as instr:
+        instr.acquisition_type = "NORMAL"
+
+
+def test_acquisition_type_set_peak():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:TYPE PEAK", None)],
+    ) as instr:
+        instr.acquisition_type = "PEAK"
+
+
+def test_acquisition_type_set_average():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:TYPE AVERage,16", None)],
+    ) as instr:
+        instr.acquisition_type = ("AVERAGE", 16)
+
+
+def test_acquisition_type_set_eres():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":ACQuire:TYPE ERES,2.0", None)],
+    ) as instr:
+        instr.acquisition_type = ("ERES", 2.0)
+
+
+def test_acquisition_type_average_missing_param_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.acquisition_type = "AVERAGE"
+
+
+def test_acquisition_type_eres_missing_param_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.acquisition_type = "ERES"
+
+
+def test_acquisition_type_normal_with_param_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.acquisition_type = ("NORMAL", 16)
+
+
+def test_acquisition_type_average_invalid_param_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.acquisition_type = ("AVERAGE", 5)
+
+
+def test_acquisition_type_invalid_type_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.acquisition_type = "FOO"
+
+
+def test_timebase_scale_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TIMebase:SCALe 5.000000E-03", None)],
+    ) as instr:
+        instr.timebase_scale = 5e-3
+
+
+def test_timebase_scale_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TIMebase:SCALe?", "5.000000E-03")],
+    ) as instr:
+        assert instr.timebase_scale == 5e-3
