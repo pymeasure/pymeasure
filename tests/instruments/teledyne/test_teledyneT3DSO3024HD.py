@@ -837,7 +837,7 @@ def test_acquisition_type_invalid_type_rejected():
 def test_timebase_scale_set():
     with expected_protocol(
         TeledyneT3DSO3024HD,
-        [(":TIMebase:SCALe 5.000000E-03", None)],
+        [(":TIMebase:SCALe 5.00E-03", None)],
     ) as instr:
         instr.timebase_scale = 5e-3
 
@@ -845,6 +845,109 @@ def test_timebase_scale_set():
 def test_timebase_scale_get():
     with expected_protocol(
         TeledyneT3DSO3024HD,
-        [(":TIMebase:SCALe?", "5.000000E-03")],
+        [(":TIMebase:SCALe?", "5.00E-03")],
     ) as instr:
         assert instr.timebase_scale == 5e-3
+
+
+def test_timebase_delay_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":TIMebase:SCALe?", "1.00E-03"),  # implicit read inside the setter
+            (":TIMebase:DELay 1.00E-05", None),
+        ],
+    ) as instr:
+        instr.timebase_delay = 1e-5
+
+
+def test_timebase_delay_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TIMebase:DELay?", "1.00E-05")],
+    ) as instr:
+        assert instr.timebase_delay == 1e-5
+
+
+def test_timebase_delay_out_of_static_range_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [(":TIMebase:SCALe?", "1.00E-03")],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.timebase_delay = 6
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        (True, "ON"),
+        (False, "OFF"),
+    ],
+)
+def test_timebase_window_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":TIMebase:WINDow {expected_command}", None)],
+    ) as instr:
+        instr.timebase_window = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("ON", True),
+        ("OFF", False),
+    ],
+)
+def test_timebase_window_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TIMebase:WINDow?", response)],
+    ) as instr:
+        assert instr.timebase_window is expected_value
+
+
+def test_timebase_window_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.timebase_window = "YES"
+
+
+def test_timebase_window_delay_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TIMebase:WINDow:DELay 1.00E-03", None)],
+    ) as instr:
+        instr.timebase_window_delay = 1e-3
+
+
+def test_timebase_window_delay_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TIMebase:WINDow:DELay?", "1.00E-03")],
+    ) as instr:
+        assert instr.timebase_window_delay == 1e-3
+
+
+def test_timebase_window_scale_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TIMebase:WINDow:SCALe 1.00E-03", None)],
+    ) as instr:
+        instr.timebase_window_scale = 1e-3
+
+
+def test_timebase_window_scale_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TIMebase:WINDow:SCALe?", "1.00E-03")],
+    ) as instr:
+        assert instr.timebase_window_scale == 1e-3

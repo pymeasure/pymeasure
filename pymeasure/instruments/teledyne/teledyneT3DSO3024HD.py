@@ -67,7 +67,8 @@ class T3DSO3024HDChannel(Channel):
 
     @property
     def high_impedance_enabled(self) -> bool:
-        """Control the input impedance of the channel in Ohms, strictly 50 or 1e6 (float)."""
+        """Control the input impedance of the channel 'True' for high impedance (1e6 Ohm),
+        'False' for low impedance (50 Ohm)."""
         return self._impedance
 
     @high_impedance_enabled.setter
@@ -314,7 +315,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
 
     sequence_count = Instrument.control(
         ":ACQuire:SEQuence:COUNt?", ":ACQuire:SEQuence:COUNt %d",
-        """Set the number (int) of memory segments to acquire. The maximum
+        """Control the number (int) of memory segments to acquire. The maximum
         number of segments may be limited by the memory depth of your oscilloscope.
 
         The maximum number of segments may be limited by the memory depth
@@ -389,16 +390,78 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         self._acquisition_type = command
 
     timebase_scale = Instrument.control(
-        ":TIMebase:SCALe?", ":TIMebase:SCALe %.6E",
-        """Control the horizontal scale (time/div) in seconds per division (float).
+        ":TIMebase:SCALe?", ":TIMebase:SCALe %.2E",
+        """Control the horizontal scale per division for the main window, in
+        seconds/div (float).
 
-        Note: legal values, resolution and the achievable memory depth range
-        are model- and mode-dependent. No validator is applied here since the
-        exact limits are not characterized; out-of-range values will be
-        rejected or clamped by the instrument itself. Use the
-        ``find_timebase_for_memory_depth`` helper script to determine, for a
-        given channel mode, which time/div values actually allow a specific
-        :attr:`memory_depth` to be set.
+        Note: the valid range varies by model; consult the datasheet. If you
+        set a value smaller than the instrument's minimum, the instrument
+        automatically clamps to the smallest settable time base.
+        """,
+        cast=float,
+    )
+
+    _timebase_delay = Instrument.control(
+        ":TIMebase:DELay?", ":TIMebase:DELay %.2E",
+        """Control the main timebase delay in seconds (float) — the time
+        between the trigger event and the delay reference point on screen.
+
+        Note: the legal range depends on the current :attr:`timebase_scale`
+        setting: [-5000 * scale, 5 * scale].
+        """,
+        cast=float,
+        validator=strict_range,
+        values=[-5000, 5],
+        dynamic=True,
+    )
+
+    @property
+    def timebase_delay(self) -> float:
+        """Control the main timebase delay in seconds (float) — the time
+        between the trigger event and the delay reference point on screen.
+
+        Note: the legal range depends on the current :attr:`timebase_scale`
+        setting: [-5000 * scale, 5 * scale].
+        """
+        return self._timebase_delay
+
+    @timebase_delay.setter
+    def timebase_delay(self, value):
+        timebase_scale = self.timebase_scale
+        self._timebase_delay_values = [-5000 * timebase_scale, 5 * timebase_scale]
+        self._timebase_delay = value
+
+    timebase_window = Instrument.control(
+        ":TIMebase:WINDow?", ":TIMebase:WINDow %s",
+        """Control whether the zoomed (delayed) time base window is enabled
+        (bool).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+        cast=str,
+    )
+
+    timebase_window_delay = Instrument.control(
+        ":TIMebase:WINDow:DELay?", ":TIMebase:WINDow:DELay %.2E",
+        """Control the horizontal position (delay) of the zoomed window
+        relative to the main sweep, in seconds (float).
+
+        Note: the legal range is limited by the main sweep range/position so
+        that the zoomed window stays within the main sweep. Out-of-range
+        values are automatically clamped by the instrument to the nearest
+        legal value, rather than rejected.
+        """,
+        cast=float,
+    )
+
+    timebase_window_scale = Instrument.control(
+        ":TIMebase:WINDow:SCALe?", ":TIMebase:WINDow:SCALe %.2E",
+        """Control the horizontal scale of the zoomed window, in seconds/div
+        (float).
+
+        Note: cannot exceed :attr:`timebase_scale`. If set greater, the
+        instrument automatically clamps it to the main window's scale rather
+        than rejecting the value.
         """,
         cast=float,
     )
