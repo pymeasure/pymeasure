@@ -25,11 +25,14 @@
 import logging
 import time
 from enum import IntFlag
+from typing import Literal, TypedDict, cast
 
 import numpy as np
 
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.generic_types import SCPIMixin
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range,
@@ -103,6 +106,7 @@ class DHOBaseChannel(Channel):
         ``"100M"``.""",
         validator=strict_discrete_set,
         values=["OFF", "20M", "100M"],
+        cast=str,
     )
 
     scale = Channel.control(
@@ -149,6 +153,7 @@ class DHOBaseChannel(Channel):
         ``"AMP"``, or ``"UNKN"``.""",
         validator=strict_discrete_set,
         values=["VOLT", "WATT", "AMP", "UNKN"],
+        cast=str,
     )
 
     label = Channel.control(
@@ -179,10 +184,10 @@ class DHOBase(SCPIMixin, Instrument):
     ch_3 = Instrument.ChannelCreator(DHOBaseChannel, 3)
     ch_4 = Instrument.ChannelCreator(DHOBaseChannel, 4)
 
-    def __init__(self, adapter, name="Rigol DHO", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Rigol DHO", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    def wait_for_opc(self, timeout=10):
+    def wait_for_opc(self, timeout: float = 10) -> None:
         """Block until the oscilloscope reports operation complete."""
         deadline = time.monotonic() + timeout
         while True:
@@ -192,7 +197,7 @@ class DHOBase(SCPIMixin, Instrument):
                 raise TimeoutError(f"wait_for_opc timed out after {timeout} s")
             time.sleep(0.1)
 
-    def clear_status(self):
+    def clear_status(self) -> None:
         """Clear the event status register (CLS)."""
         self.write("*CLS")
 
@@ -224,6 +229,7 @@ class DHOBase(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         values=["NORM", "AVER", "PEAK", "ULTR"],
+        cast=str,
     )
 
     acquisition_averages = Instrument.control(
@@ -291,6 +297,7 @@ class DHOBase(SCPIMixin, Instrument):
         """Control the timebase mode: ``"MAIN"``, ``"XY"``, or ``"ROLL"``.""",
         validator=strict_discrete_set,
         values=["MAIN", "XY", "ROLL"],
+        cast=str,
     )
 
     # ================================================================== #
@@ -324,6 +331,7 @@ class DHOBase(SCPIMixin, Instrument):
             "CAN",
             "LIN",
         ],
+        cast=str,
     )
 
     trigger_sweep = Instrument.control(
@@ -343,6 +351,7 @@ class DHOBase(SCPIMixin, Instrument):
         ``"AC"``, or ``"EXT"``.""",
         validator=strict_discrete_set,
         values=(["CHAN1", "CHAN2", "CHAN3", "CHAN4", "AC", "EXT"]),
+        cast=str,
     )
 
     trigger_slope = Instrument.control(
@@ -368,6 +377,7 @@ class DHOBase(SCPIMixin, Instrument):
         or ``"HFR"``.""",
         validator=strict_discrete_set,
         values=["AC", "DC", "LFR", "HFR"],
+        cast=str,
     )
 
     trigger_holdoff = Instrument.control(
@@ -377,7 +387,7 @@ class DHOBase(SCPIMixin, Instrument):
     )
 
     @property
-    def trigger_status(self):
+    def trigger_status(self) -> str:
         """Get the current trigger status string.
 
         Possible values: ``"TD"``, ``"WAIT"``, ``"RUN"``, ``"AUTO"``,
@@ -389,23 +399,23 @@ class DHOBase(SCPIMixin, Instrument):
     #  RUN CONTROL                                                        #
     # ================================================================== #
 
-    def run(self):
+    def run(self) -> None:
         """Start continuous acquisition."""
         self.write(":RUN")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop acquisition."""
         self.write(":STOP")
 
-    def single(self):
+    def single(self) -> None:
         """Trigger a single acquisition."""
         self.write(":SING")
 
-    def force_trigger(self):
+    def force_trigger(self) -> None:
         """Force a trigger event."""
         self.write(":TFOR")
 
-    def autoset(self):
+    def autoset(self) -> None:
         """Execute AUTOSET to automatically configure timebase, channels, and
         trigger based on the input signals."""
         self.write(":AUTO")
@@ -414,7 +424,7 @@ class DHOBase(SCPIMixin, Instrument):
     #  MEASUREMENTS                                                       #
     # ================================================================== #
 
-    def measure(self, item, channel=1):
+    def measure(self, item: str, channel: int = 1) -> float:
         """Query a built-in automatic measurement.
 
         :param item: Measurement item string, e.g. ``"VMAX"``, ``"VMIN"``,
@@ -431,7 +441,7 @@ class DHOBase(SCPIMixin, Instrument):
         except ValueError:
             return float("nan")
 
-    def clear_measurements(self):
+    def clear_measurements(self) -> None:
         """Remove all displayed measurements."""
         self.write(":MEAS:CLE:ALL")
 
@@ -446,13 +456,14 @@ class DHOBase(SCPIMixin, Instrument):
         or ``"XY"``.""",
         validator=strict_discrete_set,
         values=["OFF", "MAN", "TRAC", "XY"],
+        cast=str,
     )
 
     # ================================================================== #
     #  DISPLAY                                                            #
     # ================================================================== #
 
-    def clear_screen(self):
+    def clear_screen(self) -> None:
         """Clear the waveform display area."""
         self.write(":DISP:CLE")
 
@@ -473,17 +484,30 @@ class DHOBase(SCPIMixin, Instrument):
         ``"1"``, ``"5"``, ``"10"``, or ``"INF"``.""",
         validator=strict_discrete_set,
         values=["MIN", "0.1", "0.5", "1", "5", "10", "INF"],
+        cast=str,
     )
 
     # ================================================================== #
     #  WAVEFORM DOWNLOAD                                                  #
     # ================================================================== #
 
-    def _set_waveform_source(self, channel):
+    def _set_waveform_source(self, channel: int) -> None:
         """Set the waveform source to the given channel number (1-4)."""
         self.write(f":WAV:SOUR CHAN{channel}")
 
-    def get_waveform_preamble(self, channel=1):
+    class WaveformPreamble(TypedDict):
+        format: str | float
+        type: str | float
+        points: int
+        count: int
+        xincrement: float
+        xorigin: float
+        xreference: int
+        yincrement: float
+        yorigin: float
+        yreference: int
+
+    def get_waveform_preamble(self, channel: int = 1) -> WaveformPreamble:
         """Get the waveform preamble for *channel* as a dict.
 
         The preamble encodes scaling information needed to convert raw
@@ -497,31 +521,26 @@ class DHOBase(SCPIMixin, Instrument):
         self._set_waveform_source(channel)
         raw = self.ask(":WAV:PRE?").strip()
         parts = raw.split(",")
-        keys = [
-            "format",
-            "type",
-            "points",
-            "count",
-            "xincrement",
-            "xorigin",
-            "xreference",
-            "yincrement",
-            "yorigin",
-            "yreference",
-        ]
-        preamble = {}
-        for key, val in zip(keys, parts):
-            try:
-                preamble[key] = float(val)
-            except ValueError:
-                preamble[key] = val
-        preamble["points"] = int(preamble["points"])
-        preamble["count"] = int(preamble["count"])
-        preamble["xreference"] = int(preamble["xreference"])
-        preamble["yreference"] = int(preamble["yreference"])
-        return preamble
+        pre2 = DHOBase.WaveformPreamble(
+            format=cast_or_str(float)(parts[0]),
+            type=cast_or_str(float)(parts[1]),
+            points=int(float(parts[2])),
+            count=int(float(parts[3])),
+            xincrement=float(parts[4]),
+            xorigin=float(parts[5]),
+            xreference=int(float(parts[6])),
+            yincrement=float(parts[7]),
+            yorigin=float(parts[8]),
+            yreference=int(float(parts[9]))
+        )
+        return pre2
 
-    def get_waveform(self, channel=1, mode="NORM", fmt="BYTE"):
+    def get_waveform(
+        self,
+        channel: Literal[1, 2, 3, 4] = 1,
+        mode: Literal["NORM", "MAX", "RAW"] = "NORM",
+        fmt: Literal["BYTE", "WORD"] = "BYTE",
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Download a waveform from the oscilloscope.
 
         For ``"MAX"`` and ``"RAW"`` mode, the scope is automatically stopped
@@ -607,10 +626,10 @@ class DHOBase(SCPIMixin, Instrument):
         samples = np.concatenate(all_samples)
         voltage = ((samples - pre["yorigin"] - pre["yreference"])
                    * pre["yincrement"])
-        t = np.arange(len(samples)) * pre["xincrement"] + pre["xorigin"]
+        t = cast(np.ndarray, np.arange(len(samples)) * pre["xincrement"] + pre["xorigin"])
         return t, voltage
 
-    def get_waveform_ascii(self, channel=1):
+    def get_waveform_ascii(self, channel: int = 1) -> tuple[np.ndarray, np.ndarray]:
         """Download a waveform in ASCII format.
 
         Uses ``"NORM"`` mode, returning up to 1000 points shown on screen.

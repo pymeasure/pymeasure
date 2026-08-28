@@ -37,11 +37,11 @@ log.addHandler(logging.NullHandler())
 
 
 class Trace(Channel):
-    def delete(self):
+    def delete(self) -> None:
         """Delete data of the trace."""
         self.write(":TRACe:DELETE {ch}")
 
-    mode: InstrumentProperty[str] = Channel.control(
+    mode = Channel.control(
         ":TRACe:ATTRibute:{ch}?",
         ":TRACe:ATTRibute:{ch} %s",
         """Control the mode of the trace.""",

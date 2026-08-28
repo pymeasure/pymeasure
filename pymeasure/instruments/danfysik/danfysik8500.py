@@ -23,12 +23,15 @@
 #
 
 import re
+from collections.abc import Callable
 from time import sleep
+from typing import Literal
 
 import numpy as np
 
 from pymeasure.errors import RangeException
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import AdapterType
 
 
 class Danfysik8500(Instrument):
@@ -58,7 +61,7 @@ class Danfysik8500(Instrument):
         "PRINT", """Get the identification information. """
     )
 
-    def __init__(self, adapter, name="Danfysik 8500 Current Supply", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Danfysik 8500 Current Supply", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -71,33 +74,33 @@ class Danfysik8500(Instrument):
         self.write("ERRT")  # Use text error messages
         self.write("UNLOCK")  # Unlock from remote or local mode
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """ Read the device and raise exceptions if errors are reported by the instrument.
 
         :returns: String ASCII response of the instrument
         :raises: An :code:`Exception` if the Danfysik raises an error
         """
-        result = super().read()
+        result = super().read(**kwargs)
         search = re.search(r"^\?\x07\s(?P<name>.*)$", result, re.MULTILINE)
         if search:
             raise ValueError(f"Danfysik raised the error: {search.groups()[0]}")
         else:
             return result
 
-    def local(self):
+    def local(self) -> None:
         """ Sets the instrument in local mode, where the front
         panel can be used.
         """
         self.write("LOC")
 
-    def remote(self):
+    def remote(self) -> None:
         """ Sets the instrument in remote mode, where the the
         front panel is disabled.
         """
         self.write("REM")
 
     @property
-    def polarity(self):
+    def polarity(self) -> Literal[1, -1]:
         """Control the polarity of the current supply, being either
         -1 or 1. This property can be set by supplying one of
         these values.
@@ -105,32 +108,32 @@ class Danfysik8500(Instrument):
         return 1 if self.ask("PO").strip() == '+' else -1
 
     @polarity.setter
-    def polarity(self, value):
+    def polarity(self, value: Literal[1, -1]) -> None:
         polarity = "+" if value > 0 else "-"
         self.write(f"PO {polarity}")
 
-    def reset_interlocks(self):
+    def reset_interlocks(self) -> None:
         """ Resets the instrument interlocks.
         """
         self.write("RS")
 
-    def enable(self):
+    def enable(self) -> None:
         """ Enables the flow of current.
         """
         self.write("N")
 
-    def disable(self):
+    def disable(self) -> None:
         """ Disables the flow of current.
         """
         self.write("F")
 
-    def is_enabled(self):
+    def is_enabled(self) -> bool:
         """ Returns True if the current supply is enabled.
         """
         return self.status_hex & 0x800000 == 0
 
     @property
-    def status_hex(self):
+    def status_hex(self) -> int:
         """Get the status in hexadecimal. This value is parsed in
         :attr:`~.Danfysik8500.status` into a human-readable list.
         """
@@ -143,47 +146,49 @@ class Danfysik8500(Instrument):
                              f"got '{status}'")
 
     @property
-    def current(self):
+    def current(self) -> float:
         """Control the actual current in Amps. This property can be set through
         :attr:`~.current_ppm`.
         """
         return int(self.ask("AD 8")) * 1e-2 * self.polarity
 
     @current.setter
-    def current(self, amps):
+    def current(self, amps: float) -> None:
         if amps > 160 or amps < -160:
             raise RangeException("Danfysik 8500 is only capable of sourcing "
                                  "+/- 160 Amps")
         self.current_ppm = int((1e6 / 160) * amps)
 
     @property
-    def current_ppm(self):
+    def current_ppm(self) -> int:
         """Control the current in parts per million..
         """
         return int(self.ask("DA 0")[2:])
 
     @current_ppm.setter
-    def current_ppm(self, ppm):
+    def current_ppm(self, ppm: int) -> None:
         if abs(ppm) < 0 or abs(ppm) > 1e6:
             raise RangeException("Danfysik 8500 requires parts per million "
                                  "to be an appropriate integer")
         self.write(f"DA 0,{ppm}")
 
     @property
-    def current_setpoint(self):
+    def current_setpoint(self) -> float:
         """Get the setpoint for the current, which can deviate from the actual current
         (:attr:`~.Danfysik8500.current`) while the supply is in the process of setting the value.
         """
         return self.current_ppm * (160 / 1e6)
 
     @property
-    def slew_rate(self):
+    def slew_rate(self) -> float:
         """Get the slew rate of the current sweep.
         """
         return float(self.ask("R3"))
 
-    def wait_for_current(self, has_aborted=lambda: False, delay=0.01):
-        """ Blocks the process until the current has stabilized. A
+    def wait_for_current(
+        self, has_aborted: Callable[[], bool] = lambda: False, delay: float = 0.01
+    ) -> None:
+        """Block the process until the current has stabilized. A
         provided function :code:`has_aborted` can be supplied, which
         is checked after each delay time (in seconds) in addition to the
         stability check. This allows an abort feature to be integrated.
@@ -195,19 +200,21 @@ class Danfysik8500(Instrument):
         while not has_aborted() and not self.is_current_stable():
             sleep(delay)
 
-    def is_current_stable(self):
+    def is_current_stable(self) -> bool:
         """ Returns True if the current is within 0.02 A of the
         setpoint value.
         """
         return abs(self.current - self.current_setpoint) <= 0.02
 
-    def is_ready(self):
+    def is_ready(self) -> bool:
         """ Returns True if the instrument is in the ready state.
         """
         return self.status_hex & 0b10 == 0
 
-    def wait_for_ready(self, has_aborted=lambda: False, delay=0.01):
-        """ Blocks the process until the instrument is ready. A
+    def wait_for_ready(
+        self, has_aborted: Callable[[], bool] = lambda: False, delay: float = 0.01
+    ) -> None:
+        """Block the process until the instrument is ready. A
         provided function :code:`has_aborted` can be supplied, which
         is checked after each delay time (in seconds) in addition to the
         readiness check. This allows an abort feature to be integrated.
@@ -219,11 +226,11 @@ class Danfysik8500(Instrument):
             sleep(delay)
 
     @property
-    def status(self):
+    def status(self) -> list[str]:
         """Get a list of human-readable strings that contain
         the instrument status information, based on :attr:`~.status_hex`.
         """
-        status = []
+        status: list[str] = []
         indicator = self.ask("S1")
         if indicator[0] == "!":
             status.append("Main Power OFF")
@@ -256,36 +263,36 @@ class Danfysik8500(Instrument):
                 status.append(message)
         return status
 
-    def clear_ramp_set(self):
+    def clear_ramp_set(self) -> None:
         """ Clears the ramp set.
         """
         self.write("RAMPSET C")
 
-    def set_ramp_delay(self, time):
+    def set_ramp_delay(self, time: float) -> None:
         """ Sets the ramp delay time in seconds.
 
         :param time: The time delay time in seconds
         """
         self.write(f"RAMPSET {time:f}")
 
-    def start_ramp(self):
+    def start_ramp(self) -> None:
         """ Starts the current ramp.
         """
         self.write("RAMP R")
 
-    def add_ramp_step(self, current):
+    def add_ramp_step(self, current: float) -> None:
         """ Adds a current step to the ramp set.
 
         :param current: A current in Amps
         """
-        self.write("R %.6f" % (current / 160.))
+        self.write(f"R {current / 160:.6f}")
 
-    def stop_ramp(self):
+    def stop_ramp(self) -> None:
         """ Stops the current ramp.
         """
         self.ask("RAMP S")
 
-    def set_ramp_to_current(self, current, points, delay_time=1):
+    def set_ramp_to_current(self, current: float, points: int, delay_time: float = 1) -> None:
         """ Sets up a linear ramp from the initial current to a different
         current, with a number of points, and delay time.
 
@@ -300,7 +307,7 @@ class Danfysik8500(Instrument):
         cmds = ["R %.6f" % (step / 160.) for step in steps]
         self.write("\r".join(cmds))
 
-    def ramp_to_current(self, current, points, delay_time=1):
+    def ramp_to_current(self, current: float, points: int, delay_time: float = 1) -> None:
         """ Executes :meth:`~.set_ramp_to_current` and starts the ramp.
         """
         self.set_ramp_to_current(current, points, delay_time)
@@ -335,7 +342,7 @@ class Danfysik8500(Instrument):
         """
         self.write(f"CSS {stack}")
 
-    def sync_sequence(self, stack: int, delay=0) -> None:
+    def sync_sequence(self, stack: int, delay: float = 0) -> None:
         """ Arms the ramp sequence to be triggered by a hardware
         input to pin P33 1&2 (10 to 24 V) or a TS command. If a
         delay is provided, the sequence will start after the delay.
@@ -357,7 +364,7 @@ class Danfysik8500(Instrument):
         """
         self.write("STOP")
 
-    def is_sequence_running(self, stack):
+    def is_sequence_running(self, stack: int) -> bool:
         """ Returns True if a sequence is running with a given stack number
 
         :param stack: A stack number between 0-15

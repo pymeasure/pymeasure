@@ -25,7 +25,7 @@
 import logging
 from enum import IntEnum
 
-from pymeasure.instruments import AdapterType, Instrument, InstrumentProperty
+from pymeasure.instruments import AdapterType, Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -161,7 +161,7 @@ class TC038D(Instrument):
         """Test the connection sending an integer up to 65535, checks the response."""
         assert int(self.ask(f"ECHO,0,{test_data}")) == test_data
 
-    setpoint: InstrumentProperty[float] = Instrument.control(
+    setpoint = Instrument.control(
         "R,0x106", "W,0x106,%i",
         """Control the setpoint of the oven in °C.""",
         check_set_errors=True,
@@ -169,7 +169,7 @@ class TC038D(Instrument):
         set_process=lambda v: round(v * 10),
     )
 
-    temperature: InstrumentProperty[float] = Instrument.measurement(
+    temperature = Instrument.measurement(
         "R,0x0",
         """Measure the current oven temperature in °C.""",
         get_process=lambda v: v / 10,

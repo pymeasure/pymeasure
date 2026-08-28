@@ -27,6 +27,7 @@ import math
 import re
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import strict_range
 
 log = logging.getLogger(__name__)
@@ -40,12 +41,18 @@ class AH2500A(Instrument):
         r"[FHZ0-9.=\s]*C=\s*(-?[0-9.]+)\s*PF L=\s*(-?[0-9.]+)\s*NS V=\s*(-?[0-9.]+)\s*V")
     _renumeric = re.compile(r'[-+]?(\d*\.?\d+)')
 
-    def __init__(self, adapter, name=None, timeout=3000,
-                 write_termination="\n", read_termination="\n",
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Andeen Hagerling 2500A Precision Capacitance Bridge",
+        timeout: int = 3000,
+        write_termination: str = "\n",
+        read_termination: str = "\n",
+        **kwargs,
+    ):
         super().__init__(
             adapter,
-            name or "Andeen Hagerling 2500A Precision Capacitance Bridge",
+            name,
             write_termination=write_termination,
             read_termination=read_termination,
             timeout=timeout,
@@ -64,6 +71,7 @@ class AH2500A(Instrument):
         values in units of pF and nS. The used measurement voltage is returned
         as third value.""",
         # lambda function is needed here since AH2500A is otherwise undefined
+        cast=str,
         get_process=lambda v: AH2500A._parse_reply(v),
     )
 
@@ -81,7 +89,7 @@ class AH2500A(Instrument):
     )
 
     @classmethod
-    def _parse_reply(cls, string):
+    def _parse_reply(cls, string: str) -> tuple[float, ...]:
         """
         parse reply string from Andeen Hagerling capacitance bridges.
 
@@ -103,7 +111,7 @@ class AH2500A(Instrument):
         else:  # some unknown return string (e.g. misconfigured units)
             raise ValueError(f'Returned string "{string}" could not be parsed')
 
-    def trigger(self):
+    def trigger(self) -> None:
         """
         Triggers a new measurement without blocking and waiting for the return
         value.
@@ -111,7 +119,7 @@ class AH2500A(Instrument):
         self.write("TRG")
         self._triggered = True
 
-    def triggered_caplossvolt(self):
+    def triggered_caplossvolt(self) -> tuple[float, ...]:
         """
         reads the measurement value after the device was triggered by the
         trigger function.
@@ -121,4 +129,4 @@ class AH2500A(Instrument):
                 "Device not triggered, trigger manually for better timing")
             self.trigger()
         self._triggered = False
-        return AH2500A._parse_reply(self.read())
+        return self._parse_reply(self.read())
