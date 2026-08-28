@@ -1,0 +1,7 @@
+UNI-T UDP6933B DC Power Supply
+==============================
+
+.. autoclass:: pymeasure.instruments.unit.UNITUDP6933B
+    :members:
+    :show-inheritance:
+
