@@ -1,3 +1,4 @@
+# type: ignore[reportCallIssue, reportArgumentType]
 #
 # This file is part of the PyMeasure package.
 #
@@ -383,7 +384,7 @@ class CXN(Instrument):
         "GT\x00\x00\x00\x00", "TM\x00%c\x00\x00",
         """Control the manual tuner mode.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
-        get_process=lambda v: bool(v & 1),
+        get_process=lambda v: bool(int(v) & 1),
         set_process=lambda v: 2 if v else 1,
         validator=strict_discrete_set,
         values=(True, False),
@@ -422,7 +423,7 @@ class CXN(Instrument):
         "GS\x00\x00\x00\x00", "BR%c%c\x00\x00",
         """Control the RF output.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
-        get_process=lambda v: bool(v & 1),
+        get_process=lambda v: bool(int(v) & 1),
         set_process=lambda v: (85, 85) if v else (0, 0),
         validator=strict_discrete_set,
         values=(True, False),

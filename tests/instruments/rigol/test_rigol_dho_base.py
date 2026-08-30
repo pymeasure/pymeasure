@@ -131,7 +131,7 @@ class TestChannel:
 
     def test_bandwidth_limit_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.ch_1.bandwidth_limit = "200M"
+            inst.ch_1.bandwidth_limit = "200M"  # pyright: ignore[reportAttributeAccessIssue]
 
     # -- scale -----------------------------------------------------------
 
@@ -209,7 +209,7 @@ class TestChannel:
 
     def test_units_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.ch_1.units = "DBM"
+            inst.ch_1.units = "DBM"  # pyright: ignore[reportAttributeAccessIssue]
 
     # -- label -----------------------------------------------------------
 
@@ -541,19 +541,22 @@ class TestWaveform:
             ],
         ) as inst:
             pre = inst.get_waveform_preamble(1)
+            assert pre["format"] == 0
+            assert pre["type"] == 1
             assert pre["points"] == 1000
             assert pre["xincrement"] == pytest.approx(4e-7)
             assert pre["yincrement"] == pytest.approx(1.6e-3)
             assert pre["yreference"] == 128
             assert pre["xreference"] == 0
+            assert pre["xorigin"] == pytest.approx(-2e-4)
 
     def test_get_waveform_invalid_fmt_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.get_waveform(fmt="ASC")
+            inst.get_waveform(fmt="ASC")  # pyright: ignore[reportArgumentType]
 
     def test_get_waveform_invalid_mode_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.get_waveform(mode="INVALID")
+            inst.get_waveform(mode="INVALID")  # pyright: ignore[reportArgumentType]
 
     def test_get_waveform_norm_byte(self):
         raw_samples = bytes([128, 130, 126, 132])  # 4 uint8 samples

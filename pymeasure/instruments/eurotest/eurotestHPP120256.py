@@ -28,6 +28,7 @@ import time
 from enum import IntFlag
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -90,13 +91,15 @@ class EurotestHPP120256(Instrument):
     response_encoding = "iso-8859-2"
     regex = re.compile(r'([+-]?([\d]*\.)?[\d]+)')
 
-    def __init__(self,
-                 adapter,
-                 name="Euro Test High Voltage DC Source model HPP-120-256",
-                 query_delay=0.1,
-                 write_delay=0.4,
-                 timeout=5000,
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Euro Test High Voltage DC Source model HPP-120-256",
+        query_delay: float = 0.1,
+        write_delay: float = 0.4,
+        timeout: int = 5000,
+        **kwargs,
+    ):
 
         super().__init__(
             adapter,
@@ -283,19 +286,20 @@ class EurotestHPP120256(Instrument):
         r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
 
-    def emergency_off(self):
+    def emergency_off(self) -> None:
         """ The output of the HV source will be switched OFF permanently and the values
         of the voltage and current settings set to zero"""
         log.info("Sending emergency off command to the instrument.")
 
         self.write("EMCY OFF")
 
-    def shutdown(self, voltage_rate=200.0):
+    def shutdown(self, voltage_rate: float = 200.0) -> None:
         """
         Change the output voltage setting (V) to zero and
         the ramp speed - voltage_rate (V/s) of the output voltage.
         After calling shutdown, if the HV voltage output > 0
         it should drop to zero at a certain rate given by the voltage_rate parameter.
+
         :param voltage_rate: indicates the changing rate (V/s) of the voltage output
         """
         log.info(f"Executing the shutdown function with voltage_rate: {voltage_rate} V/s.")
@@ -303,12 +307,13 @@ class EurotestHPP120256(Instrument):
         self.ramp_to_zero(voltage_rate)
         super().shutdown()
 
-    def ramp_to_zero(self, voltage_rate=200.0):
+    def ramp_to_zero(self, voltage_rate: float = 200.0) -> None:
         """
         Sets the voltage output setting to zero and the ramp setting
         to a value determined by the voltage_rate parameter.
         In summary, the method conducts (ramps) the voltage output to zero
         at a determined voltage changing rate (ramp in V/s).
+
         :param voltage_rate: Is the changing rate (ramp in V/s) for the ramp setting
         """
         log.info(f"Executing the ramp_to_zero function with ramp: {voltage_rate} V/s.")
@@ -316,22 +321,29 @@ class EurotestHPP120256(Instrument):
         self.voltage_ramp = voltage_rate
         self.voltage_setpoint = 0
 
-    def wait_for_output_voltage_reached(self, voltage_setpoint, abs_output_voltage_error=0.03,
-                                        check_period=1.0, timeout=60.0):
+    def wait_for_output_voltage_reached(
+        self,
+        voltage_setpoint: float,
+        abs_output_voltage_error: float = 0.03,
+        check_period: float = 1.0,
+        timeout: float = 60.0,
+    ) -> None:
         """
         Wait until HV voltage output reaches the voltage setpoint.
 
         Checks the voltage output every check_period seconds and raises an exception
         if the voltage output doesn't reach the voltage setting until the timeout time.
+
         :param voltage_setpoint: the voltage in kVolts set in the HV power supply which
-        should be present at the output after some time (depends on the ramp setting).
+            should be present at the output after some time (depends on the ramp setting).
         :param abs_output_voltage_error: absolute error in kVolts for being considered
-        an output voltage reached.
+            an output voltage reached.
         :param check_period: voltage output will be measured every check_period (seconds) time.
         :param timeout: time (seconds) give to the voltage output to reach the voltage setting.
+
         :return: None
         :raises: Exception if the voltage output can't reach the voltage setting
-        before the timeout completes (seconds).
+            before the timeout completes (seconds).
         """
         log.info("Executing the wait_for_output_voltage_reached function.")
 
@@ -364,7 +376,7 @@ class EurotestHPP120256(Instrument):
         log.info("Waiting for voltage output set done.")
 
     # Wrapper functions for the Adapter object
-    def write(self, command, **kwargs):
+    def write(self, command: str, **kwargs) -> None:
         """Overrides Instrument write method for including write_delay time after the parent call.
 
         :param command: command string to be sent to the instrument
@@ -374,12 +386,13 @@ class EurotestHPP120256(Instrument):
         super().write(command, **kwargs)
         self.last_write_timestamp = time.time()
 
-    def ask(self, command):
-        """ Overrides Instrument ask method for including query_delay time on parent call.
-        :param command: Command string to be sent to the instrument.
-        :returns: String returned by the device without read_termination.
+    def wait_for(self, query_delay: float | None = None) -> None:
+        """Wait for some time. Used by 'ask' to wait before reading.
+
+        :param query_delay: Delay between writing and reading in seconds.
+            None means :attr:`query_delay`.
         """
-        return super().ask(command, self.query_delay)
+        super().wait_for(self.query_delay if query_delay is None else query_delay)
 
     class EurotestHPP120256Status(IntFlag):
         """

@@ -25,6 +25,8 @@
 import logging
 import os
 
+from ...display.widgets.tab_widget import TabWidget
+from ...experiment.procedure import Procedure
 from ...experiment.results import Results
 from ..Qt import QtCore, QtWidgets
 
@@ -41,10 +43,15 @@ class ResultsDialog(QtWidgets.QFileDialog):
     :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>` class
     """
 
-    def __init__(self, procedure_class, widget_list=(), parent=None):
-        super().__init__(parent)
+    def __init__(
+        self,
+        procedure_class: type[Procedure],
+        widget_list: list[TabWidget] | None = None,
+        parent: QtWidgets.QWidget | None = None,
+    ):
+        super().__init__(parent=parent)
         self.procedure_class = procedure_class
-        self.widget_list = widget_list
+        self.widget_list = widget_list or []
         self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
         self._setup_ui()
 
@@ -84,7 +91,7 @@ class ResultsDialog(QtWidgets.QFileDialog):
         metadata_vbox_widget.setLayout(metadata_vbox)
         preview_tab.addTab(param_vbox_widget, "Run Parameters")
         preview_tab.addTab(metadata_vbox_widget, "Metadata")
-        self.layout().addWidget(preview_tab, 0, 5, 4, 1)
+        self.layout().addWidget(preview_tab, 0, 5, 4, 1)  # type: ignore
         self.layout().setColumnStretch(5, 1)
         self.setMinimumSize(900, 500)
         self.resize(900, 500)

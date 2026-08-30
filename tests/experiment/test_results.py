@@ -182,6 +182,7 @@ class TestPandas3Numpy2Compat:
         self._write_rows(result, [{'x': float(i), 'y': float(i) * 2.5} for i in range(5)])
         result.reload()
 
+        assert result.data is not None
         assert result.data['x'].dtype == np.float64
         assert result.data['y'].dtype == np.float64
 
@@ -201,6 +202,7 @@ class TestPandas3Numpy2Compat:
         self._write_rows(result, [{'x': float(i), 'y': float(i) * 1.5} for i in range(5, 10)])
         second_data = result.data
 
+        assert second_data is not None
         assert second_data['x'].dtype == first_dtype
         assert second_data['y'].dtype == first_dtype
         assert len(second_data) == 10
@@ -219,6 +221,7 @@ class TestPandas3Numpy2Compat:
         ])
         result.reload()
 
+        assert result.data is not None
         assert list(result.data.columns) == ['z', 'a', 'b']
 
     def test_boolean_parameter_numpy_bool_(self):

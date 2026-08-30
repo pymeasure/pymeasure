@@ -27,6 +27,7 @@ from enum import IntEnum
 from pyvisa.constants import Parity, StopBits
 
 from pymeasure.instruments import AdapterType, Channel, Instrument, validators
+from pymeasure.instruments.common_base import CommonBase
 
 from .smartline_v1 import calculate_checksum
 
@@ -68,7 +69,7 @@ class SensorChannel(Channel):
 
     _id = -1  # obligatory channel number, define in channel types
 
-    def __init__(self, parent: Instrument, id: None | Sources = None, **kwargs):
+    def __init__(self, parent: CommonBase, id: None | Sources = None, **kwargs):
         # id parameter is necessary for usage with `ChannelCreator`.
         if id is None or id == self._id:
             super().__init__(parent, id=self._id, **kwargs)

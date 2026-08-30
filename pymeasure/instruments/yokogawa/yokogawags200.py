@@ -25,6 +25,7 @@
 import logging
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     truncated_discrete_set,
@@ -41,6 +42,11 @@ class YokogawaGS200(SCPIUnknownMixin, Instrument):
     """ Represents the Yokogawa GS200 source and provides a high-level interface for interacting
     with the instrument. """
 
+    def __init__(self, adapter: AdapterType, name: str = "Yokogawa GS200 Source", **kwargs):
+        super().__init__(
+            adapter, name, **kwargs
+        )
+
     source_enabled = Instrument.control(
         "OUTPut:STATe?",
         "OUTPut:STATe %d",
@@ -56,6 +62,7 @@ class YokogawaGS200(SCPIUnknownMixin, Instrument):
         """Control the source mode. Can be either 'current' or 'voltage'.""",
         validator=strict_discrete_set,
         values={'current': 'CURR', 'voltage': 'VOLT'},
+        cast=str,
         get_process=lambda s: s.strip()
     )
 
@@ -88,20 +95,15 @@ class YokogawaGS200(SCPIUnknownMixin, Instrument):
         values=[1e-3, 200e-3]
     )
 
-    def __init__(self, adapter, name="Yokogawa GS200 Source", **kwargs):
-        super().__init__(
-            adapter, name, **kwargs
-        )
-
     @property
-    def source_level(self):
+    def source_level(self) -> float:
         """ Control the output level, either a voltage or a current,
         depending on the source mode. (float)
         """
         return float(self.ask(":SOURce:LEVel?"))
 
     @source_level.setter
-    def source_level(self, level):
+    def source_level(self, level: float) -> None:
         if level > self.source_range * 1.2:
             raise ValueError(
                 "Level must be within 1.2 * source_range, otherwise the Yokogawa will produce an "
@@ -110,7 +112,7 @@ class YokogawaGS200(SCPIUnknownMixin, Instrument):
         else:
             self.write(f"SOURce:LEVel {level:g}")
 
-    def trigger_ramp_to_level(self, level, ramp_time):
+    def trigger_ramp_to_level(self, level: float, ramp_time: float) -> None:
         """
         Ramp the output level from its current value to "level" in time "ramp_time". This method
         will NOT wait until the ramp is finished (thus, it will not block further code evaluation).

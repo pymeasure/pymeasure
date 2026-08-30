@@ -22,32 +22,38 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
+
 import logging
 from typing import Generic, TypeVar
 
 import pyqtgraph as pg
+from qtpy import QtWidgets
+
+from pymeasure.experiment.results import Results
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 Curve = TypeVar("Curve")
+TabWidgetShape = TypeVar("TabWidgetShape", bound="TabWidget")
 DEFAULT_COLOR = pg.intColor(0)
 
 
-class TabWidget(Generic[Curve]):
+class TabWidget(QtWidgets.QWidget, Generic[Curve]):
     """ Utility class to define default implementation for some basic methods.
 
         When defining a widget to be used in subclasses of
         :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`,
         users should inherit from this class and provide an
-        implementation of these methods
+        implementation of these methods.
     """
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = name
 
-    def new_curve(self, results, color=DEFAULT_COLOR, **kwargs) -> Curve:
+    def new_curve(self, results: Results, color=DEFAULT_COLOR, **kwargs) -> Curve:
         """ Create a new curve """
         ...  # noqa: PIE790
 
@@ -60,15 +66,13 @@ class TabWidget(Generic[Curve]):
     def set_color(self, curve: Curve, color) -> None:
         """ Set color for widget """
 
-    def preview_widget(self, parent=None):
+    def preview_widget(self, parent: QtWidgets.QWidget | None = None) -> TabWidget | None:
         """ Return a Qt widget suitable for preview during loading
 
         See also :class:`ResultsDialog<pymeasure.display.widgets.results_dialog.ResultsDialog>`
         If the object returned is not None, then it should have also an
         attribute `name`.
         """
-
-        return
 
     def clear_widget(self) -> None:
         """ Clear widget content

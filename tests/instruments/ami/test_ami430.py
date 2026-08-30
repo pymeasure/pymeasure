@@ -22,19 +22,41 @@
 # THE SOFTWARE.
 #
 
-# import time
-# from multiprocessing import Queue
+from pymeasure.instruments.ami.ami430 import AMI430
+from pymeasure.test import expected_protocol
 
-# from pymeasure.experiment.listeners import Listener, Recorder
-# from pymeasure.experiment.results import Results
+# AMI430.__init__ reads (and discards) two welcome/connect message lines
+# before any other communication; their content is irrelevant here.
+INIT = [(None, b"welcome1"), (None, b"welcome2")]
 
-# TODO: Make results_for_testing.csv
-# TODO: Make procedure_for_testing.py
 
-"""
-def test_recorder_stop():
-    q = Queue()
-    d = Results.load('results_for_testing.csv')
-    r = Recorder(d, q)
-    r.
-"""
+def test_has_persistent_switch_enabled_true():
+    with expected_protocol(
+            AMI430,
+            INIT + [(b"PSwitch?", b"1")],
+    ) as instr:
+        assert instr.has_persistent_switch_enabled() is True
+
+
+def test_has_persistent_switch_enabled_false():
+    with expected_protocol(
+            AMI430,
+            INIT + [(b"PSwitch?", b"0")],
+    ) as instr:
+        assert instr.has_persistent_switch_enabled() is False
+
+
+def test_enable_persistent_switch():
+    with expected_protocol(
+            AMI430,
+            INIT + [(b"PSwitch 1", None)],
+    ) as instr:
+        instr.enable_persistent_switch()
+
+
+def test_disable_persistent_switch():
+    with expected_protocol(
+            AMI430,
+            INIT + [(b"PSwitch 0", None)],
+    ) as instr:
+        instr.disable_persistent_switch()

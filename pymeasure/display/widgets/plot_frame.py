@@ -24,6 +24,7 @@
 
 import logging
 import re
+from typing import cast
 
 import pyqtgraph as pg
 
@@ -47,15 +48,22 @@ class PlotFrame(QtWidgets.QFrame):
     x_axis_changed = QtCore.Signal(str)
     y_axis_changed = QtCore.Signal(str)
 
-    def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
-        super().__init__(parent)
+    def __init__(
+        self,
+        x_axis: str,
+        y_axis: str,
+        refresh_time: float = 0.2,
+        check_status: bool = True,
+        parent: QtWidgets.QWidget | None = None,
+    ):
+        super().__init__(parent=parent)
         self.refresh_time = refresh_time
         self.check_status = check_status
         self._setup_ui()
         self.change_x_axis(x_axis)
         self.change_y_axis(y_axis)
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.setAutoFillBackground(False)
         self.setStyleSheet("background: #fff")
         self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
@@ -65,15 +73,15 @@ class PlotFrame(QtWidgets.QFrame):
         vbox = QtWidgets.QVBoxLayout(self)
 
         self.plot_widget = pg.PlotWidget(self, background='#ffffff')
-        vbox.addWidget(self.plot_widget)
+        vbox.addWidget(self.plot_widget)  # pyright: ignore[reportArgumentType]
         self.setLayout(vbox)
 
-        self.plot = self.plot_widget.getPlotItem()
+        self.plot = cast(pg.PlotItem.PlotItem, self.plot_widget.getPlotItem())
 
         style = dict(self.LABEL_STYLE, justify='right')
         if "font-size" in style:  # LabelItem wants the size as 'size' rather than 'font-size'
             style["size"] = style.pop("font-size")
-        self.coordinates = pg.LabelItem("", parent=self.plot, **style)
+        self.coordinates = pg.LabelItem("", parent=self.plot, angle=0, **style)
         self.coordinates.anchor(itemPos=(1, 1), parentPos=(1, 1), offset=(0, 3))
 
         self.crosshairs = Crosshairs(self.plot,
@@ -87,10 +95,10 @@ class PlotFrame(QtWidgets.QFrame):
         self.timer.timeout.connect(self.updated)
         self.timer.start(int(self.refresh_time * 1e3))
 
-    def update_coordinates(self, x, y):
+    def update_coordinates(self, x: float, y: float) -> None:
         self.coordinates.setText(f"({x:g}, {y:g})")
 
-    def update_curves(self):
+    def update_curves(self) -> None:
         for item in self.plot.items:
             if isinstance(item, self.ResultsClass):
                 if self.check_status:
@@ -99,7 +107,7 @@ class PlotFrame(QtWidgets.QFrame):
                 else:
                     item.update_data()
 
-    def parse_axis(self, axis):
+    def parse_axis(self, axis: str) -> tuple[str, str | None]:
         """ Returns the units of an axis by searching the string
         """
         units_pattern = r"\((?P<units>\w+)\)"
@@ -108,27 +116,25 @@ class PlotFrame(QtWidgets.QFrame):
         except TypeError:
             match = None
 
-        if match:
-            if 'units' in match.groupdict():
+        if match and 'units' in match.groupdict():
                 label = re.sub(units_pattern, '', axis)
-                return label, match.groupdict()['units']
-        else:
-            return axis, None
+                return label, cast(str, match.groupdict()['units'])
+        return axis, None
 
-    def change_x_axis(self, axis):
+    def change_x_axis(self, axis: str) -> None:
         for item in self.plot.items:
             if isinstance(item, self.ResultsClass):
-                item.x = axis
+                item.x_label = axis
                 item.update_data()
         label, units = self.parse_axis(axis)
         self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
         self.x_axis = axis
         self.x_axis_changed.emit(axis)
 
-    def change_y_axis(self, axis):
+    def change_y_axis(self, axis: str) -> None:
         for item in self.plot.items:
             if isinstance(item, self.ResultsClass):
-                item.y = axis
+                item.y_label = axis
                 item.update_data()
         label, units = self.parse_axis(axis)
         self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)

@@ -22,9 +22,12 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
+
 import logging
 import re
 from itertools import product
+from typing import Any
 
 import numpy as np
 
@@ -44,25 +47,25 @@ class SequenceItem:
         2: "expression",
     }
 
-    def __init__(self, level, parameter, expression, parent):
+    def __init__(self, level: int, parameter: str, expression: str, parent: SequenceItem | None):
         self.level = level
         self.parameter = parameter
         self.expression = expression
         self.parent = parent
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int | Any):
         if idx in self.column_map:
             return getattr(self, self.column_map[idx])
         else:
             return super().__getitem__(idx)
 
-    def __setitem__(self, idx, value):
+    def __setitem__(self, idx: int | Any, value) -> None:
         if idx in self.column_map:
-            return setattr(self, self.column_map[idx], value)
+            setattr(self, self.column_map[idx], value)
         else:
-            return super().__setitem__(idx, value)
+            super().__setitem__(idx, value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} \"{}\", \"{}\"".format("-" * (self.level + 1), self.parameter, self.expression)
 
 
@@ -133,13 +136,15 @@ class SequenceHandler:
     }
 
     def __init__(self, valid_inputs=(), file_obj=None):
-        self._sequences = []
+        self._sequences: list[SequenceItem] = []
         self.valid_inputs = valid_inputs
         if file_obj:
             self.load(file_obj)
 
     @staticmethod
-    def eval_string(string, name=None, depth=None, log_enabled=True):
+    def eval_string(
+        string: str, name: str | None = None, depth: int | None = None, log_enabled: bool = True
+    ):
         """
         Evaluate the given string. The string is evaluated using a list of
         pre-defined functions that are deemed safe to use, to prevent the
@@ -284,7 +289,7 @@ class SequenceHandler:
         self._sequences[idx][column] = value
         return True
 
-    def load(self, file_obj, append=False):
+    def load(self, file_obj, append: bool = False) -> None:
         """
         Read and parse a sequence stored in a file.
 
@@ -319,7 +324,7 @@ class SequenceHandler:
                 pass
             elif (level <= parent_level):
                 # Find parent
-                current_parent = current_parent.parent
+                current_parent = None if current_parent is None else current_parent.parent
                 while current_parent is not None:
                     if level == (current_parent.level + 1):
                         break
@@ -341,7 +346,7 @@ class SequenceHandler:
         # No errors, update internal data
         self._sequences = _sequences
 
-    def save(self, file_obj):
+    def save(self, file_obj) -> None:
         """ Save modified sequence to file stream
 
         :param file_obj: file object
@@ -349,7 +354,7 @@ class SequenceHandler:
 
         file_obj.write("\n".join(str(item) for item in self._sequences))
 
-    def parameters_sequence(self, names_map=None):
+    def parameters_sequence(self, names_map: dict[str, str] | None = None) -> list[dict]:
         """
         Generate a list of parameters from the sequence tree.
 

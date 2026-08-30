@@ -27,6 +27,7 @@ import logging
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.common_base import identity
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -93,23 +94,23 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
     )
 
     @property
-    def output_power_mW(self):
+    def output_power_mW(self) -> float:
         """Control the output power in mW"""
         self._output_power_unit = 'mW'
         return self._output_power_mW
 
     @output_power_mW.setter
-    def output_power_mW(self, new_power):
+    def output_power_mW(self, new_power: float) -> None:
         self._output_power_mW = new_power
 
     @property
-    def output_power_dBm(self):
+    def output_power_dBm(self) -> float:
         """Control the output power in dBm."""
         self._output_power_unit = 'dBm'
         return self._output_power_dBm
 
     @output_power_dBm.setter
-    def output_power_dBm(self, new_power):
+    def output_power_dBm(self, new_power: float) -> None:
         self._output_power_dBm = new_power
 
     trigger_out = Instrument.control(
@@ -151,27 +152,33 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
                                     validator=strict_range,
                                     values=[0.0001, WL_RANGE[1] - WL_RANGE[0]],
                                     get_process=lambda v: v * 1e9)
+
     sweep_speed = Instrument.control('sour0:wav:swe:speed?', 'sour0:wav:swe:speed %fnm/s',
                                      """Control speed of the sweep (in nanometers per second).""",
                                      validator=strict_discrete_set,
                                      values=[0.5, 1, 50, 80, 200],
                                      get_process=lambda v: v * 1e9)
+
     sweep_mode = Instrument.control('sour0:wav:swe:mode?', 'sour0:wav:swe:mode %s',
                                     """Control sweep mode of the swept laser source """,
                                     validator=strict_discrete_set,
                                     values=['STEP', 'MAN', 'CONT'])
+
     sweep_twoway = Instrument.control('sour0:wav:swe:rep?', 'sour0:wav:swe:rep %s',
                                       """Control the repeat mode. Applies in stepped,continuous and
                                       manual sweep mode.""",
                                       validator=strict_discrete_set,
                                       map_values=True,
                                       values={False: 'ONEW', True: 'TWOW'})
+
     _sweep_params_consistent = Instrument.measurement(
-        'sour0:wav:swe:chec?',
+        "sour0:wav:swe:chec?",
         """Get whether the currently set sweep parameters (sweep mode, sweep start,
         stop, width, etc.) are consistent. If there is a
         sweep configuration problem, the laser source is not
-        able to pass a wavelength sweep.""")
+        able to pass a wavelength sweep.""",
+        get_process_list=identity,
+    )
 
     sweep_points = Instrument.measurement(
         'sour0:read:points? llog',
