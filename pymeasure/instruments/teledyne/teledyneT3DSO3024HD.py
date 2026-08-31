@@ -465,3 +465,155 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         """,
         cast=float,
     )
+
+    trigger_mode = Instrument.control(
+        ":TRIGger:MODE?", ":TRIGger:MODE %s",
+        """Control the trigger mode of the oscilloscope (str), strictly in
+        'SINGLE', 'NORMAL', 'AUTO'.""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"SINGLE": "SINGle", "NORMAL": "NORMal", "AUTO": "AUTO"},
+        cast=str,
+    )
+
+    def trigger_run(self):
+        """Set the oscilloscope to run (start acquisition).
+        """
+        self.write(":TRIGger:RUN")
+
+    trigger_status = Instrument.measurement(
+        ":TRIGger:STATus?",
+        """Get the current state of the trigger (str), one of 'Arm', 'Ready',
+        'Auto', "Trig'd", 'Stop', 'Roll'.""",
+        cast=str,
+    )
+
+    def trigger_stop(self):
+        """Set the oscilloscope from run to stop.
+        """
+        self.write(":TRIGger:STOP")
+
+    trigger_type = Instrument.control(
+        ":TRIGger:TYPE?", ":TRIGger:TYPE %s",
+        """Control the type of trigger (str), strictly in 'EDGE', 'PULSE',
+        'SLOPE', 'INTERVAL', 'PATTERN', 'RUNT', 'QUALIFIED', 'WINDOW',
+        'DROPOUT', 'VIDEO', 'IIC', 'SPI', 'UART', 'LIN', 'CAN', 'FLEXRAY',
+        'CANFD', 'IIS'.
+
+        Note: this class only implements the parameters for the 'EDGE'
+        trigger type (see the ``trigger_edge_*`` attributes). Selecting any
+        other type here does not expose its associated parameters.
+        """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"EDGE": "EDGE", "PULSE": "PULSe", "SLOPE": "SLOPe", "INTERVAL": "INTerval",
+                "PATTERN": "PATTern", "RUNT": "RUNT", "QUALIFIED": "QUALified", "WINDOW": "WINDow",
+                "DROPOUT": "DROPout", "VIDEO": "VIDeo", "IIC": "IIC", "SPI": "SPI", "UART": "UART",
+                "LIN": "LIN", "CAN": "CAN", "FLEXRAY": "FLEXray", "CANFD": "CANFd", "IIS": "IIS"},
+        cast=str,
+    )
+
+    trigger_edge_coupling = Instrument.control(
+        ":TRIGger:EDGE:COUPling?", ":TRIGger:EDGE:COUPling %s",
+        """Control the coupling mode of the edge trigger (str), strictly in
+        'DC', 'AC', 'LF_REJECT', 'HF_REJECT'.""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"DC": "DC", "AC": "AC", "LF_REJECT": "LFREJect", "HF_REJECT": "HFREJect"},
+        cast=str,
+    )
+
+    trigger_edge_holdoff_events = Instrument.control(
+        ":TRIGger:EDGE:HLDEVent?", ":TRIGger:EDGE:HLDEVent %d",
+        """Control the number of holdoff events of the edge trigger (int),
+        strictly in range [1, 100000000].""",
+        validator=strict_range,
+        values=[1, 100000000],
+        cast=int,
+    )
+
+    trigger_edge_holdoff_time = Instrument.control(
+        ":TRIGger:EDGE:HLDTime?", ":TRIGger:EDGE:HLDTime %.2E",
+        """Control the holdoff time of the edge trigger in seconds (float).
+
+        Note: the valid range varies by model; for T3DSO2000A/T3DSO3000 it
+        is [8.00E-09, 3.00E+01].
+        """,
+        validator=strict_range,
+        values=[8e-9, 3e1],
+        cast=float,
+    )
+
+    trigger_edge_holdoff_type = Instrument.control(
+        ":TRIGger:EDGE:HOLDoff?", ":TRIGger:EDGE:HOLDoff %s",
+        """Control the holdoff type of the edge trigger (str), strictly in
+        'OFF', 'EVENTS', 'TIME'.
+
+        - OFF turns off the holdoff.
+        - EVENTS holds off based on a number of trigger events (see
+          :attr:`trigger_edge_holdoff_events`).
+        - TIME holds off for a fixed duration (see
+          :attr:`trigger_edge_holdoff_time`).
+        """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"OFF": "OFF", "EVENTS": "EVENts", "TIME": "TIME"},
+        cast=str,
+    )
+
+    trigger_edge_holdoff_start = Instrument.control(
+        ":TRIGger:EDGE:HSTart?", ":TRIGger:EDGE:HSTart %s",
+        """Control the initial position of the edge trigger holdoff (str),
+        strictly in 'LAST_TRIG', 'ACQ_START'.""",
+        validator=strict_discrete_set,
+        values=["LAST_TRIG", "ACQ_START"],
+        cast=str,
+    )
+
+    trigger_edge_level = Instrument.control(
+        ":TRIGger:EDGE:LEVel?", ":TRIGger:EDGE:LEVel %.2E",
+        """Control the trigger level of the edge trigger, in Volts (float).
+
+        Note: the legal range depends on the vertical scale and offset of
+        the current trigger source channel (see :attr:`trigger_edge_source`):
+        [-4.1 * vertical_scale - vertical_offset,
+        4.1 * vertical_scale - vertical_offset].
+        """,
+        cast=float,
+    )
+
+    trigger_edge_noise_reject = Instrument.control(
+        ":TRIGger:EDGE:NREJect?", ":TRIGger:EDGE:NREJect %s",
+        """Control whether noise rejection is enabled for the edge trigger
+        (bool).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+        cast=str,
+    )
+
+    trigger_edge_slope = Instrument.control(
+        ":TRIGger:EDGE:SLOPe?", ":TRIGger:EDGE:SLOPe %s",
+        """Control the slope of the edge trigger (str), strictly in 'RISING',
+        'FALLING', 'ALTERNATE'.""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"RISING": "RISing", "FALLING": "FALLing", "ALTERNATE": "ALTernate"},
+        cast=str,
+    )
+
+    trigger_edge_source = Instrument.control(
+        ":TRIGger:EDGE:SOURce?", ":TRIGger:EDGE:SOURce %s",
+        """Control the trigger source of the edge trigger (str).
+
+        Legal values are 'C<x>' (analog channel, e.g. 'C1'), 'D<n>' (digital
+        channel, e.g. 'D0'), 'EX', 'EX5', or 'LINE'. No fixed set of values
+        is enforced here since the valid range of <x>/<n> depends on the
+        number of analog/digital channels available on the instrument.
+        """,
+        validator=strict_discrete_set,
+        values=["C1", "C2", "C3", "C4", "D0", "D1", "D2", "D3", "D4", "D5", "D6",
+                "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "EX",
+                "EX5", "LINE"],
+        cast=str,
+    )
