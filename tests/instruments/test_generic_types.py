@@ -103,6 +103,88 @@ class Test_SCPIMixin:
             assert inst.check_errors() == [[-100, '"Command error"'],
                                            [-222, '"Data out of range"']]
 
+    def test_close_does_not_raise(self):
+        with expected_protocol(self.SCPIInstrument, [], name="test") as inst:
+            inst.close()  # Adapter.close() is a no-op for ProtocolAdapter — must not raise
+
 
 def test_SCPIMixin_inherits_IEEE4882Mixin():
     assert issubclass(SCPIMixin, IEEE4882Mixin)
+
+
+class Test_GetDeviceInfo:
+    """Tests for SCPIMixin.get_device_info()."""
+
+    class SCPIInstrument(SCPIMixin, Instrument):
+        """Minimal SCPI instrument used in get_device_info tests."""
+
+    def test_sets_name_from_idn(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("*IDN?", "Rohde&Schwarz,NGP804,12345,V1.0")],
+                name="test") as inst:
+            inst.get_device_info()
+            assert inst.name == "NGP804"
+
+    def test_sets_vendor_from_idn(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("*IDN?", "Rohde&Schwarz,NGP804,12345,V1.0")],
+                name="test") as inst:
+            inst.get_device_info()
+            assert inst.vendor == "Rohde&Schwarz"
+
+    def test_sets_serial_number_from_idn(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("*IDN?", "Rohde&Schwarz,NGP804,12345,V1.0")],
+                name="test") as inst:
+            inst.get_device_info()
+            assert inst.serial_number == "12345"
+
+    def test_sets_firmware_ref_from_idn(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("*IDN?", "Rohde&Schwarz,NGP804,12345,V1.0")],
+                name="test") as inst:
+            inst.get_device_info()
+            assert inst.firmware_ref == "V1.0"
+
+
+class Test_CheckIsDevSupported:
+    """Tests for SCPIMixin.check_is_dev_supported()."""
+
+    class SCPIInstrument(SCPIMixin, Instrument):
+        """Minimal SCPI instrument used in check_is_dev_supported tests."""
+
+    def test_supported_model_does_not_raise(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("*IDN?", "Rohde&Schwarz,NGP804,12345,V1.0")],
+                name="test") as inst:
+            inst.get_device_info()
+            inst.check_is_dev_supported(["NGP804", "NGP814"], ": not supported")
+
+    def test_unsupported_model_raises_assertion_error(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("*IDN?", "Rohde&Schwarz,NGP402,12345,V1.0")],
+                name="test") as inst:
+            inst.get_device_info()
+            with pytest.raises(AssertionError, match="NGP402"):
+                inst.check_is_dev_supported(["NGP804", "NGP814"], ": not supported")
+
+    def test_error_includes_custom_message(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("*IDN?", "Rohde&Schwarz,UNKNOWN,SN,FW")],
+                name="test") as inst:
+            inst.get_device_info()
+            with pytest.raises(AssertionError, match="Instrument not supported"):
+                inst.check_is_dev_supported(["NGP804"], ": Instrument not supported")
+
+    def test_none_name_raises_assertion_error(self):
+        with expected_protocol(self.SCPIInstrument, [], name="test") as inst:
+            inst.name = None
+            with pytest.raises(AssertionError, match="not opened"):
+                inst.check_is_dev_supported(["NGP804"], "")

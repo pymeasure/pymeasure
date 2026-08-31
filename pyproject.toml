@@ -114,3 +114,10 @@ reportIncompatibleMethodOverride = "warning"
 reportOperatorIssue = "warning"
 reportPrivateImportUsage = "none"
 defineConstant = { PYQT6 = true, PYSIDE2 = false, PYQT5 = false, PYSIDE6 = false }
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pyvisa-sim>=0.7.1",
+]

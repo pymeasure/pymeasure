@@ -1,0 +1,91 @@
+spec: "1.0"
+devices:
+  ngp804:
+    eom:
+      TCPIP INSTR:
+        q: "\n"
+        r: "\n"
+      USB INSTR:
+        q: "\n"
+        r: "\n"
+      ASRL INSTR:
+        q: "\r\n"
+        r: "\n"
+    dialogues:
+      - q: "*IDN?"
+        r: "Rohde&Schwarz,NGP804,123456/001,1.00"
+      - q: "*CLS;*RST;*OPC?"
+        r: "1"
+      - q: "*CLS;*RST;"
+      - q: "SYST:REM"
+      - q: "SYST:LOC"
+      # --- Channel 1 ---
+      - q: "INST (@1);VOLT 5.000000E+00"
+      - q: "INST (@1);VOLT?"
+        r: "5.000000E+00"
+      - q: "INST (@1);CURR 1.000000E+00"
+      - q: "INST (@1);CURR?"
+        r: "1.000000E+00"
+      - q: "INST (@1);MEAS:VOLT?"
+        r: "4.999100E+00"
+      - q: "INST (@1);MEAS:CURR?"
+        r: "9.998000E-01"
+      - q: "INST (@1);OUTP 1"
+      - q: "OUTP? (@1)"
+        r: "1"
+      - q: "INST (@1);OUTP 0"
+      - q: "OUTP? (@1)"
+        r: "0"
+      # --- Channel 2 ---
+      - q: "INST (@2);VOLT 0.000000E+00"
+      - q: "INST (@2);VOLT?"
+        r: "0.000000E+00"
+      - q: "INST (@2);CURR 0.000000E+00"
+      - q: "INST (@2);CURR?"
+        r: "0.000000E+00"
+      - q: "INST (@2);MEAS:VOLT?"
+        r: "0.000000E+00"
+      - q: "INST (@2);MEAS:CURR?"
+        r: "0.000000E+00"
+      - q: "INST (@2);OUTP 0"
+      - q: "OUTP? (@2)"
+        r: "0"
+      # --- Channel 3 ---
+      - q: "INST (@3);VOLT 0.000000E+00"
+      - q: "INST (@3);VOLT?"
+        r: "0.000000E+00"
+      - q: "INST (@3);CURR 0.000000E+00"
+      - q: "INST (@3);CURR?"
+        r: "0.000000E+00"
+      - q: "INST (@3);MEAS:VOLT?"
+        r: "0.000000E+00"
+      - q: "INST (@3);MEAS:CURR?"
+        r: "0.000000E+00"
+      - q: "INST (@3);OUTP 0"
+      - q: "OUTP? (@3)"
+        r: "0"
+      # --- Channel 4 ---
+      - q: "INST (@4);VOLT 0.000000E+00"
+      - q: "INST (@4);VOLT?"
+        r: "0.000000E+00"
+      - q: "INST (@4);CURR 0.000000E+00"
+      - q: "INST (@4);CURR?"
+        r: "0.000000E+00"
+      - q: "INST (@4);MEAS:VOLT?"
+        r: "0.000000E+00"
+      - q: "INST (@4);MEAS:CURR?"
+        r: "0.000000E+00"
+      - q: "INST (@4);OUTP 0"
+      - q: "OUTP? (@4)"
+        r: "0"
+      # --- Global output ---
+      - q: "OUTP:GEN 1"
+      - q: "OUTP:GEN?"
+        r: "1"
+      - q: "OUTP:GEN 0"
+
+resources:
+  TCPIP::localhost::9000::SOCKET:
+    device: ngp804
+  USB::0x0AAD::0x01FF::123456::INSTR:
+    device: ngp804

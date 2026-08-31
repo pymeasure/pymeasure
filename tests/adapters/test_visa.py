@@ -106,6 +106,71 @@ class TestClose:
             _ = adapterC.manager.session
 
 
+class TestSharedResourceManager:
+    """Tests for passing a caller-owned ResourceManager via visa_library."""
+
+    @pytest.fixture
+    def shared_rm(self):
+        """Provide a pyvisa-sim ResourceManager and close it after the test."""
+        rm = pyvisa.ResourceManager('@sim')
+        yield rm
+        rm.close()
+
+    def test_shared_rm_is_used(self, shared_rm):
+        """Adapter opened with a caller-supplied RM uses that exact manager instance."""
+        a = VISAAdapter(SIM_RESOURCE, visa_library=shared_rm,
+                        read_termination="\n")
+        assert a.manager is shared_rm
+        a.close()
+
+    def test_shared_rm_not_owned(self, shared_rm):
+        """Adapter does not own a caller-supplied RM."""
+        a = VISAAdapter(SIM_RESOURCE, visa_library=shared_rm,
+                        read_termination="\n")
+        assert a._manager_owned is False
+        a.close()
+
+    def test_shared_rm_not_closed_on_adapter_close(self, shared_rm):
+        """Closing the adapter does not close a caller-supplied ResourceManager."""
+        a = VISAAdapter(SIM_RESOURCE, visa_library=shared_rm,
+                        read_termination="\n")
+        assert shared_rm.session is not None
+        a.close()
+        assert shared_rm.session is not None
+
+    def test_second_adapter_still_works_after_first_closes(self, shared_rm):
+        """A second adapter sharing the same RM continues to operate after the first closes."""
+        a1 = VISAAdapter(SIM_RESOURCE, visa_library=shared_rm, read_termination="\n")
+        a2 = VISAAdapter(SIM_RESOURCE, visa_library=shared_rm, read_termination="\n")
+        a1.close()
+        a2.write("*IDN?")
+        assert a2.read() == "SCPI,MOCK,VERSION_1.0"
+        a2.close()
+
+    def test_owned_manager_is_closed_on_adapter_close(self):
+        """Adapter that created its own RM closes it on close() (pyvisa-sim workaround)."""
+        a = VISAAdapter(SIM_RESOURCE, visa_library='@sim')
+        assert a._manager_owned is True
+        rm = a.manager
+        assert rm.session is not None
+        a.close()
+        with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
+            _ = rm.session
+
+    def test_instrument_init_accepts_resource_manager(self, shared_rm):
+        """Instrument(rm, resource_string) reuses the shared RM without closing it."""
+        from pymeasure.instruments import Instrument, SCPIMixin
+
+        class SimpleInstrument(SCPIMixin, Instrument):
+            """Minimal instrument used to verify shared ResourceManager handling."""
+
+        inst = SimpleInstrument(shared_rm, SIM_RESOURCE, read_termination="\n")
+        assert inst.adapter.manager is shared_rm
+        assert inst.adapter._manager_owned is False
+        inst.shutdown()
+        assert shared_rm.session is not None
+
+
 def test_write_read(adapter):
     adapter.write(":VOLT:IMM:AMPL?")
     assert float(adapter.read()) == 1
@@ -150,3 +215,32 @@ class TestReadBytes:
         adapter.write("*IDN?")
         # `break_on_termchar=False` is default value
         assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\nSCPI,MOCK,VERSION_1.0\n"
+
+
+class TestOpen:
+    """Tests for VISAAdapter.open() connection-lifecycle behaviour."""
+
+    def test_open_after_close_restores_connection(self):
+        """open() after close() re-establishes a working VISA connection.
+
+        The caller is responsible for re-applying connection settings
+        (e.g. read_termination) after open(), as open() does not restore them.
+        """
+        rm = pyvisa.ResourceManager('@sim')
+        try:
+            a = VISAAdapter(SIM_RESOURCE, visa_library=rm, read_termination="\n")
+            a.close()
+            a.open()
+            a.connection.read_termination = "\n"
+            a.write("*IDN?")
+            assert a.read() == "SCPI,MOCK,VERSION_1.0"
+            a.close()
+        finally:
+            rm.close()
+
+    def test_open_raises_for_protocol_adapter(self):
+        """open() raises AttributeError when backed by a ProtocolAdapter."""
+        with expected_protocol(VISAAdapter, []) as a, pytest.raises(  # type: ignore
+            AttributeError, match="resource_name"
+        ):
+            a.open()

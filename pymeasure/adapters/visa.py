@@ -30,21 +30,26 @@ import pyvisa
 from .adapter import Adapter
 from .protocol import ProtocolAdapter
 
+resource_manager_or_str = str | pyvisa.ResourceManager
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 # noinspection PyPep8Naming,PyUnresolvedReferences
 class VISAAdapter(Adapter):
-    """ Adapter class for the VISA library, using PyVISA to communicate with instruments.
+    """Adapter class for the VISA library, using PyVISA to communicate with instruments.
 
     The workhorse of our library, used by most instruments.
 
     :param resource_name: A
         `VISA resource string <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
         or GPIB address integer that identifies the target of the connection
-    :param visa_library: PyVISA VisaLibrary Instance, path of the VISA library or VisaLibrary spec
-        string (``@py`` or ``@ivi``). If not given, the default for the platform will be used.
+    :param visa_library: PyVISA VisaLibrary Instance, path of the VISA library, VisaLibrary spec
+        string (``@py`` or ``@ivi``), or a caller-owned :class:`pyvisa.ResourceManager` instance.
+        When a :class:`pyvisa.ResourceManager` is supplied the adapter does **not** take ownership:
+        it will not be closed when :meth:`close` is called.
+        If not given, a new :class:`pyvisa.ResourceManager` is created and owned by the adapter.
     :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
 
@@ -76,11 +81,12 @@ class VISAAdapter(Adapter):
     def __init__(
         self,
         resource_name: Union[ProtocolAdapter, "VISAAdapter", int, str],
-        visa_library: str = "",
+        visa_library: resource_manager_or_str = "",
         log: logging.Logger | None = None,
         **kwargs,
     ):
         super().__init__(log=log)
+        self._manager_owned = False
         if isinstance(resource_name, ProtocolAdapter):
             self.connection = resource_name
             self.connection.write_raw = self.connection.write_bytes  # type: ignore[assignment]
@@ -96,7 +102,11 @@ class VISAAdapter(Adapter):
             resource_name = f"GPIB0::{resource_name}::INSTR"
 
         self.resource_name = resource_name
-        self.manager = pyvisa.ResourceManager(visa_library)
+        if isinstance(visa_library, pyvisa.ResourceManager):
+            self.manager = visa_library
+        else:
+            self.manager = pyvisa.ResourceManager(visa_library)
+            self._manager_owned = True
 
         # Clean up kwargs considering the interface type matching resource_name
         if_type = self.manager.resource_info(self.resource_name).interface_type
@@ -111,10 +121,39 @@ class VISAAdapter(Adapter):
                         kwargs.setdefault(k, v)
                 del kwargs[key]
 
-        self.connection = cast(pyvisa.resources.MessageBasedResource, self.manager.open_resource(
-            resource_name,
-            **kwargs
-        ))
+        self.connection = cast(
+            pyvisa.resources.MessageBasedResource,
+            self.manager.open_resource(resource_name, **kwargs),
+        )
+
+    def open(self) -> None:
+        """Reopen the VISA connection after a close or network dropout.
+
+        Re-uses the stored :attr:`resource_name` and :attr:`manager`.
+        Any instrument-specific settings (e.g. termination characters) must
+        be restored by the caller after this method returns.
+        Raises :exc:`AttributeError` if called on an adapter without a
+        stored resource name (e.g. one created from a ProtocolAdapter).
+        """
+        if not hasattr(self, "resource_name") or not hasattr(self, "manager"):
+            raise AttributeError(
+                "open() requires resource_name and manager (not available for "
+                "ProtocolAdapter-backed instances)"
+            )
+
+        try:
+            self.connection.close()
+        except Exception:
+            self.log.debug(
+                "Ignoring error while closing the VISA connection during reopen",
+                exc_info=True,
+            )
+
+        resource_name: str = self.resource_name  # type: ignore[assignment]
+        self.connection = cast(
+            pyvisa.resources.MessageBasedResource,
+            self.manager.open_resource(resource_name),
+        )
 
     def close(self) -> None:
         """Close the connection.
@@ -123,8 +162,12 @@ class VISAAdapter(Adapter):
 
             This closes the connection to the resource for all adapters using
             it currently (e.g. different adapters using the same GPIB line).
+            A :class:`pyvisa.ResourceManager` that was supplied by the caller is **not** closed;
+            only managers created internally by this adapter are closed.
         """
         super().close()
+        if not self._manager_owned:
+            return
         try:
             if self.manager.visalib.library_path == "unset":
                 # if using the pyvisa-sim library the manager has to be also closed.
@@ -186,7 +229,7 @@ class VISAAdapter(Adapter):
                     raise
 
     def wait_for_srq(self, timeout: float = 25, delay: float = 0.1) -> None:
-        """ Block until a SRQ, and leave the bit high
+        """Block until a SRQ, and leave the bit high.
 
         :param timeout: Timeout duration in seconds
         :param delay: Time delay between checking SRQ in seconds
@@ -194,7 +237,7 @@ class VISAAdapter(Adapter):
         self.connection.wait_for_srq(int(timeout * 1000))
 
     def flush_read_buffer(self) -> None:
-        """ Flush and discard the input buffer
+        """Flush and discard the input buffer.
 
         As detailed by pyvisa, discard the read and receivee buffer contents
         and if data was present in the read buffer and no END-indicator was present,

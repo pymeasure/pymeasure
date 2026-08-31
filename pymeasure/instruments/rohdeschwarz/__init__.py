@@ -24,4 +24,5 @@
 
 from .fsseries import FSL, FSW
 from .hmp import HMP4040
+from .ngpx import NGPx, PwrChannel
 from .sfm import SFM

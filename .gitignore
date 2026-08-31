@@ -113,3 +113,6 @@ settings.json
 
 # uv lock file
 uv.lock
+
+# Local developer / machine-specific scripts (not part of the package)
+enter_prj_win.ps1

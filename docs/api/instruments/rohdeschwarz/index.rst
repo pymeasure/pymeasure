@@ -9,6 +9,7 @@ This section contains specific documentation on the Rohde & Schwarz instruments 
 .. toctree::
    :maxdepth: 3
 
+   ngpx
    sfm
    fsseries
    hmp
