@@ -21,6 +21,15 @@ Deprecated
 
 Changed
 -------
+- Allow passing a caller-owned :class:`pyvisa.ResourceManager` as the ``visa_library`` argument of
+  :class:`.VISAAdapter`; the adapter does not close the supplied manager on :meth:`~.VISAAdapter.close`.
+  This enables multiple adapters to share one manager without lifecycle conflicts (replaces #1432).
+- Add :meth:`.Adapter.open` (no-op stub) and :meth:`.VISAAdapter.open` to reopen a VISA connection
+  after :meth:`~.VISAAdapter.close` or a network dropout, without reinstantiating the instrument.
+  Instrument-specific settings (e.g. termination characters) must be reapplied by the caller.
+- Add :meth:`~.SCPIMixin.get_device_info`, :meth:`~.SCPIMixin.check_is_dev_supported`,
+  :meth:`~.SCPIMixin.close`, and :meth:`~.SCPIMixin.open` to :class:`.SCPIMixin` for structured
+  ``*IDN?`` parsing, model validation, and connection lifecycle management (replaces #1433).
 - For property creators :code:`Instrument.control`... the conversion parameters (:code:`cast` etc.) are keyword only, now.
 - Refactored :class:`.Parameter` and :class:`.Metadata` to share a common descriptor base (``_InstanceValueDescriptor``).
   Values are now eagerly converted at assignment time via :meth:`~Parameter.convert` (identity for ``Metadata``).
