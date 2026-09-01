@@ -570,7 +570,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         cast=str,
     )
 
-    trigger_edge_level = Instrument.control(
+    _trigger_edge_level = Instrument.control(
         ":TRIGger:EDGE:LEVel?", ":TRIGger:EDGE:LEVel %.2E",
         """Control the trigger level of the edge trigger, in Volts (float).
 
@@ -580,7 +580,44 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         4.1 * vertical_scale - vertical_offset].
         """,
         cast=float,
+        validator=strict_range,
+        values=[-float("inf"), float("inf")],  # Overwritten in setter
+        dynamic=True,
     )
+
+    def _get_trigger_source_channel(self):
+        """Return the Channel object for the current edge-trigger source,
+        or None if the source is not an analog channel (e.g. 'EX', 'LINE', 'D<n>')."""
+        source = self.trigger_edge_source
+        if source in ("C1", "C2", "C3", "C4"):
+            return getattr(self, f"channel_{source[1]}")
+        return None
+
+    @property
+    def trigger_edge_level(self) -> float:
+        """Control the trigger level of the edge trigger, in Volts (float).
+
+        Note: the legal range depends on the vertical scale and offset of
+        the current trigger source channel (see :attr:`trigger_edge_source`):
+        [-4.1 * vertical_scale - vertical_offset,
+        4.1 * vertical_scale - vertical_offset].
+        """
+        return self._trigger_edge_level
+
+    @trigger_edge_level.setter
+    def trigger_edge_level(self, value):
+        channel = self._get_trigger_source_channel()
+        if channel is not None:
+            scale = channel.scale
+            offset = channel.offset
+            self._trigger_edge_level_values = [
+                -4.1 * scale - offset,
+                4.1 * scale - offset,
+            ]
+        else:
+            # z.B. EX/EX5/LINE/D<n> - validator deactivated, because of no scale and offset values
+            self._trigger_edge_level_values = [-float("inf"), float("inf")]
+        self._trigger_edge_level = value
 
     trigger_edge_noise_reject = Instrument.control(
         ":TRIGger:EDGE:NREJect?", ":TRIGger:EDGE:NREJect %s",
@@ -607,9 +644,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         """Control the trigger source of the edge trigger (str).
 
         Legal values are 'C<x>' (analog channel, e.g. 'C1'), 'D<n>' (digital
-        channel, e.g. 'D0'), 'EX', 'EX5', or 'LINE'. No fixed set of values
-        is enforced here since the valid range of <x>/<n> depends on the
-        number of analog/digital channels available on the instrument.
+        channel, e.g. 'D0'), 'EX', 'EX5', or 'LINE'.
         """,
         validator=strict_discrete_set,
         values=["C1", "C2", "C3", "C4", "D0", "D1", "D2", "D3", "D4", "D5", "D6",
