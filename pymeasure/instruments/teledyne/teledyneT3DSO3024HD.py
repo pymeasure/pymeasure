@@ -652,3 +652,137 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
                 "EX5", "LINE"],
         cast=str,
     )
+
+    measure = Instrument.control(
+        ":MEASure?", ":MEASure %s",
+        """Control the state of the measurement function. Strictly in bool 'True' or 'False'.""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+        cast=str,
+    )
+
+    measure_mode = Instrument.control(
+        ":MEASure:MODE?", ":MEASure:MODE %s",
+        """Control the mode of measurement (str), strictly in 'SIMPLE' and 'ADVANCED'""",
+        validator=strict_discrete_set,
+        values={"SIMPLE": "SIMPle", "ADVANCED": "ADVanced"},
+        map_values=True,
+        cast=str,
+    )
+
+    MEASURE_PARAMETERS = {
+        # Vertical (amplitude) measurements
+        "PEAK_TO_PEAK": "PKPK",                 # Vertical peak-to-peak
+        "MAXIMUM": "MAX",                       # Maximum vertical value
+        "MINIMUM": "MIN",                       # Minimum vertical value
+        "AMPLITUDE": "AMPL",                    # Vertical amplitude
+        "TOP": "TOP",                           # Waveform top value
+        "BASE": "BASE",                         # Waveform base value
+        "LEVEL_AT_TRIGGER": "LEVELX",           # Level measured at the trigger position
+        "MEAN_FIRST_CYCLE": "CMEAN",            # Average value in the first cycle
+        "MEAN": "MEAN",                         # Average value
+        "STD_DEV": "STDEV",                     # Standard deviation of the data
+        "STD_DEV_FIRST_CYCLE": "VSTD",          # Standard deviation of the first cycle
+        "RMS": "RMS",                           # RMS value
+        "RMS_FIRST_CYCLE": "CRMS",              # RMS value in the first cycle
+        "MEDIAN": "MEDIAN",                     # Value with 50% of samples above/below
+        "MEDIAN_FIRST_CYCLE": "CMEDIAN",        # Median of the first cycle
+        "OVERSHOOT_FALLING": "OVSN",            # Overshoot of a falling edge
+        "PRESHOOT_FALLING": "FPRE",             # Preshoot of a falling edge
+        "OVERSHOOT_RISING": "OVSP",             # Overshoot of a rising edge
+        "PRESHOOT_RISING": "RPRE",              # Preshoot of a rising edge
+
+        # Time / frequency measurements
+        "PERIOD": "PER",                        # Period
+        "FREQUENCY": "FREQ",                    # Frequency
+        "TIME_OF_MAXIMUM": "TMAX",              # Time of maximum value
+        "TIME_OF_MINIMUM": "TMIN",              # Time of minimum value
+        "POSITIVE_PULSE_WIDTH": "PWID",         # Positive pulse width
+        "NEGATIVE_PULSE_WIDTH": "NWID",         # Negative pulse width
+        "WIDTH": "WID",                         # First rising edge to last falling edge @ 50%
+        "POSITIVE_DUTY_CYCLE": "DUTY",          # Positive duty cycle
+        "NEGATIVE_DUTY_CYCLE": "NDUTY",         # Negative duty cycle
+        "NEGATIVE_WIDTH": "NBWID",              # First falling edge to last rising edge @ 50%
+        "DELAY": "DELAY",                       # Trigger to first transition @ 50%
+        "TIME_TO_EACH_RISING_EDGE": "TIMEL",    # Trigger to each rising edge @ 50%
+        "RISE_TIME": "RISE",                    # Duration of rising edge, 10-90%
+        "FALL_TIME": "FALL",                    # Duration of falling edge, 10-90%
+        "RISE_TIME_20_80": "RISE20T80",         # Duration of rising edge, 20-80%
+        "FALL_TIME_80_20": "FALL80T20",         # Duration of falling edge, 80-20%
+        "PERIOD_JITTER": "CCJ",                 # Difference between two continuous periods
+
+        # Area measurements
+        "AREA_ABOVE_ZERO": "PAREA",             # Area of the waveform above zero
+        "AREA_BELOW_ZERO": "NAREA",             # Area of the waveform below zero
+        "AREA": "AREA",                         # Area of the waveform
+        "ABSOLUTE_AREA": "ABSAREA",             # Absolute area of the waveform
+
+        # Counting measurements
+        "CYCLES": "CYCLES",                     # Number of cycles in a periodic waveform
+        "RISING_EDGES": "REDGES",               # Number of rising edges
+        "FALLING_EDGES": "FEDGES",              # Number of falling edges
+        "EDGES": "EDGES",                       # Number of edges in a waveform
+        "POSITIVE_PULSES": "PPULSES",           # Number of positive pulses (see note above)
+        "NEGATIVE_PULSES": "NPULSES",           # Number of negative pulses (see note above)
+    }
+    """Mapping of descriptive measurement names to the SCPI parameter keywords
+    accepted by :meth:`set_measurement_item`, as documented in the "Description
+    of Parameters" table of the programming guide."""
+
+    measurement_simple_source = Instrument.control(
+        ":MEASure:SIMPle:SOURce?", ":MEASure:SIMPle:SOURce %s",
+        """Control the source of the simple measurement (str), strictly one
+        of the analog channels ('C1'..'C4'), zoomed waveforms ('Z1'..'Z4'),
+        math functions ('F1'..'F4'), digital channels ('D0'..'D15'), zoomed
+        digital channels ('ZD0'..'ZD15'), or reference waveforms
+        ('REFA'..'REFD').
+
+        Note: 'Z<x>'/'ZD<m>' are only valid while Zoom is on.
+        """,
+        validator=strict_discrete_set,
+        values=["C1", "C2", "C3", "C4",
+                "Z1", "Z2", "Z3", "Z4",
+                "F1", "F2", "F3", "F4",
+                "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
+                "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15",
+                "ZD0", "ZD1", "ZD2", "ZD3", "ZD4", "ZD5", "ZD6", "ZD7",
+                "ZD8", "ZD9", "ZD10", "ZD11", "ZD12", "ZD13", "ZD14", "ZD15",
+                "REFA", "REFB", "REFC", "REFD"],
+        cast=str,
+    )
+
+    def set_measurement_item(self, parameter, enabled=True):
+        """Add or remove a parameter from the simple measurement window.
+
+        :param parameter: one of the keys in :attr:`MEASURE_PARAMETERS` (str),
+            e.g. 'FREQUENCY', 'AMPLITUDE', 'RISE_TIME'.
+        :param enabled: whether to enable (True) or disable (False) it in the
+            simple measurement window.
+        """
+        parameter = strict_discrete_set(parameter.upper(), self.MEASURE_PARAMETERS.keys())
+        scpi_param = self.MEASURE_PARAMETERS[parameter]
+        state = "ON" if enabled else "OFF"
+        self.write(f":MEASure:SIMPle:ITEM {scpi_param},{state}")
+
+    def measurement_value(self, parameter):
+        """Get the current value of the given simple-measurement parameter.
+
+        :param parameter: one of the keys in :attr:`MEASURE_PARAMETERS` (str),
+            e.g. 'FREQUENCY', 'AMPLITUDE', 'RISE_TIME', or 'ALL' to get all
+            measurement values at once (except delay measurements).
+        :return: the measured value in the parameter's native unit (float), or,
+            if ``parameter == 'ALL'``, the raw response string as returned by
+            the instrument (comma-separated values, one per active item).
+
+        Note: for a parameter to return a meaningful value, it typically needs
+        to be enabled first via :meth:`set_measurement_item`.
+        """
+        parameter = strict_discrete_set(
+            parameter.upper(), list(self.MEASURE_PARAMETERS.keys()) + ["ALL"]
+        )
+        scpi_param = "ALL" if parameter == "ALL" else self.MEASURE_PARAMETERS[parameter]
+        response = self.ask(f":MEASure:SIMPle:VALue? {scpi_param}").strip()
+        if parameter == "ALL":
+            return response
+        return float(response)

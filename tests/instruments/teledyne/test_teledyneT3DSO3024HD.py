@@ -1440,3 +1440,188 @@ def test_trigger_edge_source_invalid_value_rejected():
         pytest.raises(ValueError),
     ):
         instr.trigger_edge_source = "C5"  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        (True, "ON"),
+        (False, "OFF"),
+    ],
+)
+def test_measure_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":MEASure {expected_command}", None)],
+    ) as instr:
+        instr.measure = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("ON", True),
+        ("OFF", False),
+    ],
+)
+def test_measure_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":MEASure?", response)],
+    ) as instr:
+        assert instr.measure is expected_value
+
+
+def test_measure_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.measure = "YES"  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        ("SIMPLE", "SIMPle"),
+        ("ADVANCED", "ADVanced"),
+    ],
+)
+def test_measure_mode_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":MEASure:MODE {expected_command}", None)],
+    ) as instr:
+        instr.measure_mode = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("SIMPle", "SIMPLE"),
+        ("ADVanced", "ADVANCED"),
+    ],
+)
+def test_measure_mode_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":MEASure:MODE?", response)],
+    ) as instr:
+        assert instr.measure_mode == expected_value
+
+
+def test_measure_mode_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.measure_mode = "COMPLEX"
+
+
+@pytest.mark.parametrize(
+    "source", ["C1", "C4", "Z2", "F3", "D0", "D15", "ZD7", "REFA", "REFD"],
+)
+def test_measurement_simple_source_set(source):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":MEASure:SIMPle:SOURce {source}", None)],
+    ) as instr:
+        instr.measurement_simple_source = source
+
+
+@pytest.mark.parametrize(
+    "source", ["C1", "Z2", "F3", "D15", "ZD7", "REFA"],
+)
+def test_measurement_simple_source_get(source):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":MEASure:SIMPle:SOURce?", source)],
+    ) as instr:
+        assert instr.measurement_simple_source == source
+
+
+def test_measurement_simple_source_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.measurement_simple_source = "C5"
+
+
+@pytest.mark.parametrize(
+    "parameter, scpi_param",
+    [
+        ("FREQUENCY", "FREQ"),
+        ("AMPLITUDE", "AMPL"),
+        ("RISE_TIME", "RISE"),
+        ("PEAK_TO_PEAK", "PKPK"),
+    ],
+)
+def test_set_measurement_item_enabled(parameter, scpi_param):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":MEASure:SIMPle:ITEM {scpi_param},ON", None)],
+    ) as instr:
+        instr.set_measurement_item(parameter)
+
+
+def test_set_measurement_item_disabled():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":MEASure:SIMPle:ITEM FREQ,OFF", None)],
+    ) as instr:
+        instr.set_measurement_item("FREQUENCY", enabled=False)
+
+
+def test_set_measurement_item_invalid_parameter_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.set_measurement_item("BANANA")
+
+
+@pytest.mark.parametrize(
+    "parameter, scpi_param",
+    [
+        ("FREQUENCY", "FREQ"),
+        ("AMPLITUDE", "AMPL"),
+    ],
+)
+def test_measurement_value(parameter, scpi_param):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":MEASure:SIMPle:VALue? {scpi_param}", "1.234E+03")],
+    ) as instr:
+        assert instr.measurement_value(parameter) == 1234.0
+
+
+def test_measurement_value_all_returns_raw_string():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":MEASure:SIMPle:VALue? ALL", "1.234E+03,5.000E-01")],
+    ) as instr:
+        assert instr.measurement_value("ALL") == "1.234E+03,5.000E-01"
+
+
+def test_measurement_value_invalid_parameter_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.measurement_value("BANANA")
