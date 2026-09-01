@@ -23,8 +23,8 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.mksinst.mks974b import MKS974B, Unit
+from pymeasure.test import expected_protocol
 
 
 def test_device_type():

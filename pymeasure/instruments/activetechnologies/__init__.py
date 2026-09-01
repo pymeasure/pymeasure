@@ -22,5 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .AWG401x import AWG401x_AFG
-from .AWG401x import AWG401x_AWG
+from .AWG401x import AWG401x_AFG, AWG401x_AWG

@@ -55,7 +55,7 @@ class DirectoryLineEdit(QtWidgets.QLineEdit):
 
         browse_action = QtGui.QAction(self)
         browse_action.setIcon(self.style().standardIcon(
-            getattr(QtWidgets.QStyle.StandardPixmap, 'SP_DialogOpenButton')))
+            QtWidgets.QStyle.StandardPixmap.SP_DialogOpenButton))
         browse_action.triggered.connect(self.browse_triggered)
 
         self.addAction(browse_action, QtWidgets.QLineEdit.ActionPosition.TrailingPosition)

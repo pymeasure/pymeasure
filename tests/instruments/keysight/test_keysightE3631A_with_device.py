@@ -23,6 +23,7 @@
 #
 
 import pytest
+
 from pymeasure.instruments.keysight.keysightE3631A import KeysightE3631A
 
 

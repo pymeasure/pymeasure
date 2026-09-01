@@ -28,9 +28,9 @@
 # $ pytest test_keithley4200_with_device.py --device-address "TCPIP::192.168.1.20::1225::SOCKET"
 
 import pytest
+
 from pymeasure.instruments.keithley import Keithley4200
 from pymeasure.instruments.keithley.keithley4200 import StatusCode
-
 
 ###########
 # FIXTURE #

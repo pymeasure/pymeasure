@@ -22,16 +22,26 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
 
 import logging
-from time import sleep, time
+from collections.abc import Callable
 from enum import IntFlag
+from time import sleep, time
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_range, strict_range
+from pymeasure.instruments.instrument import AdapterType
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    strict_range,
+    truncated_range,
+)
+
+if TYPE_CHECKING:
+    from pymeasure.instruments.validators import NumericSeq, NumericT
 
 from .base import OxfordInstrumentsBase
 
@@ -40,7 +50,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def pointer_validator(value, values):
+def pointer_validator(value: NumericSeq, values: NumericSeq) -> tuple[NumericT, NumericT]:
     """ Provides a validator function that ensures the passed value is
     a tuple or a list with a length of 2 and passes every item through
     the strict_range validator.
@@ -76,13 +86,15 @@ class ITC503(OxfordInstrumentsBase):
 
     """
 
-    def __init__(self,
-                 adapter,
-                 name="Oxford ITC503",
-                 clear_buffer=True,
-                 min_temperature=0,
-                 max_temperature=1677.7,
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Oxford ITC503",
+        clear_buffer: bool = True,
+        min_temperature: float = 0,
+        max_temperature: float = 1677.7,
+        **kwargs,
+    ):
 
         super().__init__(
             adapter=adapter,
@@ -120,7 +132,7 @@ class ITC503(OxfordInstrumentsBase):
     version = Instrument.measurement(
         "V",
         """ A string property that returns the version of the IPS. """,
-        preprocess_reply=lambda v: v,
+        cast=str,
     )
 
     control_mode = Instrument.control(
@@ -426,14 +438,15 @@ class ITC503(OxfordInstrumentsBase):
         valid if gas-flow in auto mode. """,
     )
 
-    def wait_for_temperature(self,
-                             error=0.01,
-                             timeout=3600,
-                             check_interval=0.5,
-                             stability_interval=10,
-                             thermalize_interval=300,
-                             should_stop=lambda: False,
-                             ):
+    def wait_for_temperature(
+        self,
+        error: float = 0.01,
+        timeout: float | None = 3600,
+        check_interval: float = 0.5,
+        stability_interval: float = 10,
+        thermalize_interval: float = 300,
+        should_stop: Callable[[], bool] = lambda: False,
+    ) -> None:
         """
         Wait for the ITC to reach the set-point temperature.
 
@@ -489,7 +502,9 @@ class ITC503(OxfordInstrumentsBase):
 
         return
 
-    def program_sweep(self, temperatures, sweep_time, hold_time, steps=None):
+    def program_sweep(
+        self, temperatures: NumericSeq, sweep_time, hold_time, steps: int | None = None
+    ) -> None:
         """
         Program a temperature sweep in the controller. Stops any running sweep.
         After programming the sweep, it can be started using
@@ -521,20 +536,20 @@ class ITC503(OxfordInstrumentsBase):
         # Make steps array
         if steps is None:
             steps = temperatures.size
-        steps = np.linspace(1, steps, steps)
+        steps_list = np.linspace(1, steps, steps)
 
         # Create interpolated arrays
         interpolator = np.round(
-            np.linspace(1, steps.size, temperatures.size))
-        temperatures = np.interp(steps, interpolator, temperatures)
+            np.linspace(1, steps_list.size, temperatures.size))
+        temperatures = np.interp(steps_list, interpolator, temperatures)
 
         interpolator = np.round(
-            np.linspace(1, steps.size, sweep_time.size))
-        sweep_time = np.interp(steps, interpolator, sweep_time)
+            np.linspace(1, steps_list.size, sweep_time.size))
+        sweep_time = np.interp(steps_list, interpolator, sweep_time)
 
         interpolator = np.round(
-            np.linspace(1, steps.size, hold_time.size))
-        hold_time = np.interp(steps, interpolator, hold_time)
+            np.linspace(1, steps_list.size, hold_time.size))
+        hold_time = np.interp(steps_list, interpolator, hold_time)
 
         # Pad with zeros to wipe unused steps (total 16) of the sweep program
         padding = 16 - temperatures.size
@@ -555,6 +570,6 @@ class ITC503(OxfordInstrumentsBase):
             self.pointer = (line, 3)
             self.sweep_table = hold
 
-    def wipe_sweep_table(self):
+    def wipe_sweep_table(self) -> None:
         """ Wipe the currently programmed sweep table. """
         self.write("w")

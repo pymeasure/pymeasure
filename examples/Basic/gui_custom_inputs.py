@@ -34,15 +34,15 @@ python gui_custom_inputs.py
 
 """
 
-import sys
+import logging
 import random
+import sys
 from time import sleep
 
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.display.Qt import QtWidgets, fromUi
 from pymeasure.display.windows import ManagedWindow
+from pymeasure.experiment import FloatParameter, IntegerParameter, Parameter, Procedure
 
-import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 

@@ -24,10 +24,9 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
-from pymeasure.adapters import Adapter
 from pyvisa.constants import Parity
 
+from pymeasure.instruments import AdapterType, Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -90,7 +89,7 @@ class TC038(Instrument):
 
     def __init__(
         self,
-        adapter: Adapter | int | str,
+        adapter: AdapterType,
         name: str = "TC038",
         address: int = 1,
         timeout: int = 1000,
@@ -153,7 +152,7 @@ class TC038(Instrument):
         "WWR" + registers["setpoint"] + ",01,%s",
         """Control the setpoint of the temperature controller in °C.""",
         cast=_data_to_temp,
-        set_process=lambda temp: f"{int(round(temp * 10)):04X}",
+        set_process=lambda temp: f"{round(temp * 10):04X}",
         check_set_errors=True,
     )
 

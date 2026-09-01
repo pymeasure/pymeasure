@@ -1,3 +1,4 @@
+# ruff: file-ignore[BLE001]
 #
 # This file is part of the PyMeasure package.
 #
@@ -27,15 +28,19 @@
 
 import logging
 import re
+
 # ctypes only required for VirtualBench_Direct class
-from ctypes import (c_int, cdll, byref)
-from datetime import datetime, timezone, timedelta
+from ctypes import byref, c_int, cdll
+from datetime import datetime, timedelta, timezone
+
 import numpy as np
 import pandas as pd
 
 from pymeasure.instruments.validators import (
-    strict_discrete_set, strict_discrete_range,
-    truncated_discrete_set, strict_range
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+    truncated_discrete_set,
 )
 
 log = logging.getLogger(__name__)
@@ -143,8 +148,7 @@ class VirtualBench:
         :rtype: (int, float)
         """
         if not isinstance(timestamp, pyvb.Timestamp):
-            raise ValueError(f"{timestamp} is not a VirtualBench Timestamp object"
-                             )
+            raise TypeError(f"{timestamp} is not a VirtualBench Timestamp object")
         return self.vb.convert_timestamp_to_values(timestamp)
 
     def convert_values_to_timestamp(self, seconds_since_1970,
@@ -186,7 +190,7 @@ class VirtualBench:
         :rtype: (str, int)
         """
         if not isinstance(names_in, str):
-            raise ValueError(f"{names_in} is not a string")
+            raise TypeError(f"{names_in} is not a string")
         return self.vb.collapse_channel_string(names_in)
 
     def expand_channel_string(self, names_in):
@@ -387,7 +391,7 @@ class VirtualBench:
                 if (line == 'trig') and (device == self._device_name):
                     single_lines.append('trig')
                     return_lines.append(self._device_name + '/' + line)
-                elif int(line) in range(0, 8):
+                elif int(line) in range(8):
                     line = int(line)
                     single_lines.append(line)
                     # validate device name: either 'dig' or 'device_name/dig'
@@ -401,17 +405,16 @@ class VirtualBench:
                         except (IndexError, KeyError):
                             error()
                         # device_name has to match
-                        if not device == self._device_name:
+                        if device != self._device_name:
                             error()
                     # constructing line references for output
                     return_lines.append((self._device_name + '/dig/%d') % line)
                 else:
                     error()
                 # check if lines are initialized
-                if validate_init is True:
-                    if line not in self._line_numbers:
-                        raise ValueError(
-                            f"Digital Line {line} is not initialized")
+                if validate_init is True and line not in self._line_numbers:
+                    raise ValueError(
+                        f"Digital Line {line} is not initialized")
 
             # create comma separated channel string
             return_lines = ', '.join(return_lines)
@@ -932,15 +935,15 @@ class VirtualBench:
             channels = self._vb_handle.expand_channel_string(channel)[0]
             channels = channels.split(', ')
             return_value = []
-            for channel in channels:
+            for channel_element in channels:
                 # split off lines by last '/'
                 try:
-                    (device, channel) = re.match(
-                        r'(.*)(?:/)(.+)', channel).groups()
+                    (device, channel_element) = re.match(
+                        r'(.*)(?:/)(.+)', channel_element).groups()
                 except Exception:
                     error()
                 # validate numbers in range 1-2
-                if int(channel) not in range(1, 3):
+                if int(channel_element) not in range(1, 3):
                     error()
                 # validate device name: either 'mso' or 'device_name/mso'
                 if device == 'mso':
@@ -953,10 +956,10 @@ class VirtualBench:
                     except Exception:
                         error()
                     # device_name has to match
-                    if not device == self._device_name:
+                    if device != self._device_name:
                         error()
                 # constructing line references for output
-                return_value.append('mso/' + channel)
+                return_value.append('mso/' + channel_element)
 
             return_value = ', '.join(return_value)
             return_value = self._vb_handle.collapse_channel_string(
@@ -1323,8 +1326,7 @@ class VirtualBench:
 
             number_of_samples = int(self.sample_rate *
                                     self.acquisition_time) + 1
-            if not number_of_samples == (len(analog_data_out) /
-                                         analog_data_stride):
+            if number_of_samples != len(analog_data_out) / analog_data_stride:
                 # try updating timing parameters
                 self.query_timing()
                 number_of_samples = int(self.sample_rate *
@@ -1338,8 +1340,8 @@ class VirtualBench:
             pretrigger_samples = int(self.sample_rate * self.pretrigger_time)
             times = (
                 list(range(-pretrigger_samples, 0))
-                + list(range(0, number_of_samples - pretrigger_samples)))
-            times = [list(map(lambda x: x * 1 / self.sample_rate, times))]
+                + list(range(number_of_samples - pretrigger_samples)))
+            times = [[x * 1 / self.sample_rate for x in times]]
 
             np_array = np.array(analog_data_out)
             np_array = np.split(np_array, analog_data_stride)

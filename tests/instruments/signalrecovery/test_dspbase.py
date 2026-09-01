@@ -24,9 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.signalrecovery.dsp_base import DSPBase
+from pymeasure.test import expected_protocol
 
 
 @pytest.mark.parametrize("index, reference", [(idx, i) for idx, i in enumerate(DSPBase.REFERENCES)])

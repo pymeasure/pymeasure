@@ -36,7 +36,7 @@ try:
     del setuptools_scm
 except (ImportError, LookupError):
     # Setuptools_scm was not found, or it could not find a version, so use installation metadata.
-    from importlib.metadata import version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError, version
 
     try:
         __version__ = version("pymeasure")

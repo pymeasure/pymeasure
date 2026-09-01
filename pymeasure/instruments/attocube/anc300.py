@@ -24,35 +24,27 @@
 
 import logging
 import re
-from math import inf, isfinite, isinf
-from warnings import warn
+from collections.abc import Sequence
+from math import isfinite, isinf
 
-from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import (joined_validators,
-                                              strict_discrete_set,
-                                              strict_range)
-
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.common_base import identity
+from pymeasure.instruments.instrument import AdapterType
+from pymeasure.instruments.validators import joined_validators, strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def deprecated_strict_range(value, values):
-    warn("This property is deprecated, use meth:`move_raw` instead.",
-         FutureWarning)
-    return strict_range(value, values)
-
-
-def strict_length(value, values):
+def strict_length(value: list[int], values: int) -> list[int]:
     if len(value) != values:
         raise ValueError(
             f"Value {value} does not have an appropriate length of {values}")
     return value
 
 
-def truncated_int_array(value, values):
-    ret = []
+def truncated_int_array(value: list[int], values: Sequence[int]) -> list[int]:
+    ret: list[int] = []
     for i, v in enumerate(value):
         if values[0] <= v <= values[1]:
             if float(v).is_integer():
@@ -93,12 +85,15 @@ class Axis(Channel):
         cast=int, check_set_errors=True)
 
     mode = Instrument.control(
-        "getm", "setm %s",
+        "getm",
+        "setm %s",
         """Control axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
         'stp+', 'stp-'. Available modes depend on the actual axis model.""",
         validator=strict_discrete_set,
-        values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'],
-        check_set_errors=True)
+        values=["gnd", "inp", "cap", "stp", "off", "stp+", "stp-"],
+        check_set_errors=True,
+        cast=str,
+    )
 
     offset_voltage = Instrument.control(
         "geta", "seta %.3f",
@@ -106,7 +101,8 @@ class Axis(Channel):
         validator=strict_range, values=[0, 150], check_set_errors=True)
 
     pattern_up = Instrument.control(
-        "getpu", "setpu %s",
+        "getpu",
+        "setpu %s",
         """Control step up pattern of the piezo drive. 256 values ranging from 0
         to 255 representing the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
@@ -114,10 +110,15 @@ class Axis(Channel):
         validator=truncated_int_array_strict_length,
         values=[256, [0, 255]],
         set_process=lambda a: " ".join(f"{v}" for v in a),
-        separator='\r\n', cast=int, check_set_errors=True)
+        separator="\r\n",
+        cast=int,
+        check_set_errors=True,
+        get_process_list=identity,
+    )
 
     pattern_down = Instrument.control(
-        "getpd", "setpd %s",
+        "getpd",
+        "setpd %s",
         """Control step down pattern of the piezo drive. 256 values ranging from 0
         to 255 representing the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
@@ -125,7 +126,11 @@ class Axis(Channel):
         validator=truncated_int_array_strict_length,
         values=[256, [0, 255]],
         set_process=lambda a: " ".join(f"{v}" for v in a),
-        separator='\r\n', cast=int, check_set_errors=True)
+        separator="\r\n",
+        cast=int,
+        check_set_errors=True,
+        get_process_list=identity,
+    )
 
     output_voltage = Instrument.measurement(
         "geto",
@@ -135,46 +140,22 @@ class Axis(Channel):
         "getc",
         """Measure the saved capacity value in nF of the axis.""")
 
-    stepu = Instrument.setting(
-        "stepu %d",
-        """Set the steps upwards for N steps. Mode must be 'stp' and N must be
-        positive. 0 causes a continuous movement until stop is called.
-
-        .. deprecated:: 0.13.0 Use meth:`move_raw` instead.
-        """,
-        validator=deprecated_strict_range,
-        values=[0, inf],
-        check_set_errors=True,
-    )
-
-    stepd = Instrument.setting(
-        "stepd %d",
-        """Set the steps downwards for N steps. Mode must be 'stp' and N must be
-        positive. 0 causes a continuous movement until stop is called.
-
-        .. deprecated:: 0.13.0 Use meth:`move_raw` instead.
-        """,
-        validator=deprecated_strict_range,
-        values=[0, inf],
-        check_set_errors=True,
-    )
-
-    def insert_id(self, command):
+    def insert_id(self, command: str) -> str:
         """Insert the channel id in a command replacing `placeholder`.
 
         Add axis id to a command string at the correct position after the
         initial command, but before a potential value.
         """
         cmdparts = command.split()
-        cmdparts.insert(1, self.id)
+        cmdparts.insert(1, str(self.id))
         return ' '.join(cmdparts)
 
-    def stop(self):
+    def stop(self) -> None:
         """ Stop any motion of the axis """
         self.write('stop')
         self.check_set_errors()
 
-    def move_raw(self, steps):
+    def move_raw(self, steps: int) -> None:
         """Move 'steps' steps in the direction given by the sign of the
         argument. This method assumes the mode of the axis is set to 'stp' and
         it is non-blocking, i.e. it will return immediately after sending the
@@ -199,7 +180,7 @@ class Axis(Channel):
             return
         self.check_set_errors()
 
-    def move(self, steps, gnd=True):
+    def move(self, steps: int, gnd: bool = True) -> None:
         """Move 'steps' steps in the direction given by the sign of the
         argument. This method will change the mode of the axis automatically
         and ground the axis on the end if 'gnd' is True. The method is blocking
@@ -208,7 +189,7 @@ class Axis(Channel):
         :param steps: finite integer value of steps to be performed. A positive
             sign corresponds to upwards steps, a negative sign to downwards
             steps.
-        :param gnd: bool, flag to decide if the axis should be grounded after
+        :param gnd: flag to decide if the axis should be grounded after
             completion of the movement
         """
         if not isfinite(steps):
@@ -223,7 +204,7 @@ class Axis(Channel):
         if gnd:
             self.mode = 'gnd'
 
-    def measure_capacity(self):
+    def measure_capacity(self) -> float:
         """ Obtains a new measurement of the capacity. The mode of the axis
         returns to 'gnd' after the measurement.
 
@@ -247,11 +228,6 @@ class ANC300Controller(Instrument):
         properties with these names
     :param passwd: password for the attocube standard console
     :param query_delay: default delay between sending and reading in s (default 0.05)
-    :param host: host address of the instrument (e.g. 169.254.0.1)
-
-        .. deprecated:: 0.11.2
-            The 'host' argument is deprecated. Use 'adapter' argument instead.
-
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
     version = Instrument.measurement(
@@ -266,24 +242,13 @@ class ANC300Controller(Instrument):
 
     def __init__(
         self,
-        adapter=None,
-        name="attocube ANC300 Piezo Controller",
-        axisnames="",
-        passwd="",
-        query_delay=0.05,
+        adapter: AdapterType,
+        name: str = "attocube ANC300 Piezo Controller",
+        axisnames: list[str] | None = None,
+        passwd: str = "",
+        query_delay: float = 0.05,
         **kwargs,
     ):
-        adapter = self.handle_deprecated_host_arg(adapter, kwargs)
-
-        if not isinstance(name, str):
-            warn(
-                f"ANC300Controller.__init__: `name` was provided was {type(name)} but should be a "
-                + "string. This is likely because `name` was added as a keyword argument. "
-                + "All positional arguments after `adapter` should be provided as keyword argument"
-                + " (i.e. `axisnames=['x', 'y']`).",
-                FutureWarning
-            )
-
         self.query_delay = query_delay
         self.termination_str = "\r\n"
 
@@ -295,8 +260,8 @@ class ANC300Controller(Instrument):
             **kwargs
         )
 
-        self._axisnames = axisnames
-        for i, axis in enumerate(axisnames):
+        self._axisnames = axisnames or []
+        for i, axis in enumerate(self._axisnames):
             setattr(self, axis, self.add_child(Axis, id=str(i + 1)))
 
         self.wait_for()
@@ -309,7 +274,7 @@ class ANC300Controller(Instrument):
         super().read()  # ignore echo of password
         auth_msg = super().read()
         if auth_msg != 'Authorization success':
-            raise Exception(f"Attocube authorization failed '{auth_msg}'")
+            raise ValueError(f"Attocube authorization failed '{auth_msg}'")
         # switch console echo off
         self.ask('echo off')
 
@@ -342,44 +307,7 @@ class ANC300Controller(Instrument):
             if isinstance(attribute, Axis):
                 attribute.stop()
 
-    def handle_deprecated_host_arg(self, adapter, kwargs):
-        """
-        This function formats user input to the __init__ function to be compatible with the
-        current definition of the __init__ function. This is used to support outdated (deprecated)
-        code. and separated out to make it easier to remove in the future. To whoever removes this:
-        This function should be removed and the `adapter` argument in the __init__ method should
-        be made non-optional.
-
-        :param dict kwargs: keyword arguments passed to the __init__ function,
-            including the deprecated `host` argument.
-        :return str: resource string for the VISAAdapter
-        """
-        host = kwargs.pop("host", None)
-        if not (host or adapter):
-            raise TypeError("ANC300Controller: missing 'adapter' argument")
-
-        if not adapter:
-            # because the host argument is deprecated, prompt for the desired
-            # argument which is the adapter argument.
-            warn("The 'host' argument is deprecated. Use 'adapter' instead.", FutureWarning)
-            adapter = host
-
-        if isinstance(adapter, str):
-            if adapter.find("::") > -1:
-                # adapter is a resource string, so use it
-                return adapter
-            # otherwise, `adapter` can only be a (deprecated) hostname, so display a
-            # deprecation warning and create the resource string
-            warn(
-                "Using a hostname is deprecated. Use a full VISA resource string instead.",
-                FutureWarning,
-            )
-            return f"TCPIP::{adapter}::7230::SOCKET"
-        elif isinstance(adapter, Adapter):
-            return adapter
-        raise TypeError("ANC300Controller: 'adapter' argument must be a string or Adapter")
-
-    def _extract_value(self, reply):
+    def _extract_value(self, reply: str) -> str:
         """ preprocess_reply function for the Attocube console. This function
         tries to extract <value> from 'name = <value> [unit]'. If <value> can
         not be identified the original string is returned.
@@ -393,11 +321,11 @@ class ANC300Controller(Instrument):
         else:
             return reply
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Read after setting a value."""
         lines = []
         while True:
-            lines.append(super().read())
+            lines.append(super().read(**kwargs))
             if lines[-1] in ["OK", "ERROR"]:
                 break
         msg = self.termination_str.join(lines[:-1])
@@ -407,7 +335,7 @@ class ANC300Controller(Instrument):
                              f"command with message {msg}")
         return self._extract_value(msg)
 
-    def wait_for(self, query_delay=None):
+    def wait_for(self, query_delay: float | None = None) -> None:
         """Wait for some time. Used by 'ask' to wait before reading.
 
         :param query_delay: Delay between writing and reading in seconds.

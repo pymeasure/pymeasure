@@ -23,8 +23,11 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
+)
 
 
 class SR570(SCPIUnknownMixin, Instrument):

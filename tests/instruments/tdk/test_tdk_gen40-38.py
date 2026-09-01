@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.tdk.tdk_gen40_38 import TDK_Gen40_38
+from pymeasure.test import expected_protocol
 
 
 def test_init():
@@ -50,20 +50,18 @@ def test_voltage_setpoint(volt):
 
 
 def test_invalid_voltage():
-    with pytest.raises(ValueError):
-        with expected_protocol(
-                TDK_Gen40_38,
-                [(b"ADR 6", b"OK"),
-                 (b"PV 60", b"OK"), ]
-        ) as instr:
-            instr.voltage_setpoint = 60
+    with pytest.raises(ValueError), expected_protocol(
+            TDK_Gen40_38,
+            [(b"ADR 6", b"OK"),
+             (b"PV 60", b"OK"), ]
+    ) as instr:
+        instr.voltage_setpoint = 60
 
 
 def test_invalid_current_setpoint():
-    with pytest.raises(ValueError):
-        with expected_protocol(
-                TDK_Gen40_38,
-                [(b"ADR 6", b"OK"),
-                 (b"PC 50", b"OK"), ]
-        ) as instr:
-            instr.current_setpoint = 50
+    with pytest.raises(ValueError), expected_protocol(
+            TDK_Gen40_38,
+            [(b"ADR 6", b"OK"),
+             (b"PC 50", b"OK"), ]
+    ) as instr:
+        instr.current_setpoint = 50

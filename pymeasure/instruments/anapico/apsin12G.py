@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class APSIN12G(SCPIUnknownMixin, Instrument):

@@ -22,11 +22,12 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from contextlib import nullcontext as does_not_raise
 
-from pymeasure.test import expected_protocol
+import pytest
+
 from pymeasure.instruments.formfactor.velox import Velox
+from pymeasure.test import expected_protocol
 
 
 class TestChuck:
@@ -88,7 +89,7 @@ class TestChuck:
              ("ReadChuckIndex Y", "0:100 200"),
              ]
         ) as inst:
-            inst.chuck.index = (100, 200)
+            inst.chuck.index = (100., 200)
             assert [100, 200] == inst.chuck.index
 
 
@@ -132,28 +133,26 @@ class TestWaferMap:
 
 class TestVelox:
     def test_error(self):
-        with pytest.raises(ConnectionError):
-            with expected_protocol(
-                Velox,
-                [("*IDN?", "7: Error Message")]
-            ) as inst:
-                inst.id
+        with pytest.raises(ConnectionError), expected_protocol(
+            Velox,
+            [("*IDN?", "7: Error Message")]
+        ) as inst:
+            _ = inst.id
 
     def test_expected_error(self):
-        with does_not_raise(ConnectionError):
-            with expected_protocol(
-                Velox,
-                [("StepNextDie", "703: End of wafer.")]
-            ) as inst:
-                inst.wafermap.step_next_die()
+        with (
+            pytest.raises(FutureWarning, match="Cannot cast"),
+            does_not_raise(ConnectionError),
+            expected_protocol(Velox, [("StepNextDie", "703: End of wafer.")]) as inst,
+        ):
+            inst.wafermap.step_next_die()
 
     def test_options(self):
-        with pytest.raises(NotImplementedError):
-            with expected_protocol(
-                Velox,
-                [("*OPT?", "Fake options")]
-            ) as inst:
-                inst.options
+        with pytest.raises(NotImplementedError), expected_protocol(
+            Velox,
+            [("*OPT?", "Fake options")]
+        ) as inst:
+            _ = inst.options
 
     def test_version(self):
         with expected_protocol(

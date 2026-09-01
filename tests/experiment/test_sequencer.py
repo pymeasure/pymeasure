@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 
+from io import StringIO
+
 import pytest
 
-from io import StringIO
-from pymeasure.experiment.sequencer import SequenceHandler, SequenceEvaluationError
+from pymeasure.experiment.sequencer import SequenceEvaluationError, SequenceHandler
 
 
 def non_empty_lines(text):

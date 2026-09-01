@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.srs.ldc500series import LDC500Series, ThermometerType
+from pymeasure.test import expected_protocol
 
 
 def test_init():

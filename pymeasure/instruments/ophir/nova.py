@@ -22,8 +22,9 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.adapters import Adapter
-from .ophir_base import KeyMixin, OphirCommunication, OphirBase
+from pymeasure.instruments.instrument import AdapterType
+
+from .ophir_base import KeyMixin, OphirBase, OphirCommunication
 
 
 class NovaEnums:
@@ -42,7 +43,7 @@ class Nova(KeyMixin, NovaEnums, OphirCommunication):
     SL, SP, VE, WL, WN, WW
     """
 
-    def __init__(self, adapter: Adapter | str | int, name: str = "Nova", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Nova", **kwargs):
         super().__init__(adapter, name=name, **kwargs)
         # Set timeouts for Nova device.
         self._power_timeout = 0

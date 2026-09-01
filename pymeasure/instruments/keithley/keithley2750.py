@@ -38,16 +38,16 @@ def clean_closed_channels(output):
     elif isinstance(output, list):
         list_final = []
         for i, entry in enumerate(output):
-            if isinstance(entry, float) or isinstance(entry, int):
+            if isinstance(entry, (float, int)):
                 list_final += [int(entry)]
             elif isinstance(entry, str):
                 list_final += [int(entry.replace("(", "").replace(")", "").replace("@", ""))]
             else:
-                raise ValueError("Every entry must be a string, float, or int")
+                raise TypeError("Every entry must be a string, float, or int")
             assert isinstance(list_final[i], int)
         return list_final
     else:
-        raise ValueError("`output` must be a string or list.")
+        raise TypeError("`output` must be a string or list.")
 
 
 class Keithley2750(SCPIMixin, Instrument):

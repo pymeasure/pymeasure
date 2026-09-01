@@ -79,7 +79,7 @@ def test_sequence(resetted_hmp4040):
     """Test sequence execution."""
     # NOTE: There are actually no assertions in this test. But it is possible to check the sequence
     # execution by looking at display of the instrument.
-    resetted_hmp4040.selected_channel == 1
+    _ = resetted_hmp4040.selected_channel == 1
     resetted_hmp4040.voltage = 0.0
     resetted_hmp4040.sequence = [1.0, 1.0, 1.0, 2.0, 2.0, 1.0]
     resetted_hmp4040.repetitions = 0

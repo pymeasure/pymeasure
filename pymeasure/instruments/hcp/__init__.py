@@ -22,5 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .tc038d import TC038D
 from .tc038 import TC038
+from .tc038d import TC038D

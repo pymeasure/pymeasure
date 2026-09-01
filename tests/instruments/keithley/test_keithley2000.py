@@ -23,8 +23,8 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.keithley.keithley2000 import Keithley2000
+from pymeasure.test import expected_protocol
 
 
 def test_voltage_read():

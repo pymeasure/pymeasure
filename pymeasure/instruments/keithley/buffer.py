@@ -27,9 +27,9 @@ from time import sleep, time
 
 import numpy as np
 
+from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range
-from pymeasure.adapters import PrologixAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -88,7 +88,7 @@ class KeithleyBuffer:
             if should_stop():
                 return
             if (time() - t) > timeout:
-                raise Exception("Timed out waiting for Keithley buffer to fill.")
+                raise TimeoutError("Timed out waiting for Keithley buffer to fill.")
 
     @property
     def buffer_data(self):

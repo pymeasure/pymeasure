@@ -61,7 +61,7 @@ def write_generic_test(
     if inkwargs is None:
         args_text = "",
     else:
-        args_text = [f'            {key}={repr(value)},\n' for key, value in inkwargs.items()]
+        args_text = [f'            {key}={value!r},\n' for key, value in inkwargs.items()]
     inst = " as inst" if "inst" in test else ""
     # file.writelines([
     #     "\n",
@@ -223,8 +223,10 @@ def parse_stream(stream: io.BytesIO) -> COMM_PAIRS:
         else:
             # newline due to "\n" character in communication
             if mode == "W":
+                assert write is not None
                 write += b"\n" + line[:-1]
             elif mode == "R":
+                assert read is not None
                 read += b"\n" + line[:-1]
             else:
                 raise ValueError("Very first line does not contain 'WRITE' or 'READ'!")
@@ -244,7 +246,7 @@ class ByteFormatter(logging.Formatter):
             return value.encode()
         raise ValueError(f"value '{value}' is neither str nor bytes.")
 
-    def format(self, record: logging.LogRecord) -> bytes:
+    def format(self, record: logging.LogRecord) -> bytes:  # pyright: ignore[reportIncompatibleMethodOverride]
         return b"".join((record.msg.replace(r"%s", "").encode(),
                          *[self.make_bytes(arg) for arg in record.args]))  # type: ignore
 
@@ -450,11 +452,10 @@ class Generator:
 
         :param filename: Name to save the tests to, may contain the path, e.g. "/tests/test_abc.py".
         """
-        file = filename if isinstance(filename, io.StringIO) else open(filename, "w")
-        self.write_init_test(file)
-        self.write_property_tests(file)
-        self.write_method_tests(file)
-        file.close()
+        with (filename if isinstance(filename, io.StringIO) else open(filename, "w")) as file:
+            self.write_init_test(file)
+            self.write_property_tests(file)
+            self.write_method_tests(file)
 
     def parse_stream(self):
         """Parse the stream not yet read."""
@@ -501,8 +502,8 @@ class Generator:
             try:
                 adapter = VISAAdapter(adapter, **adapter_kwargs)
             except ImportError:
-                raise Exception("Invalid Adapter provided for Instrument since"
-                                " PyVISA is not present")
+                raise ValueError("Invalid Adapter provided for Instrument since"
+                                 " PyVISA is not present")
         adapter.log.addHandler(ByteStreamHandler(self._stream))
         adapter.log.setLevel(logging.DEBUG)
         self.inst = instrument_class(adapter, **kwargs)  # type: ignore[reportCallIssue]

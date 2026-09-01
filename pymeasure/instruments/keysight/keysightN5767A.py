@@ -25,10 +25,9 @@
 
 import logging
 
+from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range
-
-from pymeasure.adapters import VISAAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

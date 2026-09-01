@@ -33,16 +33,22 @@ python script_plotter.py
 
 """
 
+import logging
 import random
 import tempfile
 from time import sleep
 
-from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results, Worker
 from pymeasure.display import Plotter
+from pymeasure.experiment import (
+    FloatParameter,
+    IntegerParameter,
+    Parameter,
+    Procedure,
+    Results,
+    Worker,
+)
+from pymeasure.log import console_log
 
-import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 

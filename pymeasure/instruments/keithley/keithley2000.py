@@ -26,9 +26,11 @@ import logging
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import (
-    truncated_range, truncated_discrete_set,
-    strict_discrete_set
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
 )
+
 from .buffer import KeithleyBuffer
 
 log = logging.getLogger(__name__)

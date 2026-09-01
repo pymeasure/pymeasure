@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, truncated_discrete_set
+from pymeasure.instruments.validators import truncated_discrete_set, truncated_range
 
 
 class SR510(Instrument):

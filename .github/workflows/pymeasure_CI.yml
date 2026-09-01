@@ -52,7 +52,6 @@ jobs:
         with:
           version: PATH
           annotate: all
-        continue-on-error: true
 
   docs:
     name: Docs

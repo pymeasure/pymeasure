@@ -23,24 +23,31 @@
 
 import logging
 import re
+from typing import Any
 
-from pymeasure.instruments import Instrument, cast_or_str
-from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
-    TeledyneOscilloscopeChannel, sanitize_source
+from pymeasure.instruments.common_base import InstrumentProperty, cast_or_str
+from pymeasure.instruments.instrument import AdapterType, Instrument
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import (
+    TeledyneOscilloscope,
+    TeledyneOscilloscopeChannel,
+    sanitize_source,
+)
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def _math_define_validator(value, values):
+def _math_define_validator(
+    value: tuple[str, str, str], values: tuple[list[str], list[str], list[str]]
+) -> tuple[str, str, str]:
     """
     Validate the input of the math_define property
     :param value: input parameters as a 3-element tuple
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 3:
         raise ValueError(f'Number of parameters {len(value)} different from 3')
     output = (sanitize_source(value[0]), value[1], sanitize_source(value[2]))
@@ -49,14 +56,16 @@ def _math_define_validator(value, values):
     return output
 
 
-def _measure_delay_validator(value, values):
+def _measure_delay_validator(
+    value: tuple[str, str, str], values: tuple[list[str], list[str], list[str]]
+) -> tuple[str, str, str]:
     """
     Validate the input of the measure_delay property
     :param value: input parameters as a 3-element tuple
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
+        raise TypeError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 3:
         raise ValueError(f'Number of parameters {len(value)} different from 3')
     output = (value[0], sanitize_source(value[1]), sanitize_source(value[2]))
@@ -78,7 +87,7 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
     # Change listed values for existing commands:
     trigger_slope_values = TRIGGER_SLOPES
 
-    bwlimit = Instrument.control(
+    bwlimit: InstrumentProperty[bool] = Instrument.control(
         "BWL?", "BWL %s",
         """Control the 20 MHz internal low-pass filter (strict bool).
 
@@ -90,7 +99,7 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
         cast=str,
     )
 
-    invert = Instrument.control(
+    invert: InstrumentProperty[bool] = Instrument.control(
         "INVS?", "INVS %s",
         """Control the inversion of the input signal (strict bool).""",
         validator=strict_discrete_set,
@@ -174,7 +183,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     ch_4 = Instrument.ChannelCreator(LeCroyT3DSO1204Channel, 4)
 
-    def __init__(self, adapter, name="LeCroy T3DSO1204 Oscilloscope", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "LeCroy T3DSO1204 Oscilloscope", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
     ##################
@@ -202,7 +211,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     )
 
     @property
-    def timebase(self):
+    def timebase(self) -> dict[str, float]:
         """Get timebase setup as a dict containing the following keys:
 
             - "timebase_scale": horizontal scale in seconds/div (float)
@@ -221,7 +230,13 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         }
         return tb_setup
 
-    def timebase_setup(self, scale=None, offset=None, hor_magnify=None, hor_position=None):
+    def timebase_setup(
+        self,
+        scale: float | None = None,
+        offset: float | None = None,
+        hor_magnify: float | None = None,
+        hor_position: float | None = None,
+    ) -> None:
         """Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to timebase_setup if needed.
@@ -272,7 +287,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         values=[4, 16, 32, 64, 128, 256, 512, 1024]
     )
 
-    acquisition_status = Instrument.measurement(
+    acquisition_status: InstrumentProperty[str] = Instrument.measurement(
         "SAST?", """Get the acquisition status of the scope.""",
         values={"stopped": "Stop", "triggered": "Trig'd", "ready": "Ready", "auto": "Auto",
                 "armed": "Arm"},
@@ -284,7 +299,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         "SARA?", """Get the sample rate of the scope."""
     )
 
-    def acquisition_sample_size(self, source):
+    def acquisition_sample_size(self, source: str | int) -> float:
         """Get acquisition sample size for a certain channel. Used mainly for waveform acquisition.
         If the source is MATH, the SANU? MATH query does not seem to work, so I return the memory
         size instead.
@@ -346,7 +361,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     #    Waveform    #
     ##################
 
-    memory_size = Instrument.control(
+    memory_size: InstrumentProperty[float] = Instrument.control(
         "MSIZ?", "MSIZ %s",
         """Control the maximum depth of memory.
 
@@ -364,7 +379,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     )
 
     @property
-    def waveform_preamble(self):
+    def waveform_preamble(self) -> dict[str, Any]:
         """Get preamble information for the selected waveform source as a dict with the
         following keys:
 
@@ -408,7 +423,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         preamble["sampled_points"] = self.acquisition_sample_size(self.waveform_source)
         return self._fill_yaxis_preamble(preamble)
 
-    def _fill_yaxis_preamble(self, preamble=None):
+    def _fill_yaxis_preamble(self, preamble: dict[str, Any] | None = None) -> dict[str, Any]:
         """Fill waveform preamble section concerning the Y-axis.
         :param preamble: waveform preamble to be filled
         :return: filled preamble
@@ -443,6 +458,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         validator=_math_define_validator,
         values=[["C1", "C2", "C3", "C4"], ["*", "/", "+", "-"], ["C1", "C2", "C3", "C4"]],
         cast=str,
+        get_process_list=lambda vals: tuple(vals),
     )
 
     math_vdiv = Instrument.control(

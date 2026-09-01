@@ -111,6 +111,14 @@ def truncated_range(value: NumericT, values: NumericSeq) -> NumericT:
 
     :param value: A value to test
     :param values: A set of values that are valid
+
+    .. note::
+
+        Out-of-range values are silently clipped to the closest range bound
+        without raising an error or otherwise informing the user.
+        The value actually sent to the device may therefore differ from the value the user set.
+        Prefer :func:`strict_range` by default and only use a truncated validator when
+        silent clipping is genuinely desired and the property docstring documents this behavior.
     """
     if min(values) <= value <= max(values):
         return value
@@ -152,6 +160,15 @@ def truncated_discrete_set(value: NumericT, values: Iterable[NumericT]) -> Numer
 
     :param value: A value to test
     :param values: A set of values that are valid
+
+    .. note::
+
+        Values not in the discrete set are silently mapped without raising an
+        error or otherwise informing the user. The value actually sent to
+        the device may therefore differ from the value the user set.
+        Prefer :func:`strict_discrete_set` by default and only use a truncated
+        validator when silent clipping is genuinely desired and the property
+        docstring documents this behavior.
     """
     # Force the values to be sorted
     values = sorted(values)
@@ -205,6 +222,14 @@ def truncated_discrete_set_positive(
 ) -> NumericT | Literal[False]:
     """Truncates the number to the closest element in the positive discrete set.
     Returns False if the number is larger than the maximum value or negative.
+
+    .. note::
+
+        Invalid values are silently mapped without raising an error or
+        otherwise informing the user. The value actually sent to the device
+        (or the resulting no-op) may therefore differ from what the user set.
+        Prefer :func:`strict_discrete_set` by default and only use a truncated validator when
+        silent clipping is genuinely desired and the property docstring documents this behavior.
     """
     if number < 0:
         return False

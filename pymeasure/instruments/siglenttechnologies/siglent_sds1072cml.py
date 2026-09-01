@@ -299,7 +299,7 @@ class TriggerChannel(Channel):
             self.id = kwargs["source"]
         changedValues = [key for key in kwargs if trigger_config_dict[key] != kwargs[key]]
         processToChange = [
-            key for key in setValues if any([value in changedValues for value in setValues[key]])
+            key for key in setValues if any(value in changedValues for value in setValues[key])
         ]
         for changedKey in changedValues:
             trigger_config_dict[changedKey] = kwargs[changedKey]

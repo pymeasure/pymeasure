@@ -23,10 +23,10 @@
 #
 
 from warnings import warn
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set
 
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.common_base import cast_or_str, identity
+from pymeasure.instruments.validators import strict_discrete_set
 
 deprecated_text = """
 
@@ -291,6 +291,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
 
         Reading this property will NOT initialize a trigger.
         If you need that, use the `reading` property instead.""",
+        get_process_list=identity,
     )
 
     # Display related commands

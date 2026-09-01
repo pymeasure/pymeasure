@@ -22,11 +22,8 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.attocube import ANC300Controller
+from pymeasure.test import expected_protocol
 
 # Note: This communication does not contain the first several device
 # responses, as they are ignored due to `adapter.flush_read_buffer()`.
@@ -37,19 +34,6 @@ init_comm = [
     ("echo off", "> echo off"),
     (None, "OK"),
 ]
-
-
-def test_stepu():
-    """Test a setting."""
-    with expected_protocol(
-        ANC300Controller,
-        init_comm + [("setm 1 stp", "OK"), ("stepu 1 15", "OK"), ],
-        axisnames=["a", "b", "c"],
-        passwd=passwd,
-    ) as instr:
-        instr.a.mode = "stp"
-        with pytest.warns(FutureWarning):
-            instr.a.stepu = 15
 
 
 def test_continuous_move():

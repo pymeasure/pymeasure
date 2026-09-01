@@ -24,24 +24,20 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
-
 from pymeasure.instruments.oxfordinstruments.base import OxfordInstrumentsBase, OxfordVISAError
+from pymeasure.test import expected_protocol
 
 
 def test_wrong_response():
     with expected_protocol(OxfordInstrumentsBase,
                            [("A", "B"), (None, "")],
                            max_attempts=1,
-                           ) as inst:
-        with pytest.raises(OxfordVISAError):
-            inst.ask("A")
+                           ) as inst, pytest.raises(OxfordVISAError):
+        inst.ask("A")
 
 
 def test_write_not_understood_command():
     with expected_protocol(OxfordInstrumentsBase,
                            [("A", "?B")],
-                           ) as inst:
-        with pytest.raises(OxfordVISAError):
-            inst.write("A")
+                           ) as inst, pytest.raises(OxfordVISAError):
+        inst.write("A")

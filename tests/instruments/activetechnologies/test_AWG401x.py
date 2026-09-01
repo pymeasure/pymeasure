@@ -22,11 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
-
 from pymeasure.instruments.activetechnologies import AWG401x_AFG
 from pymeasure.instruments.activetechnologies.AWG401x import ChannelAFG, SequenceEntry
+from pymeasure.test import expected_protocol
 
 
 class SequencerInstrument(Instrument):

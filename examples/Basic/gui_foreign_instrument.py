@@ -34,22 +34,23 @@ Run the program by changing to the directory containing this file and calling:
 python gui_foreign_instrument.py
 """
 
-import sys
+import logging
 import random
-from time import sleep
-
-from pymeasure.experiment import Procedure, IntegerParameter, FloatParameter
-from pymeasure.display.Qt import QtWidgets
-from pymeasure.display.windows import ManagedWindow
-
-# Import the InstrumentKit package
-from instruments.thorlabs.pm100usb import PM100USB
-import instruments.units as u
+import sys
 
 # For simulating communication
 from io import BytesIO
+from time import sleep
 
-import logging
+import instruments.units as u
+
+# Import the InstrumentKit package
+from instruments.thorlabs.pm100usb import PM100USB
+
+from pymeasure.display.Qt import QtWidgets
+from pymeasure.display.windows import ManagedWindow
+from pymeasure.experiment import FloatParameter, IntegerParameter, Procedure
+
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 

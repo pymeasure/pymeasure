@@ -23,29 +23,31 @@
 #
 
 import logging
-
 import os
 import platform
+import shutil
 import subprocess
 import tempfile
-import shutil
+from collections.abc import Mapping
 
 import pyqtgraph as pg
 
-from ..browser import BrowserItem
-from ..manager import Manager, Experiment
-from ..Qt import QtCore, QtWidgets, QtGui
+from ...display.widgets.tab_widget import TabWidget
+from ...experiment import Procedure, Results, unique_filename
+from ...experiment.parameters import Parameter
+from ..browser import BaseBrowserItem, BrowserItem
+from ..manager import Experiment, Manager
+from ..Qt import QtCore, QtGui, QtWidgets
 from ..widgets import (
-    PlotWidget,
     BrowserWidget,
+    EstimatorWidget,
+    FileInputWidget,
     InputsWidget,
     LogWidget,
+    PlotWidget,
     ResultsDialog,
     SequencerWidget,
-    FileInputWidget,
-    EstimatorWidget,
 )
-from ...experiment import Results, Procedure, unique_filename
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -122,28 +124,28 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     """
 
     def __init__(self,
-                 procedure_class,
-                 widget_list=(),
-                 inputs=(),
-                 displays=(),
-                 log_channel='',
-                 log_level=logging.INFO,
-                 parent=None,
-                 sequencer=False,
-                 sequencer_inputs=None,
-                 sequence_file=None,
-                 inputs_in_scrollarea=False,
-                 enable_file_input=True,
-                 hide_groups=True,
+                 procedure_class: type[Procedure],
+                 widget_list: list[TabWidget] | None = None,
+                 inputs: list[str] | None = None,
+                 displays: list[str] | None = None,
+                 log_channel: str | None = '',
+                 log_level: int = logging.INFO,
+                 parent: QtWidgets.QWidget | None = None,
+                 sequencer: bool = False,
+                 sequencer_inputs: list[str] | None = None,
+                 sequence_file: str | None = None,
+                 inputs_in_scrollarea: bool = False,
+                 enable_file_input: bool = True,
+                 hide_groups: bool = True,
                  ):
 
-        super().__init__(parent)
+        super().__init__(parent=parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
         self.procedure_class = procedure_class
-        self.inputs = inputs
+        self.inputs_list = inputs
         self.hide_groups = hide_groups
-        self.displays = displays
+        self.displays = displays or []
         self.use_sequencer = sequencer
         self.sequencer_inputs = sequencer_inputs
         self.sequence_file = sequence_file
@@ -153,10 +155,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.log_level = log_level
         log.setLevel(log_level)
         self.log.setLevel(log_level)
-        self.widget_list = widget_list
+        self.widget_list = widget_list or []
 
         # Check if the get_estimates function is reimplemented
-        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
+        self.use_estimator = self.procedure_class.get_estimates != Procedure.get_estimates
 
         # Validate DATA_COLUMNS fit pymeasure column header format
         Procedure.parse_columns(self.procedure_class.DATA_COLUMNS)
@@ -164,7 +166,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self._setup_ui()
         self._layout()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
 
         self.queue_button = QtWidgets.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self._queue)
@@ -191,7 +193,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         self.inputs = InputsWidget(
             self.procedure_class,
-            self.inputs,
+            self.inputs_list,
             parent=self,
             hide_groups=self.hide_groups,
             inputs_in_scrollarea=self.inputs_in_scrollarea,
@@ -221,7 +223,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 parent=self
             )
 
-    def _layout(self):
+    def _layout(self) -> None:
         self.main = QtWidgets.QWidget(self)
 
         inputs_dock = QtWidgets.QWidget(self)
@@ -279,26 +281,28 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.main.show()
         self.resize(1000, 800)
 
-    def quit(self, evt=None):
+    def quit(self, evt=None) -> None:
         if self.manager.is_running():
             self.abort()
 
         self.close()
 
-    def browser_item_changed(self, item, column):
+    def browser_item_changed(self, item: BaseBrowserItem, column) -> None:
         if column == 0:
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
+            if experiment is None or experiment.curve_list is None:
+                return
             if state == QtCore.Qt.CheckState.Unchecked:
                 for curve in experiment.curve_list:
-                    if curve:
+                    if curve and curve.wdg:
                         curve.wdg.remove(curve)
             else:
                 for curve in experiment.curve_list:
-                    if curve:
+                    if curve and curve.wdg:
                         curve.wdg.load(curve)
 
-    def browser_item_menu(self, position):
+    def browser_item_menu(self, position: QtCore.QPoint) -> None:
         item = self.browser.itemAt(position)
 
         if item is not None:
@@ -306,7 +310,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             if item not in selected_items:
                 selected_items = [item]
 
-            experiments = [self.manager.experiments.with_browser_item(i) for i in selected_items]
+            experiments = [
+                exp
+                for i in selected_items
+                if (exp := self.manager.experiments.with_browser_item(i)) is not None
+            ]
             experiment = self.manager.experiments.with_browser_item(item)
 
             menu = QtWidgets.QMenu(self)
@@ -316,8 +324,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_open.setText("Open Data Externally")
             if len(experiments) > 1:
                 action_open.setEnabled(False)
-            action_open.triggered.connect(
-                lambda: self.open_file_externally(experiment.results.data_filename))
+            if experiment is not None:
+                action_open.triggered.connect(
+                    lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
 
             # Reveal in file explorer
@@ -325,8 +334,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_reveal.setText("Reveal in File Explorer")
             if len(experiments) > 1:
                 action_reveal.setEnabled(False)
-            action_reveal.triggered.connect(
-                lambda: self.reveal_in_file_explorer(experiment.results.data_filename))
+            if experiment is not None:
+                action_reveal.triggered.connect(
+                    lambda: self.reveal_in_file_explorer(experiment.results.data_filename))
             menu.addAction(action_reveal)
 
             # Save a copy of the datafile
@@ -334,8 +344,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_save.setText("Save Data File Copy")
             if len(experiments) > 1:
                 action_save.setEnabled(False)
-            action_save.triggered.connect(
-                lambda: self.save_experiment_copy(experiment.results.data_filename))
+            if experiment is not None:
+                action_save.triggered.connect(
+                    lambda: self.save_experiment_copy(experiment.results.data_filename))
             menu.addAction(action_save)
 
             # Change Color
@@ -343,25 +354,26 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_change_color.setText("Change Color")
             if len(experiments) > 1:
                 action_change_color.setEnabled(False)
-            action_change_color.triggered.connect(
-                lambda: self.change_color(experiment))
+            if experiment is not None:
+                action_change_color.triggered.connect(
+                    lambda: self.change_color(experiment))
             menu.addAction(action_change_color)
 
             # Remove
             action_remove = QtGui.QAction(menu)
             action_remove.setText(f"Remove Graph{'s' if len(experiments) > 1 else ''}")
-            if self.manager.is_running():
-                if self.manager.running_experiment() in experiments:  # Experiment running
-                    action_remove.setEnabled(False)
+            if self.manager.is_running() and self.manager.running_experiment() in experiments:
+                # Experiment running
+                action_remove.setEnabled(False)
             action_remove.triggered.connect(lambda: self.remove_experiment(experiments))
             menu.addAction(action_remove)
 
             # Delete
             action_delete = QtGui.QAction(menu)
             action_delete.setText(f"Delete Data File{'s' if len(experiments) > 1 else ''}")
-            if self.manager.is_running():
-                if self.manager.running_experiment() in experiments:  # Experiment running
-                    action_delete.setEnabled(False)
+            if self.manager.is_running() and self.manager.running_experiment() in experiments:
+                # Experiment running
+                action_delete.setEnabled(False)
             action_delete.triggered.connect(lambda: self.delete_experiment_data(experiments))
             menu.addAction(action_delete)
 
@@ -370,12 +382,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_use.setText("Use These Parameters")
             if len(experiments) > 1:
                 action_use.setEnabled(False)
-            action_use.triggered.connect(
-                lambda: self.set_parameters(experiment.procedure.parameter_objects()))
+            if experiment is not None:
+                action_use.triggered.connect(
+                    lambda: self.set_parameters(experiment.procedure.parameter_objects()))
             menu.addAction(action_use)
             menu.exec(self.browser.viewport().mapToGlobal(position))
 
-    def remove_experiment(self, experiment):
+    def remove_experiment(self, experiment: list[Experiment] | Experiment) -> None:
         experiments = experiment if isinstance(experiment, list) else [experiment]
         if len(experiments) > 1:
             message = f"Are you sure you want to remove these {len(experiments)} graphs?"
@@ -391,7 +404,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             for exp in experiments:
                 self.manager.remove(exp)
 
-    def delete_experiment_data(self, experiment):
+    def delete_experiment_data(self, experiment: list[Experiment] | Experiment) -> None:
         experiments = experiment if isinstance(experiment, list) else [experiment]
         if len(experiments) > 1:
             message = f"Are you sure you want to delete these {len(experiments)} data files?"
@@ -411,22 +424,22 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 except OSError:
                     log.warning(f"Could not delete file {exp.data_filename}")
 
-    def show_experiments(self):
+    def show_experiments(self) -> None:
         root = self.browser.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
             item.setCheckState(0, QtCore.Qt.CheckState.Checked)
 
-    def hide_experiments(self):
+    def hide_experiments(self) -> None:
         root = self.browser.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
             item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
 
-    def clear_experiments(self):
+    def clear_experiments(self) -> None:
         self.manager.clear()
 
-    def open_experiment(self):
+    def open_experiment(self) -> None:
         dialog = ResultsDialog(self.procedure_class,
                                widget_list=self.widget_list)
         if dialog.exec():
@@ -442,14 +455,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 else:
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
-                    for curve in experiment.curve_list:
-                        if curve:
-                            curve.update_data()
+                    if experiment.curve_list:
+                        for curve in experiment.curve_list:
+                            if curve:
+                                curve.update_data()
                     experiment.browser_item.progressbar.setValue(100)
                     self.manager.load(experiment)
                     log.info(f'Opened data file {filename}')
 
-    def save_experiment_copy(self, source_filename):
+    def save_experiment_copy(self, source_filename) -> None:
         """Save a copy of the datafile to a selected folder and file.
         Primarily useful for experiments that are stored in a temporary file.
         """
@@ -464,18 +478,20 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
             log.info(f"Copied data from '{source_filename}' to '{filename}'.")
 
-    def change_color(self, experiment):
+    def change_color(self, experiment: Experiment) -> None:
         color = QtWidgets.QColorDialog.getColor(
             parent=self)
         if color.isValid():
             pixelmap = QtGui.QPixmap(24, 24)
             pixelmap.fill(color)
             experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
+            if experiment.curve_list is None:
+                return
             for curve in experiment.curve_list:
-                if curve:
+                if curve and curve.wdg:
                     curve.wdg.set_color(curve, color=color)
 
-    def open_file_externally(self, filename):
+    def open_file_externally(self, filename) -> None:
         """ Method to open the datafile using an external editor or viewer. Uses the default
         application to open a datafile of this filetype, but can be overridden by the child
         class in order to open the file in another application of choice.
@@ -490,7 +506,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         elif (system == 'Darwin'):
             _ = subprocess.Popen(['open', filename])
         else:
-            raise Exception(f"{type(self).__name__} method open_file_externally does not support "
+            raise TypeError(f"{type(self).__name__} method open_file_externally does not support "
                             f"{system} OS")
 
     def reveal_in_file_explorer(self, filename: str) -> None:
@@ -509,22 +525,22 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         elif system == "Darwin":
             _ = subprocess.Popen(["open", "-R", path])
         else:
-            raise Exception(
+            raise TypeError(
                 f"{type(self).__name__} method reveal_in_file_explorer does not support {system} OS"
             )
 
-    def make_procedure(self):
+    def make_procedure(self) -> Procedure:
         if not isinstance(self.inputs, InputsWidget):
-            raise Exception("ManagedWindow can not make a Procedure"
+            raise TypeError("ManagedWindow can not make a Procedure"
                             " without a InputsWidget type")
         return self.inputs.get_procedure()
 
-    def new_curve(self, wdg, results, color=None, **kwargs):
+    def new_curve(self, wdg: TabWidget, results: Results, color=None, **kwargs):
         if color is None:
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
         return wdg.new_curve(results, color=color, **kwargs)
 
-    def new_experiment(self, results, curve=None):
+    def new_experiment(self, results: Results, curve=None) -> Experiment:
         if curve is None:
             curve_list = []
             for wdg in self.widget_list:
@@ -537,26 +553,25 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             curve_list = curve[:]
 
         curve_color = pg.intColor(0)
-        for curve in curve_list:
-            if hasattr(curve, 'color'):
-                curve_color = curve.color
+        for curve_element in curve_list:
+            if hasattr(curve_element, 'color'):
+                curve_color = curve_element.color
                 break
 
         browser_item = BrowserItem(results, curve_color)
         return Experiment(results, curve_list, browser_item)
 
-    def set_parameters(self, parameters):
+    def set_parameters(self, parameters: Mapping[str, Parameter]) -> None:
         """ This method should be overwritten by the child class. The
         parameters argument is a dictionary of Parameter objects.
         The Parameters should overwrite the GUI values so that a user
         can click "Queue" to capture the same parameters.
         """
         if not isinstance(self.inputs, InputsWidget):
-            raise Exception("ManagedWindow can not set parameters"
-                            " without a InputsWidget")
+            raise TypeError("ManagedWindow can not set parameters without a InputsWidget")
         self.inputs.set_parameters(parameters)
 
-    def _queue(self, checked):
+    def _queue(self, checked) -> None:
         """ This method is a wrapper for the `self.queue` method to be connected
         to the `queue` button. It catches the positional argument that is passed
         when it is called by the button and calls the `self.queue` method without
@@ -564,7 +579,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         """
         self.queue()
 
-    def queue(self, procedure=None):
+    def queue(self, procedure: Procedure | None = None) -> None:
         """ Queue a measurement based on the parameters in the input-widget.
 
         Semi-abstract method, which must be overridden by the child class if the filename- and
@@ -627,7 +642,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         experiment = self.new_experiment(results)
         self.manager.queue(experiment)
 
-    def abort(self):
+    def abort(self) -> None:
         self.abort_button.setEnabled(False)
         self.abort_button.setText("Resume")
         self.abort_button.clicked.disconnect()
@@ -635,12 +650,12 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         try:
             self.manager.abort()
         except:  # noqa
-            log.error('Failed to abort experiment', exc_info=True)
+            log.exception('Failed to abort experiment')
             self.abort_button.setText("Abort")
             self.abort_button.clicked.disconnect()
             self.abort_button.clicked.connect(self.abort)
 
-    def resume(self):
+    def resume(self) -> None:
         self.abort_button.setText("Abort")
         self.abort_button.clicked.disconnect()
         self.abort_button.clicked.connect(self.abort)
@@ -649,23 +664,23 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         else:
             self.abort_button.setEnabled(False)
 
-    def queued(self, experiment):
+    def queued(self, experiment: Experiment) -> None:
         self.abort_button.setEnabled(True)
         self.browser_widget.show_button.setEnabled(True)
         self.browser_widget.hide_button.setEnabled(True)
         self.browser_widget.clear_button.setEnabled(True)
 
-    def running(self, experiment):
+    def running(self, experiment: Experiment) -> None:
         self.browser_widget.clear_button.setEnabled(False)
 
-    def abort_returned(self, experiment):
+    def abort_returned(self, experiment: Experiment) -> None:
         if self.manager.experiments.has_next():
             self.abort_button.setText("Resume")
             self.abort_button.setEnabled(True)
         else:
             self.browser_widget.clear_button.setEnabled(True)
 
-    def finished(self, experiment):
+    def finished(self, experiment: Experiment) -> None:
         if not self.manager.experiments.has_next():
             self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)
@@ -677,7 +692,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         return self.file_input.directory
 
     @directory.setter
-    def directory(self, value):
+    def directory(self, value) -> None:
         if not self.enable_file_input:
             raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
         self.file_input.directory = value
@@ -689,19 +704,19 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         return self.file_input.filename
 
     @filename.setter
-    def filename(self, value):
+    def filename(self, value) -> None:
         if not self.enable_file_input:
             raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
         self.file_input.filename = value
 
     @property
-    def store_measurement(self):
+    def store_measurement(self) -> bool:
         if not self.enable_file_input:
             raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
         return self.file_input.store_measurement
 
     @store_measurement.setter
-    def store_measurement(self, value):
+    def store_measurement(self, value: bool) -> None:
         if not self.enable_file_input:
             raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
         self.file_input.store_measurement = value
@@ -729,8 +744,16 @@ class ManagedWindow(ManagedWindowBase):
 
     """
 
-    def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1,
-                 log_fmt=None, log_datefmt=None, **kwargs):
+    def __init__(
+        self,
+        procedure_class: type[Procedure],
+        x_axis: str,
+        y_axis: str,
+        linewidth: float = 1,
+        log_fmt: str | None = None,
+        log_datefmt: str | None = None,
+        **kwargs,
+    ):
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.log_widget = LogWidget("Experiment Log", fmt=log_fmt, datefmt=log_datefmt)
@@ -738,14 +761,13 @@ class ManagedWindow(ManagedWindowBase):
                                       self.y_axis, linewidth=linewidth)
         self.plot_widget.setMinimumSize(100, 200)
 
-        if "widget_list" not in kwargs:
-            kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.plot_widget, self.log_widget)
+        widget_list: list[TabWidget] = list(kwargs.pop("widget_list", ()))
+        widget_list.extend((self.plot_widget, self.log_widget))
 
-        super().__init__(procedure_class, **kwargs)
+        super().__init__(procedure_class, widget_list=widget_list, **kwargs)
 
         # Setup measured_quantities once we know x_axis and y_axis
-        self.browser_widget.browser.measured_quantities.update([self.x_axis, self.y_axis])
+        self.browser_widget.browser.measured_quantities.update([x_axis, y_axis])
 
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)

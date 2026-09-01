@@ -23,9 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.hp.hp34401A import HP34401A
+from pymeasure.test import expected_protocol
 
 
 @pytest.mark.parametrize("function_", HP34401A.FUNCTIONS.keys())

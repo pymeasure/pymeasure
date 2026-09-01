@@ -24,8 +24,8 @@
 
 import ctypes
 import logging
-
 from enum import Enum
+
 from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -262,7 +262,7 @@ class HP6632A(HPLegacyInstrument):
         map_values=True
     )
 
-    @output_enabled.getter
+    @output_enabled.getter  # pyright: ignore[reportGeneralTypeIssues]
     def output_enabled(self):
         """
         A bool property which controls if the output is enabled

@@ -25,6 +25,7 @@
 import logging
 
 import serial
+
 from .adapter import Adapter
 
 log = logging.getLogger(__name__)

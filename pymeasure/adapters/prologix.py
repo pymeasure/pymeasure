@@ -23,9 +23,9 @@
 #
 import time
 
-from pymeasure.adapters import VISAAdapter
 from pyvisa.constants import ResourceAttribute
 
+from pymeasure.adapters import VISAAdapter
 from pymeasure.adapters.protocol import ProtocolAdapter
 
 

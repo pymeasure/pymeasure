@@ -23,9 +23,8 @@
 #
 
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.hp import HP8657B
+from pymeasure.test import expected_protocol
 
 
 def test_frequency():

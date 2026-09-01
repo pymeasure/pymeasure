@@ -45,4 +45,3 @@ class ConsoleWidget(TabWidget, PGConsoleWidget):
     :param text: The initial welcome message displayed in the console.
     """
 
-    pass

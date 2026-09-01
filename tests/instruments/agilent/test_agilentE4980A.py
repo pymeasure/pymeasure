@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.agilent.agilentE4980 import AgilentE4980
+from pymeasure.test import expected_protocol
 
 
 @pytest.mark.parametrize("freq", [40, 1E6])

@@ -22,13 +22,13 @@
 # THE SOFTWARE.
 #
 
+import logging
 from typing import Literal
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
 
-import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 

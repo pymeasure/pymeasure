@@ -25,9 +25,8 @@
 import pytest
 from pytest import raises
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.signalrecovery.dsp7265 import DSP7265
+from pymeasure.test import expected_protocol
 
 
 @pytest.mark.parametrize("frequency", [
@@ -48,9 +47,8 @@ def test_valid_frequency(frequency):
     1e14,
 ])
 def test_invalid_frequency(frequency):
-    with raises(ValueError):
-        with expected_protocol(
-                DSP7265,
-                [(b"OF. %g" % frequency, None)],
-        ) as instr:
-            instr.frequency = frequency
+    with raises(ValueError), expected_protocol(
+            DSP7265,
+            [(b"OF. %g" % frequency, None)],
+    ) as instr:
+        instr.frequency = frequency

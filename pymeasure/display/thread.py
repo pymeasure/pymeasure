@@ -23,7 +23,6 @@
 #
 
 import logging
-
 from threading import Event
 
 from .Qt import QtCore

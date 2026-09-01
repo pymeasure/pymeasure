@@ -24,10 +24,8 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
-                                                truncated_range
-
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -45,7 +43,7 @@ class TemperatureSensor(Channel):
     Therefore loop control is kept with other temperature sensor properties.
     """
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """The MercuryiTC responds to every communication (get and set).
         This simply reads back on setting a property."""
         try:
@@ -163,7 +161,7 @@ class Heater(Channel):
     loop, or otherwise set to operate in open-loop configuration.
     """
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """The MercuryiTC responds to every communication (get and set).
         This simply reads back on setting a property."""
         try:

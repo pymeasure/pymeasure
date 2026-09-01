@@ -23,6 +23,7 @@
 #
 
 import pytest
+
 from pymeasure.instruments.rigol import DHOBase
 
 
