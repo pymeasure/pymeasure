@@ -951,3 +951,492 @@ def test_timebase_window_scale_get():
         [(":TIMebase:WINDow:SCALe?", "1.00E-03")],
     ) as instr:
         assert instr.timebase_window_scale == 1e-3
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        ("SINGLE", "SINGle"),
+        ("NORMAL", "NORMal"),
+        ("AUTO", "AUTO"),
+    ],
+)
+def test_trigger_mode_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":TRIGger:MODE {expected_command}", None)],
+    ) as instr:
+        instr.trigger_mode = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("SINGle", "SINGLE"),
+        ("NORMal", "NORMAL"),
+        ("AUTO", "AUTO"),
+    ],
+)
+def test_trigger_mode_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:MODE?", response)],
+    ) as instr:
+        assert instr.trigger_mode == expected_value
+
+
+def test_trigger_mode_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_mode = "MANUAL"  # type: ignore
+
+
+def test_trigger_run():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:RUN", None)],
+    ) as instr:
+        instr.trigger_run()
+
+
+def test_trigger_status():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:STATus?", "Trig'd")],
+    ) as instr:
+        assert instr.trigger_status == "Trig'd"
+
+
+def test_trigger_stop():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:STOP", None)],
+    ) as instr:
+        instr.trigger_stop()
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        ("EDGE", "EDGE"),
+        ("PULSE", "PULSe"),
+        ("SLOPE", "SLOPe"),
+        ("INTERVAL", "INTerval"),
+        ("PATTERN", "PATTern"),
+        ("RUNT", "RUNT"),
+        ("QUALIFIED", "QUALified"),
+        ("WINDOW", "WINDow"),
+        ("DROPOUT", "DROPout"),
+        ("VIDEO", "VIDeo"),
+        ("IIC", "IIC"),
+        ("SPI", "SPI"),
+        ("UART", "UART"),
+        ("LIN", "LIN"),
+        ("CAN", "CAN"),
+        ("FLEXRAY", "FLEXray"),
+        ("CANFD", "CANFd"),
+        ("IIS", "IIS"),
+    ],
+)
+def test_trigger_type_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":TRIGger:TYPE {expected_command}", None)],
+    ) as instr:
+        instr.trigger_type = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("EDGE", "EDGE"),
+        ("PULSe", "PULSE"),
+        ("SLOPe", "SLOPE"),
+        ("CANFd", "CANFD"),
+    ],
+)
+def test_trigger_type_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:TYPE?", response)],
+    ) as instr:
+        assert instr.trigger_type == expected_value
+
+
+def test_trigger_type_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_type = "NOISE"  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        ("DC", "DC"),
+        ("AC", "AC"),
+        ("LF_REJECT", "LFREJect"),
+        ("HF_REJECT", "HFREJect"),
+    ],
+)
+def test_trigger_edge_coupling_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":TRIGger:EDGE:COUPling {expected_command}", None)],
+    ) as instr:
+        instr.trigger_edge_coupling = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("DC", "DC"),
+        ("AC", "AC"),
+        ("LFREJect", "LF_REJECT"),
+        ("HFREJect", "HF_REJECT"),
+    ],
+)
+def test_trigger_edge_coupling_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:COUPling?", response)],
+    ) as instr:
+        assert instr.trigger_edge_coupling == expected_value
+
+
+def test_trigger_edge_coupling_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_coupling = "GND"  # type: ignore
+
+
+def test_trigger_edge_holdoff_events_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:HLDEVent 5", None)],
+    ) as instr:
+        instr.trigger_edge_holdoff_events = 5
+
+
+def test_trigger_edge_holdoff_events_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:HLDEVent?", "5")],
+    ) as instr:
+        assert instr.trigger_edge_holdoff_events == 5
+
+
+def test_trigger_edge_holdoff_events_out_of_range_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_holdoff_events = 100000001
+
+
+def test_trigger_edge_holdoff_time_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:HLDTime 1.00E-03", None)],
+    ) as instr:
+        instr.trigger_edge_holdoff_time = 1e-3
+
+
+def test_trigger_edge_holdoff_time_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:HLDTime?", "1.00E-03")],
+    ) as instr:
+        assert instr.trigger_edge_holdoff_time == 1e-3
+
+
+def test_trigger_edge_holdoff_time_out_of_range_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_holdoff_time = 31.0
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        ("OFF", "OFF"),
+        ("EVENTS", "EVENts"),
+        ("TIME", "TIME"),
+    ],
+)
+def test_trigger_edge_holdoff_type_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":TRIGger:EDGE:HOLDoff {expected_command}", None)],
+    ) as instr:
+        instr.trigger_edge_holdoff_type = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("OFF", "OFF"),
+        ("EVENts", "EVENTS"),
+        ("TIME", "TIME"),
+    ],
+)
+def test_trigger_edge_holdoff_type_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:HOLDoff?", response)],
+    ) as instr:
+        assert instr.trigger_edge_holdoff_type == expected_value
+
+
+def test_trigger_edge_holdoff_type_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_holdoff_type = "NEVER"  # type: ignore
+
+
+@pytest.mark.parametrize("value", ["LAST_TRIG", "ACQ_START"])
+def test_trigger_edge_holdoff_start_set(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":TRIGger:EDGE:HSTart {value}", None)],
+    ) as instr:
+        instr.trigger_edge_holdoff_start = value
+
+
+@pytest.mark.parametrize("value", ["LAST_TRIG", "ACQ_START"])
+def test_trigger_edge_holdoff_start_get(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:HSTart?", value)],
+    ) as instr:
+        assert instr.trigger_edge_holdoff_start == value
+
+
+def test_trigger_edge_holdoff_start_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_holdoff_start = "MIDDLE"  # type: ignore
+
+
+def test_trigger_edge_level_set_channel_source():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":TRIGger:EDGE:SOURce?", "C1"),
+            (":CHANnel1:SCALe?", "2.00E+00"),
+            (":CHANnel1:OFFSet?", "0.000E+00"),
+            (":TRIGger:EDGE:LEVel 5.00E+00", None),
+        ],
+    ) as instr:
+        instr.trigger_edge_level = 5.0
+
+
+def test_trigger_edge_level_set_different_channel_source():
+    # scale=1.0, offset=0.5 -> valid range [-4.6, 3.6]
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":TRIGger:EDGE:SOURce?", "C3"),
+            (":CHANnel3:SCALe?", "1.00E+00"),
+            (":CHANnel3:OFFSet?", "5.000E-01"),
+            (":TRIGger:EDGE:LEVel -1.00E+00", None),
+        ],
+    ) as instr:
+        instr.trigger_edge_level = -1.0
+
+
+def test_trigger_edge_level_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:LEVel?", "5.00E+00")],
+    ) as instr:
+        assert instr.trigger_edge_level == 5.0
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        8.3,  # above upper bound: 4.1 * 2.0 - 0.0 = 8.2
+        -8.3,  # below lower bound: -4.1 * 2.0 - 0.0 = -8.2
+    ],
+)
+def test_trigger_edge_level_out_of_range_rejected_for_channel_source(value):
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [
+                (":TRIGger:EDGE:SOURce?", "C1"),
+                (":CHANnel1:SCALe?", "2.00E+00"),
+                (":CHANnel1:OFFSet?", "0.000E+00"),
+            ],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_level = value
+
+
+@pytest.mark.parametrize("source", ["EX", "EX5", "LINE", "D0", "D15"])
+def test_trigger_edge_level_set_unrestricted_for_non_channel_source(source):
+    # Non-analog trigger sources have no scale/offset -> no extra queries,
+    # and the value is not range-checked.
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":TRIGger:EDGE:SOURce?", source),
+            (":TRIGger:EDGE:LEVel 1.00E+03", None),
+        ],
+    ) as instr:
+        instr.trigger_edge_level = 1e3
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        (True, "ON"),
+        (False, "OFF"),
+    ],
+)
+def test_trigger_edge_noise_reject_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":TRIGger:EDGE:NREJect {expected_command}", None)],
+    ) as instr:
+        instr.trigger_edge_noise_reject = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("ON", True),
+        ("OFF", False),
+    ],
+)
+def test_trigger_edge_noise_reject_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:NREJect?", response)],
+    ) as instr:
+        assert instr.trigger_edge_noise_reject is expected_value
+
+
+def test_trigger_edge_noise_reject_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_noise_reject = "YES"  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "value, expected_command",
+    [
+        ("RISING", "RISing"),
+        ("FALLING", "FALLing"),
+        ("ALTERNATE", "ALTernate"),
+    ],
+)
+def test_trigger_edge_slope_set(value, expected_command):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":TRIGger:EDGE:SLOPe {expected_command}", None)],
+    ) as instr:
+        instr.trigger_edge_slope = value
+
+
+@pytest.mark.parametrize(
+    "response, expected_value",
+    [
+        ("RISing", "RISING"),
+        ("FALLing", "FALLING"),
+        ("ALTernate", "ALTERNATE"),
+    ],
+)
+def test_trigger_edge_slope_get(response, expected_value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:SLOPe?", response)],
+    ) as instr:
+        assert instr.trigger_edge_slope == expected_value
+
+
+def test_trigger_edge_slope_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_slope = "BOTH"  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "C1", "C2", "C3", "C4",
+        "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
+        "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15",
+        "EX", "EX5", "LINE",
+    ],
+)
+def test_trigger_edge_source_set(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":TRIGger:EDGE:SOURce {value}", None)],
+    ) as instr:
+        instr.trigger_edge_source = value
+
+
+@pytest.mark.parametrize("value", ["C1", "D0", "EX", "EX5", "LINE"])
+def test_trigger_edge_source_get(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":TRIGger:EDGE:SOURce?", value)],
+    ) as instr:
+        assert instr.trigger_edge_source == value
+
+
+def test_trigger_edge_source_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_source = "C5"  # type: ignore
