@@ -24,7 +24,7 @@
 
 import warnings
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, IEEE4882Mixin
 from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.validators import (
     strict_discrete_set,
@@ -33,7 +33,7 @@ from pymeasure.instruments.validators import (
 )
 
 
-class SR860(Instrument):
+class SR860(IEEE4882Mixin, Instrument):
 
     SENSITIVITIES: list[float] = [
         1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002,
