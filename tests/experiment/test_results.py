@@ -107,7 +107,9 @@ def test_procedure_filestorage():
     assert RandomProcedure.iterations.value == 100
     procedure = RandomProcedure()
     procedure.iterations = 101
-    resultfile = tempfile.mktemp()
+    fd, resultfile = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(resultfile)
     results = Results(procedure, resultfile)
 
     new_results = pickle.loads(pickle.dumps(results))
