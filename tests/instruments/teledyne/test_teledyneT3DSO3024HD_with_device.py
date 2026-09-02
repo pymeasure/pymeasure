@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import time
+
 import pytest
 
 from pymeasure.instruments.teledyne.teledyneT3DSO3024HD import TeledyneT3DSO3024HD
@@ -127,6 +129,7 @@ class TestSkew:
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.skew = skew_value
+        time.sleep(0.1)
         assert channel_obj.skew == skew_value
 
 
@@ -311,3 +314,27 @@ class TestAcquisitionTypeEres:
        reseted_teledyneT3DSO3024HD.acquisition_type = ("ERES", acquisition_type_eres_value)
        assert reseted_teledyneT3DSO3024HD.acquisition_type == ("ERES",
                                                                acquisition_type_eres_value)
+
+
+class TestTimebaseScale:
+    @pytest.mark.parametrize(
+        "timebase_scale_value", [5e-8, 5e-7, 5e-6, 5e-5, 5e-4, 5e-3, 5e-2, 1e-1]
+    )
+    def test_timebase_scale(self, reseted_teledyneT3DSO3024HD, timebase_scale_value):
+        reseted_teledyneT3DSO3024HD.timebase_scale = timebase_scale_value
+        assert reseted_teledyneT3DSO3024HD.timebase_scale == pytest.approx(
+            timebase_scale_value, rel=1e-3)
+
+
+class TestTimebaseDelay:
+    # the legal range depends on the current timebase_scale: [-5 * scale, 5 * scale]
+    @pytest.mark.parametrize("timebase_scale_value", [5e-7, 5e-6, 5e-5])
+    @pytest.mark.parametrize("delay_factor", [-5, -1, 0, 5])
+    def test_timebase_delay(self, reseted_teledyneT3DSO3024HD, timebase_scale_value,
+                             delay_factor):
+        reseted_teledyneT3DSO3024HD.timebase_scale = timebase_scale_value
+        delay_value = delay_factor * timebase_scale_value
+        reseted_teledyneT3DSO3024HD.timebase_delay = delay_value
+        assert reseted_teledyneT3DSO3024HD.timebase_delay == pytest.approx(
+            delay_value, rel=1e-3
+        )
