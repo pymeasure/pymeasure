@@ -24,7 +24,7 @@
 
 import warnings
 
-from pymeasure.instruments import Instrument, IEEE4882Mixin
+from pymeasure.instruments import IEEE4882Mixin, Instrument
 from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.validators import (
     strict_discrete_set,
