@@ -421,14 +421,14 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         between the trigger event and the delay reference point on screen.
 
         Note: the legal range depends on the current :attr:`timebase_scale`
-        setting: [-5000 * scale, 5 * scale].
+        setting: [-5 * scale, 5 * scale].
         """
         return self._timebase_delay
 
     @timebase_delay.setter
     def timebase_delay(self, value):
         timebase_scale = self.timebase_scale
-        self._timebase_delay_values = [-5000 * timebase_scale, 5 * timebase_scale]
+        self._timebase_delay_values = [-5 * timebase_scale, 5 * timebase_scale]
         self._timebase_delay = value
 
     timebase_window = Instrument.control(
