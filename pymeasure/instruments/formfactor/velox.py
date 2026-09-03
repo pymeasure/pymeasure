@@ -25,7 +25,7 @@
 
 import logging
 
-from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments import Channel, Instrument, SCPIMixin, cast_or_str
 from pymeasure.instruments.common_base import identity
 from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -155,7 +155,7 @@ class WaferMap(Channel):
         """
         return self.values("StepFirstDie",
                            separator=" ",
-                           cast=int,
+                           cast=cast_or_str(int),
                            )
 
     def step_next_die(self) -> list[int]:
@@ -171,7 +171,7 @@ class WaferMap(Channel):
         """
         return self.values("StepNextDie",
                            separator=" ",
-                           cast=int,
+                           cast=cast_or_str(int),
                            )
 
     def step_to_die(self, x_pos: int, y_pos: int, s_pos: int | None = None) -> None:
