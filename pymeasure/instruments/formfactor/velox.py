@@ -142,7 +142,7 @@ class WaferMap(Channel):
     end_reached = False
     """Get whether the end of the wafermap is reached or not (bool)."""
 
-    def step_first_die(self) -> list[int] | str:
+    def step_first_die(self) -> list[int | str]:
         """Move the chuck to the first die and clear the the binning results.
 
         :return: List of the int containing the coordinates of the first die.
@@ -158,7 +158,7 @@ class WaferMap(Channel):
                            cast=cast_or_str(int),
                            )
 
-    def step_next_die(self) -> list[int] | str:
+    def step_next_die(self) -> list[int | str]:
         """Move the chuck to the next logical die.
 
         :return: List of the int containing the coordinates of the new die.
