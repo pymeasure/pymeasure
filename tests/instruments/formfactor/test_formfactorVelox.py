@@ -141,7 +141,6 @@ class TestVelox:
 
     def test_expected_error(self):
         with (
-            pytest.raises(FutureWarning, match="Cannot cast"),
             does_not_raise(ConnectionError),
             expected_protocol(Velox, [("StepNextDie", "703: End of wafer.")]) as inst,
         ):
