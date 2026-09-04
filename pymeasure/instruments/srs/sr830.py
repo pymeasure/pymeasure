@@ -31,7 +31,7 @@ from typing import Literal
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import IEEE4882Mixin, Instrument
 from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.validators import (
     strict_discrete_set,
@@ -67,7 +67,7 @@ class ERRStatus(IntFlag):
     MATH_ERR = 128
 
 
-class SR830(Instrument):
+class SR830(IEEE4882Mixin, Instrument):
     SAMPLE_FREQUENCIES: list[float] = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
         32, 64, 128, 256, 512
@@ -111,27 +111,6 @@ class SR830(Instrument):
         "CH1",
         "CH2",
     ]
-
-    status = Instrument.measurement(
-        "*STB?",
-        """Get the status byte and Master Summary Status bit.""",
-        cast=str,
-    )
-
-    id = Instrument.measurement(
-        "*IDN?",
-        """Get the identification of the instrument.""",
-        cast=str,
-        maxsplit=0,
-    )
-
-    def clear(self):
-        """Clear the instrument status byte."""
-        self.write("*CLS")
-
-    def reset(self):
-        """Reset the instrument."""
-        self.write("*RST")
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
