@@ -112,27 +112,6 @@ class SR830(IEEE4882Mixin, Instrument):
         "CH2",
     ]
 
-    status = Instrument.measurement(
-        "*STB?",
-        """Get the status byte and Master Summary Status bit.""",
-        cast=str,
-    )
-
-    id = Instrument.measurement(
-        "*IDN?",
-        """Get the identification of the instrument.""",
-        cast=str,
-        maxsplit=0,
-    )
-
-    def clear(self):
-        """Clear the instrument status byte."""
-        self.write("*CLS")
-
-    def reset(self):
-        """Reset the instrument."""
-        self.write("*RST")
-
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
         """ A floating point property that represents the reference sine-wave
