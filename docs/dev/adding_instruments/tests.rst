@@ -242,30 +242,30 @@ protocol tests after all device tests have finished:
     import pytest
 
     from pymeasure.generator import Generator
-    from pymeasure.instruments.extreme5000 import Extreme5000
+    from pymeasure.instruments.hcp import TC038
 
 
     @pytest.fixture(scope="module")
     def generator():
         generator = Generator()
         yield generator
-        output = Path(__file__).with_name("test_extreme5000.py")
+        output = Path(__file__).with_name("test_tc038.py")
         generator.write_file(str(output))
 
 
     @pytest.fixture(scope="module")
-    def extreme5000(connected_device_address, generator):
+    def tc038(connected_device_address, generator):
         return generator.instantiate(
-            Extreme5000,
+            TC038,
             connected_device_address,
-            "extreme5000",
-            adapter_kwargs={},
+            "hcp",
+            adapter_kwargs={"baud_rate": 9600},
         )
 
 
-    def test_voltage(extreme5000):
-        extreme5000.voltage = 0.345
-        assert extreme5000.voltage == 0.3
+    def test_setpoint(tc038):
+        tc038.setpoint = 20
+        assert tc038.setpoint == 20
 
 The wrapped instrument is used like a regular instrument. Property access and method calls are
 recorded while the device tests run, and the generated file uses
