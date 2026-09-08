@@ -1,0 +1,7 @@
+##################################
+DC205 Precision DC Voltage Source
+##################################
+
+.. autoclass:: pymeasure.instruments.srs.dc205.DC205
+    :members:
+    :show-inheritance:
