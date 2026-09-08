@@ -31,6 +31,10 @@ Changed
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
 - Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
 
+Instruments
+-----------
+- Add Rohde & Schwarz SMP04 microwave signal generator.
+
 Version 0.16.0 (2026-05-20)
 ===========================
 
