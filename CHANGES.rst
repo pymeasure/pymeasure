@@ -31,6 +31,10 @@ Changed
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
 - Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
 
+Instruments
+-----------
+- Add HP 8565E spectrum analyzer and extract a shared high-band base class from the HP856Xx family; fix manual-verified value ranges and command typos (@niklasschulz99)
+
 Version 0.16.0 (2026-05-20)
 ===========================
 

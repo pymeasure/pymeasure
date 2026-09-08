@@ -27,8 +27,6 @@ from datetime import datetime
 from enum import Enum, IntFlag
 from math import log10
 
-import numpy as np
-
 from pymeasure.instruments import Instrument
 from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.common_base import cast_or_str
@@ -102,10 +100,10 @@ class Trace(StrEnum):
 class SweepCoupleMode(StrEnum):
     """Enumeration."""
 
-    #: Stimulus Response
+    #: Spectrum Analyzer
     SpectrumAnalyzer = "SA"
 
-    #: Spectrum Analyeze
+    #: Stimulus Response
     StimulusResponse = "SR"
 
 
@@ -127,6 +125,16 @@ class MixerMode(StrEnum):
 
     #: Mixer Mode External
     External = "EXT"
+
+
+class ExternalMixerPreselection(StrEnum):
+    """Represent the type of external mixer in use."""
+
+    #: Preselected external mixer, e.g. the HP 11974 series
+    Preselected = "PRE"
+
+    #: Unpreselected external mixer, e.g. the HP 11970 series
+    Unpreselected = "UNPR"
 
 
 class SourceLevelingControlMode(StrEnum):
@@ -236,14 +244,14 @@ class DetectionModes(StrEnum):
     #: Positive Peak Detection
     PositivePeak = "POS"
 
-    #: Sampl Mode Detection
+    #: Sample Mode Detection
     Sample = "SMP"
 
 
 class AmplitudeUnits(StrEnum):
     """Enumeration to represent the amplitude units."""
 
-    #: DB over millit Watt
+    #: DB over milli Watt
     DBM = "DBM"
 
     #: DB over milli Volt
@@ -347,7 +355,7 @@ class ErrorCode:
         329: ("FREQ ACC", "Frequency accuracy error"),
         331: ("FREQ ACC", "Frequency accuracy error"),
         333: ("600 UNLK", "600 MHz Reference Oscillator PLL is unlocked"),
-        334: ("LO AMPL", "YTO (ist LO) unleveled"),
+        334: ("LO AMPL", "YTO (1st LO) unleveled"),
         400: ("AMPL 100", "Unable to adjust amplitude of 100 Hz resolution bandwidth"),
         401: ("AMPL 300", "Unable to adjust amplitude of 300 Hz resolution bandwidth"),
         402: ("AMPL 1K", "Unable to adjust amplitude of 1 kHz resolution bandwidth"),
@@ -448,7 +456,7 @@ class ErrorCode:
         502: ("AMPL 3M", "Unable to adjust amplitude of 300 kHz resolution bandwidth"),
         503: ("AMPL 1M", "Unable to adjust amplitude of 1 MHz resolution bandwidth"),
         504: ("AMPL 30K", "Unable to adjust amplitude of 30 kHz resolution bandwidth"),
-        505: ("AMPL 1M", "Unabie to adjust amplitude of 100 kHz resolution bandwidth"),
+        505: ("AMPL 1M", "Unable to adjust amplitude of 100 kHz resolution bandwidth"),
         506: ("AMPL 3M", "Unable to adjust amplitude of 300 kHz resolution bandwidth"),
         507: ("AMPL 1M", "Unable to adjust amplitude of 1 MHz resolution bandwidth"),
         508: ("AMPL 30K", "Unable to adjust amplitude of 30 kHz resolution bandwidth"),
@@ -574,9 +582,8 @@ class ErrorCode:
         :param code: Representing an error as id or short description
         :type code: str, int
         """
-        if not (isinstance(code, (int, str))):
-            print(type(code))
-            raise TypeError("Initialziation type for code must be integer or string")
+        if not isinstance(code, (int, str)):
+            raise TypeError("Initialization type for code must be integer or string")
 
         try:
             self.code = int(code)
@@ -596,6 +603,25 @@ class ErrorCode:
             return NotImplemented
         return self.code == other.code
 
+    def __hash__(self):
+        """Hash the error code by its integer id."""
+        return hash(self.code)
+
+
+def _validate_trace(trace):
+    """Validate that the given trace is a valid representation of trace A or B.
+
+    :param trace: Either a member of :class:`Trace` or 'TRA' / 'TRB'
+    :type trace: str
+    :raises TypeError: Type isn't 'string'
+    :raises ValueError: Value is neither 'TRA' nor 'TRB'
+    """
+    if not isinstance(trace, str):
+        raise TypeError(f"Should be of type string but is '{type(trace)}'")
+
+    if trace not in _enum_list(Trace):
+        raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
+
 
 class HP856Xx(Instrument):
     """Represents the HP856XX series spectrum analyzers.
@@ -607,6 +633,9 @@ class HP856Xx(Instrument):
         'HP 8560A, 8561B Operating & Programming'
     """
 
+    #: Maximum frequency of the instrument in Hz; set by the derived classes
+    MAX_FREQUENCY = None
+
     def __init__(self, adapter, name="Hewlett-Packard HP856Xx", **kwargs):
         super().__init__(
             adapter,
@@ -615,9 +644,26 @@ class HP856Xx(Instrument):
             **kwargs,
         )
 
+        if self.MAX_FREQUENCY is not None:
+            self._set_frequency_limits(0, self.MAX_FREQUENCY)
+
+    def _set_frequency_limits(self, min_frequency, max_frequency):
+        """Adjust the limits of all frequency dependent, dynamic properties.
+
+        :param min_frequency: Lower frequency limit in Hz
+        :param max_frequency: Upper frequency limit in Hz
+        """
+        self.center_frequency_values = [min_frequency, max_frequency]
+        self.start_frequency_values = [min_frequency, max_frequency]
+        self.stop_frequency_values = [min_frequency, max_frequency]
+        self.marker_frequency_values = [min_frequency, max_frequency]
+        self.frequency_offset_values = [0, max_frequency]
+        self.span_values = [["FULL", "ZERO"], [0, max_frequency - min_frequency]]
+
     def adjust_all(self):
         """Activate the local oscillator (LO) and intermediate frequency (IF)
-        alignment routines. These are the same routines that occur when is switched on.
+        alignment routines. These are the same routines that occur when the instrument
+        is switched on.
         Commands following 'adjust_all' are not executed until after the analyzer has finished the
         alignment routines.
         """
@@ -667,7 +713,7 @@ class HP856Xx(Instrument):
 
             The displayed amplitude of each trace element falls in one of 600 data points.
             There are 10 points of overrange, which corresponds to one-sixth of a division
-            Kg of overrange. When adding or subtracting trace data, any results exceeding
+            of overrange. When adding or subtracting trace data, any results exceeding
             this limit are clipped at the limit.
         """,
         validator=strict_discrete_set,
@@ -690,7 +736,7 @@ class HP856Xx(Instrument):
 
             The displayed amplitude of each trace element falls in one of 600 data points.
             There are 10 points of overrange, which corresponds to one-sixth of a division
-            Kg of overrange. When adding or subtracting trace data, any results exceeding
+            of overrange. When adding or subtracting trace data, any results exceeding
             this limit are clipped at the limit.
         """,
         validator=strict_discrete_set,
@@ -727,7 +773,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
-        values=[["AUTO", "MAN"], np.arange(10, 80, 10)],
+        values=[["AUTO", "MAN"], [10, 20, 30, 40, 50, 60, 70]],
         cast=cast_or_str(int),
     )
 
@@ -742,7 +788,7 @@ class HP856Xx(Instrument):
         .. code-block:: python
 
             instr.amplitude_unit = 'dBmV'
-            instr.amplitude_unit = AmplitudeUnits.dBmV
+            instr.amplitude_unit = AmplitudeUnits.DBMV
 
         """,
         validator=strict_discrete_set,
@@ -795,11 +841,7 @@ class HP856Xx(Instrument):
         :raises TypeError: Type isn't 'string'
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
-        if not isinstance(trace, str):
-            raise TypeError(f"Should be of type string but is '{type(trace)}'")
-
-        if trace not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
+        _validate_trace(trace)
         self.write("BLANK " + trace)
 
     def subtract_display_line_from_trace_b(self):
@@ -850,12 +892,7 @@ class HP856Xx(Instrument):
         :raises TypeError: Type isn't 'string'
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
-        if not isinstance(trace, str):
-            raise TypeError(f"Should be of type string but is '{type(trace)}'")
-
-        if trace not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
-
+        _validate_trace(trace)
         self.write("CLRW " + trace)
 
     def set_continuous_sweep(self):
@@ -910,11 +947,11 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            instr.demodulation_mode = 'AC'
+            instr.demodulation_mode = 'AM'
             instr.demodulation_mode = DemodulationMode.AM
 
-            if instr.demodulation_mode == DemodulationMode.FM:
-                instr.demodulation_mode = Demodulation.OFF
+            if instr.demodulation_mode == DemodulationMode.Frequency:
+                instr.demodulation_mode = DemodulationMode.Off
 
         """,
         validator=strict_discrete_set,
@@ -933,10 +970,10 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            instr.demodulation_agc = True
+            instr.demodulation_agc_enabled = True
 
-            if instr.demodulation_agc:
-                instr.demodulation_agc = False
+            if instr.demodulation_agc_enabled:
+                instr.demodulation_agc_enabled = False
 
         """,
         validator=strict_discrete_set,
@@ -999,7 +1036,7 @@ class HP856Xx(Instrument):
     # specify the unit, there would be an alternative implementation as a method to allow the user
     # to modify the setting unit without manipulating it via the 'amplitude_unit' property
     display_line = Instrument.control(
-        "DL?", "DL %g.11E {amplitude_unit}",
+        "DL?", "DL %.11E {amplitude_unit}",
         """
         Control the horizontal display line for use as a visual aid or for
         computational purposes. The default value is 0 dBm.
@@ -1047,7 +1084,7 @@ class HP856Xx(Instrument):
 
             instr.trigger_sweep()
 
-            # wait for a full sweep and than 'do_something'
+            # wait for a full sweep and then 'do_something'
             if instr.done:
                 do_something()
 
@@ -1067,7 +1104,7 @@ class HP856Xx(Instrument):
 
             instr.trigger_sweep()
 
-            # wait for a full sweep and than 'do_something'
+            # wait for a full sweep and then 'do_something'
             instr.check_done()
             do_something()
 
@@ -1107,7 +1144,9 @@ class HP856Xx(Instrument):
 
         """,
         cast=cast_or_str(ErrorCode),
-        get_process=lambda value: [],
+        # a single value response means either no error ('0' or empty string) or
+        # exactly one error, which has to be wrapped into a list
+        get_process=lambda value: [] if value in ("", ErrorCode(0)) else [value],
     )
 
     elapsed_time = Instrument.measurement(
@@ -1120,7 +1159,7 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            print(elapsed_time)
+            print(instr.elapsed_time)
             1998
 
         """,
@@ -1256,7 +1295,7 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            if instr.frequency_display:
+            if instr.frequency_display_enabled:
                 print("Frequencies get displayed")
 
         """,
@@ -1276,7 +1315,7 @@ class HP856Xx(Instrument):
         an FFT on a frequency sweep will not provide time-domain results. The
         FFT results are displayed on the spectrum analyzer in a logarithmic
         amplitude scale. For the horizontal dimension, the frequency at the
-        left side of the graph is 0 Hz, and at the right side is Finax- Fmax is
+        left side of the graph is 0 Hz, and at the right side is Fmax. Fmax is
         equal to 300 divided by sweep time. As an example, if the sweep time of
         the analyzer is 60 ms, Fmax equals 5 kHz. The FFT algorithm assumes
         that the sampled signal is periodic with an integral number of periods
@@ -1292,35 +1331,23 @@ class HP856Xx(Instrument):
         frequency) and frequency resolution (due to filter shape factor and
         sidelobes). Windows are weighting functions that are applied to the
         input data to force the ends of that data smoothly to zero, thus
-        reducing the step discontinuity and reducing measuremen errors.
+        reducing the step discontinuity and reducing measurement errors.
 
-        :param source: A representation of the trace, either from :class:`Trace` or
+        :param source: A representation of the source trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
-        :param destination: A representation of the trace, either from :class:`Trace` or
-            use 'TRA' for Trace A or 'TRB' for Trace B
-        :param window: A representation of the trace, either from :class:`Trace` or
-            use 'TRA' for Trace A or 'TRB' for Trace B
+        :param destination: A representation of the destination trace, either from
+            :class:`Trace` or use 'TRA' for Trace A or 'TRB' for Trace B
+        :param window: A representation of the trace holding the window data, either from
+            :class:`Trace` or use 'TRA' for Trace A or 'TRB' for Trace B (see
+            :meth:`create_fft_trace_window`)
 
         :type source: str
         :type destination: str
         :type window: str
         """
-        if not isinstance(source, str):
-            raise TypeError(f"Should be of type string but is '{type(source)}'")
-
-        if not isinstance(destination, str):
-            raise TypeError(f"Should be of type string but is '{type(destination)}'")
-
-        if not isinstance(window, str):
-            raise TypeError(f"Should be of type string but is '{type(window)}'")
-
-        if source not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{source}'")
-        if destination not in _enum_list(Trace):
-            raise ValueError(
-                f"Only accepts values of [{_enum_list(Trace)}] but was '{destination}'")
-        if window not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{window}'")
+        _validate_trace(source)
+        _validate_trace(destination)
+        _validate_trace(window)
         self.write(f"FFT {source},{destination},{window}")
 
     frequency_offset = Instrument.control(
@@ -1393,9 +1420,9 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            instr.graticule = True
+            instr.graticule_enabled = True
 
-            if instr.graticule:
+            if instr.graticule_enabled:
                 pass
 
         """,
@@ -1444,7 +1471,7 @@ class HP856Xx(Instrument):
         """
         Control the logarithmic amplitude scale. When in linear
         mode, querying 'logarithmic_scale' returns a “0”.
-        Allowed values are 0, 1, 2, 5, 10
+        Allowed values are 1, 2, 5, 10
 
         Type: :class:`int`
 
@@ -1459,7 +1486,7 @@ class HP856Xx(Instrument):
         """,
         cast=int,
         validator=strict_discrete_set,
-        values=[0, 1, 2, 5, 10],
+        values=[1, 2, 5, 10],
     )
 
     def set_linear_scale(self):
@@ -1477,8 +1504,8 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            instr.minimum_hold('TRA')
-            instr.minimum_hold(Trace.A)
+            instr.set_minimum_hold('TRA')
+            instr.set_minimum_hold(Trace.A)
 
         :param trace: A representation of the trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
@@ -1487,12 +1514,7 @@ class HP856Xx(Instrument):
         :raises TypeError: Type isn't 'string'
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
-        if not isinstance(trace, str):
-            raise TypeError(f"Should be of type string but is '{type(trace)}'")
-
-        if trace not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
-
+        _validate_trace(trace)
         self.write(f"MINH {trace}")
 
     marker_amplitude = Instrument.measurement(
@@ -1595,15 +1617,16 @@ class HP856Xx(Instrument):
     frequency_counter_resolution = Instrument.control(
         "MKFCR?", "MKFCR %d Hz",
         """
-        Control the resolution of the frequency counter. Refer to the 'frequency_counter_mode'
-        command. The default value is 10 kHz.
+        Control the resolution of the frequency counter. Refer to the
+        'frequency_counter_mode_enabled' command. Takes values of 1 Hz to 1 MHz in powers
+        of 10. The default value is 10 kHz.
 
         Type :code:`int`
 
          .. code-block:: python
 
             # activate frequency counter mode
-            instr.frequency_counter_mode = True
+            instr.frequency_counter_mode_enabled = True
 
             # adjust resolution to 1 Hz
             instr.frequency_counter_resolution = 1
@@ -1612,7 +1635,7 @@ class HP856Xx(Instrument):
                 pass
 
         """,
-        validator=strict_range,
+        validator=strict_discrete_set,
         values=[1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6],
         maxsplit=0,
         preprocess_reply=lambda v: str(int(float(v))),
@@ -1742,6 +1765,7 @@ class HP856Xx(Instrument):
         excursion criteria. For example, a peak that is equal to 3 dB above the threshold when the
         peak excursion is equal to 6 dB will be found if the peak extends an additional 3 dB or more
         below the threshold level.
+        Takes values from 0.1 to 10 in linear mode and 0 to 30 in log mode.
 
         Type: :code:`float`
 
@@ -1753,7 +1777,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_range,
-        values=[0.1, 99],
+        values=[0, 30],
     )
 
     def set_marker_to_reference_level(self):
@@ -1840,8 +1864,8 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            instr.maximum_hold('TRA')
-            instr.maximum_hold(Trace.A)
+            instr.set_maximum_hold('TRA')
+            instr.set_maximum_hold(Trace.A)
 
         :param trace: A representation of the trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
@@ -1850,12 +1874,7 @@ class HP856Xx(Instrument):
         :raises TypeError: Type isn't 'string'
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
-        if not isinstance(trace, str):
-            raise TypeError(f"Should be of type string but is '{type(trace)}'")
-
-        if trace not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
-
+        _validate_trace(trace)
         self.write(f"MXMH {trace}")
 
     normalize_trace_data_enabled = Instrument.control(
@@ -1875,8 +1894,8 @@ class HP856Xx(Instrument):
         to move the measured response within the displayed measurement range of the analyzer. If
         ERR 904 B > DLMT is displayed, the calibration is invalid and a thru or open/short
         calibration must be performed.
-        If active (ON), the 'normalize_trace_data' command is automatically turned off with an
-        instrument preset (IP) or at power on.
+        If active (ON), the 'normalize_trace_data_enabled' command is automatically turned off
+        with an instrument preset (IP) or at power on.
 
         Type: :code:`bool`
         """,
@@ -1890,8 +1909,9 @@ class HP856Xx(Instrument):
         "NRL?", "NRL %d {amplitude_unit}",
         """
         Control the normalized reference level. It is intended to be used with the
-        :attr:`normalize_trace_data` command. When using 'normalized_reference_level', the input
-        attenuator and IF step gains are not affected. This function is a trace-offset function
+        :attr:`normalize_trace_data_enabled` command. When using 'normalized_reference_level',
+        the input attenuator and IF step gains are not affected. This function is a trace-offset
+        function
         enabling the user to offset the displayed trace without introducing hardware-switching
         errors into the stimulus-response measurement. The unit of measure for
         'normalized_reference_level' is dB. In absolute power mode (dBm), reference level (
@@ -1979,8 +1999,7 @@ class HP856Xx(Instrument):
         :param p2y: plotter-dependent values that specify the upper-right plotter position y-axis
         :type p2y: int
         """
-        if not (isinstance(p1x, int) or isinstance(p1y, int) or isinstance(p2x, int) or
-                isinstance(p2y, int)):
+        if not all(isinstance(p, int) for p in (p1x, p1y, p2x, p2y)):
             raise TypeError("Should be of type int")
 
         self.write(f"PLOT {p1x},{p1y},{p2x},{p2y}")
@@ -2028,27 +2047,21 @@ class HP856Xx(Instrument):
             instr.center_frequency = 300e6
             instr.span = 1e6
 
-            instr.maximum_hold()
+            instr.set_maximum_hold(Trace.A)
 
             instr.trigger_sweep()
 
             if instr.done:
-                pbw = instr.power_bandwidth(Trace.A, 99.0)
+                pbw = instr.get_power_bandwidth(Trace.A, 99.0)
                 print("The power bandwidth at 99 percent is %f kHz" % (pbw / 1e3))
         """
-        ran = np.arange(0, 100, 0.1)
+        _validate_trace(trace)
 
-        if not isinstance(trace, str):
-            raise TypeError(f"Should be of type string but is '{type(trace)}'")
-
-        if not isinstance(percent, float):
+        if not isinstance(percent, (int, float)) or isinstance(percent, bool):
             raise TypeError(f"Should be of type float but is '{type(percent)}'")
 
-        if trace not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
-
-        if percent not in ran:
-            raise ValueError(f"Only accepts values in the range of {ran} but was '{percent}'")
+        if not 0 <= percent <= 100:
+            raise ValueError(f"Only accepts values in the range 0 to 100 but was '{percent}'")
 
         return float(self.ask(f"PWRBW {trace},{percent:.1f}?"))
 
@@ -2058,15 +2071,17 @@ class HP856Xx(Instrument):
         Control the resolution bandwidth. This is normally a coupled function that
         is selected according to the ratio selected by the RBR command. If no ratio is selected, a
         default ratio (0.011) is used. The bandwidth, which ranges from 10 Hz to 2 MHz, may also be
-        selected manually.
+        selected manually. The instrument rounds the given value to the nearest available
+        bandwidth in a 1, 3, 10 sequence.
 
         Type: :code:`str, dec`
         """,
-        validator=joined_validators(strict_discrete_set, truncated_discrete_set),
-        values=[["AUTO", "MAN"], np.arange(10, 2e6)],
+        validator=joined_validators(strict_discrete_set, strict_range),
+        values=[["AUTO", "MAN"], [10, 2e6]],
         cast=cast_or_str(float),
         set_process=lambda v: v if isinstance(v, str) else f"{int(v)} Hz",
         get_process=lambda v: v if isinstance(v, str) else int(v),
+        dynamic=True,
     )
 
     resolution_bandwidth_to_span_ratio = Instrument.control(
@@ -2078,7 +2093,7 @@ class HP856Xx(Instrument):
         parameters adjust the ratio in a 1, 2, 5 sequence. The default ratio is 0.011.
         """,
         validator=strict_range,
-        values=np.arange(0.002, 0.10, 0.001),
+        values=[0.002, 0.10],
     )
 
     def recall_open_short_average(self):
@@ -2095,26 +2110,26 @@ class HP856Xx(Instrument):
 
             instr.source_power_enabled = True
             instr.sweep_couple = SweepCoupleMode.StimulusResponse
-            instr.source_peak_tracking()
+            instr.activate_source_peak_tracking()
 
             input("CONNECT OPEN. PRESS CONTINUE WHEN READY TO STORE.")
             instr.trigger_sweep()
-            instr.done()
+            instr.check_done()
             instr.store_open()
 
             input("CONNECT SHORT. PRESS CONTINUE WHEN READY TO STORE AND AVERAGE.")
             instr.trigger_sweep()
-            instr.done()
+            instr.check_done()
             instr.store_short()
 
             input("RECONNECT DUT. PRESS CONTINUE WHEN READY.")
             instr.trigger_sweep()
-            instr.done()
+            instr.check_done()
 
-            instr.normalize = True
+            instr.normalize_trace_data_enabled = True
 
             instr.trigger_sweep()
-            instr.done()
+            instr.check_done()
 
             instr.normalized_reference_position = 8
             instr.trigger_sweep()
@@ -2139,7 +2154,7 @@ class HP856Xx(Instrument):
             instr.preset()
             instr.recall_state(7)
         """
-        values = ["LAST", "PWRON"] + [str(f) for f in range(9)]
+        values = ["LAST", "PWRON"] + [str(f) for f in range(10)]
         if not (isinstance(inp, (str, int))):
             raise TypeError(f"Should be of type 'str' or 'int' but is '{type(inp)}'")
 
@@ -2170,15 +2185,11 @@ class HP856Xx(Instrument):
             # reload - at 7 stored trace - to Trace B
             instr.recall_trace(Trace.B, 7)
         """
-        ran = range(7)
-        if not isinstance(trace, str):
-            raise TypeError(f"Should be of type str but is '{type(trace)}'")
+        ran = range(8)
+        _validate_trace(trace)
 
         if not isinstance(number, int):
             raise TypeError(f"Should be of type int but is '{type(number)}'")
-
-        if trace not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
 
         if number not in ran:
             raise ValueError(f"Only accepts values of [{ran}] but was '{number}'")
@@ -2241,14 +2252,16 @@ class HP856Xx(Instrument):
             instr.reference_level = 0
             instr.trigger_sweep()
 
-            instr.peak_search(PeakSearchMode.High)
+            instr.search_peak(PeakSearchMode.High)
             level = instr.marker_amplitude
             rlcal = instr.reference_level_calibration - int((level + 10) / 0.17)
             instr.reference_level_calibration = rlcal
+
         """,
         cast=int,
         validator=strict_range,
         values=[-33, 33],
+        dynamic=True,
     )
 
     reference_offset = Instrument.control(
@@ -2297,7 +2310,7 @@ class HP856Xx(Instrument):
             instr.span = 20e6
             instr.save_state("PWRON")
         """
-        values = ["PWRON"] + [str(f) for f in range(9)]
+        values = ["PWRON"] + [str(f) for f in range(10)]
         if not (isinstance(inp, (str, int))):
             raise TypeError(f"Should be of type 'str' or 'int' but is '{type(inp)}'")
 
@@ -2327,15 +2340,11 @@ class HP856Xx(Instrument):
             # reload - at 7 stored trace - to Trace B
             instr.recall_trace(Trace.B, 7)
         """
-        ran = range(7)
-        if not isinstance(trace, str):
-            raise TypeError(f"Should be of type str but is '{type(trace)}'")
+        ran = range(8)
+        _validate_trace(trace)
 
         if not isinstance(number, int):
             raise TypeError(f"Should be of type int but is '{type(number)}'")
-
-        if trace not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
 
         if number not in ran:
             raise ValueError(f"Only accepts values of [{ran}] but was '{number}'")
@@ -2372,6 +2381,7 @@ class HP856Xx(Instrument):
         values=[["FULL", "ZERO"], [float("-inf"), float("inf")]],
         cast=cast_or_str(float),
         set_process=lambda v: v if isinstance(v, str) else f"{v:.11E} Hz",
+        dynamic=True,
     )
 
     squelch = Instrument.control(
@@ -2390,14 +2400,14 @@ class HP856Xx(Instrument):
             instr.start_frequency = 88e6
             instr.stop_frequency = 108e6
 
-            instr.peak_search(PeakSearchMode.High)
+            instr.search_peak(PeakSearchMode.High)
             instr.demodulation_time = 10
 
             instr.squelch = -60
-            instr.demodulation_mode = DemodulationMode.FM
+            instr.demodulation_mode = DemodulationMode.Frequency
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[["ON", "OFF"], range(-220, 30)],
+        values=[["ON", "OFF"], [-220, 30]],
         cast=cast_or_str(float),
         set_process=lambda v: v if isinstance(v, str) else f"{v} {{amplitude_unit}}",
     )
@@ -2412,19 +2422,19 @@ class HP856Xx(Instrument):
         validator=strict_discrete_set,
     )
 
-    def request_service(self, input):
+    def request_service(self, status):
         """Triggers a service request. This command allows you to force a
         service request and test a program designed to handle service requests.
         However, the service request can be triggered only if it is first
         masked using the :attr:`request_service_conditions` command.
 
-        :param input: Bits to emulate a service request
-        :type input: :class:`StatusRegister`
+        :param status: Bits to emulate a service request
+        :type status: :class:`StatusRegister`
         """
-        if input not in range(255):
+        if status not in range(256):
             raise ValueError("Bit mask needs to be between 0 ... 255")
 
-        self.write(f"SRQ {input}")
+        self.write(f"SRQ {status}")
 
     # `center_frequency_step_size` would be a command but is pretty unnecessary
 
@@ -2445,9 +2455,10 @@ class HP856Xx(Instrument):
         cannot be adjusted.
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[["AUTO", "MAN"], np.arange(50e-6, 100)],
+        values=[["AUTO", "MAN"], [50e-6, 100]],
         cast=cast_or_str(float),
-        set_process=lambda v: v if isinstance(v, str) else (f"{v:.3f} S"),
+        set_process=lambda v: v if isinstance(v, str) else (f"{v:.6E} S"),
+        dynamic=True,
     )
 
     status = Instrument.measurement(
@@ -2555,14 +2566,14 @@ class HP856Xx(Instrument):
         Control the minimum amplitude level and clips data at this value. Default
         value is -90 dBm. See also - :attr:`marker_threshold` does not clip data below its threshold
 
-        Type: :code:`str, float` range -200 to 30
+        Type: :code:`float` range -200 to 30
 
         .. note::
             When a trace is in max-hold mode, if the threshold is raised above any of the
             trace data, the data below the threshold will be permanently lost.
         """,
-        validator=strict_discrete_set,
-        values=np.arange(-200, 30),
+        validator=strict_range,
+        values=[-200, 30],
     )
 
     threshold_enabled = Instrument.setting(
@@ -2579,14 +2590,17 @@ class HP856Xx(Instrument):
         """Sets character data in the title area of the display, which is in
         the upper-right corner.
 
-        A title can be up to two rows of sixteen characters each, Carriage
-        return and line feed characters are not allowed.
+        A title can be up to two rows of sixteen characters each. Carriage
+        return, line feed and the '@' delimiter characters are not allowed.
         """
         if not isinstance(string, str):
             raise TypeError("Parameter should be of type 'str'")
 
         if len(string) > 32:
             raise ValueError(f"Title should have maximum 32 chars but has '{len(string)}'")
+
+        if any(char in string for char in "\r\n@"):
+            raise ValueError("Title must not contain carriage return, line feed or '@'")
 
         self.write(f"TITLE@{string}@")
 
@@ -2604,42 +2618,33 @@ class HP856Xx(Instrument):
     )
 
     def _get_trace_data(self, trace: Trace) -> list[float]:
+        _validate_trace(trace)
+
         self.write("TDF M")
 
-        amp_units = str(self.ask("AUNITS?"))
+        amp_units = str(self.ask("AUNITS?")).strip()
         ref_lvl = float(self.ask("RL?"))
         log_scale = float(self.ask("LG?"))
 
-        cmd_str = ""
-        if trace is Trace.A:
-            cmd_str += "TRA?"
-        elif trace is Trace.B:
-            cmd_str += "TRB?"
+        if log_scale == 0:
+            raise NotImplementedError("Linear scaling isn't supported by _get_trace_data")
 
-        values = self.values(cmd_str, cast=int)
+        values = self.values(f"{trace}?", cast=int)
 
-        if amp_units is AmplitudeUnits.W:
+        if amp_units == AmplitudeUnits.W:
             # calculate dbm from watts
             ref_lvl = (10 * log10(ref_lvl)) + 30
-        elif amp_units is AmplitudeUnits.DBUV:
+        elif amp_units == AmplitudeUnits.DBUV:
             # calculate dbm from dbuv in 50 Ohm system
             ref_lvl = ref_lvl - 107
-        elif amp_units is AmplitudeUnits.V:
+        elif amp_units == AmplitudeUnits.V:
             # calculate dbm from volts in 50 Ohm system
-            ref_lvl = 20 * log10((ref_lvl / 0.05) ** 0.5)
-        elif amp_units is AmplitudeUnits.DBMV:
+            ref_lvl = 10 * log10(ref_lvl ** 2 / 50) + 30
+        elif amp_units == AmplitudeUnits.DBMV:
             # calculate dbm from dbmv
             ref_lvl = ref_lvl - 46.9897
 
-        result_values = []
-        for value in values:
-            if log_scale != 0:
-                result_value = round(ref_lvl + (log_scale * ((value - 600) / 60)), 2)
-                result_values.append(result_value)
-            else:
-                raise NotImplementedError("Linear scaling isn't supported by get_trace_data_ ")
-
-        return result_values
+        return [round(ref_lvl + (log_scale * ((value - 600) / 60)), 2) for value in values]
 
     def get_trace_data_a(self) -> list[float]:
         """
@@ -2713,12 +2718,7 @@ class HP856Xx(Instrument):
             use 'HANNING', 'FLATTOP' or 'UNIFORM'
         :type window_mode: str
         """
-
-        if not isinstance(trace, str):
-            raise TypeError(f"Should be of type string but is '{type(trace)}'")
-
-        if trace not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
+        _validate_trace(trace)
 
         if not isinstance(window_mode, str):
             raise TypeError(f"Should be of type string but is '{type(window_mode)}'")
@@ -2746,10 +2746,10 @@ class HP856Xx(Instrument):
         averaging, though requiring more sweeps, uses faster sweep times; in some cases, it can
         produce a smooth trace as fast as a video filter.
 
-        Type: :code:`str, int`
+        Type: :code:`int` range 1 to 999
         """,
         validator=strict_range,
-        values=np.arange(1, 999),
+        values=[1, 999],
         cast=int,
     )
 
@@ -2783,7 +2783,7 @@ class HP856Xx(Instrument):
         Type: :code:`int`
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[["AUTO", "MAN"], np.arange(1, 3e6)],
+        values=[["AUTO", "MAN"], [1, 3e6]],
         cast=cast_or_str(float),
         set_process=lambda v: v if isinstance(v, str) else f"{v} Hz",
     )
@@ -2798,7 +2798,7 @@ class HP856Xx(Instrument):
         new ratio—the resolution bandwidth does not change value.
         """,
         validator=strict_range,
-        values=np.arange(0.002, 0.10, 0.001),
+        values=[0.003, 3],
     )
 
     def view_trace(self, trace):
@@ -2812,11 +2812,7 @@ class HP856Xx(Instrument):
         :raises TypeError: Type isn't 'string'
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
-        if not isinstance(trace, str):
-            raise TypeError(f"Should be of type string but is '{type(trace)}'")
-
-        if trace not in _enum_list(Trace):
-            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
+        _validate_trace(trace)
         self.write("VIEW " + trace)
 
     video_trigger_level = Instrument.control(
@@ -2860,13 +2856,6 @@ class HP8560A(HP856Xx):
             name,
             **kwargs,
         )
-
-        self.center_frequency_values = [0, self.MAX_FREQUENCY]
-        self.start_frequency_values = [0, self.MAX_FREQUENCY]
-        self.stop_frequency_values = [0, self.MAX_FREQUENCY]
-        self.frequency_offset_values = [0, self.MAX_FREQUENCY]
-        self.marker_frequency_values = [0, self.MAX_FREQUENCY]
-        self.span_values = [["FULL", "ZERO"], [0, self.MAX_FREQUENCY]]
 
     source_leveling_control = Instrument.control(
         "SRCALC?", "SRCALC %s",
@@ -2966,7 +2955,7 @@ class HP8560A(HP856Xx):
             Only available with an HP 8560A Option 002.
         """,
         validator=strict_range,
-        values=np.arange(0.1, 12.75, 0.05),
+        values=[0.1, 12.75],
     )
 
     source_power_sweep = Instrument.control(
@@ -2976,14 +2965,15 @@ class HP8560A(HP856Xx):
         output power of the tracking generator is swept over the power-sweep range chosen. The
         starting source power level is set using the :attr:`source_power` command. The output power
         of the tracking generator is swept according to the sweep rate of the spectrum analyzer.
+        Range: 0 ... 12.75 DB.
 
         Type: :code:`str, float`
 
         .. note::
             Only available with an HP 8560A Option 002.
         """,
-        validator=truncated_discrete_set,
-        values=np.arange(0.1, 12.75, 0.05),
+        validator=strict_range,
+        values=[0, 12.75],
     )
 
     source_power_sweep_enabled = Instrument.setting(
@@ -3000,14 +2990,15 @@ class HP8560A(HP856Xx):
         "SRCPWR?", "SRCPWR %s",
         """
         Control the built-in tracking generator's output power.
+        Range: -10 ... +2.8 dBm.
 
         Type: :code:`str, float`
 
         .. note::
             Only available with an HP 8560A Option 002.
         """,
-        validator=joined_validators(strict_discrete_set, truncated_discrete_set),
-        values=[["OFF", "ON"], np.arange(-10, 2.8, 0.05)],
+        validator=joined_validators(strict_discrete_set, strict_range),
+        values=[["OFF", "ON"], [-10, 2.8]],
         cast=cast_or_str(float),
         set_process=lambda v: v if isinstance(v, str) else (f"{v:.2f} {{amplitude_unit}}"),
     )
@@ -3036,40 +3027,22 @@ class HP8560A(HP856Xx):
         self.write("SRCTKPK")
 
 
-class HP8561B(HP856Xx):
-    """Represents the HP 8561B Spectrum Analyzer and provides a high-level
-    interface for interacting with the instrument.
+class HP856XxWithHighBand(HP856Xx):
+    """Provide the high-band command set shared by the microwave HP 856x spectrum analyzers.
 
-    .. code-block:: python
+    It bundles the external-mixer, harmonic-mixing and preselector functions that are
+    shared by the microwave models of the family (e.g. the HP 8561B and HP 8565E). These
+    instruments reach frequencies above the fundamental-mixing range by using harmonic
+    mixing, either with the internal preselected mixer or with an external mixer.
 
-        from pymeasure.instruments.hp import 8561B
-        from pymeasure.instruments.hp.hp856Xx import AmplitudeUnits
-
-        sa = HP8560A("GPIB::1")
-
-        sa.amplitude_unit = AmplitudeUnits.DBUV
-        sa.start_frequency = 6.4e9
-        sa.stop_frequency = 6.5e9
-
-        print(sa.marker_amplitude)
+    Don't use this class directly - use one of its derivative classes such as
+    :class:`HP8561B` or :class:`HP8565E`.
     """
 
-    # HP8561B is able to go up to 6.5 GHz
-    MAX_FREQUENCY = 6.5e9
-
-    def __init__(self, adapter, name="Hewlett-Packard HP8561B", **kwargs):
-        super().__init__(
-            adapter,
-            name,
-            **kwargs,
-        )
-
-        self.center_frequency_values = [0, self.MAX_FREQUENCY]
-        self.start_frequency_values = [0, self.MAX_FREQUENCY]
-        self.stop_frequency_values = [0, self.MAX_FREQUENCY]
-        self.frequency_offset_values = [0, self.MAX_FREQUENCY]
-        self.marker_frequency_values = [0, self.MAX_FREQUENCY]
-        self.span_values = [["FULL", "ZERO"], [0, self.MAX_FREQUENCY]]
+    #: Highest frequency reachable with an external mixer (top of band J, see
+    #: :meth:`set_fullband`). Used as the upper limit once harmonic-number locking
+    #: is released with :meth:`unlock_harmonic_number`.
+    MAX_FREQUENCY_EXTERNAL_MIXER = 325e9
 
     conversion_loss = Instrument.control(
         "CNVLOSS?", "CNVLOSS %s DB",
@@ -3081,12 +3054,12 @@ class HP8561B(HP856Xx):
         minimum loss plus the maximum loss for that band divided by two.
         Adjusting for conversion loss allows the system to remain
         calibrated (that is, the displayed amplitude values have the conversion loss incorporated
-        into them). The default value for any band is 30 dB. The spectrum analyzer must be in
-        external-mixer mode in order for this command to work. When in internal-mixer mode,
-        querying 'conversion_loss' returns a zero.
+        into them). The default value for any band is 30 dB, the range is 15 to 60 dB. The
+        spectrum analyzer must be in external-mixer mode in order for this command to work.
+        When in internal-mixer mode, querying 'conversion_loss' returns a zero.
         """,
         validator=strict_range,
-        values=[0, float("inf")],
+        values=[15, 60],
     )
 
     def set_fullband(self, band):
@@ -3096,7 +3069,7 @@ class HP8561B(HP856Xx):
         functions are not available with an HP 8560A Option 002. Takes
         frequency band letter as string.
 
-        .. list-table:: Title
+        .. list-table:: External-Mixer Frequency Bands
             :widths: 25 25 25 25
             :header-rows: 1
 
@@ -3125,7 +3098,7 @@ class HP8561B(HP856Xx):
               - 14
               - 30 dB
             * - E
-              - 60.0—-90.0
+              - 60.0—90.0
               - 16
               - 30 dB
             * - W
@@ -3174,11 +3147,9 @@ class HP8561B(HP856Xx):
         if band not in frequency_mapping:
             raise ValueError(f"Should be one of the available bands but is '{band}'")
 
-        self.center_frequency_values = frequency_mapping[band]
-        self.start_frequency_values = frequency_mapping[band]
-        self.stop_frequency_values = frequency_mapping[band]
+        self._set_frequency_limits(*frequency_mapping[band])
 
-        self.write(f"FULLBAND {band}")
+        self.write(f"FULBAND {band}")
 
     harmonic_number_lock = Instrument.control(
         "HNLOCK?", "HNLOCK %d",
@@ -3217,7 +3188,11 @@ class HP8561B(HP856Xx):
         span from 18 GHz to 40 GHz. In this case, the analyzer will
         automatically sweep first using 6—, then using 8—.
         """
-        self.write("HUNLK")
+        # Once the harmonic is unlocked the sweep may span the whole external-mixing
+        # range, so widen the limits accordingly instead of restricting to the
+        # fundamental-mixing MAX_FREQUENCY.
+        self._set_frequency_limits(0, self.MAX_FREQUENCY_EXTERNAL_MIXER)
+        self.write("HNUNLK")
 
     def set_signal_identification_to_center_frequency(self):
         """Set the center frequency to the frequency obtained from the command
@@ -3247,9 +3222,11 @@ class HP8561B(HP856Xx):
         analyzer display, indicating that positive or negative bias is on. When the bias is
         turned off, MBIAS is set to 0. Default units are in milliamps.
         """,
+        # the manuals misprint the range as "0.01 mA to -0.01 mA" with 0.1 mA increments;
+        # the open-circuit limit of +-3.5 V through 300 Ohm gives ~11.7 mA short-circuit
+        # current, so the consistent reading is +-10 mA
         validator=strict_range,
-        values=[(-10e3), int(10e3)],
-        cast=float,
+        values=[-10, 10],
     )
 
     mixer_bias_enabled = Instrument.setting(
@@ -3273,8 +3250,24 @@ class HP8561B(HP856Xx):
         cast=str,
     )
 
+    external_mixer_preselection = Instrument.control(
+        "EXTMXR?", "EXTMXR %s",
+        """
+        Control the external mixing mode as either preselected ('PRE') or unpreselected
+        ('UNPR'). Takes enum 'ExternalMixerPreselection' or string 'PRE', 'UNPR'.
+        This command applies only to the selection of the type of external mixer to be used;
+        it does not switch the analyzer from internal to external mixing - use
+        :attr:`mixer_mode` for that. Unpreselected mixers, like the HP 11970 series, need
+        'UNPR'. Selecting 'PRE' switches the rear-panel output J8 to 1.5 V/GHz of the LO
+        frequency, as required by the HP 11974 series preselected mixers.
+        """,
+        validator=strict_discrete_set,
+        values=_enum_list(ExternalMixerPreselection),
+        cast=str,
+    )
+
     def peak_preselector(self):
-        """Peaks the preselector in the HP 8561B Spectrum Analyzer.
+        """Peak the preselector of the spectrum analyzer.
 
         Make sure the entire frequency span is in high band, set the
         desired trace to clear-write mode, place a marker on a desired
@@ -3289,8 +3282,8 @@ class HP8561B(HP856Xx):
     preselector_dac_number = Instrument.control(
         "PSDAC?", "PSDAC %d",
         """
-        Control the preselector peak DAC number. For use with an
-        HP 8561B Spectrum Analyzer.
+        Control the preselector peak DAC number. For use with a spectrum
+        analyzer that has a built-in preselector.
 
         Type: :code:`int`
         """,
@@ -3308,7 +3301,7 @@ class HP8561B(HP856Xx):
         for locating correct mixer responses. Place a marker on the desired signal, then activate
         signal_identification = 'AUTO'. The frequency of a correct response appears in the active
         function block. Use this mode before executing the
-        :meth:`signal_identification_to_center_frequency` command. The second method of signal
+        :meth:`set_signal_identification_to_center_frequency` command. The second method of signal
         identification, 'MAN', shifts responses both horizontally and vertically. A correct
         response is shifted horizontally by less than 80 kHz. To ensure accuracy in MAN mode,
         limit the frequency span to less than 20 MHz.
@@ -3320,3 +3313,67 @@ class HP8561B(HP856Xx):
         values={True: "1", False: "0", "AUTO": "AUTO", "MAN": "MAN"},
         cast=str,
     )
+
+
+class HP8561B(HP856XxWithHighBand):
+    """Represent the HP 8561B Spectrum Analyzer and provide a high-level
+    interface for interacting with the instrument.
+
+    .. code-block:: python
+
+        from pymeasure.instruments.hp import HP8561B
+        from pymeasure.instruments.hp.hp856Xx import AmplitudeUnits
+
+        sa = HP8561B("GPIB::1")
+
+        sa.amplitude_unit = AmplitudeUnits.DBUV
+        sa.start_frequency = 6.4e9
+        sa.stop_frequency = 6.5e9
+
+        print(sa.marker_amplitude)
+    """
+
+    # HP8561B is able to go up to 6.5 GHz
+    MAX_FREQUENCY = 6.5e9
+
+    def __init__(self, adapter, name="Hewlett-Packard HP8561B", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs,
+        )
+
+
+class HP8565E(HP856XxWithHighBand):
+    """Represent the HP 8565E Spectrum Analyzer and provide a high-level
+    interface for interacting with the instrument.
+
+    .. code-block:: python
+
+        from pymeasure.instruments.hp import HP8565E
+        from pymeasure.instruments.hp.hp856Xx import AmplitudeUnits
+
+        sa = HP8565E("GPIB::1")
+
+        sa.amplitude_unit = AmplitudeUnits.DBUV
+        sa.start_frequency = 29.5e9
+        sa.stop_frequency = 30.5e9
+
+        print(sa.marker_amplitude)
+    """
+
+    # HP8565E is able to go up to 50 GHz
+    MAX_FREQUENCY = 50e9
+
+    def __init__(self, adapter, name="Hewlett-Packard HP8565E", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs,
+        )
+
+        # ranges differing from the A/B-series models, taken from the
+        # 'HP 8560 E-Series and EC-Series Spectrum Analyzers User's Guide'
+        self.reference_level_calibration_values = [-528, 528]
+        self.resolution_bandwidth_values = [["AUTO", "MAN"], [1, 2e6]]
+        self.sweep_time_values = [["AUTO", "MAN"], [50e-6, 2000]]

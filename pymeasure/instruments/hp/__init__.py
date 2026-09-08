@@ -23,7 +23,7 @@
 #
 
 from .hp437b import HP437B
-from .hp856Xx import HP8560A, HP8561B
+from .hp856Xx import HP8560A, HP8561B, HP8565E
 from .hp3437A import HP3437A
 from .hp3478A import HP3478A
 from .hp8116a import HP8116A
