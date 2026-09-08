@@ -31,6 +31,10 @@ Changed
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
 - Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
 
+Instruments
+-----------
+- Add APE PulseCheck autocorrelator with RS232 (:class:`PulseCheck`) and USB/PulseLink (:class:`PulseCheckUSB`) interfaces (@niklasschulz99)
+
 Version 0.16.0 (2026-05-20)
 ===========================
 

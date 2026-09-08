@@ -32,6 +32,7 @@ Instruments by manufacturer:
    anapico/index
    andeenhagerling/index
    anritsu/index
+   ape/index
    attocube/index
    bkprecision/index
    danfysik/index
