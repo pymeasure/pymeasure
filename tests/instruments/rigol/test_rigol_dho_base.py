@@ -122,7 +122,7 @@ class TestChannel:
 
     # -- bandwidth_limit -------------------------------------------------
 
-    @pytest.mark.parametrize("value", ["OFF", "ON", "20M", "250M"])
+    @pytest.mark.parametrize("value", ["OFF", "20M", "100M"])
     def test_bandwidth_limit_set(self, value):
         with expected_protocol(
             DHOBase, [(f":CHAN1:BWL {value}", None)]
@@ -131,7 +131,7 @@ class TestChannel:
 
     def test_bandwidth_limit_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.ch_1.bandwidth_limit = "100M"
+            inst.ch_1.bandwidth_limit = "250M"  # pyright: ignore[reportAttributeAccessIssue]
 
     # -- scale -----------------------------------------------------------
 
@@ -147,13 +147,13 @@ class TestChannel:
         ) as inst:
             assert inst.ch_1.scale == pytest.approx(0.5)
 
-    def test_scale_accepts_dho4000_minimum(self):
-        with expected_protocol(DHOBase, [(":CHAN1:SCAL 0.0001", None)]) as inst:
-            inst.ch_1.scale = 100e-6
-
     def test_scale_out_of_range_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
             inst.ch_1.scale = 11.0
+
+    def test_scale_below_existing_minimum_raises(self):
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.ch_1.scale = 100e-6
 
     # -- offset ----------------------------------------------------------
 
@@ -183,9 +183,14 @@ class TestChannel:
         ) as inst:
             assert inst.ch_1.probe == pytest.approx(10.0)
 
+    @pytest.mark.parametrize("value", [15, 150, 1_500, 15_000])
+    def test_probe_preserves_legacy_values(self, value):
+        with expected_protocol(DHOBase, [(f":CHAN1:PROB {value}", None)]) as inst:
+            inst.ch_1.probe = value
+
     def test_probe_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.ch_1.probe = 15
+            inst.ch_1.probe = 7
 
     # -- invert (bool) ---------------------------------------------------
 
@@ -213,7 +218,7 @@ class TestChannel:
 
     def test_units_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.ch_1.units = "DBM"
+            inst.ch_1.units = "DBM"  # pyright: ignore[reportAttributeAccessIssue]
 
     # -- label -----------------------------------------------------------
 
@@ -243,7 +248,7 @@ class TestChannel:
 
 class TestAcquisition:
 
-    @pytest.mark.parametrize("value", ["NORM", "AVER", "PEAK", "HRES", "ULTR"])
+    @pytest.mark.parametrize("value", ["NORM", "AVER", "PEAK", "ULTR"])
     def test_acquisition_type_set(self, value):
         with expected_protocol(
             DHOBase, [(f":ACQ:TYPE {value}", None)]
@@ -272,7 +277,7 @@ class TestAcquisition:
 
     @pytest.mark.parametrize(
         "value",
-        ["AUTO", 1_000_000, 5_000_000, 125_000_000, 250_000_000, 500_000_000],
+        ["AUTO", 1_000, 1_000_000, 25_000_000, 100_000_000, 200_000_000],
     )
     def test_memory_depth_set(self, value):
         with expected_protocol(DHOBase, [(f":ACQ:MDEP {value}", None)]) as inst:
@@ -342,7 +347,7 @@ class TestTimebase:
 
 class TestTrigger:
 
-    @pytest.mark.parametrize("value", ["EDGE", "SET", "FLEX", "IIS", "M1553"])
+    @pytest.mark.parametrize("value", ["EDGE", "RUNT", "SHOL", "RS232", "LIN"])
     def test_trigger_mode_set(self, value):
         with expected_protocol(DHOBase, [(f":TRIG:MODE {value}", None)]) as inst:
             inst.trigger_mode = value
@@ -562,11 +567,11 @@ class TestWaveform:
 
     def test_get_waveform_invalid_fmt_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.get_waveform(fmt="ASC")
+            inst.get_waveform(fmt="ASC")  # pyright: ignore[reportArgumentType]
 
     def test_get_waveform_invalid_mode_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.get_waveform(mode="INVALID")
+            inst.get_waveform(mode="INVALID")  # pyright: ignore[reportArgumentType]
 
     def test_get_waveform_norm_byte(self):
         raw_samples = bytes([128, 130, 126, 132])  # 4 uint8 samples

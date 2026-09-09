@@ -25,10 +25,11 @@
 import logging
 import time
 from enum import IntFlag
+from typing import Literal, TypedDict, cast
 
 import numpy as np
 
-from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments import AdapterType, Channel, Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range,
@@ -73,9 +74,42 @@ class StatusByte(IntFlag):
 class DHOBaseChannel(RigolOscilloscopeChannel):
     """A single analog input channel of the Rigol DHO series."""
 
-    bandwidth_limit_values = ["OFF", "ON", "20M", "250M"]
+    PROBE_ATTENUATIONS = [
+        0.001,
+        0.002,
+        0.005,
+        0.01,
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.5,
+        1,
+        2,
+        5,
+        10,
+        15,
+        20,
+        50,
+        100,
+        150,
+        200,
+        500,
+        1_000,
+        1_500,
+        2_000,
+        5_000,
+        10_000,
+        15_000,
+        20_000,
+        50_000,
+    ]
+
+    # Keep the existing DHO validation contract while reusing the descriptors.
+    bandwidth_limit_values = ["OFF", "20M", "100M"]
+    probe_values = PROBE_ATTENUATIONS
     scale_validator = strict_range
-    scale_values = [100e-6, 10.0]
+    scale_values = [500e-6, 10.0]
 
     label = Channel.control(
         ":CHAN{ch}:LAB:CONT?",
@@ -105,32 +139,65 @@ class DHOBase(RigolOscilloscope):
     ch_3 = Instrument.ChannelCreator(DHOBaseChannel, 3)
     ch_4 = Instrument.ChannelCreator(DHOBaseChannel, 4)
 
+    class WaveformPreamble(TypedDict):
+        """Describe the waveform scaling values returned by a DHO oscilloscope."""
+
+        format: str | float
+        type: str | float
+        points: int
+        count: int
+        xincrement: float
+        xorigin: float
+        xreference: int
+        yincrement: float
+        yorigin: float
+        yreference: int
+
     acquisition_memory_depth_values = [
         "AUTO",
         1_000,
         10_000,
         100_000,
         1_000_000,
-        5_000_000,
         10_000_000,
         25_000_000,
         50_000_000,
         100_000_000,
-        125_000_000,
         200_000_000,
-        250_000_000,
-        500_000_000,
     ]
-    acquisition_type_values = ["NORM", "AVER", "PEAK", "HRES", "ULTR"]
+    acquisition_type_values = ["NORM", "AVER", "PEAK", "ULTR"]
+    trigger_mode_values = [
+        "EDGE",
+        "PULS",
+        "RUNT",
+        "WIND",
+        "NEDG",
+        "SLOP",
+        "VID",
+        "PATT",
+        "DEL",
+        "TIM",
+        "DUR",
+        "SHOL",
+        "RS232",
+        "IIC",
+        "SPI",
+        "CAN",
+        "LIN",
+    ]
     timebase_scale_validator = strict_range
     timebase_scale_values = [1e-9, 1000.0]
     edge_trigger_source_values = ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "AC", "EXT"]
 
-    def __init__(self, adapter, name="Rigol DHO", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Rigol DHO", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    def wait_for_opc(self, timeout=10):
-        """Block until the oscilloscope reports operation complete."""
+    def wait_for_opc(self, timeout: float = 10) -> None:
+        """Block until the oscilloscope reports operation complete.
+
+        :param timeout: Maximum time to wait in seconds.
+        :raises TimeoutError: If the operation does not complete before ``timeout``.
+        """
         deadline = time.monotonic() + timeout
         while True:
             if self.ask("*OPC?").strip() == "1":
@@ -139,7 +206,7 @@ class DHOBase(RigolOscilloscope):
                 raise TimeoutError(f"wait_for_opc timed out after {timeout} s")
             time.sleep(0.1)
 
-    def clear_status(self):
+    def clear_status(self) -> None:
         """Clear the event status register (CLS)."""
         self.write("*CLS")
 
@@ -156,33 +223,33 @@ class DHOBase(RigolOscilloscope):
     )
 
     @property
-    def trigger_source(self):
+    def trigger_source(self) -> str:
         """Control the Edge-trigger source as an alias for :attr:`edge_trigger_source`."""
         return self.edge_trigger_source
 
     @trigger_source.setter
-    def trigger_source(self, value):
+    def trigger_source(self, value: str) -> None:
         self.edge_trigger_source = value
 
     @property
-    def trigger_slope(self):
+    def trigger_slope(self) -> str:
         """Control the Edge-trigger slope as an alias for :attr:`edge_trigger_slope`."""
         return self.edge_trigger_slope
 
     @trigger_slope.setter
-    def trigger_slope(self, value):
+    def trigger_slope(self, value: str) -> None:
         self.edge_trigger_slope = value
 
     @property
-    def trigger_level(self):
+    def trigger_level(self) -> float:
         """Control the Edge-trigger level as an alias for :attr:`edge_trigger_level`."""
         return self.edge_trigger_level
 
     @trigger_level.setter
-    def trigger_level(self, value):
+    def trigger_level(self, value: float) -> None:
         self.edge_trigger_level = value
 
-    def autoset(self):
+    def autoset(self) -> None:
         """Execute AUTOSET to automatically configure timebase, channels, and
         trigger based on the input signals."""
         self.write(":AUTO")
@@ -191,7 +258,7 @@ class DHOBase(RigolOscilloscope):
     #  MEASUREMENTS                                                       #
     # ================================================================== #
 
-    def measure(self, item, channel=1):
+    def measure(self, item: str, channel: int = 1) -> float:
         """Query a built-in automatic measurement.
 
         :param item: Measurement item string, e.g. ``"VMAX"``, ``"VMIN"``,
@@ -208,7 +275,7 @@ class DHOBase(RigolOscilloscope):
         except ValueError:
             return float("nan")
 
-    def clear_measurements(self):
+    def clear_measurements(self) -> None:
         """Remove all displayed measurements."""
         self.write(":MEAS:CLE:ALL")
 
@@ -223,13 +290,14 @@ class DHOBase(RigolOscilloscope):
         or ``"XY"``.""",
         validator=strict_discrete_set,
         values=["OFF", "MAN", "TRAC", "XY"],
+        cast=str,
     )
 
     # ================================================================== #
     #  DISPLAY                                                            #
     # ================================================================== #
 
-    def clear_screen(self):
+    def clear_screen(self) -> None:
         """Clear the waveform display area."""
         self.write(":DISP:CLE")
 
@@ -250,34 +318,47 @@ class DHOBase(RigolOscilloscope):
         ``"1"``, ``"5"``, ``"10"``, or ``"INF"``.""",
         validator=strict_discrete_set,
         values=["MIN", "0.1", "0.5", "1", "5", "10", "INF"],
+        cast=str,
     )
 
     # ================================================================== #
     #  WAVEFORM DOWNLOAD                                                  #
     # ================================================================== #
 
-    def _set_waveform_source(self, channel):
-        """Set the waveform source to the given channel number (1-4)."""
+    def _set_waveform_source(self, channel: int) -> None:
+        """Set the waveform source to the given channel number.
+
+        :param channel: Analog channel number from 1 to 4.
+        """
         self.write(f":WAV:SOUR CHAN{channel}")
 
-    def get_waveform_preamble(self, channel=1):
-        """Get the waveform preamble for *channel* as a dict."""
+    def get_waveform_preamble(self, channel: int = 1) -> WaveformPreamble:
+        """Get the waveform scaling preamble for a channel.
+
+        :param channel: Analog channel number from 1 to 4.
+        :returns: Scaling values for converting raw samples to physical units.
+        """
         self._set_waveform_source(channel)
         preamble = self._query_waveform_preamble()
-        return {
-            "format": float(preamble["format"]),
-            "type": float(preamble["type"]),
-            "points": preamble["points"],
-            "count": preamble["count"],
-            "xincrement": preamble["x_increment"],
-            "xorigin": preamble["x_origin"],
-            "xreference": int(preamble["x_reference"]),
-            "yincrement": preamble["y_increment"],
-            "yorigin": float(preamble["y_origin"]),
-            "yreference": preamble["y_reference"],
-        }
+        return DHOBase.WaveformPreamble(
+            format=float(preamble["format"]),
+            type=float(preamble["type"]),
+            points=preamble["points"],
+            count=preamble["count"],
+            xincrement=preamble["x_increment"],
+            xorigin=preamble["x_origin"],
+            xreference=int(preamble["x_reference"]),
+            yincrement=preamble["y_increment"],
+            yorigin=float(preamble["y_origin"]),
+            yreference=preamble["y_reference"],
+        )
 
-    def get_waveform(self, channel=1, mode="NORM", fmt="BYTE"):
+    def get_waveform(
+        self,
+        channel: Literal[1, 2, 3, 4] = 1,
+        mode: Literal["NORM", "MAX", "RAW"] = "NORM",
+        fmt: Literal["BYTE", "WORD"] = "BYTE",
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Download a waveform from the oscilloscope.
 
         For ``"MAX"`` and ``"RAW"`` mode, the scope is automatically stopped
@@ -355,10 +436,10 @@ class DHOBase(RigolOscilloscope):
         samples = np.concatenate(all_samples)
         voltage = ((samples - pre["yorigin"] - pre["yreference"])
                    * pre["yincrement"])
-        t = np.arange(len(samples)) * pre["xincrement"] + pre["xorigin"]
+        t = cast(np.ndarray, np.arange(len(samples)) * pre["xincrement"] + pre["xorigin"])
         return t, voltage
 
-    def get_waveform_ascii(self, channel=1):
+    def get_waveform_ascii(self, channel: int = 1) -> tuple[np.ndarray, np.ndarray]:
         """Download a waveform in ASCII format.
 
         Uses ``"NORM"`` mode, returning up to 1000 points shown on screen.

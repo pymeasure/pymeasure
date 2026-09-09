@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from typing import TypedDict
+
 from pymeasure.instruments import AdapterType, Channel, Instrument
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -87,6 +89,21 @@ TRIGGER_MODES = [
     "IIS",
     "M1553",
 ]
+
+
+class RigolWaveformPreamble(TypedDict):
+    """Describe the common waveform scaling values returned by Rigol oscilloscopes."""
+
+    format: int
+    type: int
+    points: int
+    count: int
+    x_increment: float
+    x_origin: float
+    x_reference: float
+    y_increment: float
+    y_origin: int
+    y_reference: int
 
 
 def _parse_ieee_block(
@@ -399,7 +416,7 @@ class RigolOscilloscope(SCPIMixin, Instrument):
         """Measure the waveform vertical reference position (float).""",
     )
 
-    def _query_waveform_preamble(self) -> dict[str, int | float]:
+    def _query_waveform_preamble(self) -> RigolWaveformPreamble:
         """Return the ten common waveform scaling parameters."""
         values = self.ask(":WAV:PRE?").strip().split(",")
         if len(values) != 10:

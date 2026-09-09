@@ -33,6 +33,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from .rigol_oscilloscope import (
     RigolOscilloscope,
     RigolOscilloscopeChannel,
+    RigolWaveformPreamble,
     _parse_ieee_block,
 )
 
@@ -4890,7 +4891,7 @@ class MSO5000(RigolOscilloscope):
         cast=int,
     )
 
-    def get_waveform_preamble(self) -> dict[str, int | float]:
+    def get_waveform_preamble(self) -> RigolWaveformPreamble:
         """Return the ten waveform scaling parameters as a dictionary."""
         return self._query_waveform_preamble()
 
