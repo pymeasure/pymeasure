@@ -11,4 +11,6 @@ in an instrument not included, please consider :doc:`adding the instrument </dev
    :maxdepth: 2
 
    rigol_dg800
+   rigol_oscilloscope
    rigol_dho_base
+   rigol_mso5000

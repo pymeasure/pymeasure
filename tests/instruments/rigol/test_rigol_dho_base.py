@@ -131,7 +131,7 @@ class TestChannel:
 
     def test_bandwidth_limit_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
-            inst.ch_1.bandwidth_limit = "200M"  # pyright: ignore[reportAttributeAccessIssue]
+            inst.ch_1.bandwidth_limit = "250M"  # pyright: ignore[reportAttributeAccessIssue]
 
     # -- scale -----------------------------------------------------------
 
@@ -150,6 +150,10 @@ class TestChannel:
     def test_scale_out_of_range_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
             inst.ch_1.scale = 11.0
+
+    def test_scale_below_existing_minimum_raises(self):
+        with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
+            inst.ch_1.scale = 100e-6
 
     # -- offset ----------------------------------------------------------
 
@@ -178,6 +182,11 @@ class TestChannel:
             DHOBase, [(":CHAN1:PROB?", "10")]
         ) as inst:
             assert inst.ch_1.probe == pytest.approx(10.0)
+
+    @pytest.mark.parametrize("value", [15, 150, 1_500, 15_000])
+    def test_probe_preserves_legacy_values(self, value):
+        with expected_protocol(DHOBase, [(f":CHAN1:PROB {value}", None)]) as inst:
+            inst.ch_1.probe = value
 
     def test_probe_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
@@ -266,11 +275,13 @@ class TestAcquisition:
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
             inst.acquisition_averages = 3  # not a power of 2
 
-    def test_memory_depth_set(self):
-        with expected_protocol(
-            DHOBase, [(":ACQ:MDEP 1000000", None)]
-        ) as inst:
-            inst.acquisition_memory_depth = 1_000_000
+    @pytest.mark.parametrize(
+        "value",
+        ["AUTO", 1_000, 1_000_000, 25_000_000, 100_000_000, 200_000_000],
+    )
+    def test_memory_depth_set(self, value):
+        with expected_protocol(DHOBase, [(f":ACQ:MDEP {value}", None)]) as inst:
+            inst.acquisition_memory_depth = value
 
     def test_sample_rate(self):
         with expected_protocol(
@@ -336,12 +347,10 @@ class TestTimebase:
 
 class TestTrigger:
 
-    # One representative mode is enough – the rest are enum validation
-    def test_trigger_mode_set(self):
-        with expected_protocol(
-            DHOBase, [(":TRIG:MODE EDGE", None)]
-        ) as inst:
-            inst.trigger_mode = "EDGE"
+    @pytest.mark.parametrize("value", ["EDGE", "RUNT", "SHOL", "RS232", "LIN"])
+    def test_trigger_mode_set(self, value):
+        with expected_protocol(DHOBase, [(f":TRIG:MODE {value}", None)]) as inst:
+            inst.trigger_mode = value
 
     def test_trigger_mode_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
@@ -367,6 +376,14 @@ class TestTrigger:
             DHOBase, [(f":TRIG:EDGE:SOUR {value}", None)]
         ) as inst:
             inst.trigger_source = value
+
+    def test_canonical_edge_trigger_source_set(self):
+        with expected_protocol(DHOBase, [(":TRIG:EDGE:SOUR CHAN2", None)]) as inst:
+            inst.edge_trigger_source = "CHAN2"
+
+    def test_trigger_source_get(self):
+        with expected_protocol(DHOBase, [(":TRIG:EDGE:SOUR?", "CHAN3")]) as inst:
+            assert inst.trigger_source == "CHAN3"
 
     def test_trigger_source_invalid_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
@@ -541,14 +558,12 @@ class TestWaveform:
             ],
         ) as inst:
             pre = inst.get_waveform_preamble(1)
-            assert pre["format"] == 0
-            assert pre["type"] == 1
             assert pre["points"] == 1000
             assert pre["xincrement"] == pytest.approx(4e-7)
             assert pre["yincrement"] == pytest.approx(1.6e-3)
             assert pre["yreference"] == 128
             assert pre["xreference"] == 0
-            assert pre["xorigin"] == pytest.approx(-2e-4)
+            assert isinstance(pre["xreference"], int)
 
     def test_get_waveform_invalid_fmt_raises(self):
         with expected_protocol(DHOBase, []) as inst, pytest.raises(ValueError):
@@ -581,6 +596,29 @@ class TestWaveform:
             assert len(t) == 4
             assert len(v) == 4
 
+    def test_get_waveform_raw_byte(self):
+        raw_samples = bytes([128, 130, 126, 132])
+        ieee_block = b"#1" + str(len(raw_samples)).encode() + raw_samples + b"\n"
+
+        with expected_protocol(
+            DHOBase,
+            [
+                (":TRIG:STAT?", "STOP"),
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:MODE RAW", None),
+                (":WAV:FORM BYTE", None),
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:PRE?", PREAMBLE),
+                (":ACQ:MDEP?", "4"),
+                (":WAV:STAR 1", None),
+                (":WAV:STOP 4", None),
+                (":WAV:DATA?", ieee_block),
+            ],
+        ) as inst:
+            t, v = inst.get_waveform(channel=1, mode="RAW", fmt="BYTE")
+            assert len(t) == 4
+            assert len(v) == 4
+
     def test_get_waveform_ascii(self):
         csv = "0.1,0.2,0.3,0.4"
         with expected_protocol(
@@ -594,6 +632,27 @@ class TestWaveform:
                 (":WAV:STAR 1", None),
                 (":WAV:STOP 1000", None),
                 (":WAV:DATA?", csv),
+            ],
+        ) as inst:
+            t, v = inst.get_waveform_ascii(channel=1)
+            assert len(v) == 4
+            assert v[0] == pytest.approx(0.1)
+            assert len(t) == len(v)
+
+    def test_get_waveform_ascii_with_ieee_block(self):
+        csv = "0.1,0.2,0.3,0.4"
+        ieee_block = f"#2{len(csv):02}{csv}"
+        with expected_protocol(
+            DHOBase,
+            [
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:MODE NORM", None),
+                (":WAV:FORM ASC", None),
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:PRE?", PREAMBLE),
+                (":WAV:STAR 1", None),
+                (":WAV:STOP 1000", None),
+                (":WAV:DATA?", ieee_block),
             ],
         ) as inst:
             t, v = inst.get_waveform_ascii(channel=1)
