@@ -22,16 +22,13 @@
 # THE SOFTWARE.
 #
 
-try:
-    from .daqmx import DAQmx
-except (OSError, AttributeError):
-    # Error Logging is handled within package
-    pass
+import importlib
 
-try:
-    from .virtualbench import VirtualBench
-    # direct access to armstrap/pyvirtualbench wrapper:
-    # from .virtualbench import VirtualBench_Direct
-except ModuleNotFoundError:
-    # Error Logging is handled within package
-    pass
+
+def test_ni_package_imports_without_ni_daqmx_library():
+    """The ni package imports even if the NI-DAQmx library is not installed.
+
+    Loading that library raises an AttributeError (rather than an OSError) when
+    it is missing, which the package has to tolerate.
+    """
+    importlib.import_module("pymeasure.instruments.ni")
