@@ -227,6 +227,12 @@ It is also possible to define derived fixtures, for example to put the device in
 
 In this case, do not specify the fixture's scope, so it is called again for every test function using it.
 
+To run the test, specify the address of the device to be used via the :code:`--device-address` command line argument and limit pytest to the relevant tests.
+You can filter tests with the :code:`-k` option or you can specify the filename.
+For example, if your tests are in a file called :code:`test_extreme5000_with_device.py`, invoke pytest with :code:`pytest -k extreme5000 --device-address "TCPIP::192.168.0.123::INSTR"`.
+
+There might also be tests where manual intervention is necessary. In this case, skip the test by prepending the test function with a :code:`@pytest.mark.skip(reason="A human needs to press a button.")` decorator.
+
 Generating protocol tests from device tests
 -------------------------------------------
 
@@ -267,13 +273,11 @@ protocol tests after all device tests have finished:
         tc038.setpoint = 20
         assert tc038.setpoint == 20
 
+.. note::
+    The code above is a modification of the regular device test, and it should not be committed.
+    The regular device test, without the generator fixture, may be committed.
+
 The wrapped instrument is used like a regular instrument. Property access and method calls are
 recorded while the device tests run, and the generated file uses
 :func:`~pymeasure.test.expected_protocol` so it can run later without a connected device.
 The generator overwrites its output file, so review the generated changes before committing them.
-
-To run the test, specify the address of the device to be used via the :code:`--device-address` command line argument and limit pytest to the relevant tests.
-You can filter tests with the :code:`-k` option or you can specify the filename.
-For example, if your tests are in a file called :code:`test_extreme5000_with_device.py`, invoke pytest with :code:`pytest -k extreme5000 --device-address "TCPIP::192.168.0.123::INSTR"`.
-
-There might also be tests where manual intervention is necessary. In this case, skip the test by prepending the test function with a :code:`@pytest.mark.skip(reason="A human needs to press a button.")` decorator.
