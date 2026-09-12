@@ -90,7 +90,13 @@ In the examples below we assume you have imported the validators.
 .. testcode::
     :hide:
 
-    from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range, truncated_discrete_set
+    from pymeasure.instruments.validators import (
+        strict_discrete_case_insensitive_set,
+        strict_discrete_set,
+        strict_range,
+        truncated_discrete_set,
+        truncated_range,
+    )
 
 In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device.
 The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` functions also provide means to achieve this.
