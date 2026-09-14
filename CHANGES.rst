@@ -30,6 +30,7 @@ Changed
   ``UnknownProcedure`` now returns empty ``parameter_objects``/``metadata_objects`` dicts so loading an unimportable procedure no longer raises.
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
 - Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
+- Rewrite the Thorlabs PRO8000/PRO800 driver to use channels: one channel per populated slot is auto-detected (:code:`:CONFIG:PLUG?`) with LDC, TED, ITC and PDA (:class:`PDAChannel`, whose ports are :class:`PDAPortChannel`) module support, added measured read-backs (actual current, temperature, voltage, ...) and fixed the laser diode polarity command (now :code:`:LDPOL`). The former flat, slot-selecting properties (:code:`LDCCurrent`, :code:`LDCStatus`, ...) are replaced by the channel interfaces.
 
 Instruments
 -----------
