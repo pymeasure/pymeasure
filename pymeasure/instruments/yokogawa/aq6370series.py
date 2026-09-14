@@ -267,9 +267,9 @@ class AQ6370Series(SCPIMixin, Instrument):
     wavelength_start = Instrument.control(
         ":SENSe:WAVelength:STARt?",
         ":SENSe:WAVelength:STARt %g",
-        "Control the measurement start wavelength (float from 50e-9 to 2250e-9 in m).",
+        "Control the measurement start wavelength (float from 50e-9 to 1700e-9 in m).",
         validator=strict_range,
-        values=[50e-9, 1700 - 9],
+        values=[50e-9, 1700e-9],
         dynamic=True,
     )
 

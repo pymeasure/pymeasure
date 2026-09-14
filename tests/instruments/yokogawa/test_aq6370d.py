@@ -178,6 +178,11 @@ def test_wavelength_start_setter():
         inst.wavelength_start = 8e-07
 
 
+def test_wavelength_start_upper_bound():
+    with expected_protocol(AQ6370D, []) as inst, pytest.raises(ValueError):
+        inst.wavelength_start = 1800e-9
+
+
 def test_wavelength_stop_setter():
     with expected_protocol(
         AQ6370D,
