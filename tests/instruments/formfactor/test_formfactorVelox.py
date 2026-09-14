@@ -145,6 +145,8 @@ class TestVelox:
             expected_protocol(Velox, [("StepNextDie", "703: End of wafer.")]) as inst,
         ):
             inst.wafermap.step_next_die()
+            assert inst.error_code == 703
+            assert inst.error_message == "End of wafer."
 
     def test_options(self):
         with pytest.raises(NotImplementedError), expected_protocol(
