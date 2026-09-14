@@ -31,6 +31,10 @@ Changed
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
 - Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
 
+Instruments
+-----------
+- Fix Yokogawa AQ6370 :code:`authenticate_ethernet` to compare responses case-insensitively (older firmware such as the AQ6370B answers in lower case) and raise :code:`ConnectionError` instead of asserting.
+
 Version 0.16.0 (2026-05-20)
 ===========================
 
