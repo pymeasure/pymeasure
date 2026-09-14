@@ -179,9 +179,6 @@ def test_wavelength_start_setter():
 
 
 def test_wavelength_start_upper_bound():
-    # Regression: the upper bound was 1691 m (typo "1700 - 9"), an absurdly large
-    # limit that never rejected anything. Per the manual the start wavelength is
-    # 50 to 1700 nm, so a value above 1700 nm must now be rejected.
     with expected_protocol(AQ6370D, []) as inst, pytest.raises(ValueError):
         inst.wavelength_start = 1800e-9
 

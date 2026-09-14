@@ -31,10 +31,6 @@ Changed
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
 - Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
 
-Instruments
------------
-- Fix Yokogawa AQ6370 ``wavelength_start`` upper bound, which was 1691 m due to a ``1700 - 9`` typo (now ``1700e-9``).
-
 Version 0.16.0 (2026-05-20)
 ===========================
 
