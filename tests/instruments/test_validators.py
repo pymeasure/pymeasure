@@ -28,6 +28,7 @@ from pymeasure.instruments.validators import (
     joined_validators,
     modular_range,
     modular_range_bidirectional,
+    strict_discrete_case_insensitive_set,
     strict_discrete_range,
     strict_discrete_set,
     strict_range,
@@ -63,6 +64,17 @@ def test_strict_discrete_set():
         strict_discrete_set(5.1, range(10))
     with pytest.raises(ValueError):
         strict_discrete_set(20, range(10))
+
+
+def test_strict_discrete_case_insensitive_set():
+    values = ["NORMal", "AVERage"]
+    assert strict_discrete_case_insensitive_set("NORMal", values) == "NORMal"
+    assert strict_discrete_case_insensitive_set("normal", values) == "NORMal"
+    assert strict_discrete_case_insensitive_set("AvErAgE", values) == "AVERage"
+    assert strict_discrete_case_insensitive_set("ON", {"ON": 1, "OFF": 0}) == "ON"
+    assert strict_discrete_case_insensitive_set(5, range(10)) == 5
+    with pytest.raises(ValueError):
+        strict_discrete_case_insensitive_set("NONSENSE", values)
 
 
 def test_truncated_range():
