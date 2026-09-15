@@ -68,7 +68,7 @@ jobs:
         uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: .github/pymeasure.yml
-          cache-environment-key: pylatest-ubuntu-latest-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-environment-key: pylatest-ubuntu-latest-mamba-${{ hashFiles('.github/pymeasure.yml') }}
           cache-downloads: false
       - name: Python and Mamba version
         run: |
@@ -102,7 +102,7 @@ jobs:
         with:
           environment-file: .github/pymeasure.yml
           create-args: python=${{ matrix.python-version }}
-          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ hashFiles('.github/pymeasure.yml') }}
           cache-downloads: false
       - name: Python version
         run: python --version
@@ -146,7 +146,7 @@ jobs:
           micromamba-version: '2.6.0-0'
           environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
-          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ hashFiles('.github/pymeasure.yml') }}
           cache-downloads: false
       - name: Python version
         run: python --version
@@ -189,7 +189,7 @@ jobs:
           micromamba-version: '2.6.0-0'
           environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
-          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ hashFiles('.github/pymeasure.yml') }}
           cache-downloads: false
       - name: Python version
         run: python --version
