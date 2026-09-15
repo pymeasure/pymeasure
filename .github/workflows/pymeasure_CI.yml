@@ -5,6 +5,10 @@ on:
       - master
       - develop
   pull_request:
+  schedule:
+    # Weekly on Monday 03:45 UTC
+    - cron: '45 3 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -219,3 +223,31 @@ jobs:
         run: |
           echo "::add-matcher::.github/pytest.json"
           pytest
+
+  test_latest:
+    name: Latest dependencies
+    # Canary for a clean-environment install: all dependencies resolve to the newest PyPI versions,
+    # so we notice upstream breakage early.
+    # Allowed to fail on PRs so it never blocks merges; the weekly scheduled run (cron) still alerts maintainers.
+    continue-on-error: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Install Qt runtime system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 libxcb1 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "${{ env.LATEST_PYTHON }}"
+          cache: 'pip'
+      - name: Install pymeasure with latest dependencies
+        run: pip install ".[gui,tcp,tests]" PyQt6
+      - name: Dependency versions
+        run: pip list
+      - name: Run pytest with xvfb
+        run: |
+          echo "::add-matcher::.github/pytest.json"
+          xvfb-run -a pytest
