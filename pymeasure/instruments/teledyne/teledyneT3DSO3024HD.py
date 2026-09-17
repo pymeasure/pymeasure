@@ -74,7 +74,7 @@ class T3DSO3024HDChannel(Channel):
     @high_impedance_enabled.setter
     def high_impedance_enabled(self, value):
         self._impedance = value
-        self.scale_values = [500e-6, 1.0] if not value else [500e-6, 1e1]
+        self.scale_values = [500e-6, 1.0] if not self.high_impedance_enabled else [500e-6, 1e1]
 
     invert: InstrumentProperty[bool] = Channel.control(
         ":CHANnel{ch}:INVert?", ":CHANnel{ch}:INVert %s",
@@ -615,8 +615,14 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
                 4.1 * scale - offset,
             ]
         else:
-            # z.B. EX/EX5/LINE/D<n> - validator deactivated, because of no scale and offset values
-            self._trigger_edge_level_values = [-float("inf"), float("inf")]
+            source = self.trigger_edge_source
+            if source == "EX":
+                self._trigger_edge_level_values = [0.610, -0.610]
+            elif source == "EX5":
+                self._trigger_edge_level_values = [3.050, -3.050]
+            else:
+            # LINE/DIGITAL source
+                self._trigger_edge_level_values = [-float("inf"), float("inf")]
         self._trigger_edge_level = value
 
     trigger_edge_noise_reject = Instrument.control(

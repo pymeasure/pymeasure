@@ -338,3 +338,212 @@ class TestTimebaseDelay:
         assert reseted_teledyneT3DSO3024HD.timebase_delay == pytest.approx(
             delay_value, rel=1e-3
         )
+
+
+class TestTimebaseWindow:
+    @pytest.mark.parametrize("timebase_window_value", [True, False])
+    def test_timebase_window(self, reseted_teledyneT3DSO3024HD, timebase_window_value):
+        reseted_teledyneT3DSO3024HD.timebase_window = timebase_window_value
+        assert reseted_teledyneT3DSO3024HD.timebase_window == timebase_window_value
+
+
+class TestTimebaseWindowScale:
+    def test_timebase_window_scale_within_main_scale(self, reseted_teledyneT3DSO3024HD):
+        reseted_teledyneT3DSO3024HD.timebase_scale = 5e-3
+        reseted_teledyneT3DSO3024HD.timebase_window = True
+        reseted_teledyneT3DSO3024HD.timebase_window_scale = 5e-4
+        assert reseted_teledyneT3DSO3024HD.timebase_window_scale == pytest.approx(
+            5e-4, rel=1e-3
+        )
+
+    def test_timebase_window_scale_clamped_to_main_scale(self, reseted_teledyneT3DSO3024HD):
+        # setting a window scale greater than the main scale must be clamped by the
+        # instrument to the main window's scale rather than rejected
+        reseted_teledyneT3DSO3024HD.timebase_scale = 5e-4
+        reseted_teledyneT3DSO3024HD.timebase_window = True
+        reseted_teledyneT3DSO3024HD.timebase_window_scale = 5e-3
+        assert reseted_teledyneT3DSO3024HD.timebase_window_scale == pytest.approx(
+            5e-4, rel=1e-3
+        )
+
+
+class TestTimebaseWindowDelay:
+    def test_timebase_window_delay_within_range(self, reseted_teledyneT3DSO3024HD):
+        reseted_teledyneT3DSO3024HD.timebase_scale = 5e-3
+        reseted_teledyneT3DSO3024HD.timebase_window = True
+        reseted_teledyneT3DSO3024HD.timebase_window_delay = 0
+        assert reseted_teledyneT3DSO3024HD.timebase_window_delay == pytest.approx(
+            0, abs=1e-9
+        )
+
+    def test_timebase_window_delay_out_of_range_is_clamped(self, reseted_teledyneT3DSO3024HD):
+        # an out-of-range value must be clamped by the instrument to the nearest
+        # legal value (within the main sweep range) rather than rejected
+        reseted_teledyneT3DSO3024HD.timebase_scale = 5e-6
+        reseted_teledyneT3DSO3024HD.timebase_window = True
+        reseted_teledyneT3DSO3024HD.timebase_window_delay = 1
+        clamped = reseted_teledyneT3DSO3024HD.timebase_window_delay
+        assert clamped != pytest.approx(1, rel=1e-3)
+
+
+class TestTriggerMode:
+    @pytest.mark.parametrize("mode_value", ["SINGLE", "NORMAL", "AUTO"])
+    def test_trigger_mode(self, reseted_teledyneT3DSO3024HD, mode_value):
+        reseted_teledyneT3DSO3024HD.trigger_mode = mode_value
+        assert reseted_teledyneT3DSO3024HD.trigger_mode == mode_value
+
+
+class TestTriggerRunStop:
+    def test_trigger_run_and_stop(self, reseted_teledyneT3DSO3024HD):
+        reseted_teledyneT3DSO3024HD.trigger_run()
+        assert reseted_teledyneT3DSO3024HD.trigger_status in (
+            "Arm", "Ready", "Auto", "Trig'd", "Stop", "Roll"
+        )
+        reseted_teledyneT3DSO3024HD.trigger_stop()
+        assert reseted_teledyneT3DSO3024HD.trigger_status == "Stop"
+
+
+class TestTriggerType:
+    # only EDGE is fully supported by this class (see trigger_edge_* attributes);
+    # the other types are still checked here for the plain set/get round-trip
+    @pytest.mark.parametrize(
+        "trigger_type_value",
+        ["EDGE", "PULSE", "SLOPE", "INTERVAL", "PATTERN", "RUNT", "QUALIFIED",
+         "WINDOW", "DROPOUT", "VIDEO"],
+    )
+    def test_trigger_type(self, reseted_teledyneT3DSO3024HD, trigger_type_value):
+        reseted_teledyneT3DSO3024HD.trigger_type = trigger_type_value
+        assert reseted_teledyneT3DSO3024HD.trigger_type == trigger_type_value
+
+
+class TestTriggerEdgeCoupling:
+    @pytest.mark.parametrize("coupling_value", ["DC", "AC", "LF_REJECT", "HF_REJECT"])
+    def test_trigger_edge_coupling(self, reseted_teledyneT3DSO3024HD, coupling_value):
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_coupling = coupling_value
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_coupling == coupling_value
+
+
+class TestTriggerEdgeHoldoffEvents:
+    @pytest.mark.parametrize("holdoff_events_value", [1, 5, 1000, 100000000])
+    def test_trigger_edge_holdoff_events(self, reseted_teledyneT3DSO3024HD,
+                                          holdoff_events_value):
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_type = "EVENTS"
+        reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_events = holdoff_events_value
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_events == holdoff_events_value
+
+
+class TestTriggerEdgeHoldoffTime:
+    @pytest.mark.parametrize("holdoff_time_value", [8e-9, 1e-6, 1e-3, 1, 30])
+    def test_trigger_edge_holdoff_time(self, reseted_teledyneT3DSO3024HD,
+                                        holdoff_time_value):
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_type = "TIME"
+        reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_time = holdoff_time_value
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_time == pytest.approx(
+            holdoff_time_value, rel=1e-3)
+
+
+class TestTriggerEdgeHoldoffType:
+    @pytest.mark.parametrize("holdoff_type_value", ["OFF", "EVENTS", "TIME"])
+    def test_trigger_edge_holdoff_type(self, reseted_teledyneT3DSO3024HD,
+                                        holdoff_type_value):
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_type = holdoff_type_value
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_type == holdoff_type_value
+
+
+class TestTriggerEdgeHoldoffStart:
+    @pytest.mark.parametrize("holdoff_start_value", ["LAST_TRIG", "ACQ_START"])
+    def test_trigger_edge_holdoff_start(self, reseted_teledyneT3DSO3024HD,
+                                         holdoff_start_value):
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_start = holdoff_start_value
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_start == holdoff_start_value
+
+
+class TestTriggerEdgeNoiseReject:
+    @pytest.mark.parametrize("noise_reject_value", [True, False])
+    def test_trigger_edge_noise_reject(self, reseted_teledyneT3DSO3024HD,
+                                        noise_reject_value):
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_noise_reject = noise_reject_value
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_noise_reject == noise_reject_value
+
+
+class TestTriggerEdgeSlope:
+    @pytest.mark.parametrize("slope_value", ["RISING", "FALLING", "ALTERNATE"])
+    def test_trigger_edge_slope(self, reseted_teledyneT3DSO3024HD, slope_value):
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_slope = slope_value
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_slope == slope_value
+
+
+class TestTriggerEdgeSource:
+    @pytest.mark.parametrize("source_value", [("C1", 1), ("C2", 2), ("C3", 3), ("C4", 4)])
+    def test_trigger_edge_source(self, reseted_teledyneT3DSO3024HD, source_value):
+        channel_attr_name = f"channel_{source_value[1]}"
+        channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
+        channel_obj.switch = True
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_source = source_value[0]
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_source == source_value[0]
+
+
+class TestTriggerEdgeLevel:
+    # the legal range depends on the vertical scale/offset of the current
+    # trigger source channel: [-4.1 * scale - offset, 4.1 * scale - offset]
+    @pytest.mark.parametrize("channel", [1, 2, 3, 4])
+    def test_trigger_edge_level_within_range(self, reseted_teledyneT3DSO3024HD, channel):
+        channel_obj = getattr(reseted_teledyneT3DSO3024HD, f"channel_{channel}")
+        channel_obj.switch = True
+        channel_obj.scale = 1
+        channel_obj.offset = 0
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_source = f"C{channel}"
+        reseted_teledyneT3DSO3024HD.trigger_edge_level = 2.0  # within [-4.1, 4.1]
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_level == pytest.approx(2.0, rel=1e-3)
+
+    def test_trigger_edge_level_range_updates_with_channel_scale(
+            self, reseted_teledyneT3DSO3024HD):
+        # a wider channel scale must widen the legal trigger level range
+        reseted_teledyneT3DSO3024HD.channel_1.switch = True
+        reseted_teledyneT3DSO3024HD.channel_1.high_impedance_enabled = True
+        reseted_teledyneT3DSO3024HD.channel_1.scale = 5
+        reseted_teledyneT3DSO3024HD.channel_1.offset = 0
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_source = "C1"
+        reseted_teledyneT3DSO3024HD.trigger_edge_level = 15  # within [-20.5, 20.5]
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_level == pytest.approx(15, rel=1e-3)
+
+    def test_trigger_edge_level_range_accounts_for_channel_offset(
+            self, reseted_teledyneT3DSO3024HD):
+        # channel offset shifts the legal range: [-4.1*scale - offset, 4.1*scale - offset]
+        reseted_teledyneT3DSO3024HD.channel_1.switch = True
+        reseted_teledyneT3DSO3024HD.channel_1.scale = 1
+        reseted_teledyneT3DSO3024HD.channel_1.offset = 0.5
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_source = "C1"
+        reseted_teledyneT3DSO3024HD.trigger_edge_level = -1.0  # within [-4.6, 3.6]
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_level == pytest.approx(-1.0, rel=1e-3)
+
+    def test_trigger_edge_level_out_of_range_rejected(self, reseted_teledyneT3DSO3024HD):
+        # values outside [-4.1*scale - offset, 4.1*scale - offset] must be
+        # rejected client-side (strict_range), before anything is sent
+        reseted_teledyneT3DSO3024HD.channel_1.switch = True
+        reseted_teledyneT3DSO3024HD.channel_1.scale = 1
+        reseted_teledyneT3DSO3024HD.channel_1.offset = 0
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_source = "C1"
+        with pytest.raises(ValueError):
+            reseted_teledyneT3DSO3024HD.trigger_edge_level = 10  # > 4.1 * 1 - 0
+
+    @pytest.mark.parametrize("source_value", ["EX", "EX5", "LINE"])
+    def test_trigger_edge_level_unrestricted_for_non_channel_source(
+            self, reseted_teledyneT3DSO3024HD, source_value):
+        # non-analog sources have no scale/offset, so the level is not range-checked
+        reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
+        reseted_teledyneT3DSO3024HD.trigger_edge_source = source_value
+        reseted_teledyneT3DSO3024HD.trigger_edge_level = 0.61
+        assert reseted_teledyneT3DSO3024HD.trigger_edge_level == pytest.approx(0.61, rel=2e-2)

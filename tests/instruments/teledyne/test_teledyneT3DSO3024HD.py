@@ -45,6 +45,7 @@ def test_high_impedance_enabled_limits_scale_range():
         TeledyneT3DSO3024HD,
         [
             (":CHANnel1:IMPedance FIFTy", None),
+            (":CHANnel1:IMPedance?", "FIFTy"),
             (":CHANnel1:SCALe 5.00E-01", None),
         ],
     ) as instr:
@@ -1306,14 +1307,26 @@ def test_trigger_edge_level_out_of_range_rejected_for_channel_source(value):
     ):
         instr.trigger_edge_level = value
 
+@pytest.mark.parametrize("source", ["EX", "EX5"])
+def test_trigger_edge_level_out_of_range_rejected_for_non_channel_source(source):
+     with expected_protocol(
+            TeledyneT3DSO3024HD,
+            [
+                (":TRIGger:EDGE:SOURce?", source),
+                (":TRIGger:EDGE:SOURce?", source),
+                (":TRIGger:EDGE:LEVel 6.10E-01", None),
+            ],
+    ) as instr:
+         instr.trigger_edge_level = 0.61
 
-@pytest.mark.parametrize("source", ["EX", "EX5", "LINE", "D0", "D15"])
+@pytest.mark.parametrize("source", ["LINE", "D0", "D15"])
 def test_trigger_edge_level_set_unrestricted_for_non_channel_source(source):
     # Non-analog trigger sources have no scale/offset -> no extra queries,
     # and the value is not range-checked.
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [
+            (":TRIGger:EDGE:SOURce?", source),
             (":TRIGger:EDGE:SOURce?", source),
             (":TRIGger:EDGE:LEVel 1.00E+03", None),
         ],
