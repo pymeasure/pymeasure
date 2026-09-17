@@ -1320,6 +1320,7 @@ def test_trigger_edge_level_out_of_range_rejected_for_non_channel_source(source)
     ) as instr:
          instr.trigger_edge_level = 0.61
 
+
 @pytest.mark.parametrize("source", ["LINE", "D0", "D15"])
 def test_trigger_edge_level_set_unrestricted_for_non_channel_source(source):
     # Non-analog trigger sources have no scale/offset -> no extra queries,
