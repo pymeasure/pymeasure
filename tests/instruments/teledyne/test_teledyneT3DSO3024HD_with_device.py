@@ -547,3 +547,48 @@ class TestTriggerEdgeLevel:
         reseted_teledyneT3DSO3024HD.trigger_edge_source = source_value
         reseted_teledyneT3DSO3024HD.trigger_edge_level = 0.61
         assert reseted_teledyneT3DSO3024HD.trigger_edge_level == pytest.approx(0.61, rel=2e-2)
+
+
+class TestMeasure:
+    @pytest.mark.parametrize("measure_value", [True, False])
+    def test_measure(self, reseted_teledyneT3DSO3024HD, measure_value):
+        reseted_teledyneT3DSO3024HD.measure = measure_value
+        assert reseted_teledyneT3DSO3024HD.measure == measure_value
+
+
+class TestMeasureMode:
+    @pytest.mark.parametrize("measure_mode_value", ["SIMPLE", "ADVANCED"])
+    def test_measure_mode(self, reseted_teledyneT3DSO3024HD, measure_mode_value):
+        reseted_teledyneT3DSO3024HD.measure_mode = measure_mode_value
+        assert reseted_teledyneT3DSO3024HD.measure_mode == measure_mode_value
+
+
+class TestMeasurementSimpleSource:
+    @pytest.mark.parametrize("source_value", ["C1", "C2", "C3", "C4"])
+    def test_measurement_simple_source_channel(self, reseted_teledyneT3DSO3024HD,
+                                                source_value):
+        reseted_teledyneT3DSO3024HD.measurement_simple_source = source_value
+        assert reseted_teledyneT3DSO3024HD.measurement_simple_source == source_value
+
+
+class TestSetMeasurementItem:
+    # NOTE: This test requires a real sine signal applied to channel 1. The sine
+    # needs to have an amplitude of 1V and a frequency of 20kHz with 0° phase shift and 0.2V offset.
+
+    def test_set_measurement(self, reseted_teledyneT3DSO3024HD):
+        measurements = [("FREQUENCY", 20e3, 1e-2), ("AMPLITUDE", 2.0, 1e-2), ("RMS", 0.735, 1e-2),
+                        ("MEAN", 0.2, 1e-1)]
+        reseted_teledyneT3DSO3024HD.channel_1.switch = True
+        reseted_teledyneT3DSO3024HD.channel_1.high_impedance_enabled = True
+        reseted_teledyneT3DSO3024HD.channel_1.scale = 0.5
+        reseted_teledyneT3DSO3024HD.timebase_scale = 20e-6
+        reseted_teledyneT3DSO3024HD.measure = True
+        reseted_teledyneT3DSO3024HD.measurement_simple_source = "C1"
+
+        for parameter in measurements:
+            reseted_teledyneT3DSO3024HD.set_measurement_item(parameter[0], True)
+            time.sleep(0.2)
+            result = reseted_teledyneT3DSO3024HD.measurement_value(parameter[0])
+            print(f"{parameter[0]}: {result} ")
+            assert result == pytest.approx(parameter[1], rel=parameter[2])
+            reseted_teledyneT3DSO3024HD.set_measurement_item(parameter[0], False)
