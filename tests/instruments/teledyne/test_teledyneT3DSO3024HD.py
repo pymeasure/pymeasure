@@ -1307,6 +1307,7 @@ def test_trigger_edge_level_out_of_range_rejected_for_channel_source(value):
     ):
         instr.trigger_edge_level = value
 
+
 @pytest.mark.parametrize("source", ["EX", "EX5"])
 def test_trigger_edge_level_out_of_range_rejected_for_non_channel_source(source):
      with expected_protocol(
