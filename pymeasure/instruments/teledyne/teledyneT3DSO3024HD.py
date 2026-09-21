@@ -21,14 +21,42 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import struct
+
+import numpy as np
 
 from pymeasure.instruments import Channel, Instrument, InstrumentProperty
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
+WAVEFORM_SOURCES = [f"C{i}" for i in range(1, 5)] + \
+    [f"F{i}" for i in range(1, 5)] + \
+    [f"D{i}" for i in range(16)]
+
+TIMEBASE_VALUES = [
+    200e-12, 500e-12, 1e-9, 2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
+    500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6, 200e-6, 500e-6,
+    1e-3, 2e-3, 5e-3, 10e-3, 20e-3, 50e-3, 100e-3, 200e-3, 500e-3,
+    1, 2, 5, 10, 20, 50, 100, 200, 500, 1000,
+]
+
+# Table 3 "Enum of Probe Attenuation" from the programming guide.
+PROBE_ATTENUATION_VALUES = [
+    0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1e3, 2e3, 5e3, 10e3,
+]
+
+SOURCE_INDEX_MAP = {
+    0: "C1", 1: "C2", 2: "C3", 3: "C4",
+    8: "F1", 9: "F2", 10: "F3", 11: "F4",
+    **{20 + i: f"D{i}" for i in range(16)},  # D0=20 .. D15=35
+}
+
 
 class T3DSO3024HDChannel(Channel):
     """Implementation of an analog channel on the :class:`T3DSO3024HD` oscilloscope."""
+
+    ADC_BITS = 12
+    CODE_PER_DIV = 480
 
     bwlimit = Channel.control(
         ":CHANnel{ch}:BWLimit?", ":CHANnel{ch}:BWLimit %s",
@@ -792,3 +820,272 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         if parameter == "ALL":
             return response
         return float(response)
+
+    waveform_source = Instrument.control(
+        ":WAVeform:SOURce?", ":WAVeform:SOURce %s",
+        """Control the waveform source used by :meth:`waveform_preamble`,
+        :meth:`waveform_data` and :meth:`get_waveform` (str).
+
+        Legal values are 'C1'..'C4' (analog channels), 'F1'..'F4' (math
+        functions) or 'D0'..'D15' (digital channels).
+        """,
+        validator=strict_discrete_set,
+        values=WAVEFORM_SOURCES,
+        cast=str,
+    )
+
+    waveform_start = Instrument.control(
+        ":WAVeform:STARt?", ":WAVeform:STARt %d",
+        """Control the index of the first data point to be transferred by
+        the next :meth:`waveform_data` query (int).
+
+        Note: the legal range depends on :attr:`waveform_points`.
+        """,
+        cast=int,
+    )
+
+    waveform_interval = Instrument.control(
+        ":WAVeform:INTerval?", ":WAVeform:INTerval %d",
+        """Control the decimation ("sparsing") interval between the data
+        points transferred by :meth:`waveform_data` (int). A value of 1
+        transfers every point, 2 transfers every other point, and so on.
+
+        Note: the legal range depends on :attr:`waveform_points` and
+        :attr:`waveform_start`.
+        """,
+        cast=int,
+    )
+
+    waveform_points = Instrument.control(
+        ":WAVeform:POINt?", ":WAVeform:POINt %d",
+        """Control the number of waveform points to be transferred by the
+        next :meth:`waveform_data` query (int).
+
+        Note: the legal range depends on the number of points currently
+        acquired, see :attr:`points`.
+        """,
+        cast=int,
+    )
+
+    waveform_max_points = Instrument.measurement(
+        ":WAVeform:MAXPoint?",
+        """Get the maximum number of points that can be transferred by a
+        single :meth:`waveform_data` query (int). Use this to split large
+        transfers into several chunks with :attr:`waveform_start`.
+        """,
+        cast=int,
+    )
+
+    waveform_format = Instrument.control(
+        ":WAVeform:WIDTh?", ":WAVeform:WIDTh %s",
+        """Control the sample width used by :meth:`waveform_data` (str),
+        strictly 'BYTE' or 'WORD'.
+
+        - 'BYTE': one 8-bit sample per point.
+        - 'WORD': one 16-bit sample per point (high byte first). Required
+          whenever the vertical resolution is set to more than 8 bit.
+        """,
+        validator=strict_discrete_set,
+        values=["BYTE", "WORD"],
+        cast=str,
+    )
+
+    def waveform_preamble(self):
+        """Get the descriptor ("WAVEDESC") of the current
+        :attr:`waveform_source`, needed to interpret :meth:`waveform_data`.
+
+        :returns: dict with the following keys:
+
+            - ``points`` (int): number of points in the data array
+              (analog/math sources only).
+            - ``first_point`` (int): offset of the first point, see
+              :attr:`waveform_start`.
+            - ``sparse_factor`` (int): decimation factor, see
+              :attr:`waveform_interval`.
+            - ``vertical_gain`` (float): vertical scale in Volts/div,
+              already scaled by the probe attenuation.
+            - ``vertical_offset`` (float): vertical offset in Volts,
+              already scaled by the probe attenuation.
+            - ``max_value_grid`` (float): Max_value. Maximum allowed value.
+              It corresponds to the upperedge of the grid. 127
+            - ``min_value_grid`` (float): Min_value. Minimum allowed value.
+              It corresponds to the loweredge of the grid. -128
+            - ``horizontal_interval`` (float): sampling interval in seconds
+              (= 1 / sample rate).
+            - ``horizontal_offset`` (float): trigger offset of the first
+              data point, in seconds.
+            - ``timebase`` (float): horizontal scale in seconds/div.
+            - ``probe_attenuation`` (float): probe attenuation factor.
+            - ``vertical_coupling`` (str): 'DC', 'AC' or 'GND'.
+            - ``bandwidth_limit`` (str): 'FULL', '20M' or '200M'.
+            - ``source`` (str): the waveform source this descriptor refers
+              to (e.g. 'C1' or 'D0'), decoded from the WAVEDESC "wave
+              source" field where possible (see ``SOURCE_INDEX_MAP``),
+              otherwise falls back to :attr:`waveform_source`.
+            - ``source_index_raw`` (int): the raw value of that field
+              (byte 0x158), in case you want to investigate further.
+        """
+        self.write(":WAVeform:PREamble?")
+        raw = self.read_bytes(-1)
+        if raw[0:1] != b'#':
+            raise ValueError(f"Unexpected waveform block header: {raw[:11]!r}")
+        raw = raw[11:]
+
+        wave_array_count = struct.unpack_from("<i", raw, 0x74)[0]
+        first_point = struct.unpack_from("<i", raw, 0x84)[0]
+        sparse_factor = struct.unpack_from("<i", raw, 0x88)[0]
+        vertical_gain_raw = struct.unpack_from("<f", raw, 0x9C)[0]
+        vertical_offset_raw = struct.unpack_from("<f", raw, 0xA0)[0]
+        max_value_grid = struct.unpack_from("<f", raw, 0xA4)[0]
+        min_value_grid = struct.unpack_from("<f", raw, 0xA8)[0]
+        horizontal_interval = struct.unpack_from("<f", raw, 0xB0)[0]
+        horizontal_offset = struct.unpack_from("<d", raw, 0xB4)[0]
+        timebase_index = struct.unpack_from("<h", raw, 0x144)[0]
+        vertical_coupling_index = struct.unpack_from("<h", raw, 0x146)[0]
+        # probe_field could be integer or flaot therefor not interpreted here
+        probe_field = raw[0x148:0x14C]
+        bandwidth_index = struct.unpack_from("<h", raw, 0x14E)[0]
+        source_index = struct.unpack_from("<h", raw, 0x158)[0]
+
+        source_name = SOURCE_INDEX_MAP.get(source_index)
+        if source_name is None:
+            source_name = self.waveform_source
+
+        # Quirk taken verbatim from the vendor's own example script: the
+        # probe field is an *index* into PROBE_ATTENUATION_VALUES for
+        # standard probes, but is *reinterpreted as a float* holding the
+        # actual attenuation directly for CUSTOM_A..D probes.
+        probe_index = struct.unpack("<i", probe_field)[0]
+        # check if integer should be float value, a float value except 0.0 should allways
+        # be higher interpreted then 15 when integer. 15 ist the # of fields in
+        # PROBE_ATTENUATION_VALUES.
+        if probe_index > 15:
+            probe_attenuation = struct.unpack("<f", probe_field)[0]
+        else:
+            probe_attenuation = PROBE_ATTENUATION_VALUES[probe_index]
+
+        return {
+            "points": wave_array_count,
+            "first_point": first_point,
+            "sparse_factor": sparse_factor,
+            "vertical_gain": vertical_gain_raw * probe_attenuation,
+            "vertical_offset": vertical_offset_raw * probe_attenuation,
+            "maximum_grid_value": max_value_grid,
+            "minimum_grid_value": min_value_grid,
+            "horizontal_interval": horizontal_interval,
+            "horizontal_offset": horizontal_offset,
+            "timebase": TIMEBASE_VALUES[timebase_index],
+            "probe_attenuation": probe_attenuation,
+            "vertical_coupling": ["DC", "AC", "GND"][vertical_coupling_index],
+            "bandwidth_limit": ["FULL", "20M", "200M"][bandwidth_index],
+            "source": source_name,
+            "source_index_raw": source_index,
+        }
+
+    def _read_waveform_block(self):
+        """Read the response of a ``:WAVeform:DATA?`` query and strip its framing.
+
+        :returns: bytes -- the raw payload.
+        """
+        # read header from the buffer
+        raw = self.read_bytes(2)
+        if raw[0:1] != b'#':
+            raise ValueError("Unexpected waveform block header")
+        len_header = int(raw[1:2])
+        raw = self.read_bytes(len_header)
+        # convert the ASCII length into int
+        length = int(raw)
+        # recover the payload
+        payload = self.read_bytes(length)
+        self.read_bytes(2)
+        # check the payload length
+        if len(payload) != length:
+            raise ValueError(
+                f"Expected {length} bytes of waveform block payload, "
+                f"got {len(payload)}"
+            )
+        return payload
+
+    def waveform_data(self):
+        """Get the raw, uncalibrated sample codes of the current analog or
+        math :attr:`waveform_source` (numpy array of int).
+
+        Use :meth:`get_waveform` instead if you want calibrated
+        volt/second values.
+        """
+        self.write(":WAVeform:DATA?")
+        payload = self._read_waveform_block()
+        if self.waveform_format == "WORD":
+            codes = np.frombuffer(payload, dtype="<u2").astype(np.int32)
+            # Overflow protection
+            codes[codes > 32767] -= 65536
+        else:
+            codes = np.frombuffer(payload, dtype=np.uint8).astype(np.int16)
+            # Overflow protection
+            codes[codes > 127] -= 256
+        return codes
+
+    def waveform_digital_data(self):
+        """Get the sample bits of the current digital :attr:`waveform_source`
+        ('D0'..'D15') as a numpy array of 0/1 (uint8), one entry per sample.
+        """
+        self.write(":WAVeform:DATA?")
+        payload = self._read_waveform_block()
+        bits = np.unpackbits(
+            np.frombuffer(payload, dtype=np.uint8), bitorder="little"
+        )
+        return bits
+
+    def get_waveform(self, source=None):
+        """Acquire, transfer and reconstruct one waveform trace.
+
+        :param source: waveform source to read, e.g. 'C1' or 'D0' (str). If
+            given, sets :attr:`waveform_source` first. If omitted, the
+            currently configured source is used.
+        :returns: tuple of numpy arrays.
+
+            - For an analog/math source: ``(time, voltage)`` in seconds and
+              Volts.
+            - For a digital source: ``(time, logic)`` in seconds and 0/1.
+        """
+        if source is not None:
+            self.waveform_source = source
+        source = self.waveform_source
+        preamble = self.waveform_preamble()
+
+        if source.startswith("D"):
+            codes = self.waveform_digital_data()
+            code_per_div = None
+        else:
+            codes = self.waveform_data()
+            channel = getattr(self, f"channel_{source[1]}", None)
+            adc_bits = channel.ADC_BITS if channel is not None else 12
+            code_per_div = channel.CODE_PER_DIV if channel is not None else 30
+            if self.waveform_format == "WORD":
+                # Data is left-aligned in the 16-bit word with the low bits
+                # zero-filled; shift back down to the native ADC resolution
+                # so that code_per_div stays valid regardless of format.
+                codes = codes >> (16 - adc_bits)
+
+        n_points = len(codes)
+        index = np.arange(n_points)
+        if source.startswith("D"):
+            point_spacing = preamble["horizontal_interval"]
+        else:
+            sparse_factor = preamble["sparse_factor"] or 1
+            point_spacing = sparse_factor * preamble["horizontal_interval"]
+
+        time = (
+            -preamble["horizontal_offset"]
+            - (preamble["timebase"] * 10 / 2)
+            + (preamble["first_point"] + index) * point_spacing
+        )
+
+        if source.startswith("D"):
+            return time, codes
+
+        voltage = (
+            codes * (preamble["vertical_gain"] / code_per_div)
+            - preamble["vertical_offset"]
+        )
+        return time, voltage

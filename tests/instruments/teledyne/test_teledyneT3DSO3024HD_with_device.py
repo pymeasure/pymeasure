@@ -592,3 +592,44 @@ class TestSetMeasurementItem:
             print(f"{parameter[0]}: {result} ")
             assert result == pytest.approx(parameter[1], rel=parameter[2])
             reseted_teledyneT3DSO3024HD.set_measurement_item(parameter[0], False)
+
+
+class TestWaveformPreamble:
+    def test_waveform_preamble(self, teledyneT3DSO3024HD):
+        result = teledyneT3DSO3024HD.waveform_preamble()
+        print(result)
+
+
+class TestWaveformData:
+    def test_waveform_data(self, teledyneT3DSO3024HD):
+        import matplotlib.pyplot as plt
+        teledyneT3DSO3024HD.waveform_points = 2000000
+        teledyneT3DSO3024HD.waveform_interval = 1
+        # teledyneT3DSO3024HD.waveform_format = 'BYTE'
+        teledyneT3DSO3024HD.waveform_format = 'WORD'
+        time, voltage = teledyneT3DSO3024HD.get_waveform("C1")
+        _fig, ax = plt.subplots(figsize=(10, 4))
+        ax.plot(time * 1e3, voltage)   # Sec -> Milisec
+        ax.set_xlabel("Time (ms)")
+        ax.set_ylabel("Voltage (V)")
+        ax.set_title("Waveform C1")
+        ax.grid(True)
+        plt.show()
+
+
+class TestWaveformDataDigital:
+    def test_waveform_data_digital(self, teledyneT3DSO3024HD):
+        import matplotlib.pyplot as plt
+        teledyneT3DSO3024HD.waveform_points = 1000000
+        teledyneT3DSO3024HD.waveform_interval = 500000
+        # teledyneT3DSO3024HD.waveform_format = 'BYTE'
+        teledyneT3DSO3024HD.waveform_format = 'WORD'
+        time, voltage = teledyneT3DSO3024HD.get_waveform("D0")
+        _fig, ax = plt.subplots(figsize=(10, 4))
+        print(len(time))
+        ax.plot(time, voltage)
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Voltage (V)")
+        ax.set_title("Waveform D0")
+        ax.grid(True)
+        plt.show()
