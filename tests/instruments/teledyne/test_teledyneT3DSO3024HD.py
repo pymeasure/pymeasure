@@ -135,6 +135,7 @@ def test_label_exact_max_length_allowed():
 
 
 def test_label_no_string():
+    """Verify that a value of none string in :attr:`label_text` is not accepted."""
     label = 21
     with (
         expected_protocol(
@@ -147,6 +148,7 @@ def test_label_no_string():
 
 
 def test_label_quote():
+    """Verify that a value with a quote in :attr:`label_text` is not accepted."""
     label = 'Hi""H'
     with (
         expected_protocol(
@@ -2158,12 +2160,13 @@ def test_waveform_data_invalid_header():
 
 
 def test_waveform_data_invalid_length():
-    """Verify that :attr:`waveform data invalid length` can be set and raises `ValueError`."""
+    """Verify that :meth:`waveform_data` raises ValueError on a payload/length mismatch."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
             [
                 (":WAVeform:DATA?", b'#15AAA'),
+                (None, b'XX'),
             ],
         ) as instr,
         pytest.raises(ValueError)
