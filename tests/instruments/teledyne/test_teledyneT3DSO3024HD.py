@@ -330,8 +330,7 @@ def test_label_set_true():
 
 
 def test_label_set_false():
-    """Verify that :attr:`label` reads back as ``True`` for the corresponding
-    instrument response."""
+    """Verify that setting :attr:`label` to ``False`` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:LABel OFF", None)],
