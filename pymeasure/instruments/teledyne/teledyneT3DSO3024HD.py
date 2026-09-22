@@ -912,12 +912,11 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
               :attr:`waveform_interval`.
             - ``vertical_gain`` (float): vertical scale in Volts/div,
               already scaled by the probe attenuation.
-            - ``vertical_offset`` (float): vertical offset in Volts,
-              already scaled by the probe attenuation.
-            - ``max_value_grid`` (float): Max_value. Maximum allowed value.
+            - ``vertical_offset`` (float): code_per_div. The value is different
+              for different vertical gain of differentmodels
+            - ``code_per_div`` (float): Max_value. Maximum allowed value.
               It corresponds to the upperedge of the grid. 127
-            - ``min_value_grid`` (float): Min_value. Minimum allowed value.
-              It corresponds to the loweredge of the grid. -128
+            - ``adc_bits`` (int): Adc_bit
             - ``horizontal_interval`` (float): sampling interval in seconds
               (= 1 / sample rate).
             - ``horizontal_offset`` (float): trigger offset of the first
@@ -944,8 +943,8 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         sparse_factor = struct.unpack_from("<i", raw, 0x88)[0]
         vertical_gain_raw = struct.unpack_from("<f", raw, 0x9C)[0]
         vertical_offset_raw = struct.unpack_from("<f", raw, 0xA0)[0]
-        max_value_grid = struct.unpack_from("<f", raw, 0xA4)[0]
-        min_value_grid = struct.unpack_from("<f", raw, 0xA8)[0]
+        code_per_div = struct.unpack_from("<f", raw, 0xA4)[0]
+        adc_bits = struct.unpack_from("<h", raw, 0xAC)[0]
         horizontal_interval = struct.unpack_from("<f", raw, 0xB0)[0]
         horizontal_offset = struct.unpack_from("<d", raw, 0xB4)[0]
         timebase_index = struct.unpack_from("<h", raw, 0x144)[0]
@@ -978,8 +977,8 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
             "sparse_factor": sparse_factor,
             "vertical_gain": vertical_gain_raw * probe_attenuation,
             "vertical_offset": vertical_offset_raw * probe_attenuation,
-            "maximum_grid_value": max_value_grid,
-            "minimum_grid_value": min_value_grid,
+            "code_per_div": code_per_div,
+            "adc_bits": adc_bits,
             "horizontal_interval": horizontal_interval,
             "horizontal_offset": horizontal_offset,
             "timebase": TIMEBASE_VALUES[timebase_index],
@@ -1066,9 +1065,8 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
             code_per_div = None
         else:
             codes = self.waveform_data()
-            channel = getattr(self, f"channel_{source[1]}", None)
-            adc_bits = channel.ADC_BITS if channel is not None else 12
-            code_per_div = channel.CODE_PER_DIV if channel is not None else 30
+            adc_bits = preamble["adc_bits"]
+            code_per_div = preamble["code_per_div"]
             if self.waveform_format == "WORD":
                 # Data is left-aligned in the 16-bit word with the low bits
                 # zero-filled; shift back down to the native ADC resolution

@@ -1765,8 +1765,8 @@ def build_preamble_bytes(
     sparse_factor=1,
     vertical_gain_raw=0.04,
     vertical_offset_raw=0.1,
-    max_value_grid=127.0,
-    min_value_grid=-128.0,
+    code_per_div=480.0,
+    adc_bits=12,
     horizontal_interval=1e-9,
     horizontal_offset=-2.5e-6,
     timebase_index=0,
@@ -1782,8 +1782,8 @@ def build_preamble_bytes(
     struct.pack_into("<i", buf, 0x88, sparse_factor)
     struct.pack_into("<f", buf, 0x9C, vertical_gain_raw)
     struct.pack_into("<f", buf, 0xA0, vertical_offset_raw)
-    struct.pack_into("<f", buf, 0xA4, max_value_grid)
-    struct.pack_into("<f", buf, 0xA8, min_value_grid)
+    struct.pack_into("<f", buf, 0xA4, code_per_div)
+    struct.pack_into("<h", buf, 0xAC, adc_bits)
     struct.pack_into("<f", buf, 0xB0, horizontal_interval)
     struct.pack_into("<d", buf, 0xB4, horizontal_offset)
     struct.pack_into("<h", buf, 0x144, timebase_index)
@@ -1811,8 +1811,6 @@ def test_waveform_preamble_standard_probe():
         sparse_factor=1,
         vertical_gain_raw=0.04,
         vertical_offset_raw=0.1,
-        max_value_grid=127.0,
-        min_value_grid=-128.0,
         horizontal_interval=1e-9,
         horizontal_offset=-2.5e-6,
         timebase_index=0,
@@ -1833,8 +1831,8 @@ def test_waveform_preamble_standard_probe():
     assert preamble["sparse_factor"] == 1
     assert preamble["vertical_gain"] == pytest.approx(0.04 * 0.1, rel=1e-6)
     assert preamble["vertical_offset"] == pytest.approx(0.1 * 0.1, rel=1e-6)
-    assert preamble["maximum_grid_value"] == pytest.approx(127.0)
-    assert preamble["minimum_grid_value"] == pytest.approx(-128.0)
+    assert preamble["code_per_div"] == pytest.approx(480.0)
+    assert preamble["adc_bits"] == pytest.approx(12)
     assert preamble["horizontal_interval"] == pytest.approx(1e-9, rel=1e-6)
     assert preamble["horizontal_offset"] == pytest.approx(-2.5e-6)
     assert preamble["timebase"] == 200e-12
