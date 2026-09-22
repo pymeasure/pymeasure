@@ -22,6 +22,9 @@
 # THE SOFTWARE.
 #
 
+import struct
+
+import numpy as np
 import pytest
 
 from pymeasure.instruments.teledyne.teledyneT3DSO3024HD import TeledyneT3DSO3024HD
@@ -1640,3 +1643,340 @@ def test_measurement_value_invalid_parameter_rejected():
         pytest.raises(ValueError),
     ):
         instr.measurement_value("BANANA")
+
+
+@pytest.mark.parametrize("value", ["C1", "D0", "F1"])
+def test_waveform_source_set(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":WAVeform:SOURce {value}", None)],
+    ) as instr:
+        instr.waveform_source = value
+
+
+@pytest.mark.parametrize("value", ["C1", "D0", "F1"])
+def test_waveform_source_get(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:SOURce?", value)],
+    ) as instr:
+        assert instr.waveform_source == value
+
+
+def test_waveform_source_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.waveform_source = "C5"  # type: ignore
+
+
+def test_waveform_start_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:STARt 100", None)],
+    ) as instr:
+        instr.waveform_start = 100
+
+
+def test_waveform_start_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:STARt?", "100")],
+    ) as instr:
+        assert instr.waveform_start == 100
+
+
+def test_waveform_interval_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:INTerval 2", None)],
+    ) as instr:
+        instr.waveform_interval = 2
+
+
+def test_waveform_interval_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:INTerval?", "2")],
+    ) as instr:
+        assert instr.waveform_interval == 2
+
+
+def test_waveform_points_set():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:POINt 1400", None)],
+    ) as instr:
+        instr.waveform_points = 1400
+
+
+def test_waveform_points_get():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:POINt?", "1400")],
+    ) as instr:
+        assert instr.waveform_points == 1400
+
+
+def test_waveform_max_points():
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:MAXPoint?", "14000000")],
+    ) as instr:
+        assert instr.waveform_max_points == 14000000
+
+
+@pytest.mark.parametrize("value", ["BYTE", "WORD"])
+def test_waveform_format_set(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(f":WAVeform:WIDTh {value}", None)],
+    ) as instr:
+        instr.waveform_format = value
+
+
+@pytest.mark.parametrize("value", ["BYTE", "WORD"])
+def test_waveform_format_get(value):
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:WIDTh?", value)],
+    ) as instr:
+        assert instr.waveform_format == value
+
+
+def test_waveform_format_invalid_value_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.waveform_format = "FLOAT"  # type: ignore
+
+
+def build_preamble_bytes(
+    wave_array_count=1400,
+    first_point=0,
+    sparse_factor=1,
+    vertical_gain_raw=0.04,
+    vertical_offset_raw=0.1,
+    max_value_grid=127.0,
+    min_value_grid=-128.0,
+    horizontal_interval=1e-9,
+    horizontal_offset=-2.5e-6,
+    timebase_index=0,
+    vertical_coupling_index=0,
+    custom_probe_attenuation=None,
+    probe_index=0,
+    bandwidth_index=0,
+    source_index=0,
+):
+    buf = bytearray(345+11)
+    struct.pack_into("<i", buf, 0x74, wave_array_count)
+    struct.pack_into("<i", buf, 0x84, first_point)
+    struct.pack_into("<i", buf, 0x88, sparse_factor)
+    struct.pack_into("<f", buf, 0x9C, vertical_gain_raw)
+    struct.pack_into("<f", buf, 0xA0, vertical_offset_raw)
+    struct.pack_into("<f", buf, 0xA4, max_value_grid)
+    struct.pack_into("<f", buf, 0xA8, min_value_grid)
+    struct.pack_into("<f", buf, 0xB0, horizontal_interval)
+    struct.pack_into("<d", buf, 0xB4, horizontal_offset)
+    struct.pack_into("<h", buf, 0x144, timebase_index)
+    struct.pack_into("<h", buf, 0x146, vertical_coupling_index)
+    if custom_probe_attenuation is not None:
+        struct.pack_into("<f", buf, 0x148, float(custom_probe_attenuation))
+    else:
+        struct.pack_into("<i", buf, 0x148, int(probe_index))
+    struct.pack_into("<h", buf, 0x14E, bandwidth_index)
+    struct.pack_into("<h", buf, 0x158, source_index)
+    header = f"#9{len(buf):09d}".encode()
+    return header + bytes(buf)
+
+
+def build_data_block(payload: bytes) -> bytes:
+    length_str = str(len(payload)).encode()
+    header = b"#" + str(len(length_str)).encode() + length_str
+    return header + payload + b"\n\n"
+
+
+def test_waveform_preamble_standard_probe():
+    raw = build_preamble_bytes(
+        wave_array_count=1400,
+        first_point=0,
+        sparse_factor=1,
+        vertical_gain_raw=0.04,
+        vertical_offset_raw=0.1,
+        max_value_grid=127.0,
+        min_value_grid=-128.0,
+        horizontal_interval=1e-9,
+        horizontal_offset=-2.5e-6,
+        timebase_index=0,
+        vertical_coupling_index=1,  # AC
+        probe_index=0,  # index 0 -> standard probe
+        bandwidth_index=2,  # 200M
+        source_index=0,
+    )
+
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:PREamble?", raw)],
+    ) as instr:
+        preamble = instr.waveform_preamble()
+
+    assert preamble["points"] == 1400
+    assert preamble["first_point"] == 0
+    assert preamble["sparse_factor"] == 1
+    assert preamble["vertical_gain"] == pytest.approx(0.04 * 0.1, rel=1e-6)
+    assert preamble["vertical_offset"] == pytest.approx(0.1 * 0.1, rel=1e-6)
+    assert preamble["maximum_grid_value"] == pytest.approx(127.0)
+    assert preamble["minimum_grid_value"] == pytest.approx(-128.0)
+    assert preamble["horizontal_interval"] == pytest.approx(1e-9, rel=1e-6)
+    assert preamble["horizontal_offset"] == pytest.approx(-2.5e-6)
+    assert preamble["timebase"] == 200e-12
+    assert preamble["probe_attenuation"] == 0.1
+    assert preamble["vertical_coupling"] == "AC"
+    assert preamble["bandwidth_limit"] == "200M"
+    assert preamble["source"] == "C1"
+    assert preamble["source_index_raw"] == 0
+
+
+def test_waveform_preamble_custom_probe_attenuation():
+    custom_attenuation = 2.5
+    raw = build_preamble_bytes(custom_probe_attenuation=custom_attenuation, source_index=0)
+
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:PREamble?", raw)],
+    ) as instr:
+        preamble = instr.waveform_preamble()
+
+    assert preamble["probe_attenuation"] == pytest.approx(custom_attenuation)
+
+
+def test_waveform_preamble_unexpected_header_rejected():
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [(":WAVeform:PREamble?", b"NOTABLOCK" + b"\x00" * 350)],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.waveform_preamble()
+
+
+def test_waveform_data_byte_format():
+    payload = bytes([10, 251, 127, 128])  # -> 10, -5, 127, -128
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":WAVeform:WIDTh?", "BYTE"),
+            (":WAVeform:DATA?", build_data_block(payload)),
+            (":WAVeform:WIDTh?", "BYTE"),
+        ],
+    ) as instr:
+        assert instr.waveform_format == "BYTE"
+        codes = instr.waveform_data()
+
+    assert list(codes) == [10, -5, 127, -128]
+
+
+def test_waveform_data_word_format():
+    payload = struct.pack("<HH", 40000, 1000)
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":WAVeform:WIDTh?", "WORD"),
+            (":WAVeform:DATA?", build_data_block(payload)),
+            (":WAVeform:WIDTh?", "WORD"),
+        ],
+    ) as instr:
+        assert instr.waveform_format == "WORD"
+        codes = instr.waveform_data()
+
+    assert list(codes) == [40000 - 65536, 1000]
+
+
+def test_waveform_digital_data():
+    payload = bytes([0b10110001])
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [(":WAVeform:DATA?", build_data_block(payload))],
+    ) as instr:
+        bits = instr.waveform_digital_data()
+
+    expected_bits = np.unpackbits(np.frombuffer(payload, dtype=np.uint8), bitorder="little")
+    assert list(bits) == list(expected_bits)
+
+
+def test_get_waveform_digital_source():
+    preamble_raw = build_preamble_bytes(
+        wave_array_count=4,
+        first_point=0,
+        sparse_factor=1,
+        horizontal_interval=1e-9,
+        horizontal_offset=0.0,
+        timebase_index=10,
+        probe_index=20
+    )
+    payload = bytes([0b00001101])  # 8 bits
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":WAVeform:SOURce D0", None),
+            (":WAVeform:SOURce?", "D0"),
+            (":WAVeform:PREamble?", preamble_raw),
+            (":WAVeform:DATA?", build_data_block(payload)),
+        ],
+    ) as instr:
+        time, logic = instr.get_waveform(source="D0")
+
+    expected_logic = np.unpackbits(np.frombuffer(payload, dtype=np.uint8), bitorder="little")
+    assert list(logic) == list(expected_logic)
+
+    timebase = 500e-9
+    expected_time = -0.0 - (timebase * 10 / 2) + np.arange(len(expected_logic)) * 1e-9
+    np.testing.assert_allclose(time, expected_time)
+
+
+def test_get_waveform_analog_source():
+    preamble_raw = build_preamble_bytes(
+        wave_array_count=2,
+        first_point=0,
+        sparse_factor=1,
+        vertical_gain_raw=0.04,
+        vertical_offset_raw=0.0,
+        horizontal_interval=1e-9,
+        horizontal_offset=0.0,
+        timebase_index=10,
+        probe_index=0,
+        source_index=0,
+    )
+    payload = bytes([10, 20])
+    with expected_protocol(
+        TeledyneT3DSO3024HD,
+        [
+            (":WAVeform:SOURce C1", None),
+            (":WAVeform:SOURce?", "C1"),
+            (":WAVeform:PREamble?", preamble_raw),
+            (":WAVeform:DATA?", build_data_block(payload)),
+            (":WAVeform:WIDTh?", "BYTE"),
+            (":WAVeform:WIDTh?", "BYTE"),
+        ],
+    ) as instr:
+        code_per_div = instr.channel_1.CODE_PER_DIV
+        time, voltage = instr.get_waveform(source="C1")
+
+    probe_attenuation = 0.1
+    vertical_gain = 0.04 * probe_attenuation
+    codes = np.array([10, 20], dtype=np.int16)
+    expected_voltage = codes * (vertical_gain / code_per_div) - 0.0
+    np.testing.assert_allclose(voltage, expected_voltage, rtol=1e-5)
+
+    timebase = 500e-9
+    expected_time = -0.0 - (timebase * 10 / 2) + np.arange(len(codes)) * 1e-9
+    np.testing.assert_allclose(time, expected_time)
