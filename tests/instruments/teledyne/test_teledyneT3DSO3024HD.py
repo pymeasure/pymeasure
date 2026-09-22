@@ -32,6 +32,7 @@ from pymeasure.test import expected_protocol
 
 
 def test_bwlimit():
+    """Verify that :attr:`bwlimit` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [
@@ -44,6 +45,8 @@ def test_bwlimit():
 
 
 def test_high_impedance_enabled_limits_scale_range():
+    """Verify that changing :attr:`high_impedance_enabled` updates the allowed range of a
+    dependent property."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [
@@ -61,6 +64,8 @@ def test_high_impedance_enabled_limits_scale_range():
 
 
 def test_high_impedance_enabled_get():
+    """Verify that reading :attr:`high_impedance_enabled` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:IMPedance?", "FIFTy")],
@@ -76,6 +81,7 @@ def test_high_impedance_enabled_get():
     ],
 )
 def test_invert_set(value, expected_command):
+    """Verify that setting :attr:`invert` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":CHANnel1:INVert {expected_command}", None)],
@@ -91,6 +97,7 @@ def test_invert_set(value, expected_command):
     ],
 )
 def test_invert_get(response, expected_value):
+    """Verify that reading :attr:`invert` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:INVert?", response)],
@@ -99,6 +106,7 @@ def test_invert_get(response, expected_value):
 
 
 def test_invert_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`invert` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -110,6 +118,7 @@ def test_invert_invalid_value_rejected():
 
 
 def test_label_set():
+    """Verify that setting :attr:`label_text` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(':CHANnel1:LABel:TEXT "MyLabel"', None)],
@@ -118,6 +127,7 @@ def test_label_set():
 
 
 def test_label_get():
+    """Verify that reading :attr:`label_text` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:LABel:TEXT?", "MyLabel")],
@@ -126,6 +136,8 @@ def test_label_get():
 
 
 def test_label_exact_max_length_allowed():
+    """Verify that a value at the maximum allowed length/limit for :attr:`label_text`
+    is accepted."""
     label_20_chars = "A" * 20
     with expected_protocol(
         TeledyneT3DSO3024HD,
@@ -161,6 +173,7 @@ def test_label_quote():
 
 
 def test_label_too_long_rejected():
+    """Verify that assigning an invalid value to :attr:`label_text` raises a ``ValueError``."""
     label_21_chars = "A" * 21
     with (
         expected_protocol(
@@ -173,6 +186,7 @@ def test_label_too_long_rejected():
 
 
 def test_offset_set():
+    """Verify that setting :attr:`offset` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:OFFSet -3.800E+00", None)],
@@ -181,6 +195,7 @@ def test_offset_set():
 
 
 def test_offset_get():
+    """Verify that reading :attr:`offset` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:OFFSet?", "-3.8E+00")],
@@ -189,6 +204,7 @@ def test_offset_get():
 
 
 def test_probe_set():
+    """Verify that setting :attr:`probe` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:PROBe VALue,1.00E+02", None)],
@@ -197,6 +213,7 @@ def test_probe_set():
 
 
 def test_probe_get():
+    """Verify that reading :attr:`probe` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:PROBe?", "1.00E+02")],
@@ -205,6 +222,7 @@ def test_probe_get():
 
 
 def test_probe_out_of_range_rejected():
+    """Verify that assigning an invalid value to :attr:`probe` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -216,6 +234,7 @@ def test_probe_out_of_range_rejected():
 
 
 def test_unit_set_voltage():
+    """Verify that setting :attr:`unit` to 'voltage' sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:UNIT V", None)],
@@ -224,6 +243,7 @@ def test_unit_set_voltage():
 
 
 def test_unit_set_current():
+    """Verify that setting :attr:`unit` to 'current' sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:UNIT A", None)],
@@ -232,6 +252,7 @@ def test_unit_set_current():
 
 
 def test_unit_get():
+    """Verify that reading :attr:`unit` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:UNIT?", "A")],
@@ -240,6 +261,7 @@ def test_unit_get():
 
 
 def test_unit_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`unit` raises a ``ValueError``."""
     with (
             expected_protocol(
                 TeledyneT3DSO3024HD,
@@ -251,6 +273,7 @@ def test_unit_invalid_value_rejected():
 
 
 def test_coupling_set_dc():
+    """Verify that setting :attr:`coupling` to 'dc' sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:COUPling DC", None)],
@@ -259,6 +282,7 @@ def test_coupling_set_dc():
 
 
 def test_coupling_set_ac():
+    """Verify that setting :attr:`coupling` to 'ac' sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:COUPling AC", None)],
@@ -267,6 +291,7 @@ def test_coupling_set_ac():
 
 
 def test_coupling_set_gnd():
+    """Verify that setting :attr:`coupling` to 'gnd' sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:COUPling GND", None)],
@@ -275,6 +300,7 @@ def test_coupling_set_gnd():
 
 
 def test_coupling_get():
+    """Verify that reading :attr:`coupling` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:COUPling?", "AC")],
@@ -283,6 +309,7 @@ def test_coupling_get():
 
 
 def test_coupling_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`coupling` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -294,6 +321,7 @@ def test_coupling_invalid_value_rejected():
 
 
 def test_label_set_true():
+    """Verify that setting :attr:`label` to ``True`` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:LABel ON", None)],
@@ -302,6 +330,8 @@ def test_label_set_true():
 
 
 def test_label_set_false():
+    """Verify that :attr:`label` reads back as ``True`` for the corresponding
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:LABel OFF", None)],
@@ -310,6 +340,8 @@ def test_label_set_false():
 
 
 def test_label_get_true():
+    """Verify that :attr:`label` reads back as ``True`` for the corresponding
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:LABel?", "ON")],
@@ -318,6 +350,8 @@ def test_label_get_true():
 
 
 def test_label_get_false():
+    """Verify that :attr:`label` reads back as ``False`` for the corresponding
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:LABel?", "OFF")],
@@ -326,6 +360,7 @@ def test_label_get_false():
 
 
 def test_label_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`label` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -337,6 +372,7 @@ def test_label_invalid_value_rejected():
 
 
 def test_skew_set():
+    """Verify that setting :attr:`skew` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:SKEW 5.00E-08", None)],
@@ -345,6 +381,7 @@ def test_skew_set():
 
 
 def test_skew_set_negative():
+    """Verify that setting :attr:`skew` to a negative value sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:SKEW -1.00E-07", None)],
@@ -353,6 +390,7 @@ def test_skew_set_negative():
 
 
 def test_skew_get():
+    """Verify that reading :attr:`skew` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:SKEW?", "5.00E-08")],
@@ -361,6 +399,7 @@ def test_skew_get():
 
 
 def test_skew_out_of_range_rejected():
+    """Verify that assigning an invalid value to :attr:`skew` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -372,6 +411,7 @@ def test_skew_out_of_range_rejected():
 
 
 def test_switch_set_true():
+    """Verify that setting :attr:`switch` to ``True`` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:SWITch ON", None)],
@@ -380,6 +420,7 @@ def test_switch_set_true():
 
 
 def test_switch_set_false():
+    """Verify that setting :attr:`switch` to ``False`` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:SWITch OFF", None)],
@@ -388,6 +429,8 @@ def test_switch_set_false():
 
 
 def test_switch_get_true():
+    """Verify that :attr:`switch` reads back as ``True`` for the corresponding
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:SWITch?", "ON")],
@@ -396,6 +439,8 @@ def test_switch_get_true():
 
 
 def test_switch_get_false():
+    """Verify that :attr:`switch` reads back as ``False`` for the corresponding
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:SWITch?", "OFF")],
@@ -404,6 +449,7 @@ def test_switch_get_false():
 
 
 def test_switch_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`switch` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -415,6 +461,7 @@ def test_switch_invalid_value_rejected():
 
 
 def test_visible_set_true():
+    """Verify that setting :attr:`visible` to ``True`` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:VISible ON", None)],
@@ -423,6 +470,7 @@ def test_visible_set_true():
 
 
 def test_visible_set_false():
+    """Verify that setting :attr:`visible` to ``False`` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:VISible OFF", None)],
@@ -431,6 +479,8 @@ def test_visible_set_false():
 
 
 def test_visible_get_true():
+    """Verify that :attr:`visible` reads back as ``True`` for the corresponding
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:VISible?", "ON")],
@@ -439,6 +489,8 @@ def test_visible_get_true():
 
 
 def test_visible_get_false():
+    """Verify that :attr:`visible` reads back as ``False`` for the corresponding
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:VISible?", "OFF")],
@@ -447,6 +499,7 @@ def test_visible_get_false():
 
 
 def test_visible_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`visible` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -458,6 +511,7 @@ def test_visible_invalid_value_rejected():
 
 
 def test_scale_set():
+    """Verify that setting :attr:`scale` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:SCALe 2.00E+00", None)],
@@ -466,6 +520,7 @@ def test_scale_set():
 
 
 def test_scale_get():
+    """Verify that reading :attr:`scale` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":CHANnel1:SCALe?", "2.00E+00")],
@@ -474,6 +529,7 @@ def test_scale_get():
 
 
 def test_scale_out_of_range_rejected():
+    """Verify that assigning an invalid value to :attr:`scale` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -492,6 +548,7 @@ def test_scale_out_of_range_rejected():
     ],
 )
 def test_acquisition_rate_mode_set(mode):
+    """Verify that setting :attr:`acquisition_rate_mode` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":ACQuire:AMODe {mode}", None)],
@@ -507,6 +564,8 @@ def test_acquisition_rate_mode_set(mode):
     ],
 )
 def test_acquisition_rate_mode_get(mode):
+    """Verify that reading :attr:`acquisition_rate_mode` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:AMODe?", mode)],
@@ -515,6 +574,8 @@ def test_acquisition_rate_mode_get(mode):
 
 
 def test_acquisition_rate_mode_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`acquisition_rate_mode
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -526,6 +587,7 @@ def test_acquisition_rate_mode_invalid_value_rejected():
 
 
 def test_clear_sweep():
+    """Verify that :attr:`clear sweep` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:CSWeep", None)],
@@ -541,6 +603,7 @@ def test_clear_sweep():
     ],
 )
 def test_interpolation_set(value, expected_command):
+    """Verify that setting :attr:`interpolation` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":ACQuire:INTerpolation {expected_command}", None)],
@@ -556,6 +619,8 @@ def test_interpolation_set(value, expected_command):
     ],
 )
 def test_interpolation_get(response, expected_value):
+    """Verify that reading :attr:`interpolation` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:INTerpolation?", response)],
@@ -564,6 +629,7 @@ def test_interpolation_get(response, expected_value):
 
 
 def test_interpolation_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`interpolation` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -576,6 +642,7 @@ def test_interpolation_invalid_value_rejected():
 
 @pytest.mark.parametrize("value", ["YT", "XY", "ROLL"])
 def test_mode_set(value):
+    """Verify that setting :attr:`mode` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":ACQuire:MODE {value}", None)],
@@ -585,6 +652,7 @@ def test_mode_set(value):
 
 @pytest.mark.parametrize("value", ["YT", "XY", "ROLL"])
 def test_mode_get(value):
+    """Verify that reading :attr:`mode` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:MODE?", value)],
@@ -593,6 +661,7 @@ def test_mode_get(value):
 
 
 def test_mode_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`mode` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -604,6 +673,7 @@ def test_mode_invalid_value_rejected():
 
 
 def test_memory_depth_single_channel_mode():
+    """Verify that :attr:`memory_depth` can be set and read back correctly."""
     # Only C1 is on -> single-channel mode -> full value set available
     with expected_protocol(
         TeledyneT3DSO3024HD,
@@ -619,6 +689,7 @@ def test_memory_depth_single_channel_mode():
 
 
 def test_memory_depth_dual_channel_mode():
+    """Verify that :attr:`memory_depth` can be set and read back correctly."""
     # One of C1/C2 and one of C3/C4 on -> dual-channel mode
     with expected_protocol(
         TeledyneT3DSO3024HD,
@@ -634,6 +705,7 @@ def test_memory_depth_dual_channel_mode():
 
 
 def test_memory_depth_quad_channel_mode():
+    """Verify that :attr:`memory_depth` can be set and read back correctly."""
     # Three channels on -> quad-channel mode
     with expected_protocol(
         TeledyneT3DSO3024HD,
@@ -649,6 +721,8 @@ def test_memory_depth_quad_channel_mode():
 
 
 def test_memory_depth_get():
+    """Verify that reading :attr:`memory_depth` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:MDEPth?", "10k")],
@@ -657,6 +731,7 @@ def test_memory_depth_get():
 
 
 def test_memory_depth_invalid_value_for_single_channel_mode_rejected():
+    """Verify that assigning an invalid value to :attr:`memory_depth` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -673,6 +748,7 @@ def test_memory_depth_invalid_value_for_single_channel_mode_rejected():
 
 
 def test_points():
+    """Verify that :attr:`points` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:POINts?", "1400")],
@@ -688,6 +764,7 @@ def test_points():
     ],
 )
 def test_sequence_set(value, expected_command):
+    """Verify that setting :attr:`sequence` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":ACQuire:SEQuence {expected_command}", None)],
@@ -703,6 +780,7 @@ def test_sequence_set(value, expected_command):
     ],
 )
 def test_sequence_get(response, expected_value):
+    """Verify that reading :attr:`sequence` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:SEQuence?", response)],
@@ -711,6 +789,7 @@ def test_sequence_get(response, expected_value):
 
 
 def test_sequence_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`sequence` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -722,6 +801,7 @@ def test_sequence_invalid_value_rejected():
 
 
 def test_sequence_count_set():
+    """Verify that setting :attr:`sequence_count` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:SEQuence:COUNt 10", None)],
@@ -730,6 +810,8 @@ def test_sequence_count_set():
 
 
 def test_sequence_count_get():
+    """Verify that reading :attr:`sequence_count` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:SEQuence:COUNt?", "10")],
@@ -738,6 +820,7 @@ def test_sequence_count_get():
 
 
 def test_sample_rate():
+    """Verify that :attr:`sample_rate` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:SRATe?", "2.0E+09")],
@@ -746,6 +829,8 @@ def test_sample_rate():
 
 
 def test_acquisition_type_get_normal():
+    """Verify that reading :attr:`acquisition_type` correctly parses the 'normal'
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:TYPE?", "NORMal")],
@@ -754,6 +839,8 @@ def test_acquisition_type_get_normal():
 
 
 def test_acquisition_type_get_peak():
+    """Verify that reading :attr:`acquisition_type` correctly parses the 'peak'
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:TYPE?", "PEAK")],
@@ -762,6 +849,8 @@ def test_acquisition_type_get_peak():
 
 
 def test_acquisition_type_get_average():
+    """Verify that reading :attr:`acquisition_type` correctly parses the 'average'
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:TYPE?", "AVERage,16")],
@@ -770,6 +859,8 @@ def test_acquisition_type_get_average():
 
 
 def test_acquisition_type_get_eres():
+    """Verify that reading :attr:`acquisition_type` correctly parses the 'eres'
+    instrument response."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:TYPE?", "ERES,2.0")],
@@ -778,6 +869,7 @@ def test_acquisition_type_get_eres():
 
 
 def test_acquisition_type_set_normal():
+    """Verify that setting :attr:`acquisition_type` to 'normal' sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:TYPE NORMal", None)],
@@ -786,6 +878,7 @@ def test_acquisition_type_set_normal():
 
 
 def test_acquisition_type_set_peak():
+    """Verify that setting :attr:`acquisition_type` to 'peak' sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:TYPE PEAK", None)],
@@ -794,6 +887,7 @@ def test_acquisition_type_set_peak():
 
 
 def test_acquisition_type_set_average():
+    """Verify that setting :attr:`acquisition_type` to 'average' sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:TYPE AVERage,16", None)],
@@ -802,6 +896,7 @@ def test_acquisition_type_set_average():
 
 
 def test_acquisition_type_set_eres():
+    """Verify that setting :attr:`acquisition_type` to 'eres' sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:TYPE ERES,2.0", None)],
@@ -810,6 +905,8 @@ def test_acquisition_type_set_eres():
 
 
 def test_acquisition_type_average_missing_param_rejected():
+    """Verify that assigning an invalid value to :attr:`acquisition_type`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -821,6 +918,8 @@ def test_acquisition_type_average_missing_param_rejected():
 
 
 def test_acquisition_type_eres_missing_param_rejected():
+    """Verify that assigning an invalid value to :attr:`acquisition_type`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -832,6 +931,8 @@ def test_acquisition_type_eres_missing_param_rejected():
 
 
 def test_acquisition_type_normal_with_param_rejected():
+    """Verify that assigning an invalid value to :attr:`acquisition_type`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -843,6 +944,8 @@ def test_acquisition_type_normal_with_param_rejected():
 
 
 def test_acquisition_type_average_invalid_param_rejected():
+    """Verify that assigning an invalid value to :attr:`acquisition_type`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -854,6 +957,7 @@ def test_acquisition_type_average_invalid_param_rejected():
 
 
 def test_acquisition_type_invalid_type_rejected():
+    """Verify that setting :attr:`timebase_scale` sends the expected SCPI command."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -865,6 +969,7 @@ def test_acquisition_type_invalid_type_rejected():
 
 
 def test_timebase_scale_set():
+    """Verify that setting :attr:`timebase_scale` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TIMebase:SCALe 5.00E-03", None)],
@@ -873,6 +978,8 @@ def test_timebase_scale_set():
 
 
 def test_timebase_scale_get():
+    """Verify that reading :attr:`timebase_scale` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TIMebase:SCALe?", "5.00E-03")],
@@ -881,6 +988,7 @@ def test_timebase_scale_get():
 
 
 def test_timebase_delay_set():
+    """Verify that setting :attr:`timebase_delay` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [
@@ -892,6 +1000,8 @@ def test_timebase_delay_set():
 
 
 def test_timebase_delay_get():
+    """Verify that reading :attr:`timebase_delay` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TIMebase:DELay?", "1.00E-05")],
@@ -900,6 +1010,7 @@ def test_timebase_delay_get():
 
 
 def test_timebase_delay_out_of_static_range_rejected():
+    """Verify that assigning an invalid value to :attr:`timebase_delay` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -918,6 +1029,7 @@ def test_timebase_delay_out_of_static_range_rejected():
     ],
 )
 def test_timebase_window_set(value, expected_command):
+    """Verify that setting :attr:`timebase_window` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":TIMebase:WINDow {expected_command}", None)],
@@ -933,6 +1045,8 @@ def test_timebase_window_set(value, expected_command):
     ],
 )
 def test_timebase_window_get(response, expected_value):
+    """Verify that reading :attr:`timebase_window` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TIMebase:WINDow?", response)],
@@ -941,6 +1055,7 @@ def test_timebase_window_get(response, expected_value):
 
 
 def test_timebase_window_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`timebase_window` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -952,6 +1067,7 @@ def test_timebase_window_invalid_value_rejected():
 
 
 def test_timebase_window_delay_set():
+    """Verify that setting :attr:`timebase_window_delay` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TIMebase:WINDow:DELay 1.00E-03", None)],
@@ -960,6 +1076,8 @@ def test_timebase_window_delay_set():
 
 
 def test_timebase_window_delay_get():
+    """Verify that reading :attr:`timebase_window_delay` parses the simulated
+    instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TIMebase:WINDow:DELay?", "1.00E-03")],
@@ -968,6 +1086,7 @@ def test_timebase_window_delay_get():
 
 
 def test_timebase_window_scale_set():
+    """Verify that setting :attr:`timebase_window_scale` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TIMebase:WINDow:SCALe 1.00E-03", None)],
@@ -976,6 +1095,8 @@ def test_timebase_window_scale_set():
 
 
 def test_timebase_window_scale_get():
+    """Verify that reading :attr:`timebase_window_scale` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TIMebase:WINDow:SCALe?", "1.00E-03")],
@@ -992,6 +1113,7 @@ def test_timebase_window_scale_get():
     ],
 )
 def test_trigger_mode_set(value, expected_command):
+    """Verify that setting :attr:`trigger_mode` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":TRIGger:MODE {expected_command}", None)],
@@ -1008,6 +1130,8 @@ def test_trigger_mode_set(value, expected_command):
     ],
 )
 def test_trigger_mode_get(response, expected_value):
+    """Verify that reading :attr:`trigger_mode` parses the simulated instrument response
+    correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:MODE?", response)],
@@ -1016,6 +1140,7 @@ def test_trigger_mode_get(response, expected_value):
 
 
 def test_trigger_mode_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_mode` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1027,6 +1152,7 @@ def test_trigger_mode_invalid_value_rejected():
 
 
 def test_trigger_run():
+    """Verify that :attr:`trigger run` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:RUN", None)],
@@ -1035,6 +1161,7 @@ def test_trigger_run():
 
 
 def test_trigger_status():
+    """Verify that :attr:`trigger_status` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:STATus?", "Trig'd")],
@@ -1043,6 +1170,7 @@ def test_trigger_status():
 
 
 def test_trigger_stop():
+    """Verify that :attr:`trigger stop` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:STOP", None)],
@@ -1074,6 +1202,7 @@ def test_trigger_stop():
     ],
 )
 def test_trigger_type_set(value, expected_command):
+    """Verify that setting :attr:`trigger_type` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":TRIGger:TYPE {expected_command}", None)],
@@ -1091,6 +1220,8 @@ def test_trigger_type_set(value, expected_command):
     ],
 )
 def test_trigger_type_get(response, expected_value):
+    """Verify that reading :attr:`trigger_type` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:TYPE?", response)],
@@ -1099,6 +1230,7 @@ def test_trigger_type_get(response, expected_value):
 
 
 def test_trigger_type_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_type` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1119,6 +1251,7 @@ def test_trigger_type_invalid_value_rejected():
     ],
 )
 def test_trigger_edge_coupling_set(value, expected_command):
+    """Verify that setting :attr:`trigger_edge_coupling` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":TRIGger:EDGE:COUPling {expected_command}", None)],
@@ -1136,6 +1269,8 @@ def test_trigger_edge_coupling_set(value, expected_command):
     ],
 )
 def test_trigger_edge_coupling_get(response, expected_value):
+    """Verify that reading :attr:`trigger_edge_coupling` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:COUPling?", response)],
@@ -1144,6 +1279,8 @@ def test_trigger_edge_coupling_get(response, expected_value):
 
 
 def test_trigger_edge_coupling_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_edge_coupling`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1155,6 +1292,7 @@ def test_trigger_edge_coupling_invalid_value_rejected():
 
 
 def test_trigger_edge_holdoff_events_set():
+    """Verify that setting :attr:`trigger_edge_holdoff_events` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:HLDEVent 5", None)],
@@ -1163,6 +1301,8 @@ def test_trigger_edge_holdoff_events_set():
 
 
 def test_trigger_edge_holdoff_events_get():
+    """Verify that reading :attr:`trigger_edge_holdoff_events` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:HLDEVent?", "5")],
@@ -1171,6 +1311,8 @@ def test_trigger_edge_holdoff_events_get():
 
 
 def test_trigger_edge_holdoff_events_out_of_range_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_edge_holdoff_events`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1182,6 +1324,7 @@ def test_trigger_edge_holdoff_events_out_of_range_rejected():
 
 
 def test_trigger_edge_holdoff_time_set():
+    """Verify that setting :attr:`trigger_edge_holdoff_time` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:HLDTime 1.00E-03", None)],
@@ -1190,6 +1333,8 @@ def test_trigger_edge_holdoff_time_set():
 
 
 def test_trigger_edge_holdoff_time_get():
+    """Verify that reading :attr:`trigger_edge_holdoff_time` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:HLDTime?", "1.00E-03")],
@@ -1198,6 +1343,8 @@ def test_trigger_edge_holdoff_time_get():
 
 
 def test_trigger_edge_holdoff_time_out_of_range_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_edge_holdoff_time`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1217,6 +1364,7 @@ def test_trigger_edge_holdoff_time_out_of_range_rejected():
     ],
 )
 def test_trigger_edge_holdoff_type_set(value, expected_command):
+    """Verify that setting :attr:`trigger_edge_holdoff_type` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":TRIGger:EDGE:HOLDoff {expected_command}", None)],
@@ -1233,6 +1381,8 @@ def test_trigger_edge_holdoff_type_set(value, expected_command):
     ],
 )
 def test_trigger_edge_holdoff_type_get(response, expected_value):
+    """Verify that reading :attr:`trigger_edge_holdoff_type` parses the simulated
+    instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:HOLDoff?", response)],
@@ -1241,6 +1391,8 @@ def test_trigger_edge_holdoff_type_get(response, expected_value):
 
 
 def test_trigger_edge_holdoff_type_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_edge_holdoff_type`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1253,6 +1405,7 @@ def test_trigger_edge_holdoff_type_invalid_value_rejected():
 
 @pytest.mark.parametrize("value", ["LAST_TRIG", "ACQ_START"])
 def test_trigger_edge_holdoff_start_set(value):
+    """Verify that setting :attr:`trigger_edge_holdoff_start` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":TRIGger:EDGE:HSTart {value}", None)],
@@ -1262,6 +1415,8 @@ def test_trigger_edge_holdoff_start_set(value):
 
 @pytest.mark.parametrize("value", ["LAST_TRIG", "ACQ_START"])
 def test_trigger_edge_holdoff_start_get(value):
+    """Verify that reading :attr:`trigger_edge_holdoff_start` parses the
+    simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:HSTart?", value)],
@@ -1270,6 +1425,8 @@ def test_trigger_edge_holdoff_start_get(value):
 
 
 def test_trigger_edge_holdoff_start_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_edge_holdoff_start`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1281,6 +1438,8 @@ def test_trigger_edge_holdoff_start_invalid_value_rejected():
 
 
 def test_trigger_edge_level_set_channel_source():
+    """Verify that setting :attr:`trigger_edge_level` to 'channel_source' sends
+    the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [
@@ -1294,6 +1453,8 @@ def test_trigger_edge_level_set_channel_source():
 
 
 def test_trigger_edge_level_set_different_channel_source():
+    """Verify that setting :attr:`trigger_edge_level` to 'different_channel_source'
+    sends the expected SCPI command."""
     # scale=1.0, offset=0.5 -> valid range [-4.6, 3.6]
     with expected_protocol(
         TeledyneT3DSO3024HD,
@@ -1308,6 +1469,8 @@ def test_trigger_edge_level_set_different_channel_source():
 
 
 def test_trigger_edge_level_get():
+    """Verify that reading :attr:`trigger_edge_level` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:LEVel?", "5.00E+00")],
@@ -1323,6 +1486,8 @@ def test_trigger_edge_level_get():
     ],
 )
 def test_trigger_edge_level_out_of_range_rejected_for_channel_source(value):
+    """Verify that assigning an invalid value to :attr:`trigger_edge_level`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1339,7 +1504,9 @@ def test_trigger_edge_level_out_of_range_rejected_for_channel_source(value):
 
 @pytest.mark.parametrize("source", ["EX", "EX5"])
 def test_trigger_edge_level_out_of_range_rejected_for_non_channel_source(source):
-     with expected_protocol(
+    """Verify that assigning an invalid value to :attr:`trigger_edge_level`
+    raises a ``ValueError``."""
+    with expected_protocol(
             TeledyneT3DSO3024HD,
             [
                 (":TRIGger:EDGE:SOURce?", source),
@@ -1352,6 +1519,8 @@ def test_trigger_edge_level_out_of_range_rejected_for_non_channel_source(source)
 
 @pytest.mark.parametrize("source", ["LINE", "D0", "D15"])
 def test_trigger_edge_level_set_unrestricted_for_non_channel_source(source):
+    """Verify that setting :attr:`trigger_edge_level` to 'unrestricted_for_non_channel_source'
+    sends the expected SCPI command."""
     # Non-analog trigger sources have no scale/offset -> no extra queries,
     # and the value is not range-checked.
     with expected_protocol(
@@ -1373,6 +1542,7 @@ def test_trigger_edge_level_set_unrestricted_for_non_channel_source(source):
     ],
 )
 def test_trigger_edge_noise_reject_set(value, expected_command):
+    """Verify that setting :attr:`trigger_edge_noise_reject` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":TRIGger:EDGE:NREJect {expected_command}", None)],
@@ -1388,6 +1558,8 @@ def test_trigger_edge_noise_reject_set(value, expected_command):
     ],
 )
 def test_trigger_edge_noise_reject_get(response, expected_value):
+    """Verify that reading :attr:`trigger_edge_noise_reject` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:NREJect?", response)],
@@ -1396,6 +1568,8 @@ def test_trigger_edge_noise_reject_get(response, expected_value):
 
 
 def test_trigger_edge_noise_reject_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_edge_noise_reject`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1415,6 +1589,7 @@ def test_trigger_edge_noise_reject_invalid_value_rejected():
     ],
 )
 def test_trigger_edge_slope_set(value, expected_command):
+    """Verify that setting :attr:`trigger_edge_slope` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":TRIGger:EDGE:SLOPe {expected_command}", None)],
@@ -1431,6 +1606,8 @@ def test_trigger_edge_slope_set(value, expected_command):
     ],
 )
 def test_trigger_edge_slope_get(response, expected_value):
+    """Verify that reading :attr:`trigger_edge_slope` parses the
+    simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:SLOPe?", response)],
@@ -1439,6 +1616,8 @@ def test_trigger_edge_slope_get(response, expected_value):
 
 
 def test_trigger_edge_slope_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_edge_slope` raises
+    a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1459,6 +1638,7 @@ def test_trigger_edge_slope_invalid_value_rejected():
     ],
 )
 def test_trigger_edge_source_set(value):
+    """Verify that setting :attr:`trigger_edge_source` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":TRIGger:EDGE:SOURce {value}", None)],
