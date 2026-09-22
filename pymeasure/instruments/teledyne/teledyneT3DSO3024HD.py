@@ -1036,12 +1036,13 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         """Get the sample bits of the current digital :attr:`waveform_source`
         ('D0'..'D15') as a numpy array of 0/1 (uint8), one entry per sample.
         """
+        point_count = self.waveform_points
         self.write(":WAVeform:DATA?")
         payload = self._read_waveform_block()
         bits = np.unpackbits(
             np.frombuffer(payload, dtype=np.uint8), bitorder="little"
         )
-        return bits
+        return bits[:point_count]
 
     def get_waveform(self, source=None):
         """Acquire, transfer and reconstruct one waveform trace.

@@ -1903,7 +1903,9 @@ def test_waveform_digital_data():
     payload = bytes([0b10110001])
     with expected_protocol(
         TeledyneT3DSO3024HD,
-        [(":WAVeform:DATA?", build_data_block(payload))],
+        [
+            (":WAVeform:POINt?", "8"),
+            (":WAVeform:DATA?", build_data_block(payload))],
     ) as instr:
         bits = instr.waveform_digital_data()
 
@@ -1928,6 +1930,7 @@ def test_get_waveform_digital_source():
             (":WAVeform:SOURce D0", None),
             (":WAVeform:SOURce?", "D0"),
             (":WAVeform:PREamble?", preamble_raw),
+            (":WAVeform:POINt?", "8"),
             (":WAVeform:DATA?", build_data_block(payload)),
         ],
     ) as instr:
