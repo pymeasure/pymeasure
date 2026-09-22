@@ -1059,6 +1059,10 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         if source is not None:
             self.waveform_source = source
         source = self.waveform_source
+        if source.startswith("F"):
+            raise NotImplementedError(
+                "FFT math waveform sources are not supported by get_waveform"
+            )
         preamble = self.waveform_preamble()
 
         if source.startswith("D"):
