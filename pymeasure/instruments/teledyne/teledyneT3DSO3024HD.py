@@ -101,6 +101,8 @@ class T3DSO3024HDChannel(Channel):
 
     @high_impedance_enabled.setter
     def high_impedance_enabled(self, value):
+        """Set :attr:`high_impedance_enabled` and update the dependent validator
+        range accordingly."""
         self._impedance = value
         self.scale_values = [500e-6, 1.0] if not self.high_impedance_enabled else [500e-6, 1e1]
 
@@ -219,6 +221,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
     channel_4 = Instrument.ChannelCreator(T3DSO3024HDChannel, "4")
 
     def __init__(self, adapter, name="Teledyne T3DSO3024HD Oscilloscope", **kwargs):
+        """Initialize the instrument connection."""
         super().__init__(adapter, name, **kwargs)
 
     acquisition_rate_mode = Instrument.control(
@@ -318,6 +321,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
 
     @memory_depth.setter
     def memory_depth(self, value):
+        """Set :attr:`memory_depth` and update the dependent validator range accordingly."""
         ch_mode = self._get_channel_mode()
         if ch_mode == "SINGLE":
             self._memory_depth_values = {2e3: "2k", 10e3: "10k", 20e3: "20k", 100e3: "100k",
@@ -406,6 +410,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
 
     @acquisition_type.setter
     def acquisition_type(self, value):
+        """Set :attr:`acquisition_type` and update the dependent validator range accordingly."""
         aq_type, param = value if isinstance(value, tuple) else (value, None)
         aq_type = strict_discrete_set(aq_type.upper(), ["NORMAL", "PEAK", "AVERAGE", "ERES"])
         scpi_names = {"NORMAL": "NORMal", "PEAK": "PEAK",
@@ -463,6 +468,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
 
     @timebase_delay.setter
     def timebase_delay(self, value):
+        """Set :attr:`timebase_delay` and update the dependent validator range accordingly."""
         timebase_scale = self.timebase_scale
         self._timebase_delay_values = [-5 * timebase_scale, 5 * timebase_scale]
         self._timebase_delay = value
@@ -642,6 +648,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
 
     @trigger_edge_level.setter
     def trigger_edge_level(self, value):
+        """Set :attr:`trigger_edge_level` and update the dependent validator range accordingly."""
         channel = self._get_trigger_source_channel()
         if channel is not None:
             scale = channel.scale
