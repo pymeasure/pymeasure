@@ -371,9 +371,10 @@ class TestTimebaseWindowDelay:
     def test_timebase_window_delay_within_range(self, reseted_teledyneT3DSO3024HD):
         reseted_teledyneT3DSO3024HD.timebase_scale = 5e-3
         reseted_teledyneT3DSO3024HD.timebase_window = True
-        reseted_teledyneT3DSO3024HD.timebase_window_delay = 0
+        reseted_teledyneT3DSO3024HD.timebase_window_scale = 1e-4
+        reseted_teledyneT3DSO3024HD.timebase_window_delay = 1e-4
         assert reseted_teledyneT3DSO3024HD.timebase_window_delay == pytest.approx(
-            0, abs=1e-9
+            1e-4, abs=1e-9
         )
 
     def test_timebase_window_delay_out_of_range_is_clamped(self, reseted_teledyneT3DSO3024HD):
@@ -571,6 +572,7 @@ class TestMeasurementSimpleSource:
         assert reseted_teledyneT3DSO3024HD.measurement_simple_source == source_value
 
 
+@pytest.mark.skip(reason="No Signal applied")
 class TestSetMeasurementItem:
     # NOTE: This test requires a real sine signal applied to channel 1. The sine
     # needs to have an amplitude of 1V and a frequency of 20kHz with 0° phase shift and 0.2V offset.
@@ -594,12 +596,14 @@ class TestSetMeasurementItem:
             reseted_teledyneT3DSO3024HD.set_measurement_item(parameter[0], False)
 
 
+@pytest.mark.skip(reason="No Signal applied")
 class TestWaveformPreamble:
     def test_waveform_preamble(self, teledyneT3DSO3024HD):
         result = teledyneT3DSO3024HD.waveform_preamble()
         print(result)
 
 
+@pytest.mark.skip(reason="No Signal applied")
 class TestWaveformData:
     def test_waveform_data(self, teledyneT3DSO3024HD):
         import matplotlib.pyplot as plt
@@ -617,6 +621,7 @@ class TestWaveformData:
         plt.show()
 
 
+@pytest.mark.skip(reason="No Signal applied")
 class TestWaveformDataDigital:
     def test_waveform_data_digital(self, teledyneT3DSO3024HD):
         import matplotlib.pyplot as plt

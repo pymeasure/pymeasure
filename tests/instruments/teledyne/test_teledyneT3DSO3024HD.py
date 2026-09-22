@@ -112,7 +112,7 @@ def test_invert_invalid_value_rejected():
 def test_label_set():
     with expected_protocol(
         TeledyneT3DSO3024HD,
-        [(":CHANnel1:LABel:TEXT MyLabel", None)],
+        [(':CHANnel1:LABel:TEXT "MyLabel"', None)],
     ) as instr:
         instr.channel_1.label_text = "MyLabel"
 
@@ -129,7 +129,7 @@ def test_label_exact_max_length_allowed():
     label_20_chars = "A" * 20
     with expected_protocol(
         TeledyneT3DSO3024HD,
-        [(f":CHANnel1:LABel:TEXT {label_20_chars}", None)],
+        [(f':CHANnel1:LABel:TEXT "{label_20_chars}"', None)],
     ) as instr:
         instr.channel_1.label_text = label_20_chars
 

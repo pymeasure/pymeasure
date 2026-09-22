@@ -114,17 +114,6 @@ class T3DSO3024HDChannel(Channel):
         cast=str,
     )
 
-    @staticmethod
-    def strict_length(value, max_length):
-        """Validator that ensures a string does not exceed max_length characters."""
-        value = str(value)
-        if len(value) > max_length:
-            raise ValueError(
-                f"Value '{value}' exceeds maximum length of {max_length} characters "
-                f"(length={len(value)})"
-            )
-        return value
-
     label = Channel.control(
         ":CHANnel{ch}:LABel?", ":CHANnel{ch}:LABel %s",
         """Control the selected channel label to ON or OFF.
@@ -135,10 +124,29 @@ class T3DSO3024HDChannel(Channel):
         cast=str,
     )
 
+    @staticmethod
+    def strict_length_quoted_string(value, values):
+        """Validate that value is a string of at most `values` characters
+        and contains no embedded double quotes (no safe escape form is
+        defined in the programming guide)."""
+        if not isinstance(value, str):
+            raise TypeError(f"Value {value!r} must be a string")
+        if '"' in value:
+            raise ValueError(
+                f"Value {value!r} contains an embedded double quote, "
+                "which cannot be safely escaped for this command"
+            )
+        max_length = values
+        if len(value) > max_length:
+            raise ValueError(
+                f"Value {value!r} exceeds the maximum length of {max_length} characters"
+            )
+        return value
+
     label_text = Channel.control(
-        ":CHANnel{ch}:LABel:TEXT?", ":CHANnel{ch}:LABel:TEXT %s",
+        ":CHANnel{ch}:LABel:TEXT?", ':CHANnel{ch}:LABel:TEXT "%s"',
         """Control the selected channel label to the string specified.""",
-        validator=strict_length,
+        validator=strict_length_quoted_string,
         values=20,
         cast=str,
     )
