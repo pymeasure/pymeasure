@@ -1501,19 +1501,21 @@ def test_trigger_edge_level_out_of_range_rejected_for_channel_source(value):
         instr.trigger_edge_level = value
 
 
-@pytest.mark.parametrize("source", ["EX", "EX5"])
-def test_trigger_edge_level_out_of_range_rejected_for_non_channel_source(source):
+@pytest.mark.parametrize(("source", "value"), [("EX", 6.11E-1), ("EX5", 0.3051E1)],)
+def test_trigger_edge_level_out_of_range_rejected_for_non_channel_source(source, value):
     """Verify that assigning an invalid value to :attr:`trigger_edge_level`
     raises a ``ValueError``."""
-    with expected_protocol(
+    with (
+        expected_protocol(
             TeledyneT3DSO3024HD,
             [
                 (":TRIGger:EDGE:SOURce?", source),
                 (":TRIGger:EDGE:SOURce?", source),
-                (":TRIGger:EDGE:LEVel 6.10E-01", None),
             ],
-    ) as instr:
-         instr.trigger_edge_level = 0.61
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.trigger_edge_level = value
 
 
 @pytest.mark.parametrize("source", ["LINE", "D0", "D15"])
