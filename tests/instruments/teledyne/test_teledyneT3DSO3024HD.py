@@ -134,6 +134,30 @@ def test_label_exact_max_length_allowed():
         instr.channel_1.label_text = label_20_chars
 
 
+def test_label_no_string():
+    label = 21
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(TypeError),
+    ):
+        instr.channel_1.label_text = label  # type: ignore
+
+
+def test_label_quote():
+    label = 'Hi""H'
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [],
+        ) as instr,
+        pytest.raises(ValueError),
+    ):
+        instr.channel_1.label_text = label  # type: ignore
+
+
 def test_label_too_long_rejected():
     label_21_chars = "A" * 21
     with (
@@ -1442,6 +1466,8 @@ def test_trigger_edge_source_set(value):
 
 @pytest.mark.parametrize("value", ["C1", "D0", "EX", "EX5", "LINE"])
 def test_trigger_edge_source_get(value):
+    """Verify that reading :attr:`trigger_edge_source` parses the simulated instrument response
+    correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":TRIGger:EDGE:SOURce?", value)],
@@ -1450,6 +1476,8 @@ def test_trigger_edge_source_get(value):
 
 
 def test_trigger_edge_source_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`trigger_edge_source` raises a
+    ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1468,6 +1496,7 @@ def test_trigger_edge_source_invalid_value_rejected():
     ],
 )
 def test_measure_set(value, expected_command):
+    """Verify that setting :attr:`measure` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":MEASure {expected_command}", None)],
@@ -1483,6 +1512,7 @@ def test_measure_set(value, expected_command):
     ],
 )
 def test_measure_get(response, expected_value):
+    """Verify that reading :attr:`measure` parses the simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":MEASure?", response)],
@@ -1491,6 +1521,7 @@ def test_measure_get(response, expected_value):
 
 
 def test_measure_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`measure` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1509,6 +1540,7 @@ def test_measure_invalid_value_rejected():
     ],
 )
 def test_measure_mode_set(value, expected_command):
+    """Verify that setting :attr:`measure_mode` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":MEASure:MODE {expected_command}", None)],
@@ -1524,6 +1556,8 @@ def test_measure_mode_set(value, expected_command):
     ],
 )
 def test_measure_mode_get(response, expected_value):
+    """Verify that reading :attr:`measure_mode` parses the simulated
+    instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":MEASure:MODE?", response)],
@@ -1532,6 +1566,7 @@ def test_measure_mode_get(response, expected_value):
 
 
 def test_measure_mode_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`measure_mode` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1546,6 +1581,7 @@ def test_measure_mode_invalid_value_rejected():
     "source", ["C1", "C4", "Z2", "F3", "D0", "D15", "ZD7", "REFA", "REFD"],
 )
 def test_measurement_simple_source_set(source):
+    """Verify that setting :attr:`measurement_simple_source` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":MEASure:SIMPle:SOURce {source}", None)],
@@ -1557,6 +1593,8 @@ def test_measurement_simple_source_set(source):
     "source", ["C1", "Z2", "F3", "D15", "ZD7", "REFA"],
 )
 def test_measurement_simple_source_get(source):
+    """Verify that reading :attr:`measurement_simple_source` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":MEASure:SIMPle:SOURce?", source)],
@@ -1565,6 +1603,8 @@ def test_measurement_simple_source_get(source):
 
 
 def test_measurement_simple_source_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`measurement_simple_source`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1585,6 +1625,7 @@ def test_measurement_simple_source_invalid_value_rejected():
     ],
 )
 def test_set_measurement_item_enabled(parameter, scpi_param):
+    """Verify that :attr:`set measurement item enabled` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":MEASure:SIMPle:ITEM {scpi_param},ON", None)],
@@ -1593,6 +1634,7 @@ def test_set_measurement_item_enabled(parameter, scpi_param):
 
 
 def test_set_measurement_item_disabled():
+    """Verify that :attr:`set measurement item disabled` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":MEASure:SIMPle:ITEM FREQ,OFF", None)],
@@ -1601,6 +1643,8 @@ def test_set_measurement_item_disabled():
 
 
 def test_set_measurement_item_invalid_parameter_rejected():
+    """Verify that assigning an invalid value to :attr:`set measurement item` raises a
+    ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1619,6 +1663,7 @@ def test_set_measurement_item_invalid_parameter_rejected():
     ],
 )
 def test_measurement_value(parameter, scpi_param):
+    """Verify that :attr:`measurement_value` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":MEASure:SIMPle:VALue? {scpi_param}", "1.234E+03")],
@@ -1627,6 +1672,7 @@ def test_measurement_value(parameter, scpi_param):
 
 
 def test_measurement_value_all_returns_raw_string():
+    """Verify that :attr:`measurement_value` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":MEASure:SIMPle:VALue? ALL", "1.234E+03,5.000E-01")],
@@ -1635,6 +1681,8 @@ def test_measurement_value_all_returns_raw_string():
 
 
 def test_measurement_value_invalid_parameter_rejected():
+    """Verify that assigning an invalid value to :attr:`measurement value`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1647,6 +1695,7 @@ def test_measurement_value_invalid_parameter_rejected():
 
 @pytest.mark.parametrize("value", ["C1", "D0", "F1"])
 def test_waveform_source_set(value):
+    """Verify that setting :attr:`waveform_source` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":WAVeform:SOURce {value}", None)],
@@ -1656,6 +1705,8 @@ def test_waveform_source_set(value):
 
 @pytest.mark.parametrize("value", ["C1", "D0", "F1"])
 def test_waveform_source_get(value):
+    """Verify that reading :attr:`waveform_source` parses the simulated instrument
+    response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":WAVeform:SOURce?", value)],
@@ -1664,6 +1715,7 @@ def test_waveform_source_get(value):
 
 
 def test_waveform_source_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`waveform_source` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1675,6 +1727,7 @@ def test_waveform_source_invalid_value_rejected():
 
 
 def test_waveform_start_set():
+    """Verify that setting :attr:`waveform_start` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":WAVeform:STARt 100", None)],
@@ -1683,6 +1736,8 @@ def test_waveform_start_set():
 
 
 def test_waveform_start_get():
+    """Verify that reading :attr:`waveform_start` parses the simulated instrument response
+    correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":WAVeform:STARt?", "100")],
@@ -1691,6 +1746,7 @@ def test_waveform_start_get():
 
 
 def test_waveform_interval_set():
+    """Verify that setting :attr:`waveform_interval` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":WAVeform:INTerval 2", None)],
@@ -1699,6 +1755,8 @@ def test_waveform_interval_set():
 
 
 def test_waveform_interval_get():
+    """Verify that reading :attr:`waveform_interval` parses the
+    simulated instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":WAVeform:INTerval?", "2")],
@@ -1707,6 +1765,7 @@ def test_waveform_interval_get():
 
 
 def test_waveform_points_set():
+    """Verify that setting :attr:`waveform_points` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":WAVeform:POINt 1400", None)],
@@ -1715,6 +1774,8 @@ def test_waveform_points_set():
 
 
 def test_waveform_points_get():
+    """Verify that reading :attr:`waveform_points` parses the simulated instrument response
+    correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":WAVeform:POINt?", "1400")],
@@ -1723,6 +1784,7 @@ def test_waveform_points_get():
 
 
 def test_waveform_max_points():
+    """Verify that :attr:`waveform_max_points` can be set and read back correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":WAVeform:MAXPoint?", "14000000")],
@@ -1732,6 +1794,7 @@ def test_waveform_max_points():
 
 @pytest.mark.parametrize("value", ["BYTE", "WORD"])
 def test_waveform_format_set(value):
+    """Verify that setting :attr:`waveform_format` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":WAVeform:WIDTh {value}", None)],
@@ -1741,6 +1804,8 @@ def test_waveform_format_set(value):
 
 @pytest.mark.parametrize("value", ["BYTE", "WORD"])
 def test_waveform_format_get(value):
+    """Verify that reading :attr:`waveform_format` parses the simulated
+    instrument response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":WAVeform:WIDTh?", value)],
@@ -1749,6 +1814,7 @@ def test_waveform_format_get(value):
 
 
 def test_waveform_format_invalid_value_rejected():
+    """Verify that assigning an invalid value to :attr:`waveform_format` raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1776,6 +1842,7 @@ def build_preamble_bytes(
     bandwidth_index=0,
     source_index=0,
 ):
+    """Build preamble bytes."""
     buf = bytearray(345+11)
     struct.pack_into("<i", buf, 0x74, wave_array_count)
     struct.pack_into("<i", buf, 0x84, first_point)
@@ -1799,12 +1866,14 @@ def build_preamble_bytes(
 
 
 def build_data_block(payload: bytes) -> bytes:
+    """Build data block."""
     length_str = str(len(payload)).encode()
     header = b"#" + str(len(length_str)).encode() + length_str
     return header + payload + b"\n\n"
 
 
 def test_waveform_preamble_source_index_none():
+    """Verify that :attr:`approx` can be set and read back correctly."""
     raw = build_preamble_bytes(
         wave_array_count=1400,
         first_point=0,
@@ -1847,6 +1916,7 @@ def test_waveform_preamble_source_index_none():
 
 
 def test_waveform_preamble_standard_probe():
+    """Verify that :attr:`approx` can be set and read back correctly."""
     raw = build_preamble_bytes(
         wave_array_count=1400,
         first_point=0,
@@ -1886,6 +1956,7 @@ def test_waveform_preamble_standard_probe():
 
 
 def test_waveform_preamble_custom_probe_attenuation():
+    """Verify that :attr:`approx` can be set and read back correctly."""
     custom_attenuation = 2.5
     raw = build_preamble_bytes(custom_probe_attenuation=custom_attenuation, source_index=0)
 
@@ -1899,6 +1970,8 @@ def test_waveform_preamble_custom_probe_attenuation():
 
 
 def test_waveform_preamble_unexpected_header_rejected():
+    """Verify that assigning an invalid value to :attr:`waveform preamble unexpected header`
+    raises a ``ValueError``."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -1910,6 +1983,7 @@ def test_waveform_preamble_unexpected_header_rejected():
 
 
 def test_waveform_data_byte_format():
+    """Verify that :attr:`waveform_format` can be set and read back correctly."""
     payload = bytes([10, 251, 127, 128])  # -> 10, -5, 127, -128
     with expected_protocol(
         TeledyneT3DSO3024HD,
@@ -1926,6 +2000,7 @@ def test_waveform_data_byte_format():
 
 
 def test_waveform_data_word_format():
+    """Verify that :attr:`waveform_format` can be set and read back correctly."""
     payload = struct.pack("<HH", 40000, 1000)
     with expected_protocol(
         TeledyneT3DSO3024HD,
@@ -1942,6 +2017,7 @@ def test_waveform_data_word_format():
 
 
 def test_waveform_digital_data():
+    """Verify that :attr:`waveform digital data` can be set and read back correctly."""
     payload = bytes([0b10110001])
     with expected_protocol(
         TeledyneT3DSO3024HD,
@@ -1956,6 +2032,7 @@ def test_waveform_digital_data():
 
 
 def test_get_waveform_digital_source():
+    """Verify that :attr:`get waveform digital source` can be set and read back correctly."""
     preamble_raw = build_preamble_bytes(
         wave_array_count=4,
         first_point=0,
@@ -1987,6 +2064,7 @@ def test_get_waveform_digital_source():
 
 
 def test_get_waveform_analog_source():
+    """Verify that :attr:`get waveform analog source` can be set and read back correctly."""
     preamble_raw = build_preamble_bytes(
         wave_array_count=2,
         first_point=0,
@@ -2026,6 +2104,7 @@ def test_get_waveform_analog_source():
 
 
 def test_get_waveform_analog_source_word():
+    """Verify that :attr:`get waveform analog source word` can be set and read back correctly."""
     preamble_raw = build_preamble_bytes(
         wave_array_count=2,
         first_point=0,
@@ -2065,6 +2144,7 @@ def test_get_waveform_analog_source_word():
 
 
 def test_waveform_data_invalid_header():
+    """Verify that :attr:`waveform data invalid header` can be set and read back correctly."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
@@ -2078,13 +2158,28 @@ def test_waveform_data_invalid_header():
 
 
 def test_waveform_data_invalid_length():
+    """Verify that :attr:`waveform data invalid length` can be set and raises `ValueError`."""
     with (
         expected_protocol(
             TeledyneT3DSO3024HD,
             [
-                (":WAVeform:DATA?", b'#13AA'),
+                (":WAVeform:DATA?", b'#15AAA'),
             ],
         ) as instr,
         pytest.raises(ValueError)
     ):
         instr.waveform_data()
+
+
+def test_get_waveform_f_source():
+    """Verify that :attr:`get waveform function source is raising `NotImplementedError`."""
+    with (
+        expected_protocol(
+            TeledyneT3DSO3024HD,
+            [
+                 (":WAVeform:SOURce?", "F1"),
+            ],
+        ) as instr,
+        pytest.raises(NotImplementedError)
+    ):
+        instr.get_waveform()
