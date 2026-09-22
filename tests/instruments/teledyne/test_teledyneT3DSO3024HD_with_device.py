@@ -31,18 +31,21 @@ from pymeasure.instruments.teledyne.teledyneT3DSO3024HD import TeledyneT3DSO3024
 
 @pytest.fixture(scope="module")
 def teledyneT3DSO3024HD(connected_device_address):
+    """Return a :class:`TeledyneT3DSO3024HD` instance connected to the configured test device."""
     instr = TeledyneT3DSO3024HD(connected_device_address)
     return instr
 
 
 @pytest.fixture(scope="class")
 def reseted_teledyneT3DSO3024HD(teledyneT3DSO3024HD):
+    """Return the shared instrument fixture after issuing a ``*RST`` reset."""
     teledyneT3DSO3024HD.reset()
     instr = teledyneT3DSO3024HD
     return instr
 
 
 def test_id(teledyneT3DSO3024HD):
+    """Verify that :attr:`id` can be set and read back correctly."""
     expected = "Teledyne Test Tools,T3DSO3024HD"
     res = teledyneT3DSO3024HD.id
     assert expected in res
@@ -52,6 +55,7 @@ class TestSetBwLimit:
     @pytest.mark.parametrize("bwlimit_value", ["FULL", "200M", "20M"])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_set_bw_limit(self, reseted_teledyneT3DSO3024HD, channel, bwlimit_value):
+        """[TestSetBwLimit] Verify that :attr:`bwlimit` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.bwlimit = bwlimit_value
@@ -62,6 +66,7 @@ class TestScale:
     @pytest.mark.parametrize("scale", [500e-6, 500e-3, 1, 5, 10])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_scale(self, reseted_teledyneT3DSO3024HD, channel, scale):
+        """[TestScale] Verify that :attr:`switch` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.switch = True
@@ -73,6 +78,7 @@ class TestCoupling:
     @pytest.mark.parametrize("coupling_value", ["DC", "AC", "GND"])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_coupling(self, reseted_teledyneT3DSO3024HD, channel, coupling_value):
+        """[TestCoupling] Verify that :attr:`coupling` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.coupling = coupling_value
@@ -84,6 +90,8 @@ class TestImpedance:
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_high_impedance_enabled(self, reseted_teledyneT3DSO3024HD, channel,
                                     high_impedance_enabled):
+        """[TestImpedance] Verify that :attr:`high_impedance_enabled` can be set
+        and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.high_impedance_enabled = high_impedance_enabled
@@ -94,6 +102,7 @@ class TestInvert:
     @pytest.mark.parametrize("invert_value", [True, False])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_invert(self, reseted_teledyneT3DSO3024HD, channel, invert_value):
+        """[TestInvert] Verify that :attr:`invert` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.invert = invert_value
@@ -104,6 +113,7 @@ class TestLabel:
     @pytest.mark.parametrize("label_value", [True, False])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_label(self, reseted_teledyneT3DSO3024HD, channel, label_value):
+        """[TestLabel] Verify that :attr:`label` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.label = label_value
@@ -114,6 +124,7 @@ class TestLabelText:
     @pytest.mark.parametrize("label_text_value", ["CH_TEST", "A" * 20])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_label_text(self, reseted_teledyneT3DSO3024HD, channel, label_text_value):
+        """[TestLabelText] Verify that :attr:`label_text` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.label_text = label_text_value
@@ -126,6 +137,7 @@ class TestSkew:
     @pytest.mark.parametrize("skew_value", [-1e-7, -5e-8, 0, 5e-8, 1e-7])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_skew(self, reseted_teledyneT3DSO3024HD, channel, skew_value):
+        """[TestSkew] Verify that :attr:`skew` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.skew = skew_value
@@ -137,6 +149,7 @@ class TestSwitch:
     @pytest.mark.parametrize("switch_value", [True, False])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_switch(self, reseted_teledyneT3DSO3024HD, channel, switch_value):
+        """[TestSwitch] Verify that :attr:`switch` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.switch = switch_value
@@ -147,6 +160,7 @@ class TestOffset:
     @pytest.mark.parametrize("offset_value", [-1, -0.5, 0, 0.5, 1])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_offset(self, reseted_teledyneT3DSO3024HD, channel, offset_value):
+        """[TestOffset] Verify that :attr:`switch` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.switch = True
@@ -159,6 +173,7 @@ class TestUnit:
     @pytest.mark.parametrize("unit_value", ["V", "A"])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_unit(self, reseted_teledyneT3DSO3024HD, channel, unit_value):
+        """[TestUnit] Verify that :attr:`unit` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.unit = unit_value
@@ -169,6 +184,7 @@ class TestProbe:
     @pytest.mark.parametrize("probe_value", [1e-6, 1, 10, 100, 1e6])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_probe(self, reseted_teledyneT3DSO3024HD, channel, probe_value):
+        """[TestProbe] Verify that :attr:`probe` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.probe = probe_value
@@ -179,6 +195,7 @@ class TestVisible:
     @pytest.mark.parametrize("visible_value", [True, False])
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_visible(self, reseted_teledyneT3DSO3024HD, channel, visible_value):
+        """[TestVisible] Verify that :attr:`visible` can be set and read back correctly."""
         channel_attr_name = f"channel_{channel}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.visible = visible_value
@@ -188,6 +205,8 @@ class TestVisible:
 class TestAcquisitionRateMode:
     @pytest.mark.parametrize("acquisition_rate_mode_value", ["FAST", "SLOW"])
     def test_acquisition_rate_mode(self, reseted_teledyneT3DSO3024HD, acquisition_rate_mode_value):
+        """[TestAcquisitionRateMode] Verify that :attr:`acquisition_rate_mode` can be set
+        and read back correctly."""
         reseted_teledyneT3DSO3024HD.acquisition_rate_mode = acquisition_rate_mode_value
         assert reseted_teledyneT3DSO3024HD.acquisition_rate_mode == acquisition_rate_mode_value
 
@@ -195,6 +214,8 @@ class TestAcquisitionRateMode:
 class TestInterpolation:
     @pytest.mark.parametrize("interpolation_value", [True, False])
     def test_interpolation(self, reseted_teledyneT3DSO3024HD, interpolation_value):
+        """[TestInterpolation] Verify that :attr:`interpolation` can be set and
+        read back correctly."""
         reseted_teledyneT3DSO3024HD.interpolation = interpolation_value
         assert reseted_teledyneT3DSO3024HD.interpolation == interpolation_value
 
@@ -202,6 +223,7 @@ class TestInterpolation:
 class TestMode:
     @pytest.mark.parametrize("mode_value", ["YT", "XY", "ROLL"])
     def test_mode(self, reseted_teledyneT3DSO3024HD, mode_value):
+        """[TestMode] Verify that :attr:`mode` can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.mode = mode_value
         assert reseted_teledyneT3DSO3024HD.mode == mode_value
 
@@ -228,6 +250,7 @@ class TestMode:
     )
     def test_memory_depth_single(self, reseted_teledyneT3DSO3024HD, memory_depth_value,
                                   timebase_scale_value, expected_sample_rate):
+        """[TestMode] Verify that :attr:`acquisition_type` can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.acquisition_type = "NORMAL"
         reseted_teledyneT3DSO3024HD.channel_1.switch = True
         reseted_teledyneT3DSO3024HD.channel_2.switch = False
@@ -250,6 +273,8 @@ class TestMemoryDepthDual:
     @pytest.mark.parametrize(
         "memory_depth_value", [2e3, 10e3, 20e3, 100e3, 200e3,  1e6, 2e6, 10e6, 20e6, 100e6, 200e6])
     def test_memory_depth_dual(self, reseted_teledyneT3DSO3024HD, memory_depth_value):
+        """[TestMemoryDepthDual] Verify that :attr:`acquisition_type` can be set
+        and read back correctly."""
         reseted_teledyneT3DSO3024HD.acquisition_type = "NORMAL"
         reseted_teledyneT3DSO3024HD.channel_1.switch = True
         reseted_teledyneT3DSO3024HD.channel_2.switch = False
@@ -263,6 +288,8 @@ class TestMemoryDepthQuad:
     @pytest.mark.parametrize(
         "memory_depth_value", [1e3, 5e3, 10e3, 50e3, 100e3, 500e3, 1e6, 5e6, 10e6, 50e6, 100e6])
     def test_memory_depth_quad(self, reseted_teledyneT3DSO3024HD, memory_depth_value):
+        """[TestMemoryDepthQuad] Verify that :attr:`acquisition_type` can be
+        set and read back correctly."""
         reseted_teledyneT3DSO3024HD.acquisition_type = "NORMAL"
         reseted_teledyneT3DSO3024HD.channel_1.switch = True
         reseted_teledyneT3DSO3024HD.channel_2.switch = True
@@ -275,6 +302,7 @@ class TestMemoryDepthQuad:
 class TestSequence:
     @pytest.mark.parametrize("sequence_value", [True, False])
     def test_sequence(self, reseted_teledyneT3DSO3024HD, sequence_value):
+        """[TestSequence] Verify that :attr:`sequence` can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.sequence = sequence_value
         assert reseted_teledyneT3DSO3024HD.sequence == sequence_value
 
@@ -282,28 +310,36 @@ class TestSequence:
 class TestSequenceCount:
     @pytest.mark.parametrize("sequence_count_value", [5, 3])
     def test_sequence_count(self, reseted_teledyneT3DSO3024HD, sequence_count_value):
+        """[TestSequenceCount] Verify that :attr:`sequence_count` can be set and
+        read back correctly."""
         reseted_teledyneT3DSO3024HD.sequence_count = sequence_count_value
         assert reseted_teledyneT3DSO3024HD.sequence_count == sequence_count_value
 
 
 class TestAcquisitionTypeNormal:
     def test_acquisition_type_normal(self, reseted_teledyneT3DSO3024HD):
-       reseted_teledyneT3DSO3024HD.acquisition_type = "NORMAL"
-       assert reseted_teledyneT3DSO3024HD.acquisition_type == "NORMAL"
+        """[TestAcquisitionTypeNormal] Verify that :attr:`acquisition_type` can be set
+        and read back correctly."""
+        reseted_teledyneT3DSO3024HD.acquisition_type = "NORMAL"
+        assert reseted_teledyneT3DSO3024HD.acquisition_type == "NORMAL"
 
 
 class TestAcquisitionTypePeak:
     def test_acquisition_type_peak(self, reseted_teledyneT3DSO3024HD):
-       reseted_teledyneT3DSO3024HD.acquisition_type = "PEAK"
-       assert reseted_teledyneT3DSO3024HD.acquisition_type == "PEAK"
+        """[TestAcquisitionTypePeak] Verify that :attr:`acquisition_type` can be set and
+        read back correctly."""
+        reseted_teledyneT3DSO3024HD.acquisition_type = "PEAK"
+        assert reseted_teledyneT3DSO3024HD.acquisition_type == "PEAK"
 
 
 class TestAcquisitionTypeAverage:
     @pytest.mark.parametrize("acquisition_type_average_value", [4, 16, 32, 64, 128, 256, 512, 1024])
     def test_acquisition_type_peak(self, reseted_teledyneT3DSO3024HD,
                                     acquisition_type_average_value):
-       reseted_teledyneT3DSO3024HD.acquisition_type = ("AVERAGE", acquisition_type_average_value)
-       assert reseted_teledyneT3DSO3024HD.acquisition_type == ("AVERAGE",
+        """[TestAcquisitionTypeAverage] Verify that :attr:`acquisition_type` can be set and read
+        back correctly."""
+        reseted_teledyneT3DSO3024HD.acquisition_type = ("AVERAGE", acquisition_type_average_value)
+        assert reseted_teledyneT3DSO3024HD.acquisition_type == ("AVERAGE",
                                                                acquisition_type_average_value)
 
 
@@ -311,8 +347,10 @@ class TestAcquisitionTypeEres:
     @pytest.mark.parametrize("acquisition_type_eres_value", [0.5, 1.0, 1.5, 2.0, 2.5, 3.0])
     def test_acquisition_type_peak(self, reseted_teledyneT3DSO3024HD,
                                     acquisition_type_eres_value):
-       reseted_teledyneT3DSO3024HD.acquisition_type = ("ERES", acquisition_type_eres_value)
-       assert reseted_teledyneT3DSO3024HD.acquisition_type == ("ERES",
+        """[TestAcquisitionTypeEres] Verify that :attr:`acquisition_type` can be set and
+        read back correctly."""
+        reseted_teledyneT3DSO3024HD.acquisition_type = ("ERES", acquisition_type_eres_value)
+        assert reseted_teledyneT3DSO3024HD.acquisition_type == ("ERES",
                                                                acquisition_type_eres_value)
 
 
@@ -321,6 +359,8 @@ class TestTimebaseScale:
         "timebase_scale_value", [5e-8, 5e-7, 5e-6, 5e-5, 5e-4, 5e-3, 5e-2, 1e-1]
     )
     def test_timebase_scale(self, reseted_teledyneT3DSO3024HD, timebase_scale_value):
+        """[TestTimebaseScale] Verify that :attr:`timebase_scale` can be set
+        and read back correctly."""
         reseted_teledyneT3DSO3024HD.timebase_scale = timebase_scale_value
         assert reseted_teledyneT3DSO3024HD.timebase_scale == pytest.approx(
             timebase_scale_value, rel=1e-3)
@@ -332,6 +372,8 @@ class TestTimebaseDelay:
     @pytest.mark.parametrize("delay_factor", [-5, -1, 0, 5])
     def test_timebase_delay(self, reseted_teledyneT3DSO3024HD, timebase_scale_value,
                              delay_factor):
+        """[TestTimebaseDelay] Verify that :attr:`timebase_scale` can be set
+        and read back correctly."""
         reseted_teledyneT3DSO3024HD.timebase_scale = timebase_scale_value
         delay_value = delay_factor * timebase_scale_value
         reseted_teledyneT3DSO3024HD.timebase_delay = delay_value
@@ -343,12 +385,16 @@ class TestTimebaseDelay:
 class TestTimebaseWindow:
     @pytest.mark.parametrize("timebase_window_value", [True, False])
     def test_timebase_window(self, reseted_teledyneT3DSO3024HD, timebase_window_value):
+        """[TestTimebaseWindow] Verify that :attr:`timebase_window` can be set
+        and read back correctly."""
         reseted_teledyneT3DSO3024HD.timebase_window = timebase_window_value
         assert reseted_teledyneT3DSO3024HD.timebase_window == timebase_window_value
 
 
 class TestTimebaseWindowScale:
     def test_timebase_window_scale_within_main_scale(self, reseted_teledyneT3DSO3024HD):
+        """[TestTimebaseWindowScale] Verify that :attr:`timebase_scale` can be set and
+        read back correctly."""
         reseted_teledyneT3DSO3024HD.timebase_scale = 5e-3
         reseted_teledyneT3DSO3024HD.timebase_window = True
         reseted_teledyneT3DSO3024HD.timebase_window_scale = 5e-4
@@ -357,6 +403,8 @@ class TestTimebaseWindowScale:
         )
 
     def test_timebase_window_scale_clamped_to_main_scale(self, reseted_teledyneT3DSO3024HD):
+        """[TestTimebaseWindowScale] Verify that :attr:`timebase_scale` can be
+        set and read back correctly."""
         # setting a window scale greater than the main scale must be clamped by the
         # instrument to the main window's scale rather than rejected
         reseted_teledyneT3DSO3024HD.timebase_scale = 5e-4
@@ -369,6 +417,8 @@ class TestTimebaseWindowScale:
 
 class TestTimebaseWindowDelay:
     def test_timebase_window_delay_within_range(self, reseted_teledyneT3DSO3024HD):
+        """[TestTimebaseWindowDelay] Verify that :attr:`timebase_scale` can be set
+        and read back correctly."""
         reseted_teledyneT3DSO3024HD.timebase_scale = 5e-3
         reseted_teledyneT3DSO3024HD.timebase_window = True
         reseted_teledyneT3DSO3024HD.timebase_window_scale = 1e-4
@@ -378,6 +428,8 @@ class TestTimebaseWindowDelay:
         )
 
     def test_timebase_window_delay_out_of_range_is_clamped(self, reseted_teledyneT3DSO3024HD):
+        """[TestTimebaseWindowDelay] Verify that assigning an invalid value to
+        :attr:`timebase_scale` raises a ``ValueError``."""
         # an out-of-range value must be clamped by the instrument to the nearest
         # legal value (within the main sweep range) rather than rejected
         reseted_teledyneT3DSO3024HD.timebase_scale = 5e-6
@@ -390,12 +442,15 @@ class TestTimebaseWindowDelay:
 class TestTriggerMode:
     @pytest.mark.parametrize("mode_value", ["SINGLE", "NORMAL", "AUTO"])
     def test_trigger_mode(self, reseted_teledyneT3DSO3024HD, mode_value):
+        """[TestTriggerMode] Verify that :attr:`trigger_mode` can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_mode = mode_value
         assert reseted_teledyneT3DSO3024HD.trigger_mode == mode_value
 
 
 class TestTriggerRunStop:
     def test_trigger_run_and_stop(self, reseted_teledyneT3DSO3024HD):
+        """[TestTriggerRunStop] Verify that :attr:`trigger_status` can be set and
+        read back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_run()
         assert reseted_teledyneT3DSO3024HD.trigger_status in (
             "Arm", "Ready", "Auto", "Trig'd", "Stop", "Roll"
@@ -413,6 +468,7 @@ class TestTriggerType:
          "WINDOW", "DROPOUT", "VIDEO"],
     )
     def test_trigger_type(self, reseted_teledyneT3DSO3024HD, trigger_type_value):
+        """[TestTriggerType] Verify that :attr:`trigger_type` can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_type = trigger_type_value
         assert reseted_teledyneT3DSO3024HD.trigger_type == trigger_type_value
 
@@ -420,6 +476,8 @@ class TestTriggerType:
 class TestTriggerEdgeCoupling:
     @pytest.mark.parametrize("coupling_value", ["DC", "AC", "LF_REJECT", "HF_REJECT"])
     def test_trigger_edge_coupling(self, reseted_teledyneT3DSO3024HD, coupling_value):
+        """[TestTriggerEdgeCoupling] Verify that :attr:`trigger_type`
+        can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
         reseted_teledyneT3DSO3024HD.trigger_edge_coupling = coupling_value
         assert reseted_teledyneT3DSO3024HD.trigger_edge_coupling == coupling_value
@@ -429,6 +487,8 @@ class TestTriggerEdgeHoldoffEvents:
     @pytest.mark.parametrize("holdoff_events_value", [1, 5, 1000, 100000000])
     def test_trigger_edge_holdoff_events(self, reseted_teledyneT3DSO3024HD,
                                           holdoff_events_value):
+        """[TestTriggerEdgeHoldoffEvents] Verify that :attr:`trigger_type`
+        can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
         reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_type = "EVENTS"
         reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_events = holdoff_events_value
@@ -439,6 +499,8 @@ class TestTriggerEdgeHoldoffTime:
     @pytest.mark.parametrize("holdoff_time_value", [8e-9, 1e-6, 1e-3, 1, 30])
     def test_trigger_edge_holdoff_time(self, reseted_teledyneT3DSO3024HD,
                                         holdoff_time_value):
+        """[TestTriggerEdgeHoldoffTime] Verify that :attr:`trigger_type` can
+        be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
         reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_type = "TIME"
         reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_time = holdoff_time_value
@@ -450,6 +512,8 @@ class TestTriggerEdgeHoldoffType:
     @pytest.mark.parametrize("holdoff_type_value", ["OFF", "EVENTS", "TIME"])
     def test_trigger_edge_holdoff_type(self, reseted_teledyneT3DSO3024HD,
                                         holdoff_type_value):
+        """[TestTriggerEdgeHoldoffType] Verify that :attr:`trigger_type`
+        can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
         reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_type = holdoff_type_value
         assert reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_type == holdoff_type_value
@@ -459,6 +523,8 @@ class TestTriggerEdgeHoldoffStart:
     @pytest.mark.parametrize("holdoff_start_value", ["LAST_TRIG", "ACQ_START"])
     def test_trigger_edge_holdoff_start(self, reseted_teledyneT3DSO3024HD,
                                          holdoff_start_value):
+        """[TestTriggerEdgeHoldoffStart] Verify that :attr:`trigger_type` can be set
+        and read back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
         reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_start = holdoff_start_value
         assert reseted_teledyneT3DSO3024HD.trigger_edge_holdoff_start == holdoff_start_value
@@ -468,6 +534,8 @@ class TestTriggerEdgeNoiseReject:
     @pytest.mark.parametrize("noise_reject_value", [True, False])
     def test_trigger_edge_noise_reject(self, reseted_teledyneT3DSO3024HD,
                                         noise_reject_value):
+        """[TestTriggerEdgeNoiseReject] Verify that :attr:`trigger_type` can be
+        set and read back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
         reseted_teledyneT3DSO3024HD.trigger_edge_noise_reject = noise_reject_value
         assert reseted_teledyneT3DSO3024HD.trigger_edge_noise_reject == noise_reject_value
@@ -476,6 +544,8 @@ class TestTriggerEdgeNoiseReject:
 class TestTriggerEdgeSlope:
     @pytest.mark.parametrize("slope_value", ["RISING", "FALLING", "ALTERNATE"])
     def test_trigger_edge_slope(self, reseted_teledyneT3DSO3024HD, slope_value):
+        """[TestTriggerEdgeSlope] Verify that :attr:`trigger_type` can be set and read
+        back correctly."""
         reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
         reseted_teledyneT3DSO3024HD.trigger_edge_slope = slope_value
         assert reseted_teledyneT3DSO3024HD.trigger_edge_slope == slope_value
@@ -484,6 +554,7 @@ class TestTriggerEdgeSlope:
 class TestTriggerEdgeSource:
     @pytest.mark.parametrize("source_value", [("C1", 1), ("C2", 2), ("C3", 3), ("C4", 4)])
     def test_trigger_edge_source(self, reseted_teledyneT3DSO3024HD, source_value):
+        """[TestTriggerEdgeSource] Verify that :attr:`switch` can be set and read back correctly."""
         channel_attr_name = f"channel_{source_value[1]}"
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, channel_attr_name)
         channel_obj.switch = True
@@ -497,6 +568,7 @@ class TestTriggerEdgeLevel:
     # trigger source channel: [-4.1 * scale - offset, 4.1 * scale - offset]
     @pytest.mark.parametrize("channel", [1, 2, 3, 4])
     def test_trigger_edge_level_within_range(self, reseted_teledyneT3DSO3024HD, channel):
+        """[TestTriggerEdgeLevel] Verify that :attr:`switch` can be set and read back correctly."""
         channel_obj = getattr(reseted_teledyneT3DSO3024HD, f"channel_{channel}")
         channel_obj.switch = True
         channel_obj.scale = 1
@@ -508,6 +580,7 @@ class TestTriggerEdgeLevel:
 
     def test_trigger_edge_level_range_updates_with_channel_scale(
             self, reseted_teledyneT3DSO3024HD):
+        """[TestTriggerEdgeLevel] Verify that :attr:`switch` can be set and read back correctly."""
         # a wider channel scale must widen the legal trigger level range
         reseted_teledyneT3DSO3024HD.channel_1.switch = True
         reseted_teledyneT3DSO3024HD.channel_1.high_impedance_enabled = True
@@ -520,6 +593,7 @@ class TestTriggerEdgeLevel:
 
     def test_trigger_edge_level_range_accounts_for_channel_offset(
             self, reseted_teledyneT3DSO3024HD):
+        """[TestTriggerEdgeLevel] Verify that :attr:`switch` can be set and read back correctly."""
         # channel offset shifts the legal range: [-4.1*scale - offset, 4.1*scale - offset]
         reseted_teledyneT3DSO3024HD.channel_1.switch = True
         reseted_teledyneT3DSO3024HD.channel_1.scale = 1
@@ -530,6 +604,8 @@ class TestTriggerEdgeLevel:
         assert reseted_teledyneT3DSO3024HD.trigger_edge_level == pytest.approx(-1.0, rel=1e-3)
 
     def test_trigger_edge_level_out_of_range_rejected(self, reseted_teledyneT3DSO3024HD):
+        """[TestTriggerEdgeLevel] Verify that assigning an invalid value to :attr:`switch`
+        raises a ``ValueError``."""
         # values outside [-4.1*scale - offset, 4.1*scale - offset] must be
         # rejected client-side (strict_range), before anything is sent
         reseted_teledyneT3DSO3024HD.channel_1.switch = True
@@ -543,6 +619,8 @@ class TestTriggerEdgeLevel:
     @pytest.mark.parametrize("source_value", ["EX", "EX5", "LINE"])
     def test_trigger_edge_level_unrestricted_for_non_channel_source(
             self, reseted_teledyneT3DSO3024HD, source_value):
+        """[TestTriggerEdgeLevel] Verify that :attr:`trigger_type` can be set and read
+        back correctly."""
         # non-analog sources have no scale/offset, so the level is not range-checked
         reseted_teledyneT3DSO3024HD.trigger_type = "EDGE"
         reseted_teledyneT3DSO3024HD.trigger_edge_source = source_value
@@ -553,6 +631,7 @@ class TestTriggerEdgeLevel:
 class TestMeasure:
     @pytest.mark.parametrize("measure_value", [True, False])
     def test_measure(self, reseted_teledyneT3DSO3024HD, measure_value):
+        """[TestMeasure] Verify that :attr:`measure` can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.measure = measure_value
         assert reseted_teledyneT3DSO3024HD.measure == measure_value
 
@@ -560,6 +639,7 @@ class TestMeasure:
 class TestMeasureMode:
     @pytest.mark.parametrize("measure_mode_value", ["SIMPLE", "ADVANCED"])
     def test_measure_mode(self, reseted_teledyneT3DSO3024HD, measure_mode_value):
+        """[TestMeasureMode] Verify that :attr:`measure_mode` can be set and read back correctly."""
         reseted_teledyneT3DSO3024HD.measure_mode = measure_mode_value
         assert reseted_teledyneT3DSO3024HD.measure_mode == measure_mode_value
 
@@ -568,6 +648,8 @@ class TestMeasurementSimpleSource:
     @pytest.mark.parametrize("source_value", ["C1", "C2", "C3", "C4"])
     def test_measurement_simple_source_channel(self, reseted_teledyneT3DSO3024HD,
                                                 source_value):
+        """[TestMeasurementSimpleSource] Verify that :attr:`measurement_simple_source` can be set
+        and read back correctly."""
         reseted_teledyneT3DSO3024HD.measurement_simple_source = source_value
         assert reseted_teledyneT3DSO3024HD.measurement_simple_source == source_value
 
@@ -578,6 +660,8 @@ class TestSetMeasurementItem:
     # needs to have an amplitude of 1V and a frequency of 20kHz with 0° phase shift and 0.2V offset.
 
     def test_set_measurement(self, reseted_teledyneT3DSO3024HD):
+        """[TestSetMeasurementItem] Verify that :attr:`switch` can be set and read back
+        correctly."""
         measurements = [("FREQUENCY", 20e3, 1e-2), ("AMPLITUDE", 2.0, 1e-2), ("RMS", 0.735, 1e-2),
                         ("MEAN", 0.2, 1e-1)]
         reseted_teledyneT3DSO3024HD.channel_1.switch = True
@@ -598,6 +682,8 @@ class TestSetMeasurementItem:
 
 @pytest.mark.skip(reason="No Signal applied")
 class TestWaveformPreamble:
+    """[TestWaveformPreamble] Verify that :attr:`waveform preamble`
+    can be set and read back correctly."""
     def test_waveform_preamble(self, teledyneT3DSO3024HD):
         result = teledyneT3DSO3024HD.waveform_preamble()
         print(result)
@@ -606,6 +692,8 @@ class TestWaveformPreamble:
 @pytest.mark.skip(reason="No Signal applied")
 class TestWaveformData:
     def test_waveform_data(self, teledyneT3DSO3024HD):
+        """[TestWaveformData] Verify that :attr:`waveform_points` can be set and
+        read back correctly."""
         import matplotlib.pyplot as plt
         teledyneT3DSO3024HD.waveform_points = 2000000
         teledyneT3DSO3024HD.waveform_interval = 1
@@ -624,6 +712,8 @@ class TestWaveformData:
 @pytest.mark.skip(reason="No Signal applied")
 class TestWaveformDataDigital:
     def test_waveform_data_digital(self, teledyneT3DSO3024HD):
+        """[TestWaveformDataDigital] Verify that :attr:`waveform_points` can be set and
+        read back correctly."""
         import matplotlib.pyplot as plt
         teledyneT3DSO3024HD.waveform_points = 1000000
         teledyneT3DSO3024HD.waveform_interval = 500000
