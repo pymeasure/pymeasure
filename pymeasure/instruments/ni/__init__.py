@@ -24,7 +24,7 @@
 
 try:
     from .daqmx import DAQmx
-except OSError:
+except (OSError, AttributeError):
     # Error Logging is handled within package
     pass
 
