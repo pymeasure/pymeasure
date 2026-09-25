@@ -34,6 +34,7 @@ python script.py
 """
 
 import logging
+import os
 import random
 import tempfile
 from time import sleep
@@ -88,7 +89,9 @@ if __name__ == "__main__":
     scribe = console_log(log, level=logging.DEBUG)
     scribe.start()
 
-    filename = tempfile.mktemp()
+    fd, filename = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(filename)
     log.info(f"Using data file: {filename}")
 
     procedure = TestProcedure()
