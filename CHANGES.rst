@@ -21,6 +21,8 @@ Deprecated
 
 Changed
 -------
+- Apply value mapping when :code:`get_process_list` reduces a multi-value
+  instrument response to a one-item list (#1288).
 - For property creators :code:`Instrument.control`... the conversion parameters (:code:`cast` etc.) are keyword only, now.
 - Refactored :class:`.Parameter` and :class:`.Metadata` to share a common descriptor base (``_InstanceValueDescriptor``).
   Values are now eagerly converted at assignment time via :meth:`~Parameter.convert` (identity for ``Metadata``).
