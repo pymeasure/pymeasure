@@ -104,6 +104,30 @@ def strict_discrete_set(value: T, values: Iterable[T] | dict[T, Any]) -> T:
         raise ValueError(f'Value of {value} is not in the discrete set {values}')
 
 
+def strict_discrete_case_insensitive_set(value: T, values: Iterable[T] | dict[T, Any]) -> T:
+    """Validate a value against a discrete set, ignoring the case of strings.
+
+    Returns the element of ``values`` that matches ``value``.
+    Strings are compared case-insensitively, all other values with ``==``.
+    A ValueError is raised if ``values`` contains no matching element.
+    The matched element of ``values`` is returned instead of ``value`` itself, so that
+    devices receive the spelling documented in ``values``.
+    This also keeps ``map_values=True`` working, because it looks the validated value up
+    in ``values``.
+
+    :param value: A value to test
+    :param values: A set of values that are valid
+    :raises: ValueError if the value is not in the set
+    """
+    for valid in values:
+        if isinstance(valid, str) and isinstance(value, str):
+            if valid.casefold() == value.casefold():
+                return valid
+        elif valid == value:
+            return valid
+    raise ValueError(f'Value of {value} is not in the discrete set {values}')
+
+
 def truncated_range(value: NumericT, values: NumericSeq) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the closest
