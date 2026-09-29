@@ -546,7 +546,7 @@ def test_scale_out_of_range_rejected():
         ("FAST", True),
     ],
 )
-def test_acquisition_rate_mode_set(mode):
+def test_acquisition_rate_mode_enabled_set(mode):
     """Verify that setting :attr:`acquisition_rate_mode` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
@@ -562,7 +562,7 @@ def test_acquisition_rate_mode_set(mode):
         ("FAST", True),
     ],
 )
-def test_acquisition_rate_mode_get(mode):
+def test_acquisition_rate_mode_enabled_get(mode):
     """Verify that reading :attr:`acquisition_rate_mode` parses the simulated instrument
     response correctly."""
     with expected_protocol(
@@ -572,7 +572,7 @@ def test_acquisition_rate_mode_get(mode):
         assert instr.acquisition_rate_mode_enabled == mode[1]
 
 
-def test_acquisition_rate_mode_invalid_value_rejected():
+def test_acquisition_rate_mode_enabled_invalid_value_rejected():
     """Verify that assigning an invalid value to :attr:`acquisition_rate_mode
     raises a ``ValueError``."""
     with (
@@ -601,13 +601,13 @@ def test_clear_sweep():
         (False, "OFF"),
     ],
 )
-def test_interpolation_set(value, expected_command):
+def test_interpolation_enabled_set(value, expected_command):
     """Verify that setting :attr:`interpolation` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(f":ACQuire:INTerpolation {expected_command}", None)],
     ) as instr:
-        instr.interpolation = value
+        instr.interpolation_enabled = value
 
 
 @pytest.mark.parametrize(
@@ -617,17 +617,17 @@ def test_interpolation_set(value, expected_command):
         ("OFF", False),
     ],
 )
-def test_interpolation_get(response, expected_value):
+def test_interpolation_enabled_get(response, expected_value):
     """Verify that reading :attr:`interpolation` parses the simulated instrument
     response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
         [(":ACQuire:INTerpolation?", response)],
     ) as instr:
-        assert instr.interpolation is expected_value
+        assert instr.interpolation_enabled is expected_value
 
 
-def test_interpolation_invalid_value_rejected():
+def test_interpolation_enabled_invalid_value_rejected():
     """Verify that assigning an invalid value to :attr:`interpolation` raises a ``ValueError``."""
     with (
         expected_protocol(
@@ -636,7 +636,7 @@ def test_interpolation_invalid_value_rejected():
         ) as instr,
         pytest.raises(ValueError),
     ):
-        instr.interpolation = "YES"  # type: ignore
+        instr.interpolation_enabled = "YES"  # type: ignore
 
 
 @pytest.mark.parametrize("value", ["YT", "XY", "ROLL"])

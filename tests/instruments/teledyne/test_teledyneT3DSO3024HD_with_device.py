@@ -216,11 +216,11 @@ class TestAcquisitionRateMode:
 
 class TestInterpolation:
     @pytest.mark.parametrize("interpolation_value", [True, False])
-    def test_interpolation(self, reseted_teledyneT3DSO3024HD, interpolation_value):
-        """[TestInterpolation] Verify that :attr:`interpolation` can be set and
+    def test_interpolation_enabled(self, reseted_teledyneT3DSO3024HD, interpolation_value):
+        """[TestInterpolation] Verify that :attr:`interpolation_enabled` can be set and
         read back correctly."""
-        reseted_teledyneT3DSO3024HD.interpolation = interpolation_value
-        assert reseted_teledyneT3DSO3024HD.interpolation == interpolation_value
+        reseted_teledyneT3DSO3024HD.interpolation_enabled = interpolation_value
+        assert reseted_teledyneT3DSO3024HD.interpolation_enabled == interpolation_value
 
 
 class TestMode:

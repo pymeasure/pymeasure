@@ -240,7 +240,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         """
         self.write(":ACQuire:CSWeep")
 
-    interpolation = Instrument.control(
+    interpolation_enabled = Instrument.control(
         ":ACQuire:INTerpolation?", ":ACQuire:INTerpolation %s",
         """Control whether sinx/x (sinc) interpolation is used (bool).
 
