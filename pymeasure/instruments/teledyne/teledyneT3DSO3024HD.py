@@ -161,8 +161,7 @@ class T3DSO3024HDChannel(Channel):
 
     switch = Channel.control(
         ":CHANnel{ch}:SWITch?", ":CHANnel{ch}:SWITch %s",
-        """Control the display of the specified channel ON or OFF.
-        Boolean value True or False.""",
+        """Control the display of the specified channel ON or OFF.""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "ON", False: "OFF"},
