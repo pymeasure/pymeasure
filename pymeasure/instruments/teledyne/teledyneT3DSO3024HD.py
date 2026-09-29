@@ -271,7 +271,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
 
     _memory_depth = Instrument.control(
         ":ACQuire:MDEPth?", ":ACQuire:MDEPth %s",
-        """Control the maximum memory depth (str).
+        """Control the maximum memory depth (int).
 
         Legal values depend on if the oscilloscope mode is
         in single- or dual-channel mode (Single Channel Mode: Only one of C1/C2/C3/C4
