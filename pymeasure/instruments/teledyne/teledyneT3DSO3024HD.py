@@ -375,8 +375,8 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
     )
 
     @property
-    def acquisition_type(self):
-        """Control the type of data acquisition (tuple of (str, float) or str).
+    def acquisition_type(self) -> tuple[str, float] | str:
+        """Control the type of data acquisition (tuple of (str, float) | str).
 
         The first element is strictly one of 'NORMAL', 'PEAK', 'AVERAGE',
         'ERES'. The second element is:
