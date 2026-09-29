@@ -797,7 +797,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
     )
 
     def set_measurement_item(self, parameter, enabled=True):
-        """Add or remove a parameter from the simple measurement window.
+        """Enable/Disable a parameter from the simple measurement window.
 
         :param parameter: one of the keys in :attr:`MEASURE_PARAMETERS` (str),
             e.g. 'FREQUENCY', 'AMPLITUDE', 'RISE_TIME'.
