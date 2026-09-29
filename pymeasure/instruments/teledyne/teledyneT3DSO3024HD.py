@@ -376,12 +376,12 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
 
     @property
     def acquisition_type(self):
-        """Control the type of data acquisition (tuple of (str, float | None)).
+        """Control the type of data acquisition (tuple of (str, float) or str).
 
         The first element is strictly one of 'NORMAL', 'PEAK', 'AVERAGE',
         'ERES'. The second element is:
 
-        - None for 'NORMAL' and 'PEAK'
+        - Doesn't exist for 'NORMAL' and 'PEAK'
         - the number of averages (one of 4, 16, 32, 64, 128, 256, 512, 1024)
           for 'AVERAGE'
         - the number of enhanced-resolution bits (one of 0.5, 1.0, 1.5, 2.0,
@@ -393,8 +393,9 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         Example::
 
             scope.acquisition_type = ("AVERAGE", 16)
-            scope.acquisition_type = ("NORMAL", None)
             aq_type, param = scope.acquisition_type
+            scope.acquisition_type = "NORMAL"
+            aq_type = scope.acquisition_type
         """
         raw = self._acquisition_type
         parts = raw.split(",")
