@@ -161,7 +161,7 @@ class T3DSO3024HDChannel(Channel):
 
     switch = Channel.control(
         ":CHANnel{ch}:SWITch?", ":CHANnel{ch}:SWITch %s",
-        """Control the display of the specified channel ON or OFF.""",
+        """Control whether to display the selected channel (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "ON", False: "OFF"},
@@ -220,15 +220,15 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         """Initialize the instrument connection."""
         super().__init__(adapter, name, **kwargs)
 
-    acquisition_rate_mode = Instrument.control(
+    acquisition_rate_mode_enabled = Instrument.control(
         ":ACQuire:AMODe?", ":ACQuire:AMODe %s",
-        """Control the waveform capture rate mode (str), strictly 'FAST' or 'SLOW'.
+        """Control the waveform capture rate mode True (FAST Mode) or False (SLOW Mode).
 
         FAST provides a high-speed waveform capture rate to help capture
         signal anomalies; SLOW is the normal capture rate.
         """,
         validator=strict_discrete_set,
-        values=["FAST", "SLOW"],
+        values={True: "FAST", False: "SLOW"},
         cast=str,
     )
 
