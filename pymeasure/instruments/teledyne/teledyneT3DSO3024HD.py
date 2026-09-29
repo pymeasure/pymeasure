@@ -118,8 +118,7 @@ class T3DSO3024HDChannel(Channel):
 
     label = Channel.control(
         ":CHANnel{ch}:LABel?", ":CHANnel{ch}:LABel %s",
-        """Control the selected channel label to ON or OFF.
-        Bool value 'True' or 'False'""",
+        """Control whether the selected channel label  is enabled (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "ON", False: "OFF"},
