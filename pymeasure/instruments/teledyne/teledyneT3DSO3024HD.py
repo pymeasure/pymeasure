@@ -157,7 +157,6 @@ class T3DSO3024HDChannel(Channel):
         The range of the value is [-1.00E-07, 1.00E-07].""",
         validator=strict_range,
         values=[-1e-7, 1e-7],
-        cast=float,
     )
 
     switch = Channel.control(
