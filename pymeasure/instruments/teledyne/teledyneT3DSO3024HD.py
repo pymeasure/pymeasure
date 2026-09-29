@@ -515,8 +515,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
     )
 
     def trigger_run(self):
-        """Set the oscilloscope to run (start acquisition).
-        """
+        """Trigger a new acquisition run."""
         self.write(":TRIGger:RUN")
 
     trigger_status = Instrument.measurement(
