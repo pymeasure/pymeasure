@@ -1,6 +1,6 @@
-##############################################
+#################################
 Teledyne T3DSO3024HD Oscilloscope
-##############################################
+#################################
 
 .. autoclass:: pymeasure.instruments.teledyne.TeledyneT3DSO3024HD
     :members:
