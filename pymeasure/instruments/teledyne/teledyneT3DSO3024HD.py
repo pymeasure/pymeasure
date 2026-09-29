@@ -126,7 +126,7 @@ class T3DSO3024HDChannel(Channel):
     )
 
     @staticmethod
-    def strict_length_quoted_string(value, values):
+    def strict_length_quoted_string(value, max_length: int):
         """Validate that value is a string of at most `values` characters
         and contains no embedded double quotes (no safe escape form is
         defined in the programming guide)."""
@@ -137,7 +137,6 @@ class T3DSO3024HDChannel(Channel):
                 f"Value {value!r} contains an embedded double quote, "
                 "which cannot be safely escaped for this command"
             )
-        max_length = values
         if len(value) > max_length:
             raise ValueError(
                 f"Value {value!r} exceeds the maximum length of {max_length} characters"
