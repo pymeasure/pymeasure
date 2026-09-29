@@ -542,24 +542,24 @@ def test_scale_out_of_range_rejected():
 @pytest.mark.parametrize(
     "mode",
     [
-        "SLOW",
-        "FAST",
+        ("SLOW", False),
+        ("FAST", True),
     ],
 )
 def test_acquisition_rate_mode_set(mode):
     """Verify that setting :attr:`acquisition_rate_mode` sends the expected SCPI command."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
-        [(f":ACQuire:AMODe {mode}", None)],
+        [(f":ACQuire:AMODe {mode[0]}", None)],
     ) as instr:
-        instr.acquisition_rate_mode = mode
+        instr.acquisition_rate_mode_enabled = mode[1]
 
 
 @pytest.mark.parametrize(
     "mode",
     [
-        "SLOW",
-        "FAST",
+        ("SLOW", False),
+        ("FAST", True),
     ],
 )
 def test_acquisition_rate_mode_get(mode):
@@ -567,9 +567,9 @@ def test_acquisition_rate_mode_get(mode):
     response correctly."""
     with expected_protocol(
         TeledyneT3DSO3024HD,
-        [(":ACQuire:AMODe?", mode)],
+        [(":ACQuire:AMODe?", mode[0])],
     ) as instr:
-        assert instr.acquisition_rate_mode == mode
+        assert instr.acquisition_rate_mode_enabled == mode[1]
 
 
 def test_acquisition_rate_mode_invalid_value_rejected():
@@ -582,7 +582,7 @@ def test_acquisition_rate_mode_invalid_value_rejected():
         ) as instr,
         pytest.raises(ValueError),
     ):
-        instr.acquisition_rate_mode = "MEDIUM"
+        instr.acquisition_rate_mode_enabled = "MEDIUM"
 
 
 def test_clear_sweep():

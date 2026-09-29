@@ -200,7 +200,7 @@ class T3DSO3024HDChannel(Channel):
     visible = Channel.control(
         ":CHANnel{ch}:VISible?", ":CHANnel{ch}:VISible %s",
         """Control to whether display the waveform of
-        the specified channel or not (ON or OFF). Boolean value True or False. """,
+        the specified channel or not (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "ON", False: "OFF"},
@@ -228,6 +228,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         signal anomalies; SLOW is the normal capture rate.
         """,
         validator=strict_discrete_set,
+        map_values=True,
         values={True: "FAST", False: "SLOW"},
         cast=str,
     )

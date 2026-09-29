@@ -203,12 +203,15 @@ class TestVisible:
 
 
 class TestAcquisitionRateMode:
-    @pytest.mark.parametrize("acquisition_rate_mode_value", ["FAST", "SLOW"])
-    def test_acquisition_rate_mode(self, reseted_teledyneT3DSO3024HD, acquisition_rate_mode_value):
-        """[TestAcquisitionRateMode] Verify that :attr:`acquisition_rate_mode` can be set
-        and read back correctly."""
-        reseted_teledyneT3DSO3024HD.acquisition_rate_mode = acquisition_rate_mode_value
-        assert reseted_teledyneT3DSO3024HD.acquisition_rate_mode == acquisition_rate_mode_value
+    @pytest.mark.parametrize("acquisition_rate_mode_value", [True, False])
+    def test_acquisition_rate_mode_enabled(self, reseted_teledyneT3DSO3024HD,
+                                           acquisition_rate_mode_value):
+        """[TestAcquisitionRateMode] Verify that :attr:`test_acquisition_rate_mode_enabled` can be
+        set and read back correctly."""
+        reseted_teledyneT3DSO3024HD.acquisition_rate_mode_enabled = acquisition_rate_mode_value
+        assert (
+            reseted_teledyneT3DSO3024HD.acquisition_rate_mode_enabled == acquisition_rate_mode_value
+        )
 
 
 class TestInterpolation:
