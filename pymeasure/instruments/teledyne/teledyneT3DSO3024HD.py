@@ -1090,7 +1090,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
 
         time = (
             -preamble["horizontal_offset"]
-            - (preamble["timebase"] * 10 / 2)
+            - (preamble["timebase"] * 5)
             + (preamble["first_point"] + index) * point_spacing
         )
 
