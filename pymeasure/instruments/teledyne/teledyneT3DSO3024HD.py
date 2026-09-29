@@ -237,8 +237,6 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         """Clear the sweep and restart acquisition.
 
         Equivalent to the "Clear Sweeps" button on the front panel.
-
-        Note: this is a write-only command; there is no corresponding query.
         """
         self.write(":ACQuire:CSWeep")
 
