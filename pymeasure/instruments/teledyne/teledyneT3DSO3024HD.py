@@ -179,7 +179,7 @@ class T3DSO3024HDChannel(Channel):
 
     unit = Channel.control(
         ":CHANnel{ch}:UNIT?", ":CHANnel{ch}:UNIT %s",
-        """Control the unit of the input signal of the channel (str), strictly 'V' or 'A'.""",
+        """Control the unit of the input signal of the channel (str, strictly 'V' or 'A').""",
         validator=strict_discrete_set,
         values=["V", "A"],
         cast=str,
