@@ -297,7 +297,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
         cast=str,
     )
 
-    def _get_channel_mode(self):
+    def get_channel_mode(self):
         """Determine whether the scope is in single-, dual- or quad channel mode."""
         pair_12_on = sum([self.channel_1.switch, self.channel_2.switch])
         pair_34_on = sum([self.channel_3.switch, self.channel_4.switch])
@@ -317,7 +317,7 @@ class TeledyneT3DSO3024HD(SCPIMixin, Instrument):
     @memory_depth.setter
     def memory_depth(self, value):
         """Set :attr:`memory_depth` and update the dependent validator range accordingly."""
-        ch_mode = self._get_channel_mode()
+        ch_mode = self.get_channel_mode()
         if ch_mode == "SINGLE":
             self._memory_depth_values = {2e3: "2k", 10e3: "10k", 20e3: "20k", 100e3: "100k",
                                          200e3: "200k",  1e6: "1M", 2e6: "2M", 10e6: "10M",
