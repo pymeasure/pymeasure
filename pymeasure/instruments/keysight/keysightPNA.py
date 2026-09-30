@@ -280,7 +280,7 @@ class KeysightPNA(SCPIMixin, Instrument):
     """
 
     def __init__(self,
-                 adapter: Adapter | int | str,
+                 adapter: AdapterType,
                  name: str = "Keysight PNA",
                  data_format: str = "real64",
                  byte_order_swapped: bool = True,
