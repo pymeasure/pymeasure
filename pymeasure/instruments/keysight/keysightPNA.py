@@ -22,12 +22,11 @@
 # THE SOFTWARE.
 #
 
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 
-from pymeasure.adapters import Adapter
-from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments import AdapterType, Channel, Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 
