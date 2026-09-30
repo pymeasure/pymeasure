@@ -282,7 +282,7 @@ class KeysightPNA(SCPIMixin, Instrument):
     def __init__(self,
                  adapter: AdapterType,
                  name: str = "Keysight PNA",
-                 data_format: str = "real64",
+                 data_format: Literal["ascii", "real32", "real64"] = "real64",
                  byte_order_swapped: bool = True,
                  **kwargs: Any) -> None:
         super().__init__(
