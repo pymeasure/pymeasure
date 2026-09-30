@@ -26,6 +26,7 @@ from typing import Any, Literal
 
 import numpy as np
 
+
 from pymeasure.instruments import AdapterType, Channel, Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
