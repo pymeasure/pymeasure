@@ -173,7 +173,7 @@ class AnalogOutputFastChannel(Channel):
     shape = Instrument.control(
         "SOUR{ch}:FUNC?",
         "SOUR{ch}:FUNC %s",
-        """ A string property that controls the output waveform. Can be set to:
+        """Control the output waveform (str). Can be set to:
         SINE, SQUARE, TRIANGLE, SAWU, SAWD, PWM, ARBITRARY, DC, DC_NEG. """,
         validator=strict_discrete_set,
         values=SHAPES,
