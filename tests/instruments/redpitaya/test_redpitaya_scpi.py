@@ -270,7 +270,7 @@ def test_board_name_getter():
 def test_date_setter():
     with expected_protocol(
             RedPitayaScpi,
-            [(b'SYST:DATE 2023,12,22', None)],
+            [(b'SYST:DATE "2023-12-22"', None)],
     ) as inst:
         inst.date = datetime.date(2023, 12, 22)
 
@@ -278,7 +278,7 @@ def test_date_setter():
 def test_date_getter():
     with expected_protocol(
             RedPitayaScpi,
-            [(b'SYST:DATE?', b'2023,12,22')],
+            [(b'SYST:DATE?', b'2023-12-22')],
     ) as inst:
         assert inst.date == datetime.date(2023, 12, 22)
 
@@ -382,7 +382,7 @@ def test_led_getter():
 def test_time_setter():
     with expected_protocol(
             RedPitayaScpi,
-            [(b'SYST:TIME 13,07,20', None)],
+            [(b'SYST:TIME "13:07:20"', None)],
     ) as inst:
         inst.time = datetime.time(13, 7, 20)
 
@@ -390,7 +390,7 @@ def test_time_setter():
 def test_time_getter():
     with expected_protocol(
             RedPitayaScpi,
-            [(b'SYST:TIME?', '13,07,20')],
+            [(b'SYST:TIME?', '13:07:20')],
     ) as inst:
         assert inst.time == datetime.time(13, 7, 20)
 

@@ -469,8 +469,9 @@ class RedPitayaScpi(SCPIMixin, Instrument):
                               "SYST:DATE %s",
                               """Control the date on board
                               date should be given as a datetime.date object""",
+                              cast=str,
                               get_process=lambda dstr:
-                              datetime.date(*[int(split) for split in dstr.split('-')]),
+                              datetime.date.fromisoformat(dstr),
                               set_process=lambda date: date.strftime('"%Y-%m-%d"'),
                               )
 
