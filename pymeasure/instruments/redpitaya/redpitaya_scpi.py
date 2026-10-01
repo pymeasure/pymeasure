@@ -127,7 +127,7 @@ class AnalogInputFastChannel(Channel):
         self.write(f"ACQ:SOUR{'{ch}'}:DATA:STArt:N? {start:.0f}, {npts:.0f}")
         return self._read_from_ascii()
 
-    def get_data(self, npts: int = None, format='ASCII') -> np.ndarray:
+    def get_data(self, npts: int | None = None, format='ASCII') -> np.ndarray:
         """ Read data from the buffer
 
         :param npts: number of points to be read
