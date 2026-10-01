@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,12 @@
 #
 
 import logging
+from enum import IntEnum
+
+from pyvisa.constants import Parity
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
-from pyvisa.constants import Parity
-from enum import IntEnum
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -116,7 +117,7 @@ class LakeShore211(SCPIUnknownMixin, Instrument):
             strict_discrete_set(v[0], vs[0]), strict_discrete_set(v[1], vs[1])),
         values=[list(AnalogMode), list(AnalogRange)],
         # These are the vs values in the validator lambda
-        get_process=lambda x: (LakeShore211.AnalogMode(x[0]), LakeShore211.AnalogRange(x[1])),
+        get_process_list=lambda x: (LakeShore211.AnalogMode(x[0]), LakeShore211.AnalogRange(x[1])),
         cast=int
     )
 
@@ -181,7 +182,7 @@ class LakeShore211(SCPIUnknownMixin, Instrument):
         :return: Current RelayMode of queried relay
         """
         relay = strict_discrete_set(relay, list(self.RelayNumber))
-        return int(self.ask("RELAY? %d" % relay))
+        return int(self.ask(f"RELAY? {relay}"))
 
     def configure_relay(self, relay, mode):
         """
@@ -194,7 +195,7 @@ class LakeShore211(SCPIUnknownMixin, Instrument):
         """
         relay = strict_discrete_set(relay, list(self.RelayNumber))
         mode = strict_discrete_set(mode, list(self.RelayMode))
-        self.write('RELAY %d %d' % (relay, mode))
+        self.write(f'RELAY {relay} {mode}')
 
     def get_alarm_status(self):
         """
@@ -218,7 +219,7 @@ class LakeShore211(SCPIUnknownMixin, Instrument):
         :param latch: Specifies if the alarm should latch or not
         """
 
-        command_string = "ALARM %d,%g,%g,%g,%d" % (on, high_value, low_value, deadband, latch)
+        command_string = f"ALARM {int(on)},{high_value:g},{low_value:g},{deadband:g},{int(latch)}"
         self.write(command_string)
 
     def reset_alarm(self):

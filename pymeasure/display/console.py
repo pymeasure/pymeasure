@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,25 +22,25 @@
 # THE SOFTWARE.
 #
 
-import logging
-
-import copy
 import argparse
+import copy
+import logging
+import os
 
 try:
     import progressbar
     # Check that progressbar is progressbar2
-    progressbar.streams
+    _ = progressbar.streams
 except (AttributeError, ImportError):
     progressbar = None
-from .Qt import QtCore
 import signal
-from ..log import console_log
 
+from ..experiment import Procedure, Results, unique_filename
+from ..experiment.procedure import ProcedureStatus
+from ..log import console_log
 from .browser import BaseBrowserItem
 from .manager import BaseManager, Experiment
-
-from ..experiment import Results, Procedure, unique_filename
+from .Qt import QtCore
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -51,11 +51,11 @@ class ConsoleBrowserItem(BaseBrowserItem):
     def __init__(self, progress_bar):
         self.bar = progress_bar
 
-    def setStatus(self, status):
+    def setStatus(self, status: ProcedureStatus) -> None:
         if self.bar:
-            self.bar.update(status=self.status_label[status])
+            self.bar.update(status=status)
 
-    def setProgress(self, progress):
+    def setProgress(self, progress: float) -> None:
         if self.bar:
             self.bar.update(progress)
 
@@ -88,12 +88,12 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
                              "help_fields": ["default"]},
     }
 
-    def __init__(self, procedure_class, **kwargs):
+    def __init__(self, procedure_class: type[Procedure], **kwargs):
         super().__init__(**kwargs)
         self.procedure_class = procedure_class
         self.setup_parser()
 
-    def setup_parser(self):
+    def setup_parser(self) -> None:
         """ Setup command line arguments parsing from parameters information """
 
         self.procedure = self.procedure_class()
@@ -102,51 +102,46 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
         special_options = copy.deepcopy(self.special_options)
         special_opts_group = self.add_argument_group("Common options")
         for option, kwargs in special_options.items():
-            help_fields = [('units are', 'units')] + kwargs['help_fields']
-            desc = kwargs['desc']
+            help_fields = [('units are', 'units')] + kwargs.pop('help_fields')
+            desc = kwargs.pop('desc')
             kwargs['help'] = self._cli_help_fields(desc, kwargs, help_fields)
-            del kwargs['help_fields']
-            del kwargs['desc']
             special_opts_group.add_argument("--" + option, **kwargs)
 
         experiment_opts_group = self.add_argument_group("Experiment options")
         for name in parameter_objects:
             if name in special_options:
-                raise Exception(f"Experiment option {name} " +
-                                "is already defined as common options")
+                raise ValueError(f"Experiment option {name} " +
+                                 "is already defined as common options")
             kwargs = {}
             parameter = parameter_objects[name]
-            default, help_fields, _type = parameter.cli_args
-            kwargs['help'] = self._cli_help_fields(parameter.name, parameter, help_fields)
+            default, _, _type = parameter.cli_args
+            kwargs['help'] = parameter._cli_help_fields().replace("%", "%%")
             kwargs['default'] = default
             if _type is not None:
                 kwargs['type'] = _type
             experiment_opts_group.add_argument("--" + name, **kwargs)
 
     @staticmethod
-    def _cli_help_fields(name, inst, help_fields):
-        def hasattr_dict(inst, key):
-            return key in inst
+    def _cli_help_fields(description: str, kwargs: dict, help_fields) -> str:
+        if not isinstance(kwargs, dict):
+            raise TypeError("kwargs must be a dictionary")
 
-        def getattr_dict(inst, key):
-            return inst[key]
+        message = ""
+        if isinstance(description, str):
+            if not description.endswith("."):
+                description += "."
+            message += description
 
-        if isinstance(inst, dict):
-            hasattribute = hasattr_dict
-            getattribute = getattr_dict
-        else:
-            hasattribute = hasattr
-            getattribute = getattr
-
-        message = name
         for field in help_fields:
             if isinstance(field, str):
-                field = ["{} is".format(field), field]
+                field = (f"{field} is", field)
 
-            if hasattribute(inst, field[1]) and getattribute(inst, field[1]) is not None:
-                prefix = field[0]
-                value = getattribute(inst, field[1])
-                message += ", {} {}".format(prefix, value)
+            if (value := kwargs.get(field[1])) is not None:
+                prefix = field[0].capitalize()
+                if isinstance(value, str):
+                    value = f'"{value}"'
+
+                message += f" {prefix} {value}."
 
         message = message.replace("%", "%%")
         return message
@@ -162,12 +157,15 @@ class ManagedConsole(QtCore.QCoreApplication):
             (see :class:`~pymeasure.experiment.procedure.Procedure`)
     :param log_channel: :code:`logging.Logger` instance to use for logging output
     :param log_level: logging level
+    :param kwargs: additional keyword arguments to be passed to the
+            :class:`~pymeasure.display.console.ConsoleArgumentParser` constructor
     """
 
     def __init__(self,
-                 procedure_class,
-                 log_channel='',
-                 log_level=logging.INFO,
+                 procedure_class: type[Procedure],
+                 log_channel: str = '',
+                 log_level: int = logging.INFO,
+                 **kwargs,
                  ):
 
         super().__init__([])
@@ -179,7 +177,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         self.log.setLevel(log_level)
 
         # Check if the get_estimates function is reimplemented
-        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
+        self.use_estimator = self.procedure_class.get_estimates != Procedure.get_estimates
         if self.use_estimator:
             log.warning("Estimator not yet implemented")
 
@@ -187,7 +185,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         signal.signal(signal.SIGINT, lambda sig, _: self.abort())
 
         # Parse command line arguments
-        parser = ConsoleArgumentParser(procedure_class)
+        parser = ConsoleArgumentParser(procedure_class, **kwargs)
         args = vars(parser.parse_args())
 
         self.directory = args['result_directory']
@@ -215,7 +213,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         else:
             for name in args:
                 opt_name = name.replace("_", "-")
-                if not (opt_name in parser.special_options):
+                if opt_name not in parser.special_options:
                     self.parameter_values[name] = args[name]
 
         if progressbar and not args['no_progressbar']:
@@ -237,7 +235,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         self.manager.finished.connect(self._terminate)
         self.manager.log.connect(self.log.handle)
 
-    def get_filename(self, directory, procedure=None):
+    def get_filename(self, directory: os.PathLike, procedure: Procedure | None = None) -> str:
         """ Return filename for saving results file
 
         :param directory: directory of the returned filename.
@@ -248,7 +246,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         else:
             return unique_filename(directory)
 
-    def queue(self):
+    def queue(self) -> None:
         procedure = self.procedure_class()
         procedure.set_parameters(self.parameter_values)
         filename = self.get_filename(self.directory, procedure)
@@ -257,17 +255,17 @@ class ManagedConsole(QtCore.QCoreApplication):
 
         self.manager.queue(experiment)
 
-    def _terminate(self):
+    def _terminate(self) -> None:
         if not self.manager.experiments.has_next():
             self.quit()
 
-    def abort(self):
+    def abort(self) -> None:
         """ Aborts the currently running Experiment, but raises an exception if
         there is no running experiment
         """
         self.manager.abort()
 
-    def new_experiment(self, results):
+    def new_experiment(self, results: Results) -> Experiment:
         browser_item = ConsoleBrowserItem(self.bar)
         return Experiment(results, browser_item=browser_item)
 

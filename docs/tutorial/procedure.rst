@@ -40,7 +40,7 @@ These steps are expressed in code as follows. ::
     current_range = 10e-3  # in Amps
     compliance_voltage = 10  # in Volts
     measure_nplc = 0.1  # Number of power line cycles
-    voltage_range = 1  # in VOlts
+    voltage_range = 1  # in Volts
 
     # Connect and configure the instrument
     sourcemeter = Keithley2400("GPIB::24")
@@ -86,7 +86,7 @@ Running this example script will execute the measurement and save the data to a 
 * Input parameters are not associated with the data that is saved
 * Data is not plotted during the execution (nor at all in this case)
 * Data is only saved upon successful completion, which is otherwise lost
-* Canceling a running measurement causes the system to end in a undetermined state
+* Canceling a running measurement causes the system to end in an undetermined state
 * Exceptions also end the system in an undetermined state
 
 The :class:`Procedure <pymeasure.experiment.procedure.Procedure>` class allows us to solve all of these issues. The next section introduces the :class:`Procedure <pymeasure.experiment.procedure.Procedure>` class and shows how to modify our script example to take advantage of these features.
@@ -127,7 +127,36 @@ At the top of the SimpleProcedure class we define the required Parameters. In th
 
 We define the data columns that will be recorded in a list stored in :python:`DATA_COLUMNS`. This sets the order by which columns are stored in the file. In this example, we will store the Iteration number for each loop iteration.
 
-The :python:`execute` methods defines the main body of the procedure. Our example method consists of a loop over the number of iterations, in which we emit the data to be recorded (the Iteration number). The data is broadcast to any number of listeners by using the :code:`emit` method, which takes a topic as the first argument. Data with the :python:`'results'` topic and the proper data columns will be recorded to a file. The sleep function in our example provides two very useful features. The first is to delay the execution of the next lines of code by the time argument in units of seconds. The seconds is that during this delay time, the CPU is free to perform other code. Successful measurements often require the intelligent use of sleep to deal with instrument delays and ensure that the CPU is not hogged by a single script. After our delay, we check to see if the Procedure should stop by calling :python:`self.should_stop()`. By checking this flag, the Procedure will react to a user canceling the procedure execution.
+The :python:`execute` methods defines the main body of the procedure.
+Our example method consists of a loop over the number of iterations, in which we emit the data to be recorded (the Iteration number).
+The data is broadcast to any number of listeners by using the :code:`emit` method, which takes a topic as the first argument.
+Data with the :python:`'results'` topic and the proper data columns will be recorded to a file.
+The sleep function in our example provides two very useful features.
+The first is to delay the execution of the next lines of code by the time argument in units of seconds.
+The second is that during this delay time, the CPU is free to perform other code.
+Successful measurements often require the intelligent use of sleep to deal with instrument delays and ensure that the CPU is not hogged by a single script.
+After our delay, we check to see if the Procedure should stop by calling :python:`self.should_stop()`.
+By checking this flag, the Procedure will react to a user canceling the procedure execution.
+If your :python:`startup` method is very time-consuming, it is also recommended to query :python:`should_stop()` within it to allow for early cancellation.
+
+.. note::
+   Instead of emitting results one by one, it is also possible to emit results in batch. As an example consider a device that returns multiple points for each measurement (such as an oscilloscope or a CCD): ::
+
+    intensities = self.ccd.capture()  # Assume this function returns a list of intensities for each pixel
+    pixels = np.arange(len(intensities))
+
+    for pixel, intensity in zip(pixels, intensities):
+        self.emit('results', {'Pixel': pixel, 'Intensity': intensity})
+
+   The downside to this method is that it is cumbersome to write and can be slow when the array of data is large. Instead it is possible to emit the data as a whole: ::
+
+    intensities = self.ccd.capture()  # Assume this function returns a list of intensities for each pixel
+    pixels = np.arange(len(intensities))
+
+    self.emit('batch results', {'Pixel': pixels, 'Intensity': intensities})
+
+   Please note that you have to use :python:`'batch results'` as the topic when emitting results this way.
+
 
 This covers the basic requirements of a Procedure object. Now let's construct our SimpleProcedure object with 100 iterations. ::
 
@@ -266,7 +295,7 @@ Storing metadata
 ~~~~~~~~~~~~~~~~
 
 Metadata (:class:`pymeasure.experiment.parameters.Metadata`) allows storing information (e.g. the actual starting time, instrument parameters) about the measurement in the header of the datafile.
-These Metadata objects are evaluated and stored in the datafile only after the :python:`startup` method has ran; this way it is possible to e.g. retrieve settings from an instrument and store them in the file.
+These Metadata objects are evaluated and stored in the datafile only after the :python:`startup` method has run; this way it is possible to e.g. retrieve settings from an instrument and store them in the file.
 Using a Metadata is nearly as straightforward as using a Parameter; extending the example of above to include metadata, looks as follows: ::
 
     from time import sleep, time
@@ -303,7 +332,7 @@ Using a Metadata is nearly as straightforward as using a Parameter; extending th
 As with a Parameter, PyMeasure swaps out the Metadata with their values behind the scene, which makes accessing the values of Metadata very convenient.
 
 The value of a Metadata can be set either using an :python:`fget` method or manually in the startup method.
-The :python:`fget` method, if provided, is ran after startup method.
+The :python:`fget` method, if provided, is run after startup method.
 It can also be provided as a string; in that case it is assumed that the string contains the name of an attribute (either a callable or not) of the Procedure class which returns the value that is to be stored.
 This also allows to retrieve nested attributes (e.g. in order to store a property or method of an instrument) by separating the attributes with a period: e.g. `instrument_name.attribute_name` (or even `instrument_name.subclass_name.attribute_name`); note that here only the final element (i.e. `attribute_name` in the example) is allowed to refer to a callable.
 If neither an :python:`fget` method is provided or a value manually set, the Metadata will return to its default value, if set.

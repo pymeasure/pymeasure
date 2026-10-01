@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,13 @@
 # THE SOFTWARE.
 #
 
-from enum import IntFlag
 import logging
+from enum import IntFlag
 
 from pyvisa import VisaIOError
+
 from pymeasure.adapters import SerialAdapter, VISAAdapter
 from pymeasure.instruments import Instrument
-
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -114,7 +114,6 @@ class VellemanK8090(Instrument):
             write_termination="",
             read_termination="",
             timeout=timeout,
-            includeSCPI=False,
             **kwargs,
         )
 
@@ -127,7 +126,7 @@ class VellemanK8090(Instrument):
         Get firmware version, as (year - 2000, week). E.g. ``(10, 1)``
         """,
         cast=int,
-        get_process=lambda v: (v[2], v[3]) if len(v) > 3 and v[0] == 0x71 else None,
+        get_process_list=lambda v: (v[2], v[3]) if len(v) > 3 and v[0] == 0x71 else None,
     )
 
     status = Instrument.measurement(
@@ -143,7 +142,7 @@ class VellemanK8090(Instrument):
         * Timer state: the state of each relay timer
         """,
         cast=int,
-        get_process=_get_process_status,
+        get_process_list=_get_process_status,
     )
 
     switch_on = Instrument.setting(
@@ -172,12 +171,12 @@ class VellemanK8090(Instrument):
 
     id = None  # No identification available
 
-    def _make_checksum(self, command, mask, param1, param2):
+    def _make_checksum(self, command: int, mask: int, param1: int, param2: int) -> int:
         # The formula from the sheet requires twos-complement negation,
         # this works
         return 1 + 0xFF - ((self.BYTE_STX + command + mask + param1 + param2) & 0xFF)
 
-    def write(self, command, **kwargs):
+    def write(self, command: str, **kwargs) -> None:
         """The write command specifically for the protocol of the K8090.
 
         This overrides the method from the ``Instrument`` class.
@@ -221,7 +220,7 @@ class VellemanK8090(Instrument):
             self.BYTE_ETX,
         ]
 
-        self.write_bytes(bytes(content))
+        self.write_bytes(bytes(content), **kwargs)
 
     def read(self, **kwargs):
         """The read command specifically for the protocol of the K8090.
@@ -260,7 +259,7 @@ class VellemanK8090(Instrument):
 
         return ",".join(values_str)
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check for errors after having set a property and log them.
 
         Called if :code:`check_set_errors=True` is set for that property.
@@ -275,7 +274,7 @@ class VellemanK8090(Instrument):
         try:
             self.read()
         except (VisaIOError, ConnectionError):
-            pass  # Ignore a timeout
+            return []  # Ignore a timeout
         except Exception as exc:
             log.exception("Setting a property failed.", exc_info=exc)
             raise

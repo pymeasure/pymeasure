@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,29 +22,155 @@
 # THE SOFTWARE.
 
 import logging
+from collections.abc import Callable, Sequence
+from time import sleep, time
+from typing import Literal
 
-from pymeasure.instruments import Instrument, SCPIMixin
+from pyvisa.util import from_binary_block
+
+from pymeasure.instruments import AdapterType, Instrument, InstrumentProperty, SCPIMixin
+from pymeasure.instruments.channel import Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class Trace(Channel):
+    def delete(self) -> None:
+        """Delete data of the trace."""
+        self.write(":TRACe:DELETE {ch}")
+
+    mode = Channel.control(
+        ":TRACe:ATTRibute:{ch}?",
+        ":TRACe:ATTRibute:{ch} %s",
+        """Control the mode of the trace.""",
+        values=["WRITE", "FIX", "MAX", "MIN", "RAVG", "CALC"],
+        cast=int,
+        get_process=lambda v: ["WRITE", "FIX", "MAX", "MIN", "RAVG", "CALC"][v],
+    )
+
+    sample_number = Channel.measurement(
+        ":TRACe:DATA:SNUMber? {ch}",
+        """Get the number of samples.""",
+        cast=int,
+    )
+
+    def get_axis_data(
+        self, axis: Literal["X", "Y"] = "Y", samples: tuple[int, int] | None = None
+    ) -> list[float]:
+        """Get the data of an axi in m (X) or displayed units (Y).
+
+        :param samples: Optionally tuple of the slice to retrieve, e.g. [0, 10]
+        """
+        if samples is None:
+            area = ""
+        else:
+            area = f",{samples[0]+1},{samples[1]}"
+        return self.values(f":TRACE:{axis}? {{ch}}{area}")
+
+
 class AQ6370Series(SCPIMixin, Instrument):
     """Represents Yokogawa AQ6370 Series of optical spectrum analyzer."""
 
-    def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Yokogawa AQ3670D OSA",
+        baud_rate: int = 115200,
+        **kwargs,
+    ):
+        super().__init__(
+            adapter,
+            name,
+            asrl={
+                "read_termination": "\r\n",
+                "write_termination": "\r\n",
+                "baud_rate": baud_rate,
+            },
+            gpib={"read_termination": "\n", "write_termination": "\n"},
+            tcpip={
+                "read_termination": "\r\n",
+                "write_termination": "\r\n",
+                "port": 10001,  # configurable
+            },
+            **kwargs,
+        )
 
-    # Initiate and abort sweep ---------------------------------------------------------------------
+    TRA = Instrument.ChannelCreator(Trace, "TRA")
+    TRB = Instrument.ChannelCreator(Trace, "TRB")
+    TRC = Instrument.ChannelCreator(Trace, "TRC")
+    TRD = Instrument.ChannelCreator(Trace, "TRD")
+    TRE = Instrument.ChannelCreator(Trace, "TRE")
+    TRF = Instrument.ChannelCreator(Trace, "TRF")
+    TRG = Instrument.ChannelCreator(Trace, "TRG")
 
-    def abort(self):
+    def authenticate_ethernet(self, username: str, password: str = "") -> None:
+        """Authenticate for an ethernet connection.
+
+        :param username: User name to log in with.
+        :param password: Password to log in with (empty by default).
+        :raises ConnectionError: If the instrument does not return the expected
+            handshake responses.
+        """
+        # Open the connection. It has to be closed at the end.
+        # The comparison is case-insensitive because older firmware (e.g. the
+        # AQ6370B) answers in lower case.
+        response = self.ask(f'OPEN "{username}"').strip()
+        if response.upper() != "AUTHENTICATE CRAM-MD5.":
+            raise ConnectionError(f"Unexpected response to OPEN: {response!r}")
+        # Encrypted password transfer is possible.
+        response = self.ask(password).strip()
+        if response.upper() != "READY":
+            raise ConnectionError(f"Authentication failed: {response!r}")
+
+    # Control sweep status -------------------------------------------------------------------------
+
+    def trigger(self) -> None:
+        """Perform a single sweep according to previous conditions."""
+        self.write("*TRG")  # "Trigger"
+
+    def abort(self) -> None:
         """Stop operations such as measurements and calibration."""
         self.write(":ABORt")
 
-    def initiate_sweep(self):
+    def initiate_sweep(self) -> None:
         """Initiate a sweep."""
         self.write(":INITiate:IMMediate")
+
+    sweep_complete = Instrument.measurement(
+        ":STATus:OPERation:CONDition?",
+        """Get the completion status of the sweep (bool, True if complete).""",
+        get_process=lambda x: bool(int(x) & 1),
+    )
+
+    def wait_for_sweep_complete(
+        self,
+        should_stop: Callable[..., bool] = lambda: False,
+        timeout: float = 3600,
+        delay: float = 0,
+    ) -> bool:
+        """Block the program, waiting for the sweep to complete.
+
+        :param should_stop: Function that returns True to stop waiting.
+        :param timeout: Maximum waiting time, in seconds.
+        :param delay: Delay between checks for sweep completion, in seconds.
+        :return: True when sweep completed, False if stopped by should_stop.
+        :raises TimeoutError: If the sweep does not complete within the timeout period.
+        """
+
+        t0 = time()
+        while not self.sweep_complete:
+
+            if should_stop():
+                return False
+
+            if time() - t0 > timeout:
+                raise TimeoutError("Timed out waiting for sweep to run.")
+
+            sleep(delay)
+
+        return True
 
     # Leveling -------------------------------------------------------------------------------------
 
@@ -67,13 +193,13 @@ class AQ6370Series(SCPIMixin, Instrument):
         get_process=lambda x: int(x),
     )
 
-    def set_level_position_to_max(self):
+    def set_level_position_to_max(self) -> None:
         """Set the reference level position to the maximum value."""
         self.write(":CALCulate:MARKer:MAXimum:SRLevel")
 
     # Sweep settings -------------------------------------------------------------------------------
 
-    sweep_mode = Instrument.control(
+    sweep_mode: InstrumentProperty[str] = Instrument.control(
         ":INITiate:SMODe?",
         ":INITiate:SMODe %s",
         "Control the sweep mode (str 'SINGLE', 'REPEAT', 'AUTO', 'SEGMENT').",
@@ -90,7 +216,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         values=[0, 99999],
     )
 
-    automatic_sample_number = Instrument.control(
+    automatic_sample_number: InstrumentProperty[bool] = Instrument.control(
         ":SENSe:SWEep:POINts:AUTO?",
         ":SENSe:SWEep:POINts:AUTO %d",
         "Control the automatic sample number (bool).",
@@ -106,6 +232,16 @@ class AQ6370Series(SCPIMixin, Instrument):
         validator=strict_range,
         values=[101, 50001],
         get_process=lambda x: int(x),
+    )
+
+    sensitivity: InstrumentProperty[str] = Instrument.control(
+        ":SENSe:SENSe?",
+        ":SENSe:SENSe %s",
+        """Control the sweep sensitivity
+        (str 'NHLD', 'NAUT', 'NORM', 'MID', 'HIGH1', 'HIGH2', 'HIGH3')""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"NHLD": 0, "NAUT": 1, "MID": 2, "HIGH1": 3, "HIGH2": 4, "HIGH3": 5, "NORM": 6},
     )
 
     # Wavelength settings (all assuming wavelength mode, not frequency mode) -----------------------
@@ -131,9 +267,9 @@ class AQ6370Series(SCPIMixin, Instrument):
     wavelength_start = Instrument.control(
         ":SENSe:WAVelength:STARt?",
         ":SENSe:WAVelength:STARt %g",
-        "Control the measurement start wavelength (float from 50e-9 to 2250e-9 in m).",
+        "Control the measurement start wavelength (float from 50e-9 to 1700e-9 in m).",
         validator=strict_range,
-        values=[50e-9, 1700 - 9],
+        values=[50e-9, 1700e-9],
         dynamic=True,
     )
 
@@ -146,70 +282,15 @@ class AQ6370Series(SCPIMixin, Instrument):
         dynamic=True,
     )
 
-    # Trace operations -----------------------------------------------------------------------------
-
-    active_trace = Instrument.control(
-        ":TRACe:ACTive?",
-        ":TRACe:ACTive %d",
-        "Control the active trace (str 'A', 'B', 'C', ...).",
+    wavelength_automatic_center: InstrumentProperty[bool] = Instrument.control(
+        ":calc:mark:max:scenter:auto?",
+        ":calc:mark:max:scenter:auto %s",
+        """Control whether the wavelength center follows the maximum (bool).""",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+        cast=str,
     )
-
-    def copy_trace(self, source, destination):
-        """
-        Copy the data of specified trace to the another trace.
-
-        :param source: Source trace (str 'A', 'B', 'C', ...).
-        :param destination: Destination trace (str 'A', 'B', 'C', ...).
-        """
-
-        self.write(f":TRACe:COPY TR{source.replace('TR', '')},TR{destination.replace('TR', '')}")
-
-    def delete_trace(self, trace):
-        """
-        Delete the specified trace.
-
-        :param trace: Trace to be deleted (str 'ALL', 'A', 'B', 'C', ...).
-        """
-
-        if trace == "ALL":
-            self.write(":TRACe:DELete:ALL")
-        else:
-            self.write(f":TRACe:DELete TR{trace.replace('TR', '')}")
-
-    def get_xdata(self, trace="TRA"):
-        """
-        Measure the x-axis data of specified trace, output wavelength in m.
-
-        :param trace: Trace to measure (str 'A', 'B', 'C', ...).
-        :return: The x-axis data of specified trace.
-        """
-
-        return self.values(f":TRACe:X? TR{trace.replace('TR', '')}")
-
-    def get_ydata(self, trace="TRA"):
-        """
-        Measure the y-axis data of specified trace, output power in dBm.
-
-        :param trace: Trace to measure (str 'A', 'B', 'C', ...).
-        :return: The y-axis data of specified trace.
-        """
-
-        return self.values(f":TRACe:Y? TR{trace.replace('TR', '')}")
-
-    # Analysis -------------------------------------------------------------------------------------
-
-    def execute_analysis(self):
-        """Execute the analysis with the current analysis settings."""
-        self.write(":CALCulate")
-
-    def get_analysis(self):
-        """
-        Query the analysis results of latest analysis. If no analysis has been
-        performed, returns query error.
-        """
-        return self.write(":CALCulate:DATA?")
-
-    # Resolution -----------------------------------------------------------------------------------
 
     resolution_bandwidth = Instrument.control(
         ":SENSe:BWIDth:RESolution?",
@@ -221,8 +302,119 @@ class AQ6370Series(SCPIMixin, Instrument):
         dynamic=True,
     )
 
+    # Trace operations -----------------------------------------------------------------------------
+
+    active_trace = Instrument.control(
+        ":TRACe:ACTive?",
+        ":TRACe:ACTive %d",
+        "Control the active trace (str 'A', 'B', 'C', ...).",
+        cast=str,
+    )
+
+    def copy_trace(self, source: str, destination: str) -> None:
+        """
+        Copy the data of specified trace to the another trace.
+
+        :param source: Source trace (str 'A', 'B', 'C', ...).
+        :param destination: Destination trace (str 'A', 'B', 'C', ...).
+        """
+
+        self.write(f":TRACe:COPY TR{source.replace('TR', '')},TR{destination.replace('TR', '')}")
+
+    def delete_trace(self, trace: str) -> None:
+        """
+        Delete the specified trace.
+
+        :param trace: Trace to be deleted (str 'ALL', 'A', 'B', 'C', ...).
+        """
+
+        if trace == "ALL":
+            self.write(":TRACe:DELete:ALL")
+        else:
+            self.write(f":TRACe:DELete TR{trace.replace('TR', '')}")
+
+    def get_xdata(self, trace: str = "TRA") -> list[float]:
+        """
+        Measure the x-axis data of specified trace, output wavelength in m.
+
+        :param trace: Trace to measure (str 'A', 'B', 'C', ...).
+        :return: The x-axis data of specified trace.
+        """
+
+        return self.values(f":TRACe:X? TR{trace.replace('TR', '')}")
+
+    def get_ydata(self, trace: str = "TRA") -> list[float]:
+        """
+        Measure the y-axis data of specified trace, output power in dBm.
+
+        :param trace: Trace to measure (str 'A', 'B', 'C', ...).
+        :return: The y-axis data of specified trace.
+        """
+
+        return self.values(f":TRACe:Y? TR{trace.replace('TR', '')}")
+
+    # Analysis -------------------------------------------------------------------------------------
+
+    def execute_analysis(self) -> None:
+        """Execute the analysis with the current analysis settings."""
+        self.write(":CALCulate")
+
+    def get_analysis(self) -> None:
+        """
+        Query the analysis results of latest analysis. If no analysis has been
+        performed, returns query error.
+        """
+        return self.write(":CALCulate:DATA?")
+
+    # Calculate
+    calc_result = Instrument.measurement(
+        ":CALCulate:DATA?",
+        """Get the results of the last analysis.""",
+    )
+
+    transfer_format = Instrument.control(
+        ":FORMat:DATA?",
+        ":FORMat:DATA %s",
+        """Control the data transfer format. It returns to default ASCII at reset.""",
+        values=["ASCII", "REAL,32", "REAL,64"],
+        cast=str,
+    )
+
+    def get_binary_data(self, bitness: Literal[32, 64] = 64) -> Sequence[int | float]:
+        header = self.read_bytes(2)
+        assert (
+            chr(header[0]) == "#"
+        ), f"header does not start with #, but with {header!r}"
+        length_of_length_indicator = int(chr(header[1]))
+        length = int(self.read_bytes(length_of_length_indicator).decode())
+        data = self.read_bytes(length)
+        return from_binary_block(
+            data, datatype="d" if bitness == 64 else "f", is_big_endian=False
+        )
+
 
 # subclasses of specific instruments ---------------------------------------------------------------
+
+
+class AQ6370E(AQ6370Series):
+    """Represents Yokogawa AQ6370E optical spectrum analyzer."""
+
+    sweep_speed = Instrument.control(
+        ":SENSe:SWEep:SPEed?",
+        ":SENSe:SWEep:SPEed %d",
+        "Control the sweep speed (str '1x' or '2x' for double speed).",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"1x": 0, "2x": 1},
+    )
+
+    sensitivity_level = Instrument.control(
+        ":SENSe:SENSe:LEVel?",
+        ":SENSe:SENSe:LEVel %g",
+        """Control the sweep sensitivity by specifying the sensitivity level you want to measure at,
+        in dBm. The sensitivity closest to that level, and the sweep speed are automatically
+        selected.""",
+    )
 
 
 class AQ6370D(AQ6370Series):
@@ -236,7 +428,6 @@ class AQ6370D(AQ6370Series):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
 
 
 class AQ6370C(AQ6370Series):
@@ -250,7 +441,6 @@ class AQ6370C(AQ6370Series):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
 
 
 class AQ6373(AQ6370Series):
@@ -272,7 +462,6 @@ class AQ6373(AQ6370Series):
         5e-9,
         10e-9,
     ]
-    pass
 
 
 class AQ6373B(AQ6373):
@@ -286,7 +475,6 @@ class AQ6373B(AQ6373):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
 
 
 class AQ6375(AQ6370Series):
@@ -304,7 +492,6 @@ class AQ6375(AQ6370Series):
         1e-9,
         2e-9,
     ]
-    pass
 
 
 class AQ6375B(AQ6375):
@@ -318,4 +505,3 @@ class AQ6375B(AQ6375):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass

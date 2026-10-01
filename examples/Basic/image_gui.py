@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,18 +31,16 @@ Run the program by changing to the directory containing this file and calling:
 
 python image_gui.py
 """
-from time import sleep
+import logging
 import sys
+from time import sleep
 
 import numpy as np
 
-from pymeasure.experiment import Results, unique_filename
-from pymeasure.experiment import Procedure
-from pymeasure.display.windows import ManagedImageWindow  # new ManagedWindow class
-from pymeasure.experiment import FloatParameter
 from pymeasure.display.Qt import QtWidgets
+from pymeasure.display.windows import ManagedImageWindow  # new ManagedWindow class
+from pymeasure.experiment import FloatParameter, Procedure, Results, unique_filename
 
-import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -107,8 +105,7 @@ class TestImageGUI(ManagedImageWindow):
             inputs=['X_start', 'X_end', 'X_step', 'Y_start', 'Y_end', 'Y_step',
                     'delay'],
             displays=['X_start', 'X_end', 'Y_start', 'Y_end', 'delay'],
-            filename_input=False,
-            directory_input=False,
+            enable_file_input=False,
         )
         self.setWindowTitle('PyMeasure Image Test')
 

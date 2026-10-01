@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,9 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
 from time import sleep
+
+import pytest
 
 from pymeasure.instruments.teledyne import TeledyneMAUI
 
@@ -217,7 +217,6 @@ class TestTeledyneMAUI:
     @pytest.mark.parametrize("ch_number", CHANNELS)
     def test_channel_setup(self, instrument, ch_number):
         # Only autoscale on the first channel
-        instrument = instrument
         if ch_number == self.CHANNELS[0]:
             instrument.reset()
             sleep(7)
@@ -308,6 +307,12 @@ class TestTeledyneMAUI:
         expected = resetted_instrument.trigger
         resetted_instrument.trigger_setup(**expected)
         assert resetted_instrument.trigger == expected
+
+    def test_vbs(self, resetted_instrument):
+        """Test reading and writing values through the VBS interface."""
+        resetted_instrument.vbs_write("app.Acquisition.C1.VerScale=0.01")
+        val = resetted_instrument.vbs_ask("app.Acquisition.C1.VerScale")
+        assert val == "0.01\n"
 
 
 if __name__ == "__main__":

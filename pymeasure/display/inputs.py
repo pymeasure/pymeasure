@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
 #
 
 import logging
-
 import re
+from typing import cast
 
 from .Qt import QtGui, QtWidgets
 
@@ -59,7 +59,9 @@ class Input:
             self.setValue(parameter.value)
 
         if hasattr(parameter, 'units') and parameter.units:
-            self.setSuffix(" %s" % parameter.units)
+            self.setSuffix(f" {parameter.units}")
+
+        self.setToolTip(parameter._cli_help_fields())
 
     def update_parameter(self):
         """
@@ -167,13 +169,17 @@ class ListInput(Input, QtWidgets.QComboBox):
         # Override from :class:`Input`
         try:
             if hasattr(parameter, 'units') and parameter.units:
-                suffix = " %s" % parameter.units
+                suffix = f" {parameter.units}"
             else:
                 suffix = ""
 
-            self._stringChoices = tuple((str(choice) + suffix) for choice in parameter.choices)
+            self._stringChoices = (
+                tuple((str(choice) + suffix) for choice in parameter.choices)
+                if parameter.choices is not None
+                else ()
+            )
         except TypeError:  # choices is None
-            self._stringChoices = tuple()
+            self._stringChoices = ()
         self.clear()
         self.addItems(self._stringChoices)
 
@@ -185,7 +191,7 @@ class ListInput(Input, QtWidgets.QComboBox):
             self.setCurrentIndex(index)
         except (TypeError, ValueError) as e:  # no choices or choice invalid
             raise ValueError("Invalid choice for parameter. "
-                             "Must be one of %s" % str(self._parameter.choices)) from e
+                             f"Must be one of {self._parameter.choices!s}") from e
 
     def setSuffix(self, value):
         pass
@@ -233,7 +239,7 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
         if self._parameter.units:
             text = text[:-(len(self._parameter.units) + 1)]
             result = self.validator.validate(text, pos)
-            return result[0], result[1] + " %s" % self._parameter.units, result[2]
+            return result[0], result[1] + f" {self._parameter.units}", result[2]
         else:
             return self.validator.validate(text, pos)
 
@@ -265,9 +271,29 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
         string = re.sub(r"e(-?)0*(\d+)", r"e\1\2", string)
         return string
 
+    def stepBy(self, steps):
+        value = self.value()
+        if self._parameter.step_type == "log":
+            sign = 1 if value >= 0 else -1
+            self.setValue(value * cast(float, self._parameter.step) ** (sign * steps))
+        else:
+            super().stepBy(steps)
+
     def stepEnabled(self):
         if self.parameter.step:
             return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepUpEnabled | \
                 QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepDownEnabled
         else:
             return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepNone
+
+
+class VectorInput(StringInput):
+    """
+    String input box connected to a :class:`VectorParameter`. This box will
+    display and accept lists.
+    """
+
+    def setValue(self, value):  # override the method from StringInput
+        value = "[" + ", ".join(map(str, value)) + "]"
+        # QtWidgets.QLineEdit has a setText() method instead of setValue()
+        return super().setText(value)

@@ -11,8 +11,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath('..'))  # Allow modules to be found
 from pymeasure import __version__
@@ -23,10 +23,7 @@ from pymeasure.instruments.instrument import Instrument
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 if not on_rtd:  # only import and set the theme if we're building docs locally
-    import sphinx_rtd_theme
-
     html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -42,7 +39,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest'
+    'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest', 'sphinx_autodoc_typehints'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -59,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'PyMeasure'
-copyright = '2013-2022, PyMeasure Developers'
+copyright = '2013-2026, PyMeasure Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -270,7 +267,13 @@ texinfo_documents = [
 # texinfo_no_detailmenu = False
 
 # Automatically mock optional packages
-autodoc_mock_imports = ['zmq', 'cloudpickle', 'vxi11', 'pyvirtualbench']
+autodoc_mock_imports = ['zmq', 'cloudpickle', 'pyvirtualbench']
+
+
+# -- Options for sphinx_autodoc_typehints ---------------------------------
+
+typehints_use_rtype = False
+typehints_defaults = "braces-after"
 
 
 def setup(app):
@@ -289,7 +292,7 @@ def gen_channel_docs(app, what, name, obj, options, lines):
     Generate channel documentation for instruments with channels
     """
     if hasattr(obj, '__bases__') and issubclass(obj, Instrument):
-        for attr, channel_class in obj.get_channels(obj):
+        for attr, channel_class in obj.get_channels():
             if isinstance(channel_class, CommonBase.ChannelCreator):
                 channel_name = get_class_name(channel_class.pairs[0][0])
                 lines += ['.. py:attribute:: ' + attr, '', ]

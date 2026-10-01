@@ -1,7 +1,8 @@
+# type: ignore[reportCallIssue, reportArgumentType]
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +25,24 @@
 
 import enum
 import struct
+from collections.abc import Callable
+from typing import TypeVar
 
-from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.validators import strict_discrete_set
+
+T = TypeVar("T")
 
 
-def values(self, command, cast=int, separator=',', preprocess_reply=None, **kwargs):
+def values(
+    self,
+    command: str,
+    separator: str | None = ",",
+    cast: type[T] | Callable[[str], T] = int,  # type: ignore[assignment]
+    preprocess_reply: Callable[[bytes], bytes] | None = None,
+    maxsplit: int = -1,
+    **kwargs,
+) -> list[T]:
     """Write a command to the instrument and return a list of formatted
     values from the result.
 
@@ -46,20 +59,20 @@ def values(self, command, cast=int, separator=',', preprocess_reply=None, **kwar
         string.
     :returns: A list of the desired type, or strings where the casting fails
     """
-    results = self.ask(command)
+    results: bytes = self.ask(command)
     if callable(preprocess_reply):
         results = preprocess_reply(results)
     for i, result in enumerate(results):
         try:
-            if cast == bool:
+            if cast is bool:
                 # Need to cast to float first since results are usually
                 # strings and bool of a non-empty string is always True
-                results[i] = bool(float(result))
+                results[i] = bool(float(result))  # type: ignore
             else:
-                results[i] = cast(result)
-        except Exception:
+                results[i] = cast(result)  # type: ignore
+        except Exception:  # noqa: BLE001, S110
             pass  # Keep as bytes
-    return results
+    return results  # type: ignore
 
 
 def int2char(value):
@@ -68,7 +81,7 @@ def int2char(value):
 
 
 class PresetChannel(Channel):
-    values = values
+    values = values  # type: ignore[ignore-incompatible-override]
 
     load_capacity = Instrument.control(
         "GU\x00{ch:c}\x00\x00", "TD{ch:c}\x01\x00%c",
@@ -126,7 +139,7 @@ class CXN(Instrument):
         but control should remain active one can also use the ping method.
     """
     # use predefined values method to allow reusing in the Channels
-    values = values
+    values = values  # type: ignore[invalid-method-override]
 
     preset_1 = Instrument.ChannelCreator(PresetChannel, 1)
 
@@ -150,14 +163,13 @@ class CXN(Instrument):
         self.address = address
         super().__init__(adapter,
                          name,
-                         includeSCPI=False,
                          write_termination="",
                          read_termination="",
-                         asrl=dict(baud_rate=38400),
+                         asrl={'baud_rate': 38400},
                          **kwargs)
 
     @staticmethod
-    def _checksum(msg):
+    def _checksum(msg: bytes) -> bytes:
         """Calculate a 2 bytes checksum calculated by a bytewise sum of the message.
 
         :param bytes msg: message content
@@ -166,14 +178,14 @@ class CXN(Instrument):
         """
         return struct.pack(">H", sum(msg))
 
-    def _prepend_cmdheader(self, cmd):
+    def _prepend_cmdheader(self, cmd: bytes) -> bytes:
         """Prepends command start byte and address to the command.
 
         :param bytes msg: command message
         """
         return b"C" + self.address.to_bytes(1, "big") + cmd
 
-    def _check_acknowledgment(self):
+    def _check_acknowledgment(self) -> None:
         """Check reply string for acknowledgement byte.
 
         :raises ValueError: if an invalid an invalid byte is read from the instrument
@@ -185,7 +197,7 @@ class CXN(Instrument):
         raise ValueError(
             f"invalid reply '{ret}' found in acknowledgement check")
 
-    def read(self):
+    def read(self, **kwargs) -> bytes:  # type: ignore[invalid-method-override]
         """Reads a response message from the instrument.
 
         This method determines the length of the message from the automatically
@@ -195,7 +207,7 @@ class CXN(Instrument):
         :rtype: bytes
         :raises ValueError: if a checksum error is detected
         """
-        header = super().read_bytes(4)
+        header = super().read_bytes(4, **kwargs)
         # check valid header
         if header[0] != 82:
             raise ValueError(f"invalid header start byte '{header[0]}' received")
@@ -203,8 +215,8 @@ class CXN(Instrument):
             raise ValueError(f"invalid address byte '{header[1]}' received; "
                              f"should be {self.address.to_bytes(1, 'big')}")
         datalength = int.from_bytes(header[2:], "big")
-        data = super().read_bytes(datalength)
-        chksum = super().read_bytes(2)
+        data = super().read_bytes(datalength, **kwargs)
+        chksum = super().read_bytes(2, **kwargs)
         if chksum == self._checksum(header + data):
             return data
         else:
@@ -213,14 +225,14 @@ class CXN(Instrument):
                 f"with checksum {self._checksum(header + data)} "
                 f"but received {chksum}")
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Writes a command to the instrument and includes needed required
         header and address.
 
         :param str command: command to be sent to the instrument
         """
         fullcmd = self._prepend_cmdheader(command.encode())
-        super().write_bytes(fullcmd + self._checksum(fullcmd))
+        super().write_bytes(fullcmd + self._checksum(fullcmd), **kwargs)
         self._check_acknowledgment()
 
     class Status(enum.IntFlag):
@@ -252,7 +264,7 @@ class CXN(Instrument):
         "Gi\x00\x01\x00\x00",
         """Get the device identification string.""",
         cast=str,
-        get_process=lambda d: d.decode()[2:-1].strip(),
+        get_process_list=lambda d: d.decode()[2:-1].strip(),
     )
 
     serial = Instrument.measurement(
@@ -266,7 +278,7 @@ class CXN(Instrument):
         "Gf\x00\x00\x00\x00",
         """Get the UI-processor and RF-processor firmware version numbers.""",
         preprocess_reply=lambda d: struct.unpack("BBBB", d),
-        get_process=lambda v: str.format("UI {}.{}, RF {}.{}", *v)
+        get_process_list=lambda v: str.format("UI {}.{}, RF {}.{}", *v)
     )
 
     pulse_params = Instrument.measurement(
@@ -285,7 +297,7 @@ class CXN(Instrument):
         "GP\x00\x00\x00\x00",
         """Get power readings for forward/reverse/load power in watts.""",
         preprocess_reply=lambda d: struct.unpack(">HHH", d),
-        get_process=lambda d: (float(d[0]) / 10, float(d[1]) / 10, float(d[2]) / 10),
+        get_process_list=lambda d: (float(d[0]) / 10, float(d[1]) / 10, float(d[2]) / 10),
     )
 
     status = Instrument.measurement(
@@ -372,7 +384,7 @@ class CXN(Instrument):
         "GT\x00\x00\x00\x00", "TM\x00%c\x00\x00",
         """Control the manual tuner mode.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
-        get_process=lambda v: bool(v & 1),
+        get_process=lambda v: bool(int(v) & 1),
         set_process=lambda v: 2 if v else 1,
         validator=strict_discrete_set,
         values=(True, False),
@@ -411,13 +423,13 @@ class CXN(Instrument):
         "GS\x00\x00\x00\x00", "BR%c%c\x00\x00",
         """Control the RF output.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
-        get_process=lambda v: bool(v & 1),
+        get_process=lambda v: bool(int(v) & 1),
         set_process=lambda v: (85, 85) if v else (0, 0),
         validator=strict_discrete_set,
         values=(True, False),
     )
 
-    def request_control(self):
+    def request_control(self) -> None:
         """Request control of the instrument.
 
         This is required to be able to set any properties.
@@ -427,7 +439,7 @@ class CXN(Instrument):
         if status != 1:
             print("error(CXN): control request denied!")
 
-    def release_control(self):
+    def release_control(self) -> None:
         """Release instrument control.
 
         This will reset certain properties to safe defaults and disable the RF
@@ -438,6 +450,6 @@ class CXN(Instrument):
         if status != 0:
             print("error(CXN): release of control unsuccessful!")
 
-    def ping(self):
+    def ping(self) -> None:
         """Send a ping to the instrument."""
         self.write("BP\x00\x00\x00\x00")

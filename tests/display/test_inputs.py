@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,18 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from unittest import mock
 
+import pytest
+
+from pymeasure.display.inputs import BooleanInput, ListInput, ScientificInput, VectorInput
 from pymeasure.display.Qt import QtCore
-from pymeasure.display.inputs import ScientificInput, BooleanInput, ListInput
-from pymeasure.experiment.parameters import BooleanParameter, ListParameter, FloatParameter
+from pymeasure.experiment.parameters import (
+    BooleanParameter,
+    FloatParameter,
+    ListParameter,
+    VectorParameter,
+)
 
 
 @pytest.mark.parametrize("default_value", [True, False])
@@ -83,7 +89,7 @@ class TestBooleanInput:
             bool_input.setValue(not default_value)
 
             assert bool_input.value() == (not default_value)
-            bool_input.parameter  # lazy update
+            _ = bool_input.parameter  # lazy update
             p.assert_called_once_with(not default_value)
 
 
@@ -138,7 +144,7 @@ class TestListInput:
                         return_value=123) as p:
             for choice in choices:
                 list_input.setValue(choice)
-                list_input.parameter  # lazy update
+                _ = list_input.parameter  # lazy update
             p.assert_has_calls((mock.call(123), mock.call('abc'), mock.call(0)))
 
     def test_unit_should_append_to_strings(self, qtbot):
@@ -237,12 +243,49 @@ class TestScientificInput:
                         return_value=10.0) as p:
             # test
             sci_input.setValue(5.0)
-            sci_input.parameter  # lazy update
+            _ = sci_input.parameter  # lazy update
             p.assert_called_once_with(5.0)
 
+    def test_linear_stepBy(self, qtbot):
+        float_param = FloatParameter("potato", minimum=0, maximum=1000, default=10.0, step=2)
+        sci_input = ScientificInput(float_param)
+        qtbot.addWidget(sci_input)
+
+        sci_input.stepBy(1)
+        assert sci_input.value() == 12.0
+        sci_input.stepBy(-1)
+        assert sci_input.value() == 10.0
+
+    def test_log_stepBy(self, qtbot):
+        float_param = FloatParameter(
+            "potato", minimum=0, maximum=1000, default=10.0, step=10, step_type="log"
+        )
+        sci_input = ScientificInput(float_param)
+        qtbot.addWidget(sci_input)
+
+        sci_input.stepBy(1)
+        assert sci_input.value() == 100.0
+        sci_input.stepBy(-1)
+        assert sci_input.value() == 10.0
+        # Multiple steps at once
+        sci_input.stepBy(2)
+        assert sci_input.value() == 1000.0
+
+    def test_log_stepBy_for_negative_value(self, qtbot):
+        float_param = FloatParameter("potato", default=-1.0, step=10, step_type="log")
+        sci_input = ScientificInput(float_param)
+        qtbot.addWidget(sci_input)
+
+        sci_input.stepBy(1)
+        assert sci_input.value() == -0.1
+
     @pytest.mark.parametrize("locale, decimalSep", [
-        [QtCore.QLocale(31, 7, 224), "."],  # UK locale for period
-        [QtCore.QLocale(30, 7, 151), ","],  # NL locale for comma
+        [QtCore.QLocale(QtCore.QLocale.English,
+                        QtCore.QLocale.LatinScript,
+                        QtCore.QLocale.UnitedKingdom), "."],
+        [QtCore.QLocale(QtCore.QLocale.Dutch,
+                        QtCore.QLocale.LatinScript,
+                        QtCore.QLocale.Netherlands), ","],
     ])
     def test_locale_settings(self, qtbot, locale, decimalSep):
         assert locale.decimalPoint() == decimalSep
@@ -263,3 +306,15 @@ class TestScientificInput:
 
         # Reset the locale settings
         QtCore.QLocale.setDefault(QtCore.QLocale.system())
+
+
+class TestVectorInput:
+    def test_init_from_param(self, qtbot):
+        vector_param = VectorParameter('vector_test',
+                                       default=[-1.35, 2, 3.6e+5],
+                                       )
+
+        vector_param = VectorInput(vector_param)
+        qtbot.addWidget(vector_param)
+
+        assert "[-1.35, 2.0, 360000.0]" == vector_param.value()

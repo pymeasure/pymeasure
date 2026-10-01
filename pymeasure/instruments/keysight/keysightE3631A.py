@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,8 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -51,6 +51,15 @@ class VoltageChannel(Channel):
         validator=strict_range,
         values=[0, 1],
         dynamic=True,
+    )
+
+    output_enabled = Channel.control(
+        "INST:NSEL {ch};:OUTPut?",
+        "OUTPut %d, (@{ch})",
+        """Control whether the channel output is enabled (boolean).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
     )
 
     voltage = Channel.measurement(
@@ -104,7 +113,7 @@ class KeysightE3631A(SCPIMixin, Instrument):
     output_enabled = Instrument.control(
         "OUTPut?",
         "OUTPut %d",
-        """Control whether the channel output is enabled (boolean).""",
+        """Control whether the output of the last used channel is enabled (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},

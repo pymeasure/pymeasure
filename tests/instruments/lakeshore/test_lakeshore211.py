@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.lakeshore.lakeshore211 import LakeShore211
+from pymeasure.test import expected_protocol
 
 
 def test_init():
@@ -57,7 +56,10 @@ def test_set_analog():
             [(b"ANALOG 0,1", None),
              (b"ANALOG?", b"0,1")],
     ) as instr:
-        instr.analog_configuration = (0, 1)
+        instr.analog_configuration = (
+            LakeShore211.AnalogMode.VOLTAGE,
+            LakeShore211.AnalogRange.RANGE_100K,
+        )
         assert instr.analog_configuration == (0, 1)
 
 

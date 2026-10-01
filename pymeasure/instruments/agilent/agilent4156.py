@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,19 +21,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import time
-import os
 import json
+import logging
+import os
+import time
+from typing import Literal
 
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_discrete_set,
-                                              strict_range)
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
+from pymeasure.instruments.common_base import CommonBase, IdType
+from pymeasure.instruments.instrument import AdapterType
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    strict_range,
+    truncated_discrete_set,
+)
 
-import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -130,29 +135,33 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
     """
 
-    def __init__(self, adapter, name="Agilent 4155/4156 Semiconductor Parameter Analyzer",
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Agilent 4155/4156 Semiconductor Parameter Analyzer",
+        **kwargs,
+    ):
         super().__init__(
             adapter,
             name,
             **kwargs
         )
 
-        self.smu1 = SMU(self.adapter, 'SMU1', **kwargs)
-        self.smu2 = SMU(self.adapter, 'SMU2', **kwargs)
-        self.smu3 = SMU(self.adapter, 'SMU3', **kwargs)
-        self.smu4 = SMU(self.adapter, 'SMU4', **kwargs)
-        self.vmu1 = VMU(self.adapter, 'VMU1', **kwargs)
-        self.vmu2 = VMU(self.adapter, 'VMU2', **kwargs)
-        self.vsu1 = VSU(self.adapter, 'VSU1', **kwargs)
-        self.vsu2 = VSU(self.adapter, 'VSU2', **kwargs)
-        self.var1 = VAR1(self.adapter, **kwargs)
-        self.var2 = VAR2(self.adapter, **kwargs)
-        self.vard = VARD(self.adapter, **kwargs)
+        self.smu1 = SMU(self, 'SMU1')
+        self.smu2 = SMU(self, 'SMU2')
+        self.smu3 = SMU(self, 'SMU3')
+        self.smu4 = SMU(self, 'SMU4')
+        self.vmu1 = VMU(self, 'VMU1')
+        self.vmu2 = VMU(self, 'VMU2')
+        self.vsu1 = VSU(self, 'VSU1')
+        self.vsu2 = VSU(self, 'VSU2')
+        self.var1 = VAR1(self)
+        self.var2 = VAR2(self)
+        self.vard = VARD(self)
 
     analyzer_mode = Instrument.control(
         ":PAGE:CHAN:MODE?", ":PAGE:CHAN:MODE %s",
-        """ A string property that controls the instrument operating mode.
+        """Control the instrument operating mode.
 
         - Values: :code:`SWEEP`, :code:`SAMPLING`
 
@@ -164,12 +173,13 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         values={'SWEEP': 'SWE', 'SAMPLING': 'SAMP'},
         map_values=True,
         check_set_errors=True,
-        check_get_errors=True
+        check_get_errors=True,
+        cast=str,
     )
 
     integration_time = Instrument.control(
         ":PAGE:MEAS:MSET:ITIM?", ":PAGE:MEAS:MSET:ITIM %s",
-        """ A string property that controls the integration time.
+        """Control the integration time.
 
         - Values: :code:`SHORT`, :code:`MEDIUM`, :code:`LONG`
 
@@ -181,12 +191,13 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         values={'SHORT': 'SHOR', 'MEDIUM': 'MED', 'LONG': 'LONG'},
         map_values=True,
         check_set_errors=True,
-        check_get_errors=True
+        check_get_errors=True,
+        cast=str
     )
 
     delay_time = Instrument.control(
         ":PAGE:MEAS:DEL?", ":PAGE:MEAS:DEL %g",
-        """ A floating point property that measurement delay time in seconds,
+        """Control the measurement delay time in seconds,
         which can take the values from 0 to 65s in 0.1s steps.
 
         .. code-block:: python
@@ -196,12 +207,12 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         validator=truncated_discrete_set,
         values=np.arange(0, 65.1, 0.1),
         check_set_errors=True,
-        check_get_errors=True
+        check_get_errors=True,
     )
 
     hold_time = Instrument.control(
         ":PAGE:MEAS:HTIME?", ":PAGE:MEAS:HTIME %g",
-        """ A floating point property that measurement hold time in seconds,
+        """Control the measurement hold time in seconds,
         which can take the values from 0 to 655s in 1s steps.
 
         .. code-block:: python
@@ -211,11 +222,12 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         validator=truncated_discrete_set,
         values=np.arange(0, 655, 1),
         check_set_errors=True,
-        check_get_errors=True
+        check_get_errors=True,
+        cast=int,
     )
 
-    def stop(self):
-        """Stops the ongoing measurement
+    def stop(self) -> None:
+        """Stop the ongoing measurement.
 
         .. code-block:: python
 
@@ -223,9 +235,10 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         """
         self.write(":PAGE:SCON:STOP")
 
-    def measure(self, period="INF", points=100):
+    def measure(self, period: float | Literal["INF"] = "INF", points: int = 100) -> None:
         """
-        Performs a single measurement and waits for completion in sweep mode.
+        Perform a single measurement and wait for completion in sweep mode.
+
         In sampling mode, the measurement period and number of points can be specified.
 
         :param period: Period of sampling measurement from 6E-6 to 1E11 seconds.
@@ -233,10 +246,11 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         :param points: Number of samples to be measured, from 1 to 10001.
             Default setting is :code:`100`.
 
-        .. code-block::python
+        .. code-block:: python
 
             instr.measure() #for sweep measurement
             instr.measure(period=100, points=100) #for sampling measurement
+
         """
         if self.analyzer_mode == "SWEEP":
             self.write(":PAGE:SCON:MEAS:SING; *OPC?")
@@ -246,27 +260,27 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
             self.write(f":PAGE:MEAS:SAMP:POIN {points}")
             self.write(":PAGE:SCON:MEAS:SING; *OPC?")
 
-    def disable_all(self):
-        """ Disables all channels in the instrument.
+    def disable_all(self) -> None:
+        """ Disable all channels in the instrument.
 
         .. code-block:: python
 
             instr.disable_all()
         """
-        self.smu1.disable
+        self.smu1.reset_settings()
         time.sleep(0.1)
-        self.smu2.disable
+        self.smu2.reset_settings()
         time.sleep(0.1)
-        self.smu3.disable
+        self.smu3.reset_settings()
         time.sleep(0.1)
-        self.smu4.disable
+        self.smu4.reset_settings()
         time.sleep(0.1)
-        self.vmu1.disable
+        self.vmu1.reset_settings()
         time.sleep(0.1)
-        self.vmu2.disable
+        self.vmu2.reset_settings()
         time.sleep(0.1)
 
-    def configure(self, config_file):
+    def configure(self, config_file: os.PathLike | str) -> None:
         """ Configure the channel setup and sweep using a JSON configuration file.
 
         (JSON is the `JavaScript Object Notation`_)
@@ -308,7 +322,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
                 setattr(obj, setting, value)
                 time.sleep(0.1)
 
-    def save(self, trace_list):
+    def save(self, trace_list: list[str] | str) -> None:
         """ Save the voltage or current in the instrument display list
 
         :param trace_list: A list of channel variables whose measured data should be saved.
@@ -335,13 +349,13 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
                 'multiple variables are being saved.'
             )
 
-    def save_var(self, trace_list):
+    def save_var(self, trace_list: list[str] | str) -> None:
         """ Save the voltage or current in the instrument variable list.
 
         This is useful if one or two more variables need to be saved in addition to the 8
         variables allowed by :meth:`~.Agilent4156.save`.
 
-        :param trace_list: A list of channel variables whose measured   data should be saved.
+        :param trace_list: A list of channel variables whose measured data should be saved.
             A maximum of 2 variables are allowed. If only one variable is being saved, a string
             can be specified.
 
@@ -365,7 +379,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
             )
 
     @property
-    def data_variables(self):
+    def data_variables(self) -> list[str]:
         """
         Get a string list of data variables for which measured data is available.
 
@@ -384,7 +398,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         varlist = dlist + dvar
         return list(filter(None, varlist))
 
-    def get_data(self, path=None):
+    def get_data(self, path: str | None = None) -> pd.DataFrame:
         """
         Get the measurement data from the instrument after completion.
 
@@ -401,6 +415,8 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
         """
         if int(self.ask('*OPC?')):
             header = self.data_variables
+        else:
+            raise PermissionError("Not possible to read data during measurement.")
         self.write(":FORM:DATA ASC")
         # recursively get data for each variable
         for i, listvar in enumerate(header):
@@ -412,7 +428,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
                 data = np.column_stack((lastdata, data))
                 lastdata = data
 
-        df = pd.DataFrame(data=data, columns=header, index=None)
+        df = pd.DataFrame(data=data, columns=header, index=None)  # pyright: ignore[reportArgumentType]  # pandas accepts list[str] at runtime
         if path is not None:
             _, ext = os.path.splitext(path)
             if ext != ".csv":
@@ -421,69 +437,101 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
         return df
 
+
+def check_current_voltage_name(name: str) -> str:
+    if (len(name) > 6) or not name[0].isalpha():
+        new_name = 'a' + name[:5]
+        log.info(f"Renaming {name} to {new_name}...")
+        name = new_name
+    return name
+
+
 ##########
 # CHANNELS
 ##########
 
+class AgilentMeasurementChannel(Channel):
+    """Offers some common properties."""
 
-class SMU(SCPIUnknownMixin, Instrument):
-    def __init__(self, adapter, channel, **kwargs):
-        super().__init__(
-            adapter,
-            "SMU of Agilent 4155/4156 Semiconductor Parameter Analyzer",
-            **kwargs
-        )
-        self.channel = channel.upper()
+    voltage_name = Channel.control(
+        "PAGE:CHAN:{ch}:VNAME?",
+        ":PAGE:CHAN:{ch}:VNAME \'%s\'",
+        """ Control the voltage name of the channel.
 
-    @property
-    def channel_mode(self):
-        """ A string property that controls the SMU<n> channel mode.
-
-        - Values: :code:`V`, :code:`I` or :code:`COMM`
-
-        VPULSE AND IPULSE are not yet supported.
+        If input is greater than 6 characters long or starts with a number,
+        the name is autocorrected and prepended with 'a'. Event is logged.
 
         .. code-block:: python
 
-            instr.smu1.channel_mode = "V"
-        """
-        value = self.ask(f":PAGE:CHAN:{self.channel}:MODE?")
-        self.check_errors()
-        return value
+            instr.smu1.voltage_name = "Vbase"
+        """,
+        set_process=check_current_voltage_name,
+        cast=str,
+    )
 
-    @channel_mode.setter
-    def channel_mode(self, mode):
-        validator = strict_discrete_set
-        values = ["V", "I", "COMM"]
-        value = validator(mode, values)
-        self.write(f":PAGE:CHAN:{self.channel}:MODE {value}")
-        self.check_errors()
+    def reset_settings(self) -> list:
+        """Reset the settings of this channel to default value.
+
+        .. code-block:: python
+
+            instr.smu1.reset_settings()
+        """
+        self.write(":PAGE:CHAN:{ch}:DIS")
+        return self.check_errors()
 
     @property
-    def channel_function(self):
-        """ A string property that controls the SMU<n> channel function.
+    def disable(self) -> None:
+        """Set the settings of this channel to default value.
+
+        .. code-block:: python
+
+            instr.smu1.disable
+        """
+        self.reset_settings()
+
+    channel_mode = Channel.control(
+        ":PAGE:CHAN:{ch}:MODE?",
+        ":PAGE:CHAN:{ch}:MODE %s",
+        """Control the channel mode.""",
+        values=[],
+        validator=strict_discrete_set,
+        check_get_errors=True,
+        check_set_errors=True,
+        dynamic=True,
+        cast=str,
+    )
+
+    channel_function = Channel.control(
+        ":PAGE:CHAN:{ch}:FUNC?",
+        ":PAGE:CHAN:{ch}:FUNC %s",
+        """Control the channel function.
 
         - Values: :code:`VAR1`, :code:`VAR2`, :code:`VARD` or :code:`CONS`.
+        """,
+        check_get_errors=True,
+        check_set_errors=True,
+        validator=strict_discrete_set,
+        values=["VAR1", "VAR2", "VARD", "CONS"],
+        cast=str,
+    )
 
-        .. code-block:: python
 
-            instr.smu1.channel_function = "VAR1"
-        """
-        value = self.ask(f":PAGE:CHAN:{self.channel}:FUNC?")
-        self.check_errors()
-        return value
+class SMU(AgilentMeasurementChannel):
+    """SMU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
+    parent: Agilent4156
 
-    @channel_function.setter
-    def channel_function(self, function):
-        validator = strict_discrete_set
-        values = ["VAR1", "VAR2", "VARD", "CONS"]
-        value = validator(function, values)
-        self.write(f":PAGE:CHAN:{self.channel}:FUNC {value}")
-        self.check_errors()
+    def __init__(self, parent: Agilent4156, id: str, **kwargs):
+        super().__init__(
+            parent,
+            id.upper(),
+            **kwargs
+        )
+        self.channel_mode_values = ["V", "I", "COMM"]
 
-    @property
-    def series_resistance(self):
-        """ Controls the series resistance of SMU<n>.
+    series_resistance = Channel.control(
+        ":PAGE:CHAN:{ch}:SRES?",
+        ":PAGE:CHAN:{ch}:SRES %s",
+        """ Control the series resistance of SMU<n>.
 
         - Values: :code:`0OHM`, :code:`10KOHM`, :code:`100KOHM`, or :code:`1MOHM`
 
@@ -491,33 +539,17 @@ class SMU(SCPIUnknownMixin, Instrument):
 
             instr.smu1.series_resistance = "10KOHM"
 
-        """
-        value = self.ask(f":PAGE:CHAN:{self.channel}:SRES?")
-        self.check_errors()
-        return value
-
-    @series_resistance.setter
-    def series_resistance(self, sres):
-        validator = strict_discrete_set
-        values = ["0OHM", "10KOHM", "100KOHM", "1MOHM"]
-        value = validator(sres, values)
-        self.write(f":PAGE:CHAN:{self.channel}:SRES {value}")
-        self.check_errors()
+        """,
+        check_get_errors=True,
+        check_set_errors=True,
+        validator=strict_discrete_set,
+        values=["0OHM", "10KOHM", "100KOHM", "1MOHM"],
+        cast=str,
+    )
 
     @property
-    def disable(self):
-        """ Deletes the settings of SMU<n>.
-
-        .. code-block:: python
-
-            instr.smu1.disable()
-        """
-        self.write(f":PAGE:CHAN:{self.channel}:DIS")
-        self.check_errors()
-
-    @property
-    def constant_value(self):
-        """ Set the constant source value of SMU<n>.
+    def constant_value(self) -> str:
+        """Control the constant source value of SMU<n>.
 
         You use this command only if :meth:`~.SMU.channel_function`
         is :code:`CONS` and also :meth:`~.SMU.channel_mode` should not be :code:`COMM`.
@@ -530,28 +562,27 @@ class SMU(SCPIUnknownMixin, Instrument):
             instr.smu1.constant_value = 1
 
         """
-        if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
-            value = self.ask(f":PAGE:MEAS:CONS:{self.channel}?")
+        if self.parent.analyzer_mode == "SWEEP":
+            value = self.ask(":PAGE:MEAS:CONS:{ch}?")
         else:
-            value = self.ask(f":PAGE:MEAS:SAMP:CONS:{self.channel}?")
+            value = self.ask(":PAGE:MEAS:SAMP:CONS:{ch}?")
         self.check_errors()
         return value
 
     @constant_value.setter
-    def constant_value(self, const_value):
+    def constant_value(self, const_value: float) -> None:
         validator = strict_range
         values = self.__validate_cons()
         value = validator(const_value, values)
-        if Agilent4156.analyzer_mode.fget(self) == 'SWEEP':
-            self.write(f":PAGE:MEAS:CONS:{self.channel} {value}")
+        if self.parent.analyzer_mode == 'SWEEP':
+            self.write(f":PAGE:MEAS:CONS:{{ch}} {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{} {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:SAMP:CONS:{self.channel} {value}")
         self.check_errors()
 
     @property
-    def compliance(self):
-        """ Sets the *constant* compliance value of SMU<n>.
+    def compliance(self) -> str:
+        """Control the *constant* compliance value of SMU<n>.
 
         If the SMU channel is setup as a variable (VAR1, VAR2, VARD) then compliance limits are
         set by the variable definition.
@@ -563,30 +594,29 @@ class SMU(SCPIUnknownMixin, Instrument):
 
             instr.smu1.compliance = 0.1
         """
-        if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
-            value = self.ask(f":PAGE:MEAS:CONS:{self.channel}:COMP?")
+        if self.parent.analyzer_mode == "SWEEP":
+            value = self.ask(":PAGE:MEAS:CONS:{ch}:COMP?")
         else:
             value = self.ask(
-                f":PAGE:MEAS:SAMP:CONS:{self.channel}:COMP?")
+                ":PAGE:MEAS:SAMP:CONS:{ch}:COMP?")
         self.check_errors()
         return value
 
     @compliance.setter
-    def compliance(self, comp):
+    def compliance(self, comp: float) -> None:
         validator = strict_range
         values = self.__validate_compl()
         value = validator(comp, values)
-        if Agilent4156.analyzer_mode.fget(self) == 'SWEEP':
-            self.write(":PAGE:MEAS:CONS:{}:COMP {}".format(
-                self.channel, value))
+        if self.parent.analyzer_mode == 'SWEEP':
+            self.write(f":PAGE:MEAS:CONS:{self.channel}:COMP {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{}:COMP {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:SAMP:CONS:{self.channel}:COMP {value}")
         self.check_errors()
 
-    @property
-    def voltage_name(self):
-        """ Define the voltage name of the channel.
+    current_name = Channel.control(
+        "PAGE:CHAN:{ch}:INAME?",
+        ":PAGE:CHAN:{ch}:INAME \'%s\'",
+        """ Control the current name of the channel.
 
         If input is greater than 6 characters long or starts with a number,
         the name is autocorrected and prepended with 'a'. Event is logged.
@@ -594,35 +624,12 @@ class SMU(SCPIUnknownMixin, Instrument):
         .. code-block:: python
 
             instr.smu1.voltage_name = "Vbase"
-        """
-        value = self.ask(f"PAGE:CHAN:{self.channel}:VNAME?")
-        return value
+        """,
+        set_process=check_current_voltage_name,
+        cast=str,
+    )
 
-    @voltage_name.setter
-    def voltage_name(self, vname):
-        value = check_current_voltage_name(vname)
-        self.write(f":PAGE:CHAN:{self.channel}:VNAME \'{value}\'")
-
-    @property
-    def current_name(self):
-        """ Define the current name of the channel.
-
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-
-        .. code-block:: python
-
-            instr.smu1.current_name = "Ibase"
-        """
-        value = self.ask(f"PAGE:CHAN:{self.channel}:INAME?")
-        return value
-
-    @current_name.setter
-    def current_name(self, iname):
-        value = check_current_voltage_name(iname)
-        self.write(f":PAGE:CHAN:{self.channel}:INAME \'{value}\'")
-
-    def __validate_cons(self):
+    def __validate_cons(self) -> list[int]:
         """Validates the instrument settings for operation in constant mode.
         """
         if not ((self.channel_mode != 'COMM') and (
@@ -635,7 +642,7 @@ class SMU(SCPIUnknownMixin, Instrument):
             values = valid_iv(self.channel_mode)
         return values
 
-    def __validate_compl(self):
+    def __validate_compl(self) -> list[int]:
         """Validates the instrument compliance for operation in constant mode.
         """
         if not ((self.channel_mode != 'COMM') and (
@@ -649,243 +656,143 @@ class SMU(SCPIUnknownMixin, Instrument):
         return values
 
 
-class VMU(SCPIUnknownMixin, Instrument):
-    def __init__(self, adapter, channel, **kwargs):
+class VMU(AgilentMeasurementChannel):
+    """VMU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
+
+    def __init__(self, parent: CommonBase, id: str, **kwargs):
         super().__init__(
-            adapter,
-            "VMU of Agilent 4155/4156 Semiconductor Parameter Analyzer",
+            parent,
+            id=id.upper(),
             **kwargs
         )
-        self.channel = channel.upper()
-
-    @property
-    def voltage_name(self):
-        """ Define the voltage name of the VMU channel.
-
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-
-        .. code-block:: python
-
-            instr.vmu1.voltage_name = "Vanode"
-        """
-        value = self.ask(f"PAGE:CHAN:{self.channel}:VNAME?")
-        return value
-
-    @voltage_name.setter
-    def voltage_name(self, vname):
-        value = check_current_voltage_name(vname)
-        self.write(f":PAGE:CHAN:{self.channel}:VNAME \'{value}\'")
-
-    @property
-    def disable(self):
-        """ Disables the settings of VMU<n>.
-
-        .. code-block:: python
-
-            instr.vmu1.disable()
-        """
-        self.write(f":PAGE:CHAN:{self.channel}:DIS")
-        self.check_errors()
-
-    @property
-    def channel_mode(self):
-        """ A string property that controls the VMU<n> channel mode.
-
-        - Values: :code:`V`, :code:`DVOL`
-        """
-        value = self.ask(f":PAGE:CHAN:{self.channel}:MODE?")
-        self.check_errors()
-        return value
-
-    @channel_mode.setter
-    def channel_mode(self, mode):
-        validator = strict_discrete_set
-        values = ["V", "DVOL"]
-        value = validator(mode, values)
-        self.write(f":PAGE:CHAN:{self.channel}:MODE {value}")
-        self.check_errors()
+        self.channel_mode_values = ["V", "DVOL"]
 
 
-class VSU(SCPIUnknownMixin, Instrument):
-    def __init__(self, adapter, channel, **kwargs):
+class VSU(AgilentMeasurementChannel):
+    """VSU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
+    parent: Agilent4156
+
+    def __init__(self, parent: Agilent4156, id: str, **kwargs):
         super().__init__(
-            adapter,
-            "VSU of Agilent 4155/4156 Semiconductor Parameter Analyzer",
+            parent,
+            id.upper(),
             **kwargs
         )
-        self.channel = channel.upper()
 
     @property
-    def voltage_name(self):
-        """ Define the voltage name of the VSU channel
-
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-
-        .. code-block:: python
-
-            instr.vsu1.voltage_name = "Ve"
-        """
-        value = self.ask(f"PAGE:CHAN:{self.channel}:VNAME?")
-        return value
-
-    @voltage_name.setter
-    def voltage_name(self, vname):
-        value = check_current_voltage_name(vname)
-        self.write(f":PAGE:CHAN:{self.channel}:VNAME \'{value}\'")
-
-    @property
-    def disable(self):
-        """ Deletes the settings of VSU<n>.
-
-        .. code-block:: python
-
-            instr.vsu1.disable()
-        """
-        self.write(f":PAGE:CHAN:{self.channel}:DIS")
-        self.check_errors()
-
-    @property
-    def channel_mode(self):
-        """ Get channel mode of VSU<n>."""
-        value = self.ask(f":PAGE:CHAN:{self.channel}:MODE?")
-        self.check_errors()
-        return value
-
-    @property
-    def constant_value(self):
-        """ Sets the constant source value of VSU<n>.
+    def constant_value(self) -> str:
+        """Control the constant source value of VSU<n>.
 
         .. code-block:: python
 
             instr.vsu1.constant_value = 0
         """
-        if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
-            value = self.ask(f":PAGE:MEAS:CONS:{self.channel}?")
+        if self.parent.analyzer_mode == "SWEEP":
+            value = self.ask(":PAGE:MEAS:CONS:{ch}?")
         else:
-            value = self.ask(f":PAGE:MEAS:SAMP:CONS:{self.channel}?")
+            value = self.ask(":PAGE:MEAS:SAMP:CONS:{ch}?")
         self.check_errors()
         return value
 
     @constant_value.setter
-    def constant_value(self, const_value):
+    def constant_value(self, const_value: float) -> None:
         validator = strict_range
         values = [-200, 200]
         value = validator(const_value, values)
-        if Agilent4156.analyzer_mode.fget(self) == 'SWEEP':
-            self.write(f":PAGE:MEAS:CONS:{self.channel} {value}")
+        if self.parent.analyzer_mode == 'SWEEP':
+            self.write(f":PAGE:MEAS:CONS:{{ch}} {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{} {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:SAMP:CONS:{self.channel} {value}")
         self.check_errors()
 
-    @property
-    def channel_function(self):
-        """ A string property that controls the VSU channel function.
-
-        - Value: :code:`VAR1`, :code:`VAR2`, :code:`VARD` or :code:`CONS`.
-        """
-        value = self.ask(f":PAGE:CHAN:{self.channel}:FUNC?")
-        self.check_errors()
-        return value
-
-    @channel_function.setter
-    def channel_function(self, function):
-        validator = strict_discrete_set
-        values = ["VAR1", "VAR2", "VARD", "CONS"]
-        value = validator(function, values)
-        self.write(f":PAGE:CHAN:{self.channel}:FUNC {value}")
-        self.check_errors()
 
 #################
 # SWEEP VARIABLES
 #################
 
 
-class VARX(SCPIUnknownMixin, Instrument):
-    """ Base class to define sweep variable settings """
+class VARX(Channel):
+    """ Base class to define sweep variable settings."""
 
-    def __init__(self, adapter, var_name, **kwargs):
+    def __init__(self, parent: CommonBase, id: str, **kwargs):
         super().__init__(
-            adapter,
-            "Methods to setup sweep variables",
+            parent,
+            id.upper(),
             **kwargs
         )
-        self.var = var_name.upper()
 
     @property
-    def channel_mode(self):
+    def channel_mode(self) -> str:
+        """Control the channel mode."""
         channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
         for ch in channels:
             ch_func = self.ask(f":PAGE:CHAN:{ch}:FUNC?")
-            if ch_func == self.var:
+            if ch_func == self.id:
                 ch_mode = self.ask(f":PAGE:CHAN:{ch}:MODE?")
         return ch_mode
 
     @property
-    def start(self):
-        """ Sets the sweep START value.
+    def start(self) -> str:
+        """Control the sweep START value.
 
         .. code-block:: python
 
             instr.var1.start = 0
         """
-        value = self.ask(f":PAGE:MEAS:{self.var}:STAR?")
+        value = self.ask(":PAGE:MEAS:{ch}:STAR?")
         self.check_errors()
         return value
 
     @start.setter
-    def start(self, value):
-        validator = strict_range
+    def start(self, value: float) -> None:
         values = valid_iv(self.channel_mode)
-        set_value = validator(value, values)
-        self.write(f":PAGE:MEAS:{self.var}:STAR {set_value}")
+        set_value = strict_range(value, values)
+        self.write(f":PAGE:MEAS:{{ch}}:STAR {set_value}")
         self.check_errors()
 
     @property
-    def stop(self):
-        """ Sets the sweep STOP value.
+    def stop(self) -> str:
+        """Control the sweep STOP value.
 
         .. code-block:: python
 
             instr.var1.stop = 3
         """
-        value = self.ask(f":PAGE:MEAS:{self.var}:STOP?")
+        value = self.ask(":PAGE:MEAS:{ch}:STOP?")
         self.check_errors()
         return value
 
     @stop.setter
-    def stop(self, value):
+    def stop(self, value: float) -> None:
         validator = strict_range
         values = valid_iv(self.channel_mode)
         set_value = validator(value, values)
-        self.write(f":PAGE:MEAS:{self.var}:STOP {set_value}")
+        self.write(f":PAGE:MEAS:{{ch}}:STOP {set_value}")
         self.check_errors()
 
     @property
-    def step(self):
-        """ Sets the sweep STEP value.
+    def step(self) -> str:
+        """Control the sweep STEP value.
 
         .. code-block:: python
 
             instr.var1.step = 0.1
         """
-        value = self.ask(f":PAGE:MEAS:{self.var}:STEP?")
+        value = self.ask(":PAGE:MEAS:{ch}:STEP?")
         self.check_errors()
         return value
 
     @step.setter
-    def step(self, value):
+    def step(self, value: float) -> None:
         validator = strict_range
         values = 2 * valid_iv(self.channel_mode)
         set_value = validator(value, values)
-        self.write(f":PAGE:MEAS:{self.var}:STEP {set_value}")
+        self.write(f":PAGE:MEAS:{{ch}}:STEP {set_value}")
         self.check_errors()
 
     @property
-    def compliance(self):
-        """ Sets the sweep COMPLIANCE value.
+    def compliance(self) -> str:
+        """Control the sweep COMPLIANCE value.
 
         .. code-block:: python
 
@@ -896,11 +803,11 @@ class VARX(SCPIUnknownMixin, Instrument):
         return value
 
     @compliance.setter
-    def compliance(self, value):
+    def compliance(self, value: float) -> None:
         validator = strict_range
         values = 2 * valid_compliance(self.channel_mode)
         set_value = validator(value, values)
-        self.write(f":PAGE:MEAS:{self.var}:COMP {set_value}")
+        self.write(f":PAGE:MEAS:{{ch}}:COMP {set_value}")
         self.check_errors()
 
 
@@ -909,18 +816,18 @@ class VAR1(VARX):
     Most common methods are inherited from base class.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, parent: CommonBase, **kwargs):
         super().__init__(
-            adapter,
+            parent,
             "VAR1",
             **kwargs
         )
 
-    spacing = Instrument.control(
-        ":PAGE:MEAS:VAR1:SPAC?",
-        ":PAGE:MEAS:VAR1:SPAC %s",
+    spacing = Channel.control(
+        ":PAGE:MEAS:{ch}:SPAC?",
+        ":PAGE:MEAS:{ch}:SPAC %s",
         """
-        Selects the sweep type of VAR1.
+        Control the sweep type of VAR1.
 
         - Values: :code:`LINEAR`, :code:`LOG10`, :code:`LOG25`, :code:`LOG50`.
         """,
@@ -938,18 +845,18 @@ class VAR2(VARX):
     Common methods are imported from base class.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, parent: CommonBase, **kwargs):
         super().__init__(
-            adapter,
+            parent,
             "VAR2",
             **kwargs
         )
 
-    points = Instrument.control(
-        ":PAGE:MEAS:VAR2:POINTS?",
-        ":PAGE:MEAS:VAR2:POINTS %g",
+    points = Channel.control(
+        ":PAGE:MEAS:{ch}:POINTS?",
+        ":PAGE:MEAS:{ch}:POINTS %g",
         """
-        Sets the number of sweep steps of VAR2.
+        Control the number of sweep steps of VAR2.
         You use this command only if there is an SMU or VSU
         whose function (FCTN) is VAR2.
 
@@ -964,20 +871,21 @@ class VAR2(VARX):
     )
 
 
-class VARD(SCPIUnknownMixin, Instrument):
+class VARD(Channel):
     """ Class to handle all the definitions needed for VARD.
     VARD is always defined in relation to VAR1.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, parent: CommonBase, id: IdType = "VARD", **kwargs):
         super().__init__(
-            adapter,
-            "Definitions for VARD sweep variable.",
+            parent,
+            id,
             **kwargs
         )
 
     @property
-    def channel_mode(self):
+    def channel_mode(self) -> str:
+        """Control the channel mode."""
         channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
         for ch in channels:
             ch_func = self.ask(f":PAGE:CHAN:{ch}:FUNC?")
@@ -986,9 +894,9 @@ class VARD(SCPIUnknownMixin, Instrument):
         return ch_mode
 
     @property
-    def offset(self):
+    def offset(self) -> str:
         """
-        Sets the OFFSET value of VARD.
+        Control the OFFSET value of VARD.
         For each step of sweep, the output values of VAR1' are determined by the
         following equation: VARD = VAR1 X RATio + OFFSet
         You use this command only if there is an SMU or VSU whose function is VARD.
@@ -1002,7 +910,7 @@ class VARD(SCPIUnknownMixin, Instrument):
         return value
 
     @offset.setter
-    def offset(self, offset_value):
+    def offset(self, offset_value: float) -> None:
         validator = strict_range
         values = 2 * valid_iv(self.channel_mode)
         value = validator(offset_value, values)
@@ -1013,7 +921,7 @@ class VARD(SCPIUnknownMixin, Instrument):
         ":PAGE:MEAS:VARD:RATIO?",
         ":PAGE:MEAS:VARD:RATIO %g",
         """
-        Sets the RATIO of VAR1'.
+        Control the RATIO of VAR1'.
         For each step of sweep, the output values of VAR1' are determined by the
         following equation: VAR1’ = VAR1 * RATio + OFFSet
         You use this command only if there is an SMU or VSU whose function
@@ -1026,8 +934,8 @@ class VARD(SCPIUnknownMixin, Instrument):
     )
 
     @property
-    def compliance(self):
-        """ Sets the sweep COMPLIANCE value of VARD.
+    def compliance(self) -> str:
+        """Control the sweep COMPLIANCE value of VARD.
 
         .. code-block:: python
 
@@ -1038,23 +946,14 @@ class VARD(SCPIUnknownMixin, Instrument):
         return value
 
     @compliance.setter
-    def compliance(self, value):
-        validator = strict_range
+    def compliance(self, value: float) -> None:
         values = 2 * valid_compliance(self.channel_mode)
-        set_value = validator(value, values)
+        set_value = strict_range(value, values)
         self.write(f":PAGE:MEAS:VARD:COMP {set_value}")
         self.check_errors()
 
 
-def check_current_voltage_name(name):
-    if (len(name) > 6) or not name[0].isalpha():
-        new_name = 'a' + name[:5]
-        log.info(f"Renaming {name} to {new_name}...")
-        name = new_name
-    return name
-
-
-def valid_iv(channel_mode):
+def valid_iv(channel_mode: Literal["V", "I"] | str) -> list[int]:
     if channel_mode == 'V':
         values = [-200, 200]
     elif channel_mode == 'I':
@@ -1065,7 +964,7 @@ def valid_iv(channel_mode):
     return values
 
 
-def valid_compliance(channel_mode):
+def valid_compliance(channel_mode: Literal["V", "I"] | str) -> list[int]:
     if channel_mode == 'I':
         values = [-200, 200]
     elif channel_mode == 'V':
