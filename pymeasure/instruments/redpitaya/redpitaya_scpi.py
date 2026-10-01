@@ -418,12 +418,16 @@ class RedPitayaScpi(SCPIMixin, Instrument):
 
     def __init__(self,
                  adapter=None,
-                 ip_address: str = '10.42.0.78', port: int = 5000, name="Redpitaya SCPI",
+                 ip_address: str | None = None,
+                 port: int = 5000,
+                 name="Redpitaya SCPI",
                  read_termination='\r\n',
                  write_termination='\r\n',
                  **kwargs):
 
         if adapter is None:  # if None build it from the usual way as written in the documentation
+            if ip_address is None:
+                raise ValueError("Provide either adapter or ip_address.")
             adapter = f"TCPIP::{ip_address}::{port}::SOCKET"
 
         super().__init__(
