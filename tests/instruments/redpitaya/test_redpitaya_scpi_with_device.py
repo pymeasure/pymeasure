@@ -134,7 +134,7 @@ class TestRedpitaya:
         assert inst.acq_trigger_delay_samples == 0
         assert inst.acq_trigger_delay_ns == 0
 
-    def test_acq_trigger_delay(self, redpitaya_scpi):
+    def test_acq_trigger_delay_non_zero(self, redpitaya_scpi):
         inst = redpitaya_scpi
         inst.acq_trigger_delay_samples = 500
         assert inst.acq_trigger_delay_samples == 500
