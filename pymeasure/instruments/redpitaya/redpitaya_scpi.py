@@ -237,7 +237,7 @@ class AnalogOutputFastChannel(Channel):
     gen_trigger_source = Instrument.control(
         "SOUR{ch}:TRig:SOUR?",
         "SOUR{ch}:TRig:SOUR %s",
-        """Set and get the generator output trigger source (str), one of RedPitayaScpi.GEN_TRIGGER_SOURCES.
+        """ Control the generator output trigger source (str), one of RedPitayaScpi.GEN_TRIGGER_SOURCES.
         PE and NE means respectively Positive and Negative edge. 
         Is important to note that it appears that the trigger can only be done internally.
         """,
