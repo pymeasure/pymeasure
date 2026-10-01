@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,18 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
 import pytest
 
-from pymeasure.experiment.parameters import Parameter
-from pymeasure.experiment.parameters import IntegerParameter
-from pymeasure.experiment.parameters import BooleanParameter
-from pymeasure.experiment.parameters import FloatParameter
-from pymeasure.experiment.parameters import ListParameter
-from pymeasure.experiment.parameters import VectorParameter
+from pymeasure.experiment.parameters import (
+    BooleanParameter,
+    FloatParameter,
+    IntegerParameter,
+    ListParameter,
+    Parameter,
+    VectorParameter,
+)
+from pymeasure.experiment.procedure import Procedure
 
 
 def test_parameter_default():
@@ -37,6 +41,7 @@ def test_parameter_default():
     assert p.value == 5
     assert p.cli_args[0] == 5
     assert p.cli_args[1] == [('units are', 'units'), 'default']
+    assert p._cli_help_fields() == 'Test:\n\nDefault is 5.'
 
 
 def test_integer_units():
@@ -77,7 +82,7 @@ def test_integer_bounds():
         p.value = -100  # below minimum
 
 
-def test_boolean_value():
+def test_boolean_value_error():
     p = BooleanParameter('Test')
     with pytest.raises(ValueError):
         _ = p.value  # not set
@@ -85,22 +90,24 @@ def test_boolean_value():
         p.value = 'a'  # a string
     with pytest.raises(ValueError):
         p.value = 10  # a number other than 0 or 1
-    p.value = "True"
-    assert p.value is True
-    p.value = "False"
-    assert p.value is False
-    p.value = "true"
-    assert p.value is True
-    p.value = "false"
-    assert p.value is False
-    p.value = 1  # a number
-    assert p.value is True
-    p.value = 0  # zero
-    assert p.value is False
-    p.value = True
-    assert p.value is True
     assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default']
+
+
+@pytest.mark.parametrize("value, mapping", (
+                         ["True", True],
+                         ["true", True],
+                         [1, True],
+                         [np.bool_(True), True],
+                         ["False", False],
+                         ["false", False],
+                         [0, False],
+                         [np.bool_(False), False],
+                         ))
+def test_boolean_value(value, mapping):
+    p = BooleanParameter('Test')
+    p.value = value
+    assert p.value == mapping
 
 
 def test_float_value():
@@ -121,7 +128,8 @@ def test_float_value():
     with pytest.raises(ValueError):
         p.value = '31.3 incorrect units'  # not the correct units
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', 'decimals']
+    assert p.cli_args[1] == [('units are', 'units'), 'default',
+                             ('decimals are', 'decimals')]
 
 
 def test_float_bounds():
@@ -132,6 +140,20 @@ def test_float_bounds():
         p.value = 10  # above maximum
     with pytest.raises(ValueError):
         p.value = -10  # below minimum
+
+
+def test_float_step_type():
+    p = FloatParameter('Test')
+    assert p.step_type == "linear"  # default
+    p = FloatParameter('Test', step=2, step_type="log")
+    assert p.step_type == "log"
+    with pytest.raises(ValueError):
+        FloatParameter('Test', step_type="invalid")  # pyright: ignore[reportArgumentType]
+    # step must be positive for log stepping (it is a multiplicative factor)
+    with pytest.raises(ValueError):
+        FloatParameter('Test', step=-2, step_type="log")
+    with pytest.raises(ValueError):
+        FloatParameter('Test', step=0, step_type="log")
 
 
 def test_list_string():
@@ -157,7 +179,8 @@ def test_list_value():
     with pytest.raises(ValueError):
         p.value = 5
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', ('choices are', 'choices')]
+    assert p.cli_args[1] == [('units are', 'units'), 'default',
+                             ('choices are', 'choices')]
 
 
 def test_list_value_with_units():
@@ -173,7 +196,8 @@ def test_list_value_with_units():
     p.value = 'and four tests'
     assert p.value == 'and four'
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', ('choices are', 'choices')]
+    assert p.cli_args[1] == [('units are', 'units'), 'default',
+                             ('choices are', 'choices')]
 
 
 def test_list_order():
@@ -181,17 +205,12 @@ def test_list_order():
     # check if order is preserved, choices are internally stored as dict
     assert p.choices == (1, 2.2, 'three', 'and four')
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', ('choices are', 'choices')]
+    assert p.cli_args[1] == [('units are', 'units'), 'default',
+                             ('choices are', 'choices')]
 
 
-def test_vector():
+def test_vector_error():
     p = VectorParameter('test', length=3, units='tests')
-    p.value = [1, 2, 3]
-    assert p.value == [1, 2, 3]
-    p.value = '[4, 5, 6]'
-    assert p.value == [4, 5, 6]
-    p.value = '[7, 8, 9] tests'
-    assert p.value == [7, 8, 9]
     with pytest.raises(ValueError):
         p.value = '[0, 1, 2] wrong unit'
     with pytest.raises(ValueError):
@@ -202,6 +221,119 @@ def test_vector():
         p.value = '0, 1, 2'
 
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', '_length']
+    assert p.cli_args[1] == [('units are', 'units'), 'default', ('length is', '_length')]
+
+
+@pytest.mark.parametrize("value, mapping", (
+                         [[1, 2, 3], [1, 2, 3]],
+                         ['[4, 5, 6]', [4, 5, 6]],
+                         ['[7, 8, 9] tests', [7, 8, 9]],
+                         [np.array([10, 11, 12]), [10, 11, 12]],
+                         ))
+def test_vector(value, mapping):
+    p = VectorParameter('test', length=3, units='tests')
+    p.value = value
+    assert p.value == mapping
+
+
+def test_descriptor_set_stores_converted_value_on_parameter():
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X')
+
+    p = TestProcedure()
+    p.x = 42
+    # the converted value lives on the parameter object's `_value`
+    assert p._parameters['x']._value == 42
+    # the descriptor no longer maintains a side `_param_values` dict
+    assert not hasattr(p, '_param_values')
+
+
+def test_descriptor_set_none_is_passthrough():
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X', default=5)
+
+    p = TestProcedure()
+    # assigning None must not raise even though convert(None) would fail
+    p.x = None
+    assert p._parameters['x']._value is None
+    assert p._parameters['x'].is_set() is False
+    assert p.x is None
+
+
+def test_descriptor_set_eagerly_converts():
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X')
+
+    p = TestProcedure()
+    p.x = "42"
+    # value is eagerly converted to int immediately at assignment
+    assert p._parameters['x']._value == 42
+    assert isinstance(p._parameters['x']._value, int)
+    assert p._parameters['x'].is_set() is True
+    assert p.x == 42
+
+
+def test_descriptor_set_calls_convert_exactly_once():
+    calls = []
+
+    class CountingParameter(Parameter):
+        def convert(self, value):
+            calls.append(value)
+            return value
+
+    class TestProcedure(Procedure):
+        x = CountingParameter('X')
+
+    p = TestProcedure()
+    calls.clear()
+    p.x = "value"
+    assert calls == ["value"]
+
+
+def test_descriptor_get_returns_live_value_or_none():
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X', default=7)
+
+    p = TestProcedure()
+    assert p.x == 7
+    p._parameters['x']._value = None
+    assert p.x is None
+
+
+def test_descriptor_fallback_round_trip_without_container_entry():
+    """Setting then getting via the descriptor returns the stored value
+    when the parameter name is absent from the backing container.
+
+    This exercises the UnknownProcedure fallback path where ``__set__``
+    stores the raw value in ``obj.__dict__`` and ``__get__`` must read it
+    back rather than returning ``None``.
+    """
+
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X')
+
+    p = TestProcedure()
+    # simulate the missing-container-entry fallback (e.g. UnknownProcedure)
+    del p._parameters['x']
+    p.x = 42
+    assert p.x == 42
+    assert p.__dict__['x'] == 42
+
+
+def test_descriptor_fallback_round_trip_without_container():
+    """Setting then getting via the descriptor returns the stored value
+    when there is no backing container attribute at all.
+    """
+
+    class TestProcedure(Procedure):
+        x = IntegerParameter('X')
+
+    p = TestProcedure()
+    # simulate the missing-container fallback entirely
+    del p._parameters
+    p.x = 13
+    assert p.x == 13
+    assert p.__dict__['x'] == 13
+
 
 # TODO: Add tests for Measurable

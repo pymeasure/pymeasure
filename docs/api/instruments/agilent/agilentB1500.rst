@@ -31,7 +31,7 @@ method/attribute names in this instrument driver.
 ===========     =============================================
 Command         Property/Method
 ===========     =============================================
-``AAD``         :meth:`SMU.adc_type`
+``AAD``         :attr:`SMU.adc_type`
 ``AB``          :meth:`~AgilentB1500.abort`
 ``AIT``         :meth:`~AgilentB1500.adc_setup`
 ``AV``          :meth:`~AgilentB1500.adc_averaging`
@@ -39,7 +39,7 @@ Command         Property/Method
 ``BC``          :meth:`~AgilentB1500.clear_buffer`
 ``CL``          :meth:`SMU.disable`
 ``CM``          :attr:`~AgilentB1500.auto_calibration`
-``CMM``         :meth:`SMU.meas_op_mode`
+``CMM``         :attr:`SMU.meas_op_mode`
 ``CN``          :meth:`SMU.enable`
 ``DI``          :meth:`SMU.force` mode: ``'CURRENT'``
 ``DV``          :meth:`SMU.force` mode: ``'VOLTAGE'``
@@ -47,7 +47,7 @@ Command         Property/Method
 ``ERRX?``       :meth:`~AgilentB1500.check_errors`
 ``FL``          :attr:`SMU.filter`
 ``FMT``         :meth:`~AgilentB1500.data_format`
-``*IDN?``       :meth:`~AgilentB1500.id`
+``*IDN?``       :attr:`~AgilentB1500.id`
 ``*LRN?``       :meth:`~AgilentB1500.query_learn`, |br|
                 multiple methods to read/format settings directly
 ``MI``          :meth:`SMU.sampling_source` mode: ``'CURRENT'``
@@ -209,6 +209,9 @@ Classes to communicate with the instrument:
 
 * :class:`AgilentB1500`: Main instrument class
 * :class:`SMU`: Instantiated by main instrument class for every SMU
+* :class:`SPGU`: Instantiated by main instrument class for every SPGU
+* :class:`SPGUChannel`: Instantiated by SPGU for each channel
+* :class:`CMU`: Instantiated by main instrument class for CMU
 
 All `query` commands return a human readable dict of settings. These are intended for debugging/logging/file headers, not for passing to the accompanying setting commands.
 
@@ -220,10 +223,19 @@ All `query` commands return a human readable dict of settings. These are intende
     :members:
     :show-inheritance:
     :member-order: bysource
+.. autoclass:: SPGU
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+.. autoclass:: SPGUChannel
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+.. autoclass:: CMU
+    :members:
+    :show-inheritance:
+    :member-order: bysource
 
-.. .. automodule:: pymeasure.instruments.agilent.agilentB1500
-..     :members: AgilentB1500, SMU
-..     :show-inheritance:
 
 **********************************************
 Supporting Classes
@@ -250,9 +262,6 @@ Classes that provide additional functionalities:
     :members:
     :show-inheritance:
 
-.. .. automodule:: pymeasure.instruments.agilent.agilentB1500
-..     :members: QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
-..     :show-inheritance:
 
 Enumerations
 =========================
@@ -271,6 +280,6 @@ It's purpose is only logging or documentation.
 
 .. automodule:: pymeasure.instruments.agilent.agilentB1500
     :members: 
-    :exclude-members: AgilentB1500, SMU, QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
+    :exclude-members: AgilentB1500, SMU, SPGU, SPGUChannel, CMU, QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
     :show-inheritance:
     :member-order: bysource

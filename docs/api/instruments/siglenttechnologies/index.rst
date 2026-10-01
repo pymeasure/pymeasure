@@ -12,3 +12,5 @@ This section contains specific documentation on the Siglent Technologies instrum
    siglent_spdbase
    siglent_spd1168x
    siglent_spd1305x
+   siglent_sds1072cml
+   siglent_sds1000xhd

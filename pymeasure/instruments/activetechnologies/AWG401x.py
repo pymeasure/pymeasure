@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,27 +27,29 @@ for the Arbitrary Waveform Generator (AWG) mode and the Arbitrary Function
 Generator (AFG) mode. The module has been developed from the official
 documentation available on https://www.activetechnologies.it"""
 
-from collections import abc, namedtuple
-
 import pprint
+from collections import abc, namedtuple
+from collections.abc import Iterator, Sequence
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
-from pymeasure.instruments.validators import strict_discrete_set, \
-    strict_range
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
+from pymeasure.instruments.common_base import CommonBase, IdType
+from pymeasure.instruments.instrument import AdapterType
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
+FS_Element = namedtuple("FS_Element", "name type dimension")
 
 
 class ChannelBase(Channel):
     """Implementation of a base Active Technologies AWG-4000 channel."""
 
-    def __init__(self, instrument, id):
-        super().__init__(instrument, id)
+    def __init__(self, parent: CommonBase, id: IdType, **kwargs):
+        super().__init__(parent, id, **kwargs)
 
         self.delay_values = [self.delay_min, self.delay_max]
 
     enabled = Instrument.control(
         "OUTPut{ch}:STATe?", "OUTPut{ch}:STATe %d",
-        """A boolean property that enables or disables the output for the
-        specified channel.""",
+        """Control output state (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
@@ -55,9 +57,7 @@ class ChannelBase(Channel):
 
     polarity = Instrument.control(
         "OUTPut{ch}:POLarity?", "OUTPut{ch}:POLarity %s",
-        """This property inverts the output waveform relative to its average
-        value: (High Level – Low Level)/2. NORM for normal, INV for inverted
-        """,
+        """Control output polarity (str in [NORMAL, NORM, INVERTED, INV]).""",
         validator=strict_discrete_set,
         values=["NORMAL", "NORM", "INVERTED", "INV"],
         get_process=lambda v: "NORM" if v == 0 else ("INV" if v == 1 else v)
@@ -65,32 +65,32 @@ class ChannelBase(Channel):
 
     delay = Instrument.control(
         None, None,
-        """This property sets or queries the initial delay, set 0 for disable
+        """Control initial delay, set 0 for disable
         it. When you send this command in AFG mode, if the instrument is
         running, it will be stopped.""",
         dynamic=True
     )
 
     delay_max = Instrument.measurement(
-        None,
-        """This property queries the maximum delay that can be set to the
-        output waveform.""",
-        dynamic=True
+        "",
+        """Get maximum delay (int).""",
+        dynamic=True,
+        cast=int,
     )
 
     delay_min = Instrument.measurement(
-        None,
-        """This property queries the minimum delay that can be set to the
-        output waveform.""",
-        dynamic=True
+        "",
+        """Get minimum delay (int).""",
+        dynamic=True,
+        cast=int,
     )
 
 
 class ChannelAFG(ChannelBase):
     """Implementation of a Active Technologies AWG-4000 channel in AFG mode."""
 
-    def __init__(self, instrument, id):
-        super().__init__(instrument, id)
+    def __init__(self, parent: CommonBase, id: IdType, **kwargs):
+        super().__init__(parent, id, **kwargs)
 
         self.calculate_voltage_range()
         self.frequency_values = [self.frequency_min, self.frequency_max]
@@ -99,7 +99,7 @@ class ChannelAFG(ChannelBase):
 
     load_impedance = Instrument.control(
         "OUTPut{ch}:IMPedance?", "OUTPut{ch}:IMPedance %d",
-        """This property sets the output load impedance for the specified
+        """Control the output load impedance for the specified
         channel. The specified value is used for amplitude, offset, and
         high/low level settings. You can set the impedance to any value from
         1 Ω to 1 MΩ. The default value is 50 Ω.""",
@@ -109,7 +109,7 @@ class ChannelAFG(ChannelBase):
 
     output_impedance = Instrument.control(
         "OUTPut{ch}:LOW:IMPedance?", "OUTPut{ch}:LOW:IMPedance %d",
-        """This property sets the instrument output impedance, the possible
+        """Control the instrument output impedance, the possible
         values are: 5 Ohm or 50 Ohm (default).""",
         validator=strict_discrete_set,
         values={5: 1, 50: 0},
@@ -118,8 +118,8 @@ class ChannelAFG(ChannelBase):
 
     shape = Instrument.control(
         "SOURce{ch}:FUNCtion:SHAPe?", "SOURce{ch}:FUNCtion:SHAPe %s",
-        """This property sets or queries the shape of the carrier waveform.
-        Allowed choices depends on the choosen modality, please refer on
+        """Control the shape of the carrier waveform.
+        Allowed choices depends on the chosen modality, please refer on
         instrument manual. When you set this property with a different value,
         if the instrument is running it will be stopped.
         Can be set to: SIN<USOID>, SQU<ARE>, PULS<E>, RAMP, PRN<OISE>, DC,
@@ -129,7 +129,8 @@ class ChannelAFG(ChannelBase):
         values=["SINUSOID", "SIN", "SQUARE", "SQU", "PULSE", "PULS", "RAMP",
                 "PRNOISE", "PRN", "DC", "SINC", "GAUSSIAN", "GAUS", "LORENTZ",
                 "LOR", "ERISE", "ERIS", "EDECAY", "EDEC", "HAVERSINE", "HAV",
-                "ARBB", "EFILE", "EFIL", "DOUBLEPULSE", "DOUBLEPUL"]
+                "ARBB", "EFILE", "EFIL", "DOUBLEPULSE", "DOUBLEPUL"],
+        cast=str,
     )
 
     # Default delay override
@@ -140,7 +141,7 @@ class ChannelAFG(ChannelBase):
 
     frequency = Instrument.control(
         "SOURce{ch}:FREQuency?", "SOURce{ch}:FREQuency %s",
-        """This property sets or queries the frequency of the output waveform.
+        """Control the frequency of the output waveform.
         This command is available when the Run Mode is set to any setting other
         than Sweep. The output frequency range setting depends on the type of
         output waveform. If you change the type of output waveform, it may
@@ -153,19 +154,19 @@ class ChannelAFG(ChannelBase):
 
     frequency_max = Instrument.measurement(
         "SOURce{ch}:FREQuency? MAXimum",
-        """This property queries the maximum frequency that can be set to the
+        """Get the maximum frequency that can be set to the
         output waveform."""
     )
 
     frequency_min = Instrument.measurement(
         "SOURce{ch}:FREQuency? MINimum",
-        """This property queries the minimum frequency that can be set to the
+        """Get the minimum frequency that can be set to the
         output waveform."""
     )
 
     phase = Instrument.control(
         "SOURce{ch}:PHASe:ADJust?", "SOURce{ch}:PHASe:ADJust %s",
-        """This property sets or queries the phase of the output waveform for
+        """Control the phase of the output waveform for
         the specified channel. The value is in degrees.""",
         validator=strict_range,
         dynamic=True
@@ -173,29 +174,30 @@ class ChannelAFG(ChannelBase):
 
     phase_max = Instrument.measurement(
         "SOURce{ch}:PHASe:ADJust? MAXimum",
-        """This property queries the maximum phase that can be set to the
+        """Get the maximum phase that can be set to the
         output waveform."""
     )
 
     phase_min = Instrument.measurement(
         "SOURce{ch}:PHASe:ADJust? MINimum",
-        """This property queries the minimum phase that can be set to the
+        """Get the minimum phase that can be set to the
         output waveform."""
     )
 
     voltage_unit = Instrument.control(
         "OUTPut{ch}:VOLTage:UNIT?", "OUTPut{ch}:VOLTage:UNIT %s",
-        """This property sets or queries the units of output amplitude, the
+        """Control the units of output amplitude, the
         possible choices are: VPP, VRMS, DBM. This command does not affect the
         offset, high level, or low level of output.""",
         validator=strict_discrete_set,
-        values=["VPP", "VRMS", "DBM"]
+        values=["VPP", "VRMS", "DBM"],
+        cast=str,
     )
 
     voltage_low = Instrument.control(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:LOW?",
         "SOURce{ch}:VOLTage:LEVel:IMMediate:LOW %s",
-        """This property sets or queries the low level of the waveform. The
+        """Control the low level of the waveform. The
         low level could be limited by noise level to not exceed the maximum
         amplitude. If the carrier is Noise or DC level, this command and this
         query cause an error.""",
@@ -205,20 +207,20 @@ class ChannelAFG(ChannelBase):
 
     voltage_low_max = Instrument.measurement(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:LOW? MAXimum",
-        """This property queries the maximum low voltage level that can be set
+        """Get the maximum low voltage level that can be set
         to the output waveform."""
     )
 
     voltage_low_min = Instrument.measurement(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:LOW? MINimum",
-        """This property queries the minimum low voltage level that can be set
+        """Get the minimum low voltage level that can be set
         to the output waveform."""
     )
 
     voltage_high = Instrument.control(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:HIGH?",
         "SOURce{ch}:VOLTage:LEVel:IMMediate:HIGH %s",
-        """This property sets or queries the high level of the waveform. The
+        """Control the high level of the waveform. The
         high level could be limited by noise level to not exceed the maximum
         amplitude. If the carrier is Noise or DC level, this command and this
         query cause an error.""",
@@ -228,20 +230,20 @@ class ChannelAFG(ChannelBase):
 
     voltage_high_max = Instrument.measurement(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:HIGH? MAXimum",
-        """This property queries the maximum high voltage level that can be set
+        """Get the maximum high voltage level that can be set
         to the output waveform."""
     )
 
     voltage_high_min = Instrument.measurement(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:HIGH? MINimum",
-        """This property queries the minimum high voltage level that can be set
+        """Get the minimum high voltage level that can be set
         to the output waveform."""
     )
 
     voltage_amplitude = Instrument.control(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:AMPLitude?",
         "SOURce{ch}:VOLTage:LEVel:IMMediate:AMPLitude %s",
-        """This property sets or queries the output amplitude for the specified
+        """Control the output amplitude for the specified
         channel. The measurement unit of amplitude depends on the selection
         operated using the voltage_unit property. If the carrier is Noise the
         amplitude is Vpk instead of Vpp. If the carrier is DC level this
@@ -254,22 +256,22 @@ class ChannelAFG(ChannelBase):
 
     voltage_amplitude_max = Instrument.measurement(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:AMPLitude? MAXimum",
-        """This property queries the maximum amplitude voltage level that can
+        """Get the maximum amplitude voltage level that can
         be set to the output waveform.""",
-        get_process=lambda value: float(value.replace("VPP", ""))
+        preprocess_reply=lambda s: s.removeprefix("VPP"),
     )
 
     voltage_amplitude_min = Instrument.measurement(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:AMPLitude? MINimum",
-        """This property queries the minimum amplitude voltage level that can
+        """Get the minimum amplitude voltage level that can
         be set to the output waveform.""",
-        get_process=lambda value: float(value.replace("VPP", ""))
+        preprocess_reply=lambda s: s.removeprefix("VPP"),
     )
 
     voltage_offset = Instrument.control(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:OFFSet?",
         "SOURce{ch}:VOLTage:LEVel:IMMediate:OFFSet %s",
-        """This property sets or queries the offset level for the specified
+        """Control the offset level for the specified
         channel. The offset range setting depends on the amplitude parameter.
         """,
         validator=strict_range,
@@ -278,20 +280,20 @@ class ChannelAFG(ChannelBase):
 
     voltage_offset_max = Instrument.measurement(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:OFFSet? MAXimum",
-        """This property queries the maximum offset voltage level that can be
+        """Get the maximum offset voltage level that can be
         set to the output waveform."""
     )
 
     voltage_offset_min = Instrument.measurement(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:OFFSet? MINimum",
-        """This property queries the minimum offset voltage level that can be
+        """Get the minimum offset voltage level that can be
         set to the output waveform."""
     )
 
     baseline_offset = Instrument.control(
         "SOURce{ch}:VOLTage:BASELINE:OFFSET?",
         "SOURce{ch}:VOLTage:BASELINE:OFFSET %s",
-        """This property sets or queries the offset level for the specified
+        """Control the offset level for the specified
         channel. The offset range setting depends on the amplitude parameter.
         """,
         validator=strict_range,
@@ -300,17 +302,17 @@ class ChannelAFG(ChannelBase):
 
     baseline_offset_max = Instrument.measurement(
         "SOURce{ch}:VOLTage:BASELINE:OFFSET? MAXimum",
-        """This property queries the maximum offset voltage level that can be
+        """Get the maximum offset voltage level that can be
         set to the output waveform."""
     )
 
     baseline_offset_min = Instrument.measurement(
         "SOURce{ch}:VOLTage:BASELINE:OFFSET? MINimum",
-        """This property queries the minimum offset voltage level that can be
+        """Get the minimum offset voltage level that can be
         set to the output waveform."""
     )
 
-    def calculate_voltage_range(self):
+    def calculate_voltage_range(self) -> None:
         self.voltage_low_values = [self.voltage_low_min, self.voltage_low_max]
 
         self.voltage_high_values = [self.voltage_high_min,
@@ -338,7 +340,7 @@ class ChannelAWG(ChannelBase):
     scale = Instrument.control(
         "OUTPut{ch}:SCALe?",
         "OUTPut{ch}:SCALe %f",
-        """This property sets or returns the Amplitude Scale parameter of the
+        """Control the Amplitude Scale parameter of the
         analog channel “n”. This property can be modified at run-time to adjust
         the waveform amplitude while the instrument is running and it is
         applied to all the waveforms contained in the sequencer. It is
@@ -352,9 +354,12 @@ class ChannelAWG(ChannelBase):
 class AWG401x_base(SCPIUnknownMixin, Instrument):
     """AWG-401x base class"""
 
-    def __init__(self, adapter,
-                 name="Active Technologies AWG-4014 1.2GS/s Arbitrary Waveform Generator",
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Active Technologies AWG-4014 1.2GS/s Arbitrary Waveform Generator",
+        **kwargs,
+    ):
 
         # Insert an higher timeout because, often, when starting the
         # instrument, can pass some time and the adapted goes in timeout
@@ -370,10 +375,10 @@ class AWG401x_base(SCPIUnknownMixin, Instrument):
         """Causes a system beep."""
         self.write("SYST:BEEP")
 
-    def save(self, position):
+    def save(self, position: int) -> None:
         """Save the actual configuration in memory.
 
-        :param int position: Instrument save position [0,4]
+        :param position: Instrument save position [0,4]
 
         :raises ValueError: If position is outside permitted limit [0,4].
         """
@@ -383,10 +388,10 @@ class AWG401x_base(SCPIUnknownMixin, Instrument):
         else:
             raise ValueError("position value outside permitted range [0,4]")
 
-    def load(self, position):
+    def load(self, position: int) -> None:
         """Load the actual configuration in memory.
 
-        :param int position: Instrument load position [0,4]
+        :param position: Instrument load position [0,4]
 
         :raises ValueError: If position is outside permitted limit [0,4].
         """
@@ -396,8 +401,8 @@ class AWG401x_base(SCPIUnknownMixin, Instrument):
         else:
             raise ValueError("position value outside permitted range [0,4]")
 
-    def wait_last(self):
-        """Wait for last operation completition"""
+    def wait_last(self) -> None:
+        """Wait for last operation completion"""
 
         self.write("*WAI")
 
@@ -435,14 +440,14 @@ class AWG401x_AFG(AWG401x_base):
 
     enabled = Instrument.control(
         "AFGControl:STATus?", "AFGControl:%s",
-        """A boolean property that enables the generation of signals.""",
+        """Control whether the generation of signals is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: "START", False: "STOP"},
         map_values=True,
         get_process=lambda v: "START" if v == 1 else ("STOP" if v == 0 else v)
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter: AdapterType, **kwargs):
         super().__init__(adapter, **kwargs)
 
         model = self.id.split(",")[1]
@@ -491,7 +496,7 @@ class AWG401x_AWG(AWG401x_base):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter: AdapterType, **kwargs):
         super().__init__(adapter, **kwargs)
 
         for i in range(1, self.num_ch + 1):
@@ -507,30 +512,31 @@ class AWG401x_AWG(AWG401x_base):
 
     num_ch = Instrument.measurement(
         "AWGControl:CONFigure:CNUMber?",
-        """This property queries the number of analog channels.""",
+        """Get the number of analog channels.""",
         cast=int
     )
 
     num_dch = Instrument.measurement(
         "AWGControl:CONFigure:DNUMber?",
-        """This property queries the number of digital channels.""",
+        """Get the number of digital channels.""",
         cast=int
     )
 
     sample_decreasing_strategy = Instrument.control(
         "AWGControl:DECreasing?", "AWGControl:DECreasing %s",
-        """This property sets or returns the Sample Decreasing Strategy. The
+        """Control the Sample Decreasing Strategy. The
         “Sample decreasing strategy” parameter defines the strategy used to
         adapt the waveform length to the sequencer entry length in the case
         where the original waveform length is longer than the sequencer entry
         length. Can be set to: DECIM<ATION>, CUTT<AIL>, CUTH<EAD>""",
         validator=strict_discrete_set,
-        values=["DECIMATION", "DECIM", "CUTTAIL", "CUTT", "CUTHEAD", "CUTH"]
+        values=["DECIMATION", "DECIM", "CUTTAIL", "CUTT", "CUTHEAD", "CUTH"],
+        cast=str,
     )
 
     sample_increasing_strategy = Instrument.control(
         "AWGControl:INCreasing?", "AWGControl:INCreasing %s",
-        """This property sets or or returns the Sample Increasing Strategy. The
+        """Control the Sample Increasing Strategy. The
         “Sample increasing strategy” parameter defines the strategy used to
         adapt the waveform length to the sequencer entry length in the case
         where the original waveform length is shorter than the sequencer entry
@@ -538,12 +544,13 @@ class AWG401x_AWG(AWG401x_base):
         SAMPLESM<ULTIPLICATION>""",
         validator=strict_discrete_set,
         values=["INTERPOLATION", "INTER", "RETURNZERO", "RETURN", "HOLDLAST",
-                "HOLD", "SAMPLESMULTIPLICATION", "SAMPLESM"]
+                "HOLD", "SAMPLESMULTIPLICATION", "SAMPLESM"],
+        cast=str,
     )
 
     entry_level_strategy = Instrument.control(
         "AWGControl:LENGth:MODE?", "AWGControl:LENGth:MODE %s",
-        """This property sets or or returns the Entry Length Strategy. This
+        """Control the Entry Length Strategy. This
         strategy manages the length of the sequencer entries in relationship
         with the length of the channel waveforms defined for each entry. The
         possible values are:
@@ -559,12 +566,13 @@ class AWG401x_AWG(AWG401x_base):
           parameter""",
         validator=strict_discrete_set,
         values=["ADAPTLONGER", "ADAPTL", "ADAPTSHORTER", "ADAPTS", "DEFAULT",
-                "DEF"]
+                "DEF"],
+        cast=str,
     )
 
     run_mode = Instrument.control(
         "AWGControl:RMODe?", "AWGControl:RMODe %s",
-        """This property sets or returns the AWG run mode. The possible values
+        """Control the AWG run mode. The possible values
         are:
 
         * CONT<INUOUS>: each waveform will loop as written in the entry
@@ -594,33 +602,34 @@ class AWG401x_AWG(AWG401x_base):
         The \\*RST command sets this parameter to CONTinuous.""",
         validator=strict_discrete_set,
         values=["CONTINUOUS", "CONT", "BURST", "BURS", "TCONTINUOUS",
-                "TCON", "STEPPED", "STEP", "ADVANCED", "ADVA"]
+                "TCON", "STEPPED", "STEP", "ADVANCED", "ADVA"],
+        cast=str,
     )
 
     burst_count = Instrument.control(
         "AWGControl:BURST?",
         "AWGControl:BURST %d",
-        """This property sets or queries the burst count parameter.""",
+        """Control the burst count parameter.""",
         validator=strict_range,
         dynamic=True
     )
 
     burst_count_max = Instrument.measurement(
         "AWGControl:BURST? MAXimum",
-        """This property queries the maximum burst count parameter.""",
+        """Get the maximum burst count parameter.""",
         cast=int
     )
 
     burst_count_min = Instrument.measurement(
         "AWGControl:BURST? MINimum",
-        """This property queries the minimum burst count parameter.""",
+        """Get the minimum burst count parameter.""",
         cast=int
     )
 
     sampling_rate = Instrument.control(
         "AWGControl:SRATe?",
         "AWGControl:SRATe %f",
-        """This property sets or queries the sample rate for the Sampling
+        """Control the sample rate for the Sampling
         Clock.""",
         validator=strict_range,
         dynamic=True
@@ -628,19 +637,19 @@ class AWG401x_AWG(AWG401x_base):
 
     sampling_rate_max = Instrument.measurement(
         "AWGControl:SRATe? MAXimum",
-        """This property queries the maximum sample rate for the Sampling
+        """Get the maximum sample rate for the Sampling
         Clock."""
     )
 
     sampling_rate_min = Instrument.measurement(
         "AWGControl:SRATe? MINimum",
-        """This property queries the minimum sample rate for the Sampling
+        """Get the minimum sample rate for the Sampling
         Clock."""
     )
 
     run_status = Instrument.measurement(
         "AWGControl:RSTATe?",
-        """This property returns the run state of the AWG. The possible values
+        """Get the run state of the AWG. The possible values
         are: STOPPED, WAITING_TRIGGER, RUNNING""",
         values={"STOPPED": 0, "WAITING_TRIGGER": 1, "RUNNING": 2},
         map_values=True
@@ -648,7 +657,7 @@ class AWG401x_AWG(AWG401x_base):
 
     enabled = Instrument.control(
         "AWGControl:RSTATe?", "AWGControl:%s",
-        """A boolean property that enables the generation of signals.""",
+        """Control whether generation of signals in enabled.""",
         validator=strict_discrete_set,
         values={True: "RUN", False: "STOP"},
         map_values=True,
@@ -657,7 +666,7 @@ class AWG401x_AWG(AWG401x_base):
 
     trigger_source = Instrument.control(
         "TRIGger:SEQuence:SOURce?", "TRIGger:SEQuence:SOURce %s",
-        """This property sets or returns the instrument trigger source. The
+        """Control the instrument trigger source. The
         possible values are:
 
         * TIM<ER>: the trigger is sent at regular intervals.
@@ -665,24 +674,23 @@ class AWG401x_AWG(AWG401x_base):
         * MAN<UAL>: the trigger is sent via software or using the trigger
           button on front panel.""",
         validator=strict_discrete_set,
-        values=["TIMER", "TIM", "EXTERNAL", "EXT", "MANUAL", "MAN"]
+        values=["TIMER", "TIM", "EXTERNAL", "EXT", "MANUAL", "MAN"],
+        cast=str,
     )
 
     waveforms = property(
         lambda self: self._waveforms,
-        doc="""This property returns a dict with all the waveform present
+        doc="""Get a dict with all the waveform present
         in the instrument system (Wave. List). It is possible to modify the
         values, delete them or create new waveforms""")
 
-    def trigger(self):
-        """Force a trigger event to occour."""
+    def trigger(self) -> None:
+        """Force a trigger event to occur."""
         self.write("TRIGger:SEQuence:IMMediate")
 
-    def save_file(self,
-                  file_name,
-                  data,
-                  path=None,
-                  override_existing=False):
+    def save_file(
+        self, file_name: str, data: str, path: None = None, override_existing: bool = False
+    ) -> None:
         """Write a string in a file in the instrument"""
 
         if path is not None:
@@ -704,7 +712,7 @@ class AWG401x_AWG(AWG401x_base):
         # executed because if it is more than 1024 bytes it doesn't work
         self.wait_last()
 
-    def remove_file(self, file_name, path=None):
+    def remove_file(self, file_name: str, path: None = None):
         """Remove a specified file"""
 
         if path is not None:
@@ -713,11 +721,11 @@ class AWG401x_AWG(AWG401x_base):
         if file_name not in [file.name
                              for file in self.list_files(path=path)
                              if file.type == '']:
-            raise ValueError("File do not exist")
+            raise ValueError("File does not exist")
 
         self.write('MMEMORY:DELETE "' + file_name + '"')
 
-    def list_files(self, path=None):
+    def list_files(self, path: None = None) -> list[FS_Element]:
         """Return a List of tuples with all file found in a directory. If the
         path is not specified the current directory will be used"""
 
@@ -727,9 +735,7 @@ class AWG401x_AWG(AWG401x_base):
         catalog = self.values("MMEMory:CATalog?")
         catalog = catalog[1:]
 
-        FS_Element = namedtuple("FS_Element", "name type dimension")
-
-        elements = []
+        elements: list[FS_Element] = []
         for i in range(int(len(catalog) / 3)):
             elements.append(FS_Element(catalog[i * 3 + 0],
                                        catalog[i * 3 + 1],
@@ -740,18 +746,19 @@ class AWG401x_AWG(AWG401x_base):
     class WaveformsLazyDict(abc.MutableMapping):
         """This class inherit from MutableMapping in order to create a custom
         dict to lazy load, modify, delete and create instrument waveform."""
+        _data: dict[str, None | abc.Sequence[float]]
 
-        def __init__(self, parent):
+        def __init__(self, parent: "AWG401x_AWG"):
             self.parent = parent
             self.reset()
 
-        def __getitem__(self, key):
+        def __getitem__(self, key: str) -> None | Sequence[float]:
             """Load data from instrument if not present"""
             if self._data[key] is None:
                 self._data[key] = self._get_waveform(key)
             return self._data[key]
 
-        def __setitem__(self, key, value):
+        def __setitem__(self, key: str, value: Sequence[float]) -> None:
             """Create a new waveform from key and value"""
 
             if len(value) < 16:
@@ -767,12 +774,12 @@ class AWG401x_AWG(AWG401x_base):
                 raise VoltageOutOfRangeError(
                     f"{max(value)}V is higher than maximum possible voltage, "
                     f"which is "
-                    f"{self.instrument.entries[1].channels[1].voltage_high_max}V")
+                    f"{self.parent.entries[1].channels[1].voltage_high_max}V")
             if min(value) < self.parent.entries[1].channels[1].voltage_low_min:
                 raise VoltageOutOfRangeError(
                     f"{min(value)}V is lower than minimum possible voltage, "
                     f"which is "
-                    f"{self.instrument.entries[1].channels[1].voltage_low_min}V")
+                    f"{self.parent.entries[1].channels[1].voltage_low_min}V")
 
             self.parent.save_file(f"{key}.txt",
                                   "\n".join(map(str, value)),
@@ -791,36 +798,33 @@ class AWG401x_AWG(AWG401x_base):
             self.parent.remove_file(f"{key}.txt")
 
             self._data[key] = None
-            return
 
-        def __delitem__(self, key):
+        def __delitem__(self, key: str) -> None:
             """When removing an element this method removes also the
             corresponding waveform in the instrument"""
             del self._data[key]
             self.parent.write(f'WLISt:WAVeform:DELete "{key}"')
-            return
 
-        def __iter__(self):
+        def __iter__(self) -> Iterator[str]:
             try:
-                for el in self._data:
-                    yield el
+                yield from self._data
             except KeyError:
                 return
 
-        def __len__(self):
+        def __len__(self) -> int:
             return len(self._data)
 
-        def __str__(self):
+        def __str__(self) -> str:
             """Return a str without the waveforms points because it is useless
             and loads all waveforms uselessy"""
             return pprint.pformat({el: "Waveform Points" for el in self._data})
 
-        def reset(self):
+        def reset(self) -> None:
             """Reset the class reloading the waveforms from instrument"""
-            waveforms_name = self.parent.values("WLISt:LIST?")
+            waveforms_name = self.parent.values("WLISt:LIST?", cast=str)
             self._data = {v: None for v in waveforms_name}
 
-        def _get_waveform(self, waveform_name):
+        def _get_waveform(self, waveform_name: str) -> abc.Sequence[int | float]:
             """Get the waveform point of a specified waveform"""
 
             bin_value = self.parent.adapter.connection.query_binary_values(
@@ -834,28 +838,28 @@ class AWG401x_AWG(AWG401x_base):
         """Dummy List Class to list every sequencer entry. The content is
         loaded in real-time."""
 
-        def __init__(self, parent, number_of_channel):
+        def __init__(self, parent: CommonBase, number_of_channel: int):
             self.parent = parent
             self.num_ch = number_of_channel
 
-        def resize(self, new_size):
+        def resize(self, new_size: int) -> None:
             self.parent.write(f"SEQuence:LENGth {new_size}")
 
-        def __getitem__(self, key):
+        def __getitem__(self, key: int) -> "SequenceEntry":
             if key <= 0:
                 raise IndexError("Entry numeration start from 1")
-            if key > int(self.parent.values("SEQuence:LENGth?")[0]):
+            if key > int(self.parent.values("SEQuence:LENGth?", cast=int)[0]):
                 raise IndexError("Index out of range")
             return SequenceEntry(self.parent, self.num_ch, key)
 
-        def __len__(self):
-            return int(self.parent.values("SEQuence:LENGth?")[0])
+        def __len__(self) -> int:
+            return int(self.parent.values("SEQuence:LENGth?", cast=int)[0])
 
 
 class SequenceEntry(Channel):
     """Implementation of sequencer entry."""
 
-    def __init__(self, parent, number_of_channels, sequence_number):
+    def __init__(self, parent: CommonBase, number_of_channels: int, sequence_number: IdType):
         super().__init__(parent, sequence_number)
         self.number_of_channels = number_of_channels
 
@@ -866,13 +870,13 @@ class SequenceEntry(Channel):
             self.add_child(self.AnalogChannel, i,
                            sequence_number=sequence_number)
 
-    def insert_id(self, command):
+    def insert_id(self, command: str) -> str:
         return command.format(ent=self.id)
 
     length = Instrument.control(
         "SEQuence:ELEM{ent}:LENGth?",
         "SEQuence:ELEM{ent}:LENGth %s",
-        """This property sets or returns the number of samples of the entry.
+        """Control the number of samples of the entry.
         """,
         validator=strict_range,
         dynamic=True
@@ -880,20 +884,20 @@ class SequenceEntry(Channel):
 
     length_max = Instrument.measurement(
         "SEQuence:ELEM{ent}:LENGth? MAXimum",
-        """This property queries the maximum entry samples length.""",
+        """Get the maximum entry samples length.""",
         get_process=lambda v: int(v)
     )
 
     length_min = Instrument.measurement(
         "SEQuence:ELEM{ent}:LENGth? MINimum",
-        """This property queries the minimum entry samples length.""",
+        """Get the minimum entry samples length.""",
         get_process=lambda v: int(v)
     )
 
     loop_count = Instrument.control(
         "SEQuence:ELEM{ent}:LOOP:COUNt?",
         "SEQuence:ELEM{ent}:LOOP:COUNt %s",
-        """This property sets or returns the number of waveform repetitions for
+        """Control the number of waveform repetitions for
         the entry.
         """,
         validator=strict_range,
@@ -902,14 +906,14 @@ class SequenceEntry(Channel):
 
     loop_count_max = Instrument.measurement(
         "SEQuence:ELEM{ent}:LOOP:COUNt? MAXimum",
-        """This property queries the maximum number of waveform repetitions for
+        """Get the maximum number of waveform repetitions for
         the entry.""",
         get_process=lambda v: int(v)
     )
 
     loop_count_min = Instrument.measurement(
         "SEQuence:ELEM{ent}:LOOP:COUNt? MINimum",
-        """This property queries the minimum number of waveform repetitions for
+        """Get the minimum number of waveform repetitions for
         the entry.""",
         get_process=lambda v: int(v)
     )
@@ -917,20 +921,20 @@ class SequenceEntry(Channel):
     class AnalogChannel(Channel):
         """Implementation of an analog channel for a single sequencer entry."""
 
-        def __init__(self, parent, id, sequence_number):
-            super().__init__(parent, id)
+        def __init__(self, parent: CommonBase, id: IdType, sequence_number, **kwargs):
+            super().__init__(parent, id, **kwargs)
             self.seq_num = sequence_number
 
             self.waveform_values = list(self.parent.parent.waveforms.keys())
             self.calculate_voltage_range()
 
-        def insert_id(self, command):
+        def insert_id(self, command: str) -> str:
             return command.format(ent=self.seq_num, ch=self.id)
 
         voltage_amplitude = Instrument.control(
             "SEQuence:ELEM{ent}:AMPlitude{ch}?",
             "SEQuence:ELEM{ent}:AMPlitude{ch} %s",
-            """This property sets or returns the voltage peak-to-peak
+            """Control the voltage peak-to-peak
             amplitude.""",
             validator=strict_range,
             dynamic=True
@@ -938,40 +942,40 @@ class SequenceEntry(Channel):
 
         voltage_amplitude_max = Instrument.measurement(
             "SEQuence:ELEM{ent}:AMPlitude{ch}? MAXimum",
-            """This property queries the maximum amplitude voltage level that
+            """Get the maximum amplitude voltage level that
             can be set."""
         )
 
         voltage_amplitude_min = Instrument.measurement(
             "SEQuence:ELEM{ent}:AMPlitude{ch}? MINimum",
-            """This property queries the minimum amplitude voltage level that
+            """Get the minimum amplitude voltage level that
             can be set."""
         )
 
         voltage_offset = Instrument.control(
             "SEQuence:ELEM{ent}:OFFset{ch}?",
             "SEQuence:ELEM{ent}:OFFset{ch} %s",
-            """This property sets or returns the voltage offset.""",
+            """Control the voltage offset.""",
             validator=strict_range,
             dynamic=True
         )
 
         voltage_offset_max = Instrument.measurement(
             "SEQuence:ELEM{ent}:OFFset{ch}? MAXimum",
-            """This property queries the maximum voltage offset that can be
+            """Get the maximum voltage offset that can be
             set."""
         )
 
         voltage_offset_min = Instrument.measurement(
             "SEQuence:ELEM{ent}:OFFset{ch}? MINimum",
-            """This property queries the minimum voltage offset that can be
+            """Get the minimum voltage offset that can be
             set."""
         )
 
         voltage_high = Instrument.control(
             "SEQuence:ELEM{ent}:VOLTage:HIGH{ch}?",
             "SEQuence:ELEM{ent}:VOLTage:HIGH{ch} %s",
-            """This property sets or returns the high voltage level of the
+            """Control the high voltage level of the
             waveform.""",
             validator=strict_range,
             dynamic=True
@@ -979,20 +983,20 @@ class SequenceEntry(Channel):
 
         voltage_high_max = Instrument.measurement(
             "SEQuence:ELEM{ent}:VOLTage:HIGH{ch}? MAXimum",
-            """This property queries the maximum high voltage level of the
+            """Get the maximum high voltage level of the
             waveform that can be set to the output waveform."""
         )
 
         voltage_high_min = Instrument.measurement(
             "SEQuence:ELEM{ent}:VOLTage:HIGH{ch}? MINimum",
-            """This property queries the minimum high voltage level of the
+            """Get the minimum high voltage level of the
             waveform that can be set to the output waveform."""
         )
 
         voltage_low = Instrument.control(
             "SEQuence:ELEM{ent}:VOLTage:LOW{ch}?",
             "SEQuence:ELEM{ent}:VOLTage:LOW{ch} %s",
-            """This property sets or returns the low voltage level of the
+            """Control the low voltage level of the
             waveform.""",
             validator=strict_range,
             dynamic=True
@@ -1000,20 +1004,20 @@ class SequenceEntry(Channel):
 
         voltage_low_max = Instrument.measurement(
             "SEQuence:ELEM{ent}:VOLTage:LOW{ch}? MAXimum",
-            """This property queries the maximum low voltage level of the
+            """Get the maximum low voltage level of the
             waveform that can be set to the output waveform."""
         )
 
         voltage_low_min = Instrument.measurement(
             "SEQuence:ELEM{ent}:VOLTage:LOW{ch}? MINimum",
-            """This property queries the minimum low voltage level of the
+            """Get the minimum low voltage level of the
             waveform that can be set to the output waveform."""
         )
 
         waveform = Instrument.control(
             "SEQuence:ELEM{ent}:WAVeform{ch}?",
             "SEQuence:ELEM{ent}:WAVeform{ch} %s",
-            """This property sets or returns the waveform. It’s possible select
+            """Control the waveform. It’s possible select
             a waveform only from those in the waveform list. In waveform list
             are already present 10 predefined waveform: Sine, Ramp, Square,
             Sync, DC, Gaussian, Lorentz, Haversine, Exp_Rise and Exp_Decay but
@@ -1023,7 +1027,7 @@ class SequenceEntry(Channel):
             dynamic=True
         )
 
-        def calculate_voltage_range(self):
+        def calculate_voltage_range(self) -> None:
             self.voltage_amplitude_values = [self.voltage_amplitude_min,
                                              self.voltage_amplitude_max]
 

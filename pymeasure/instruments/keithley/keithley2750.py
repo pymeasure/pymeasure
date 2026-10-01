@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,16 +38,16 @@ def clean_closed_channels(output):
     elif isinstance(output, list):
         list_final = []
         for i, entry in enumerate(output):
-            if isinstance(entry, float) or isinstance(entry, int):
+            if isinstance(entry, (float, int)):
                 list_final += [int(entry)]
             elif isinstance(entry, str):
                 list_final += [int(entry.replace("(", "").replace(")", "").replace("@", ""))]
             else:
-                raise ValueError("Every entry must be a string, float, or int")
+                raise TypeError("Every entry must be a string, float, or int")
             assert isinstance(list_final[i], int)
         return list_final
     else:
-        raise ValueError("`output` must be a string or list.")
+        raise TypeError("`output` must be a string or list.")
 
 
 class Keithley2750(SCPIMixin, Instrument):
@@ -55,9 +55,9 @@ class Keithley2750(SCPIMixin, Instrument):
     interacting with the instrument.
     """
 
-    closed_channels = Instrument.measurement(":ROUTe:CLOSe?",
-                                             "Reads the list of closed channels",
-                                             get_process=clean_closed_channels)
+    closed_channels = Instrument.measurement(
+        ":ROUTe:CLOSe?", "Get the list of closed channels.", get_process_list=clean_closed_channels
+    )
 
     def __init__(self, adapter, name="Keithley 2750 Multimeter/Switch System", **kwargs):
         super().__init__(

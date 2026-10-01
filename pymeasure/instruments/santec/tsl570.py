@@ -1,0 +1,83 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2026 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.santec.tsl500series import (  # noqa: F401
+    SweepMode,
+    SweepPattern,
+    SweepRouting,
+    SweepStatus,
+    TSL500Series,
+    combine_pattern_routing,
+    mode_to_pattern,
+    mode_to_routing,
+)
+from pymeasure.instruments.validators import strict_discrete_set
+
+
+class TSL570(TSL500Series):
+    """Represents the Santec TSL-570 Tunable Laser and provides a high-level interface for
+    interacting with the instrument.
+
+    Unless otherwise stated, units of wavelength and optical frequency are determined by
+    :attr:`TSL570.command_set`."""
+
+    def __init__(self, adapter, name="Santec TSL-570", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
+    command_set = Instrument.control(
+        ":SYSTem:COMMunicate:CODe?",
+        ":SYSTem:COMMunicate:CODe %d",
+        """Control the command set, "Legacy" or "SCPI".
+
+        Unless otherwise stated, Legacy commands use units of nm for wavelength, and THz for optical
+        frequency. SCPI commands use units of m for wavelength and Hz for optical frequency.""",
+        validator=strict_discrete_set,
+        values={"Legacy": 0, "SCPI": 1},
+        map_values=True,
+    )
+
+    wavelength_min = Instrument.measurement(
+        ":WAVelength:SWEep:RANGe:MINimum?",
+        """Get the minimum wavelength in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    wavelength_max = Instrument.measurement(
+        ":WAVelength:SWEep:RANGe:MAXimum?",
+        """Get the maximum wavelength in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    frequency_min = Instrument.measurement(
+        ":FREQuency:SWEep:RANGe:MINimum?",
+        """Get the minimum frequency in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    frequency_max = Instrument.measurement(
+        ":FREQuency:SWEep:RANGe:MAXimum?",
+        """Get the maximum frequency in the configurable sweep range
+        at the current sweep speed.""",
+    )

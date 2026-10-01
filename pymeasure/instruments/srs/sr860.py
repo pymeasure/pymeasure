@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,26 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+import warnings
+
+from pymeasure.instruments import IEEE4882Mixin, Instrument
+from pymeasure.instruments.common_base import InstrumentProperty
+from pymeasure.instruments.validators import (
+    strict_discrete_set,
+    truncated_discrete_set,
+    truncated_range,
+)
 
 
-class SR860(SCPIUnknownMixin, Instrument):
+class SR860(IEEE4882Mixin, Instrument):
 
-    SENSITIVITIES = [
-        1e-9, 2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
-        500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6,
-        200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
-        50e-3, 100e-3, 200e-3, 500e-3, 1
+    SENSITIVITIES: list[float] = [
+        1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002,
+        0.001, 0.0005, 0.0002, 0.0001, 5e-05, 2e-05, 1e-05,
+        5e-06, 2e-06, 1e-06, 5e-07, 2e-07, 1e-07, 5e-08,
+        2e-08, 1e-08, 5e-09, 2e-09, 1e-09
     ]
-    TIME_CONSTANTS = [
+    TIME_CONSTANTS: list[float] = [
         1e-6, 3e-6, 10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
         30e-3, 100e-3, 300e-3, 1, 3, 10, 30, 100, 300, 1e3,
         3e3, 10e3, 30e3
@@ -103,21 +109,23 @@ class SR860(SCPIUnknownMixin, Instrument):
         """An integer property that controls the harmonic that is measured.
         Allowed values are 1 to 99. Can be set.""",
         validator=strict_discrete_set,
-        values=range(1, 99)
+        values=range(1, 99),
+        cast=int,
     )
     harmonicdual = Instrument.control(
         "HARMDUAL?", "HARMDUAL %d",
         """An integer property that controls the harmonic in dual reference mode that is measured.
         Allowed values are 1 to 99. Can be set.""",
         validator=strict_discrete_set,
-        values=range(1, 99)
+        values=range(1, 99),
+        cast=int,
     )
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL %0.9e",
         """A floating point property that represents the reference sine-wave
         voltage in Volts. This property can be set.""",
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
 
     timebase = Instrument.control(
@@ -125,89 +133,96 @@ class SR860(SCPIUnknownMixin, Instrument):
         """Sets the external 10 MHZ timebase to auto(i=0) or internal(i=1).""",
         validator=strict_discrete_set,
         values=[0, 1],
-        map_values=True
+        cast=int,
     )
-    dcmode = Instrument.control(
+
+    dcmode: InstrumentProperty[str] = Instrument.control(
         "REFM?", "REFM %d",
-        """A string property that represents the sine out dc mode.
-        This property can be set. Allowed values are:{}""".format(INPUT_DCMODE),
+        f"""A string property that represents the sine out dc mode.
+        This property can be set. Allowed values are:{INPUT_DCMODE}""",
         validator=strict_discrete_set,
         values=INPUT_DCMODE,
         map_values=True
     )
-    reference_source = Instrument.control(
+    reference_source: InstrumentProperty[str] = Instrument.control(
         "RSRC?", "RSRC %d",
-        """A string property that represents the reference source.
-        This property can be set. Allowed values are:{}""".format(INPUT_REFERENCESOURCE),
+        f"""A string property that represents the reference source.
+        This property can be set. Allowed values are:{INPUT_REFERENCESOURCE}""",
         validator=strict_discrete_set,
         values=INPUT_REFERENCESOURCE,
         map_values=True
     )
-    reference_triggermode = Instrument.control(
+    reference_triggermode: InstrumentProperty[str] = Instrument.control(
         "RTRG?", "RTRG %d",
-        """A string property that represents the external reference trigger mode.
-        This property can be set. Allowed values are:{}""".format(INPUT_REFERENCETRIGGERMODE),
+        f"""A string property that represents the external reference trigger mode.
+        This property can be set. Allowed values are:{INPUT_REFERENCETRIGGERMODE}""",
         validator=strict_discrete_set,
         values=INPUT_REFERENCETRIGGERMODE,
         map_values=True
     )
-    reference_externalinput = Instrument.control(
+    reference_source_trigger = reference_triggermode
+
+    reference_externalinput: InstrumentProperty[str] = Instrument.control(
         "REFZ?", "REFZ&d",
-        """A string property that represents the external reference input.
-        This property can be set. Allowed values are:{}""".format(INPUT_REFERENCEEXTERNALINPUT),
+        f"""A string property that represents the external reference input.
+        This property can be set. Allowed values are:{INPUT_REFERENCEEXTERNALINPUT}""",
         validator=strict_discrete_set,
         values=INPUT_REFERENCEEXTERNALINPUT,
         map_values=True
     )
-    input_signal = Instrument.control(
+    input_signal: InstrumentProperty[str] = Instrument.control(
         "IVMD?", "IVMD %d",
-        """A string property that represents the signal input.
-        This property can be set. Allowed values are:{}""".format(INPUT_SIGNAL_INPUT),
+        f"""A string property that represents the signal input.
+        This property can be set. Allowed values are:{INPUT_SIGNAL_INPUT}""",
         validator=strict_discrete_set,
         values=INPUT_SIGNAL_INPUT,
         map_values=True
     )
-    input_voltage_mode = Instrument.control(
+    input_voltage_mode: InstrumentProperty[str] = Instrument.control(
         "ISRC?", "ISRC %d",
-        """A string property that represents the voltage input mode.
-        This property can be set. Allowed values are:{}""".format(INPUT_VOLTAGE_MODE),
+        f"""A string property that represents the voltage input mode.
+        This property can be set. Allowed values are:{INPUT_VOLTAGE_MODE}""",
         validator=strict_discrete_set,
         values=INPUT_VOLTAGE_MODE,
         map_values=True
     )
-    input_coupling = Instrument.control(
+    input_config = input_voltage_mode
+
+    input_coupling: InstrumentProperty[str] = Instrument.control(
         "ICPL?", "ICPL %d",
-        """A string property that represents the input coupling.
-        This property can be set. Allowed values are:{}""".format(INPUT_COUPLING),
+        f"""A string property that represents the input coupling.
+        This property can be set. Allowed values are:{INPUT_COUPLING}""",
         validator=strict_discrete_set,
         values=INPUT_COUPLING,
         map_values=True
     )
-    input_shields = Instrument.control(
+    input_shields: InstrumentProperty[str] = Instrument.control(
         "IGND?", "IGND %d",
-        """A string property that represents the input shield grounding.
-        This property can be set. Allowed values are:{}""".format(INPUT_SHIELDS),
+        f"""A string property that represents the input shield grounding.
+        This property can be set. Allowed values are:{INPUT_SHIELDS}""",
         validator=strict_discrete_set,
         values=INPUT_SHIELDS,
         map_values=True
     )
-    input_range = Instrument.control(
+    input_grounding = input_shields
+
+    input_range: InstrumentProperty[str] = Instrument.control(
         "IRNG?", "IRNG %d",
-        """A string property that represents the input range.
-        This property can be set. Allowed values are:{}""".format(INPUT_RANGE),
+        f"""A string property that represents the input range.
+        This property can be set. Allowed values are:{INPUT_RANGE}""",
         validator=strict_discrete_set,
         values=INPUT_RANGE,
         map_values=True
     )
-    input_current_gain = Instrument.control(
+    input_current_gain: InstrumentProperty[str] = Instrument.control(
         "ICUR?", "ICUR %d",
-        """A string property that represents the current input gain.
-        This property can be set. Allowed values are:{}""".format(INPUT_GAIN),
+        f"""A string property that represents the current input gain.
+        This property can be set. Allowed values are:{INPUT_GAIN}""",
         validator=strict_discrete_set,
         values=INPUT_GAIN,
         map_values=True
     )
-    sensitvity = Instrument.control(
+    sensitivity: InstrumentProperty[float] = Instrument.control(
         "SCAL?", "SCAL %d",
         """ A floating point property that controls the sensitivity in Volts,
         which can take discrete values from 2 nV to 1 V. Values are truncated
@@ -216,7 +231,21 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=SENSITIVITIES,
         map_values=True
     )
-    time_constant = Instrument.control(
+
+    @property
+    def sensitvity(self) -> float:
+        """Access sensitivity attribute with sensitvity (sic) property.
+
+        .. deprecated:: 0.16.0
+            Use sensitivity instead.
+        """
+        warnings.warn(
+            "`sensitvity` is deprecated, use sensitivity instead",
+            FutureWarning
+            )
+        return self.sensitivity
+
+    time_constant: InstrumentProperty[float] = Instrument.control(
         "OFLT?", "OFLT %d",
         """ A floating point property that controls the time constant
         in seconds, which can take discrete values from 10 microseconds
@@ -231,20 +260,35 @@ class SR860(SCPIUnknownMixin, Instrument):
         """A integer property that sets the filter slope to 6 dB/oct(i=0), 12 DB/oct(i=1),
         18 dB/oct(i=2), 24 dB/oct(i=3).""",
         validator=strict_discrete_set,
-        values=range(0, 3)
+        values=range(4),
+        cast=int,
     )
-    filer_synchronous = Instrument.control(
+    filter_synchronous: InstrumentProperty[str] = Instrument.control(
         "SYNC?", "SYNC %d",
-        """A string property that represents the synchronous filter.
-        This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
+        f"""A string property that represents the synchronous filter.
+        This property can be set. Allowed values are:{INPUT_FILTER}""",
         validator=strict_discrete_set,
         values=INPUT_FILTER,
         map_values=True
     )
-    filter_advanced = Instrument.control(
+
+    @property
+    def filer_synchronous(self) -> str:
+        """Access filter_synchronous attribute with filer_synchronous (sic) property.
+
+        .. deprecated:: 0.16.0
+            Use filter_synchronous instead.
+        """
+        warnings.warn(
+            "`filer_synchronous` is deprecated, use filter_synchronous instead",
+            FutureWarning
+            )
+        return self.filter_synchronous
+
+    filter_advanced: InstrumentProperty[str] = Instrument.control(
         "ADVFILT?", "ADVFIL %d",
-        """A string property that represents the advanced filter.
-        This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
+        f"""A string property that represents the advanced filter.
+        This property can be set. Allowed values are:{INPUT_FILTER}""",
         validator=strict_discrete_set,
         values=INPUT_FILTER,
         map_values=True
@@ -282,28 +326,28 @@ class SR860(SCPIUnknownMixin, Instrument):
         """Floating point property representing the preset sine out amplitude, for the A1 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_amplitudepreset2 = Instrument.control(
         "PSTA? 1", "PSTA1, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A2 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_amplitudepreset3 = Instrument.control(
         "PSTA? 2", "PSTA2, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A3 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_amplitudepreset4 = Instrument.control(
         "PSTA? 3", "PSTA 3, %0.9e",
-        """Floating point property representing the preset sine out amplitude, for the A3 preset button.
+        """Floating point property representing the preset sine out amplitude, for the A4 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_dclevelpreset1 = Instrument.control(
         "PSTL? 0", "PSTL 0, %0.3e",
@@ -335,7 +379,7 @@ class SR860(SCPIUnknownMixin, Instrument):
     )
 
     aux_out_1 = Instrument.control(
-        "AUXV? 0", "AUXV 0, %f",
+        "AUXV? 0", "AUXV 0, %g",
         """ A floating point property that controls the output of Aux output 1 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -346,7 +390,7 @@ class SR860(SCPIUnknownMixin, Instrument):
     dac1 = aux_out_1
 
     aux_out_2 = Instrument.control(
-        "AUXV? 1", "AUXV 1, %f",
+        "AUXV? 1", "AUXV 1, %g",
         """ A floating point property that controls the output of Aux output 2 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -357,7 +401,7 @@ class SR860(SCPIUnknownMixin, Instrument):
     dac2 = aux_out_2
 
     aux_out_3 = Instrument.control(
-        "AUXV? 2", "AUXV 2, %f",
+        "AUXV? 2", "AUXV 2, %g",
         """ A floating point property that controls the output of Aux output 3 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -368,7 +412,7 @@ class SR860(SCPIUnknownMixin, Instrument):
     dac3 = aux_out_3
 
     aux_out_4 = Instrument.control(
-        "AUXV? 3", "AUXV 3, %f",
+        "AUXV? 3", "AUXV 3, %g",
         """ A floating point property that controls the output of Aux output 4 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -406,7 +450,9 @@ class SR860(SCPIUnknownMixin, Instrument):
     # For consistency with other lock-in instrument classes
     adc4 = aux_in_4
 
-    def snap(self, val1="X", val2="Y", val3=None):
+    def snap(
+        self, val1: int | str = "X", val2: int | str = "Y", val3: int | str | None = None
+    ) -> list[float]:
         """retrieve 2 or 3 parameters at once
         parameters can be chosen by index, or enumeration as follows:
 
@@ -470,6 +516,14 @@ class SR860(SCPIUnknownMixin, Instrument):
                 cast=float,
             )
 
+    def snap_all(self) -> list[float]:
+        """snap X,Y,R,THETA parameters at once"""
+        return self.values(
+            command="SNAPD?",
+            separator=",",
+            cast=float,
+        )
+
     gettimebase = Instrument.measurement(
         "TBSTAT?",
         """Returns the current 10 MHz timebase source."""
@@ -498,7 +552,7 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=ON_OFF_VALUES,
         map_values=True
     )
-    screen_layout = Instrument.control(
+    screen_layout: InstrumentProperty[str] = Instrument.control(
         "DLAY?", "DLAY %i",
         """A integer property that Sets the screen layout to trend(i=0), full strip chart
         history(i=1), half strip chart history(i=2), full FFT(i=3), half FFT(i=4) or big
@@ -508,7 +562,7 @@ class SR860(SCPIUnknownMixin, Instrument):
         map_values=True
     )
 
-    def screenshot(self):
+    def screenshot(self) -> None:
         """Take screenshot on device
         The DCAP command saves a screenshot to a USB memory stick.
         This command is the same as pressing the [Screen Shot] key.
@@ -518,31 +572,35 @@ class SR860(SCPIUnknownMixin, Instrument):
 
     parameter_DAT1 = Instrument.control(
         "CDSP? 0", "CDSP 0, %i",
-        """A integer property that assigns a parameter to data channel 1(green).
-        This parameters can be set. Allowed values are:{}""".format(LIST_PARAMETER),
+        f"""A integer property that assigns a parameter to data channel 1(green).
+        This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16),
+        cast=int,
     )
     parameter_DAT2 = Instrument.control(
         "CDSP? 1", "CDSP 1, %i",
-        """A integer property that assigns a parameter to data channel 2(blue).
-        This parameters can be set. Allowed values are:{}""".format(LIST_PARAMETER),
+        f"""A integer property that assigns a parameter to data channel 2(blue).
+        This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16),
+        cast=int,
     )
     parameter_DAT3 = Instrument.control(
         "CDSP? 2", "CDSP 2, %i",
-        """A integer property that assigns a parameter to data channel 3(yellow).
-        This parameters can be set. Allowed values are:{}""".format(LIST_PARAMETER),
+        f"""A integer property that assigns a parameter to data channel 3(yellow).
+        This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16),
+        cast=int,
     )
     parameter_DAT4 = Instrument.control(
         "CDSP? 3", "CDSP 3, %i",
-        """A integer property that assigns a parameter to data channel 3(orange).
-        This parameters can be set. Allowed values are:{}""".format(LIST_PARAMETER),
+        f"""A integer property that assigns a parameter to data channel 3(orange).
+        This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16),
+        cast=int,
     )
     strip_chart_dat1 = Instrument.control(
         "CGRF? 0", "CGRF 0, %i",
@@ -579,10 +637,9 @@ class SR860(SCPIUnknownMixin, Instrument):
     # Strip Chart commands
     horizontal_time_div = Instrument.control(
         "GSPD?", "GSDP %i",
-        """A integer property for the horizontal time/div according to the following table:{}
-        """.format(LIST_HORIZONTAL_TIME_DIV),
+        f"""Control the horizontal time/div according to the following table:{LIST_HORIZONTAL_TIME_DIV}""",  # noqa: E501
         validator=strict_discrete_set,
-        values=range(0, 16)
+        values=range(16)
     )
 
     def __init__(self, adapter, name="Stanford Research Systems SR860 Lock-in amplifier",

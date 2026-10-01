@@ -104,7 +104,7 @@ As a first step, this code imports the Generator and generates a middle man inst
 The :meth:`instantiate` method creates an instrument instance and logs the communication at startup.
 The Generator creates a special adapter for the communication with the device.
 It cannot inspect the instrument's :meth:`__init__`, however.
-Therefore you have to specify the **all** connection settings via the :code:`adapter_kwargs` dictionary, even those, which are defined in :meth:`__init__`.
+Therefore you have to specify **all** the connection settings via the :code:`adapter_kwargs` dictionary, even those, which are defined in :meth:`__init__`.
 These adapter arguments are not written to tests.
 If you have arguments for the instrument itself, e.g. a RS485 address, you may give it as a keyword argument.
 These additional keyword arguments are included in the tests.
@@ -229,6 +229,55 @@ In this case, do not specify the fixture's scope, so it is called again for ever
 
 To run the test, specify the address of the device to be used via the :code:`--device-address` command line argument and limit pytest to the relevant tests.
 You can filter tests with the :code:`-k` option or you can specify the filename.
-For example, if your tests are in a file called :code:`test_extreme5000_with_device.py`, invoke pytest with :code:`pytest -k extreme5000 --device-address TCPIP::192.168.0.123::INSTR"`.
+For example, if your tests are in a file called :code:`test_extreme5000_with_device.py`, invoke pytest with :code:`pytest -k extreme5000 --device-address "TCPIP::192.168.0.123::INSTR"`.
 
 There might also be tests where manual intervention is necessary. In this case, skip the test by prepending the test function with a :code:`@pytest.mark.skip(reason="A human needs to press a button.")` decorator.
+
+Generating protocol tests from device tests
+-------------------------------------------
+
+If the driver works with a connected device, the :class:`~pymeasure.generator.Generator`
+can wrap the instrument in the device fixture and record the communication exercised by the
+device tests. A module-scoped generator fixture can then write the recorded communication as
+protocol tests after all device tests have finished:
+
+.. code-block:: python
+
+    from pathlib import Path
+
+    import pytest
+
+    from pymeasure.generator import Generator
+    from pymeasure.instruments.hcp import TC038
+
+
+    @pytest.fixture(scope="module")
+    def generator():
+        generator = Generator()
+        yield generator
+        output = Path(__file__).with_name("test_tc038.py")
+        generator.write_file(str(output))
+
+
+    @pytest.fixture(scope="module")
+    def tc038(connected_device_address, generator):
+        return generator.instantiate(
+            TC038,
+            connected_device_address,
+            "hcp",
+            adapter_kwargs={"baud_rate": 9600},
+        )
+
+
+    def test_setpoint(tc038):
+        tc038.setpoint = 20
+        assert tc038.setpoint == 20
+
+.. note::
+    The code above is a modification of the regular device test, and it should not be committed.
+    The regular device test, without the generator fixture, may be committed.
+
+The wrapped instrument is used like a regular instrument. Property access and method calls are
+recorded while the device tests run, and the generated file uses
+:func:`~pymeasure.test.expected_protocol` so it can run later without a connected device.
+The generator overwrites its output file, so review the generated changes before committing them.

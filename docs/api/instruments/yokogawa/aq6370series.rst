@@ -6,6 +6,10 @@ Yokogawa AQ6370 Series of Optical Spectrum Analyzers
     :members:
     :show-inheritance:
 
+.. autoclass:: pymeasure.instruments.yokogawa.aq6370series.AQ6370E
+    :members:
+    :show-inheritance:
+
 .. autoclass:: pymeasure.instruments.yokogawa.aq6370series.AQ6370D
     :members:
     :show-inheritance:

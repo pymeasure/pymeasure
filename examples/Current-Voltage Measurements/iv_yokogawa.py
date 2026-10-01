@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,19 +36,18 @@ python iv_yokogawa.py
 
 """
 
+import logging
 import sys
 from time import sleep
+
 import numpy as np
 
-from pymeasure.instruments.keithley import Keithley2000
-from pymeasure.instruments.yokogawa import Yokogawa7651
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
-from pymeasure.experiment import (
-    Procedure, FloatParameter, unique_filename, Results
-)
+from pymeasure.experiment import FloatParameter, Procedure, Results, unique_filename
+from pymeasure.instruments.keithley import Keithley2000
+from pymeasure.instruments.yokogawa import Yokogawa7651
 
-import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
@@ -61,7 +60,7 @@ class IVProcedure(Procedure):
     delay = FloatParameter('Delay Time', units='ms', default=20)
     voltage_range = FloatParameter('Voltage Range', units='V', default=10)
 
-    DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Resistance (Ohm)']
+    DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Resistance (ohm)']
 
     def startup(self):
         log.info("Setting up instruments")
@@ -86,7 +85,7 @@ class IVProcedure(Procedure):
 
         log.info("Starting to sweep through current")
         for i, current in enumerate(currents):
-            log.debug("Measuring current: %g mA" % current)
+            log.debug(f"Measuring current: {current:g} mA")
 
             self.source.source_current = current
             # Or use self.source.ramp_to_current(current, delay=0.1)
@@ -100,7 +99,7 @@ class IVProcedure(Procedure):
             data = {
                 'Current (A)': current,
                 'Voltage (V)': voltage,
-                'Resistance (Ohm)': resistance
+                'Resistance (ohm)': resistance
             }
             self.emit('results', data)
             self.emit('progress', 100. * i / steps)

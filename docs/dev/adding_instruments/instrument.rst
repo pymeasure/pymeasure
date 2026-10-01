@@ -41,23 +41,16 @@ Copy an existing instrument documentation file, which will automatically generat
 Instrument file
 ===============
 
-All standard instruments should be child class of :class:`Instrument <pymeasure.instruments.Instrument>`. This provides the basic functionality for working with :class:`Adapters <pymeasure.adapters.Adapter>`, which perform the actual communication. 
+All standard instruments should be child class of :class:`Instrument <pymeasure.instruments.Instrument>`. This provides the basic functionality for working with :class:`Adapters <pymeasure.adapters.Adapter>`, which perform the actual communication.
 
 The most basic instrument, for our "Extreme 5000" example starts like this:
-
-.. testsetup::
-
-    # Behind the scene, replace Instrument with FakeInstrument to enable
-    # doctesting simple usage cases (default doctest group)
-    from pymeasure.instruments.fakes import FakeInstrument as Instrument
-
 
 .. testcode::
 
     #
     # This file is part of the PyMeasure package.
     #
-    # Copyright (c) 2013-2024 PyMeasure Developers
+    # Copyright (c) 2013-2026 PyMeasure Developers
     #
     # Permission is hereby granted, free of charge, to any person obtaining a copy
     # of this software and associated documentation files (the "Software"), to deal
@@ -78,16 +71,16 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     # THE SOFTWARE.
     #
 
-    # from pymeasure.instruments import Instrument
+    from pymeasure.instruments import AdapterType, Instrument
 
 This is a minimal instrument definition:
 
 .. testcode::
-    
+
     class Extreme5000(Instrument):
         """Control the imaginary Extreme 5000 instrument."""
 
-        def __init__(self, adapter, name="Extreme 5000", **kwargs):
+        def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", **kwargs):
             super().__init__(
                 adapter,
                 name,
@@ -146,6 +139,7 @@ For example, if an instrument complies to SCPI standards, you can add :class:`~p
 
 This mixin adds default SCPI properties like :attr:`~pymeasure.instruments.generic_types.SCPIMixin.id`, :attr:`~pymeasure.instruments.generic_types.SCPIMixin.status` and default methods like :meth:`~pymeasure.instruments.generic_types.SCPIMixin.clear` and :meth:`~pymeasure.instruments.generic_types.SCPIMixin.reset` to :code:`SomeSCPIInstrument`.
 
+You can check whether your instrument can safely inherit from :class:`~pymeasure.instruments.generic_types.SCPIMixin` by running :code:`pytest -k scpi_mixin --device-address "<instrument-address>"`.
 
 Frequent properties
 -------------------
@@ -218,9 +212,9 @@ The status property could look like this:
 .. testcode::
 
     status = Instrument.measurement(
-        "STB?", 
+        "STB?",
         """Measure the status of the device as enum.""",
-        get_process=lambda v: ErrorCode(v), 
+        get_process=lambda v: ErrorCode(v),
     )
 
 .. _default_connection_settings:
@@ -240,7 +234,7 @@ The simplest version, suitable when the instrument connection needs default sett
 
 .. code-block:: python
 
-    def __init__(self, adapter, name="Extreme 5000", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -252,7 +246,7 @@ This is suitable when the instrument has one type of interface, or any defaults 
 
 .. code-block:: python
 
-    def __init__(self, adapter, name="Extreme 5000", baud_rate=2400, **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", baud_rate: int = 2400, **kwargs):
         super().__init__(
             adapter,
             name,
@@ -264,7 +258,7 @@ If you want to set defaults, but they don't need to be prominently exposed for r
 
 .. code-block:: python
 
-    def __init__(self, adapter, name="Extreme 5000", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
@@ -283,7 +277,7 @@ These then contain a *dictionary* with the settings specific to the respective i
 
 .. code-block:: python
 
-    def __init__(self, adapter, name="Extreme 5000", baud_rate=2400, **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", baud_rate: int = 2400, **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
@@ -295,7 +289,7 @@ These then contain a *dictionary* with the settings specific to the respective i
             **kwargs
         )
 
-When the instrument instance is created, the interface-specific settings for the actual interface being used get merged with ``**kwargs`` before passing them on to PyVISA, the rest is discarded. 
+When the instrument instance is created, the interface-specific settings for the actual interface being used get merged with ``**kwargs`` before passing them on to PyVISA, the rest is discarded.
 This way, we always pass on a valid set of arguments.
 In addition, any entries in ``**kwargs**`` take precedence, so if they need to, it is *still* possible for users to override any defaults you set in the instrument definition.
 

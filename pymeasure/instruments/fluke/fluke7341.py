@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -30,18 +31,17 @@ class Fluke7341(Instrument):
     """ Represents the compact constant temperature bath from Fluke.
     """
 
-    def __init__(self, adapter, name="Fluke 7341", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Fluke 7341", **kwargs):
         kwargs.setdefault('timeout', 2000)
         kwargs.setdefault('write_termination', '\r\n')
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             asrl={'baud_rate': 2400},
             **kwargs
         )
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
         Extract the value from the response string.
@@ -49,7 +49,7 @@ class Fluke7341(Instrument):
         Responses are in the format "`type`: `value` `optional information`".
         Optional information is for example the unit (degree centigrade or Fahrenheit).
         """
-        return super().read().split(":")[-1]
+        return super().read(**kwargs).split(":")[-1]
 
     set_point = Instrument.control("s", "s=%g",
                                    """Control the temperature setpoint (float from -40 to 150 °C)
@@ -64,6 +64,7 @@ class Fluke7341(Instrument):
         """Control the temperature unit: `c` for Celsius and `f` for Fahrenheit`.""",
         validator=strict_discrete_set,
         values=('c', 'f'),
+        cast=str,
     )
 
     temperature = Instrument.measurement("t",
@@ -75,5 +76,5 @@ class Fluke7341(Instrument):
     id = Instrument.measurement("*ver",
                                 """Get the instrument model.""",
                                 cast=str,
-                                get_process=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}",
+                                get_process_list=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}",
                                 )

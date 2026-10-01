@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,7 @@
 import logging
 
 from .adapter import Adapter, FakeAdapter
-
 from .protocol import ProtocolAdapter
-
-from pymeasure.adapters.telnet import TelnetAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -36,14 +33,10 @@ try:
     from pymeasure.adapters.visa import VISAAdapter
 except ImportError:
     log.warning("PyVISA library could not be loaded")
+else:
+    from pymeasure.adapters.prologix import PrologixAdapter
 
 try:
     from pymeasure.adapters.serial import SerialAdapter
-    from pymeasure.adapters.prologix import PrologixAdapter
 except ImportError:
     log.warning("PySerial library could not be loaded")
-
-try:
-    from pymeasure.adapters.vxi11 import VXI11Adapter
-except ImportError:
-    log.warning("VXI-11 library could not be loaded")

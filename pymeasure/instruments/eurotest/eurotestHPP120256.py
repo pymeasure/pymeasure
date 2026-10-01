@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,15 +23,13 @@
 #
 import logging
 import math
-
 import re
 import time
+from enum import IntFlag
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
-from pymeasure.instruments.validators import strict_discrete_set
-
-from enum import IntFlag
+from pymeasure.instruments.instrument import AdapterType
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -93,13 +91,15 @@ class EurotestHPP120256(Instrument):
     response_encoding = "iso-8859-2"
     regex = re.compile(r'([+-]?([\d]*\.)?[\d]+)')
 
-    def __init__(self,
-                 adapter,
-                 name="Euro Test High Voltage DC Source model HPP-120-256",
-                 query_delay=0.1,
-                 write_delay=0.4,
-                 timeout=5000,
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Euro Test High Voltage DC Source model HPP-120-256",
+        query_delay: float = 0.1,
+        write_delay: float = 0.4,
+        timeout: int = 5000,
+        **kwargs,
+    ):
 
         super().__init__(
             adapter,
@@ -107,7 +107,6 @@ class EurotestHPP120256(Instrument):
             write_termination="\n",
             read_termination="",
             send_end=True,
-            includeSCPI=False,
             timeout=timeout,
             **kwargs
         )
@@ -126,7 +125,8 @@ class EurotestHPP120256(Instrument):
         # getter device response: "U, RANGE=3.000kV, VALUE=2.458kV"
         validator=strict_range,
         values=VOLTAGE_RANGE,
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
@@ -138,7 +138,8 @@ class EurotestHPP120256(Instrument):
         # hence the convenience of the get_process.
         validator=strict_range,
         values=CURRENT_RANGE,
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
@@ -150,7 +151,8 @@ class EurotestHPP120256(Instrument):
         # hence the convenience of the get_process.
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
@@ -160,7 +162,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage will return 2458.0,
         # hence the convenience of the get_process.
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
@@ -170,8 +173,9 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
         # hence the convenience of the get_process.
-        get_process=lambda r:
-        float(EurotestHPP120256.regex.search(r[1]).groups()[0])
+        cast=str,
+        get_process_list=lambda r:
+        float(EurotestHPP120256.regex.search(r[1].strip()).groups()[0])
     )
 
     current = Instrument.measurement(
@@ -180,7 +184,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA", then current will return a 1739.0,
         # hence the convenience of the get_process."""
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
@@ -190,7 +195,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
         # hence the convenience of the get_process.
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[1].strip()).groups()[0])
     )
 
@@ -202,7 +208,8 @@ class EurotestHPP120256(Instrument):
         validator=strict_discrete_set,
         values={True: 'ENable', False: 'DISable'},
         map_values=True,
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         EurotestHPP120256.EurotestHPP120256Status(
             int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
                 decode('utf-8', 'ignore'), 2)
@@ -217,7 +224,8 @@ class EurotestHPP120256(Instrument):
         validator=strict_discrete_set,
         values={True: 'ON', False: 'OFF'},
         map_values=True,
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         EurotestHPP120256.EurotestHPP120256Status(
             int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
                 decode('utf-8', 'ignore'), 2)
@@ -227,7 +235,8 @@ class EurotestHPP120256(Instrument):
     id = Instrument.measurement(
         "ID",
         """Get the identification of the instrument (string) """,
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
 
@@ -253,7 +262,8 @@ class EurotestHPP120256(Instrument):
         # local  b2     remote              local
         # kilena b1     kill disable        kill enable
         # on     b0     off                 high voltage is ON
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         EurotestHPP120256.EurotestHPP120256Status(
             int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
                 decode('utf-8', 'ignore'), 2)
@@ -271,23 +281,25 @@ class EurotestHPP120256(Instrument):
         # LAM,TRIP ERROR Software current trip occurred
         # LAM,INPUT ERROR Wrong command received
         # LAM,OK Status OK
-        get_process=lambda r:
+        cast=str,
+        get_process_list=lambda r:
         r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
 
-    def emergency_off(self):
+    def emergency_off(self) -> None:
         """ The output of the HV source will be switched OFF permanently and the values
         of the voltage and current settings set to zero"""
         log.info("Sending emergency off command to the instrument.")
 
         self.write("EMCY OFF")
 
-    def shutdown(self, voltage_rate=200.0):
+    def shutdown(self, voltage_rate: float = 200.0) -> None:
         """
         Change the output voltage setting (V) to zero and
         the ramp speed - voltage_rate (V/s) of the output voltage.
         After calling shutdown, if the HV voltage output > 0
         it should drop to zero at a certain rate given by the voltage_rate parameter.
+
         :param voltage_rate: indicates the changing rate (V/s) of the voltage output
         """
         log.info(f"Executing the shutdown function with voltage_rate: {voltage_rate} V/s.")
@@ -295,12 +307,13 @@ class EurotestHPP120256(Instrument):
         self.ramp_to_zero(voltage_rate)
         super().shutdown()
 
-    def ramp_to_zero(self, voltage_rate=200.0):
+    def ramp_to_zero(self, voltage_rate: float = 200.0) -> None:
         """
         Sets the voltage output setting to zero and the ramp setting
         to a value determined by the voltage_rate parameter.
         In summary, the method conducts (ramps) the voltage output to zero
-        at a determinated voltage changing rate (ramp in V/s).
+        at a determined voltage changing rate (ramp in V/s).
+
         :param voltage_rate: Is the changing rate (ramp in V/s) for the ramp setting
         """
         log.info(f"Executing the ramp_to_zero function with ramp: {voltage_rate} V/s.")
@@ -308,22 +321,29 @@ class EurotestHPP120256(Instrument):
         self.voltage_ramp = voltage_rate
         self.voltage_setpoint = 0
 
-    def wait_for_output_voltage_reached(self, voltage_setpoint, abs_output_voltage_error=0.03,
-                                        check_period=1.0, timeout=60.0):
+    def wait_for_output_voltage_reached(
+        self,
+        voltage_setpoint: float,
+        abs_output_voltage_error: float = 0.03,
+        check_period: float = 1.0,
+        timeout: float = 60.0,
+    ) -> None:
         """
         Wait until HV voltage output reaches the voltage setpoint.
 
         Checks the voltage output every check_period seconds and raises an exception
         if the voltage output doesn't reach the voltage setting until the timeout time.
-        :param voltage_setpoint: the voltage in kVolts setted in the HV power supply which
-        should be present at the output after some time (depends on the ramp setting).
+
+        :param voltage_setpoint: the voltage in kVolts set in the HV power supply which
+            should be present at the output after some time (depends on the ramp setting).
         :param abs_output_voltage_error: absolute error in kVolts for being considered
-        an output voltage reached.
+            an output voltage reached.
         :param check_period: voltage output will be measured every check_period (seconds) time.
         :param timeout: time (seconds) give to the voltage output to reach the voltage setting.
+
         :return: None
         :raises: Exception if the voltage output can't reach the voltage setting
-        before the timeout completes (seconds).
+            before the timeout completes (seconds).
         """
         log.info("Executing the wait_for_output_voltage_reached function.")
 
@@ -356,7 +376,7 @@ class EurotestHPP120256(Instrument):
         log.info("Waiting for voltage output set done.")
 
     # Wrapper functions for the Adapter object
-    def write(self, command, **kwargs):
+    def write(self, command: str, **kwargs) -> None:
         """Overrides Instrument write method for including write_delay time after the parent call.
 
         :param command: command string to be sent to the instrument
@@ -366,12 +386,13 @@ class EurotestHPP120256(Instrument):
         super().write(command, **kwargs)
         self.last_write_timestamp = time.time()
 
-    def ask(self, command):
-        """ Overrides Instrument ask method for including query_delay time on parent call.
-        :param command: Command string to be sent to the instrument.
-        :returns: String returned by the device without read_termination.
+    def wait_for(self, query_delay: float | None = None) -> None:
+        """Wait for some time. Used by 'ask' to wait before reading.
+
+        :param query_delay: Delay between writing and reading in seconds.
+            None means :attr:`query_delay`.
         """
-        return super().ask(command, self.query_delay)
+        super().wait_for(self.query_delay if query_delay is None else query_delay)
 
     class EurotestHPP120256Status(IntFlag):
         """

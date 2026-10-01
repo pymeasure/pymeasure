@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,14 +23,14 @@
 #
 
 import logging
+import time
 from warnings import warn
+
+import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 
 from .buffer import KeithleyBuffer
-
-import numpy as np
-import time
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -53,7 +53,7 @@ def clist_validator(value, values):
     elif isinstance(value, (list, tuple, np.ndarray, range)):
         clist = [f"{x:d}" for x in value]
     else:
-        raise ValueError(f"Type of value ({type(value)}) not valid")
+        raise TypeError(f"Type of value ({type(value)}) not valid")
 
     # Pad numbers to length (if required)
     clist = [c.rjust(2, "0") for c in clist]
@@ -112,7 +112,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
     # Routing commands
     closed_channels = Instrument.control(
         "ROUTe:MULTiple:CLOSe?", "ROUTe:MULTiple:CLOSe %s",
-        """ Parameter that controls the opened and closed channels.
+        """ Control the opened and closed channels.
         All mentioned channels are closed, other channels will be opened.
         """,
         validator=clist_validator,
@@ -121,13 +121,13 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         check_set_errors=True,
         separator=None,
         get_process=lambda v: [
-            int(vv) for vv in (v.strip(" ()@,").split(",")) if not vv == ""
+            int(vv) for vv in (v.strip(" ()@,").split(",")) if vv != ""
         ],
     )
 
     open_channels = Instrument.setting(
         "ROUTe:MULTiple:OPEN %s",
-        """ A parameter that opens the specified list of channels. Can only
+        """ Set the specified list of channels. Can only
         be set.
         """,
         validator=clist_validator,
@@ -141,7 +141,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         :param channels: a list of channel numbers, or single channel number
         """
         clist = clist_validator(channels, self.CLIST_VALUES)
-        state = self.ask("ROUTe:MULTiple:STATe? %s" % clist)
+        state = self.ask(f"ROUTe:MULTiple:STATe? {clist}")
 
         return state
 
@@ -216,10 +216,10 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         """
 
         if slot is not None and self.cards[slot] != "7709":
-            raise ValueError("No 7709 card installed in slot %g" % slot)
+            raise ValueError(f"No 7709 card installed in slot {slot:g}")
 
         if isinstance(rows, str) and isinstance(columns, str):
-            raise ValueError("Only one parameter can be 'all'")
+            raise TypeError("Only one parameter can be 'all'")
         elif isinstance(rows, str) and rows == "all":
             rows = list(range(1, 7))
         elif isinstance(columns, str) and columns == "all":
@@ -282,6 +282,11 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
 
     @property
     def error(self):
+        """Get the next error from the queue.
+
+        .. deprecated:: 0.15
+            Use `next_error` instead.
+        """
         warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
         return self.next_error
 
@@ -291,9 +296,9 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
 
     options = Instrument.measurement(
         "*OPT?",
-        """Property that lists the installed cards in the Keithley 2700.
+        """Get the lists of the installed cards in the Keithley 2700.
         Returns a dict with the integer card numbers on the position.""",
-        cast=False
+        cast=str
     )
 
     ###########
@@ -302,7 +307,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
 
     text_enabled = Instrument.control(
         "DISP:TEXT:STAT?", "DISP:TEXT:STAT %d",
-        """ A boolean property that controls whether a text message can be
+        """ Control (boolean) whether a text message can be
         shown on the display of the Keithley 2700.
         """,
         values={True: 1, False: 0},
@@ -310,7 +315,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
     )
     display_text = Instrument.control(
         "DISP:TEXT:DATA?", "DISP:TEXT:DATA '%s'",
-        """ A string property that controls the text shown on the display of
+        """ Control (string) the text shown on the display of
         the Keithley 2700. Text can be up to 12 ASCII characters and must be
         enabled to show.
         """,

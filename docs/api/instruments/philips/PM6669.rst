@@ -1,0 +1,7 @@
+#############################################
+Philips PM 6669 Universal Frequency Counter
+#############################################
+
+.. autoclass:: pymeasure.instruments.philips.PM6669
+    :members:
+    :show-inheritance:

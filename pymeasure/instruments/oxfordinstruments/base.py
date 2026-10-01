@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,14 @@
 #
 
 
-from pymeasure.instruments import Instrument
-from pyvisa.errors import VisaIOError
-from pyvisa import constants as vconst
-import re
 import logging
+import re
 
+from pyvisa import constants as vconst
+from pyvisa.errors import VisaIOError
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import AdapterType
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -44,7 +46,7 @@ class OxfordInstrumentsBase(Instrument):
     Checks the replies from instruments for validity.
 
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
-    :param string name: The name of the instrument. Often the model designation by default.
+    :param name: The name of the instrument. Often the model designation by default.
     :param max_attempts: Integer that sets how many attempts at getting a
         valid response to a query can be made
     :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
@@ -56,12 +58,17 @@ class OxfordInstrumentsBase(Instrument):
 
     regex_pattern = r"^([a-zA-Z])[\d.+-]*$"
 
-    def __init__(self, adapter, name="OxfordInstruments Base", max_attempts=5, **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "OxfordInstruments Base",
+        max_attempts: int = 5,
+        **kwargs,
+    ):
         kwargs.setdefault('read_termination', '\r')
 
         super().__init__(adapter,
                          name=name,
-                         includeSCPI=False,
                          asrl={
                              'baud_rate': 9600,
                              'data_bits': 8,
@@ -71,7 +78,7 @@ class OxfordInstrumentsBase(Instrument):
                          **kwargs)
         self.max_attempts = max_attempts
 
-    def ask(self, command):
+    def ask(self, command: str) -> str:  # type: ignore[override]
         """Write the command to the instrument and return the resulting ASCII response. Also check
         the validity of the response before returning it; if the response is not valid, another
         attempt is made at getting a valid response, until the maximum amount of attempts is
@@ -106,13 +113,13 @@ class OxfordInstrumentsBase(Instrument):
                 if e_visa.args == self.timeoutError.args:
                     pass
                 else:
-                    raise e_visa
+                    raise
 
         # No valid response has been received within the maximum allowed number of attempts
         raise OxfordVISAError(f"Retried {self.max_attempts} times without getting a valid "
                               "response, maybe there is something worse at hand.")
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Write command to instrument and check whether the reply indicates that the given command
         was not understood.
         The devices from Oxford Instruments reply with '?xxx' to a command 'xxx' if this command is
@@ -123,9 +130,9 @@ class OxfordInstrumentsBase(Instrument):
         :raises: :class:`~.OxfordVISAError` if the instrument does not recognise the supplied
             command or if the response of the instrument is not understood
         """
-        super().write(command)
+        super().write(command, **kwargs)
 
-        if not command[0] == "$":
+        if command[0] != "$":
             response = self.read()
 
             log.debug(
@@ -141,7 +148,7 @@ class OxfordInstrumentsBase(Instrument):
                     raise OxfordVISAError(f"The response of the instrument to command '{command}' "
                                           f"is not valid: '{response}'")
 
-    def is_valid_response(self, response, command):
+    def is_valid_response(self, response: str, command: str) -> bool:
         """Check if the response received from the instrument after a command is valid and
         understood by the instrument.
 
@@ -172,10 +179,10 @@ class OxfordInstrumentsBase(Instrument):
         except TypeError:
             match = False
 
-        if match and not match.groups()[0] == command[0]:
+        if match and match.groups()[0] != command[0]:
             match = False
 
         return bool(match)
 
-    def __repr__(self):
-        return "<OxfordInstrumentsAdapter(adapter='%s')>" % self.adapter.connection.resource_name
+    def __repr__(self) -> str:
+        return f"<OxfordInstrumentsAdapter(adapter='{self.adapter.connection.resource_name}')>"

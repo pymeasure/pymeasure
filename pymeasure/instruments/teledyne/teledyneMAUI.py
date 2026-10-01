@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,15 @@
 # THE SOFTWARE.
 #
 
+from typing import cast
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
-    TeledyneOscilloscopeChannel, _results_list_to_dict
+from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import (
+    TeledyneOscilloscope,
+    TeledyneOscilloscopeChannel,
+    _results_list_to_dict,
+)
 
 
 class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
@@ -80,7 +86,7 @@ class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
         ch_setup = {
             "channel": self.id,
             "attenuation": self.probe_attenuation,
-            "bandwidth_limit": self.bwlimit[f"C{self.id}"],
+            "bandwidth_limit": self.bwlimit[f"C{self.id}"],  # pyright: ignore[reportArgumentType]
             "coupling": self.coupling,
             "offset": self.offset,
             "display": self.display,
@@ -101,8 +107,11 @@ class TeledyneMAUI(TeledyneOscilloscope):
     The manual detailing the API is "MAUI Oscilloscopes Remote Control and Automation Manual"
     (`link`_).
 
+    This class of Teledyne oscilloscopes also support direct VBS commands.
+    See :meth:`~vbs_ask` and :meth:`~vbs_write`.
+
     .. _link: https://cdn.teledynelecroy.com/files/manuals/
-              maui-remote-control-automation_27jul22.pdf
+              maui-remote-control-and-automation-manual.pdf
     """
 
     ch_1 = Instrument.ChannelCreator(TeledyneMAUIChannel, 1)
@@ -116,6 +125,40 @@ class TeledyneMAUI(TeledyneOscilloscope):
     # Change listed values for existing commands:
     bwlimit_values = TeledyneMAUIChannel.BANDWIDTH_LIMITS
 
+    def vbs_write(self, message: str):
+        """Write a VBS command directly to the device.
+
+        This class of oscilloscopes also allows the direct usage of Visual Basic
+        Scripting (VBScript). With this method a literal VBS command is sent.
+        You can use the 'MAUI Browser' on the oscilloscope to list all available
+        variables.
+
+        A very basic example of usage:
+
+        .. code:: python
+
+           instrument.vbs_write("app.Display.GridMode = Dual")
+        """
+        query = f"VBS '{message}'"
+        self.write(query)
+
+    def vbs_ask(self, name: str) -> str:
+        """Return the value of a VBS variable.
+
+        Only the target needs to be specified, a query is formatted by this method.
+        Note: the target name is not escaped!
+
+        See :meth:`~vbs_write` for more info.
+
+        A very basic example of usage:
+
+        .. code:: python
+
+           instrument.vbs_ask("app.Display.GridMode")
+        """
+        query = f"VBS? 'Return={name}'"
+        return self.ask(query)
+
     ###############
     #   Trigger   #
     ###############
@@ -128,16 +171,16 @@ class TeledyneMAUI(TeledyneOscilloscope):
         - "trigger_type": condition that will trigger the acquisition of waveforms
           [edge,slew,glit,intv,runt,drop]
         - "source": trigger source [c1,c2,c3,c4]
-        - "hold_type": hold type (refer to page 172 of programing guide)
-        - "hold_value1": hold value1 (refer to page 172 of programing guide)
-        - "hold_value2": hold value2 (refer to page 172 of programing guide)
+        - "hold_type": hold type (refer to page 172 of programming guide)
+        - "hold_value1": hold value1 (refer to page 172 of programming guide)
+        - "hold_value2": hold value2 (refer to page 172 of programming guide)
         - "coupling": input coupling for the selected trigger sources
         - "level": trigger level voltage for the active trigger source
         - "slope": trigger slope of the specified trigger source
 
         """
         trigger_select = self.trigger_select
-        ch = self.ch(trigger_select[1])
+        ch = self.ch(cast(str | int, trigger_select[1]))
         tb_setup = {
             "mode": self.trigger_mode,
             "trigger_type": trigger_select[0],
@@ -166,7 +209,8 @@ class TeledyneMAUI(TeledyneOscilloscope):
     hardcopy_setup_current = Instrument.measurement(
         "HCSU?",
         """Get current hardcopy config.""",
-        get_process=_results_list_to_dict,
+        get_process_list=_results_list_to_dict,
+        cast=cast_or_str(float),
     )
 
     def hardcopy_setup(self, **kwargs):
