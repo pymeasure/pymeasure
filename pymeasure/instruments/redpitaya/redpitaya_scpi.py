@@ -250,7 +250,7 @@ class AnalogOutputFastChannel(Channel):
     )
 
     def run(self):
-        """ It will trig the generation of the specified fast analog output immediately internally"""
+        """Trigger the generation of the specified fast analog output immediately internally."""
         self.write("SOUR{ch}:TRig:INT")
 
     enable = Instrument.control(
@@ -491,7 +491,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
         self.write("ANALOG:RST")
 
     def output_reset(self):
-        """ Reset the Analog Output generation channels """
+        """ Reset the Analog Output generation channels. """
         self.write("GEN:RST")
 
     # ACQUISITION SECTION
