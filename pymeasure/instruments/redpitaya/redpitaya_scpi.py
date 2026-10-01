@@ -458,6 +458,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
                               "SYST:TIME %s",
                               """Control the time on board
                               time should be given as a datetime.time object""",
+                              cast=str,
                               get_process=lambda _tstr:
                               datetime.time.fromisoformat(_tstr),
                               set_process=lambda _time:
