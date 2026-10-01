@@ -328,70 +328,70 @@ class AnalogOutputFastChannel(Channel):
 
 
     # Burst mode
-    #Not working at the moment
+    #Not working at the moment to be further tested !!!
 
-    BURST_MODES = ('CONTINUOUS', 'BURST')
-    burst_mode = Instrument.control(
-        "SOUR{ch}:BURS:STAT?",
-        "SOUR{ch}:BURS:STAT %s",
-        """ A string property that controls the generation mode. 
-        Can be set to: CONTINUOUS or BURST
-        Red Pitaya will generate R bursts with N signal periods.
-        P is the time between the start of one and the start of the next burst.""",
-        validator=strict_discrete_set,
-        values=BURST_MODES,
-    )
-
-    burst_initial_voltage = Instrument.control(
-        "SOUR{ch}:BURS:INITValue?",
-        "SOUR{ch}:BURS:INITValue %f",
-        """ A floating point property that controls the initial voltage value, 
-        from 0 V to 1V, that appears on the fast analog output once it is enabled 
-        but before the signal is generated.""",
-        validator=strict_range,
-        values=AMPLITUDES,
-    )
-
-    burst_last_voltage = Instrument.control(
-        "SOUR{ch}:BURS:LASTValue?",
-        "SOUR{ch}:BURS:LASTValue %f",
-        """ A floating point property that controls the end value of the 
-        generated burst signal, from 0 V to 1V.
-        The output will stay on this value until a new signal is generated.""",
-        validator=strict_range,
-        values=AMPLITUDES,
-    )
-
-    NUM = [1, 65536]
-    burst_num_cycles= Instrument.control(
-        "SOUR{ch}:BURS:NCYC?",
-        "SOUR{ch}:BURS:NCYC %d",
-        """ An integer point property that controls the number of cycles in one burst (N),
-        the number of generated waveforms in a burst.""",
-        validator=strict_range,
-        values=NUM,
-    )
-
-    burst_num_repetitions = Instrument.control(
-        "SOUR{ch}:BURS:NOR?",
-        "SOUR{ch}:BURS:NOR %d",
-        """ An integer point property that controls the number of repeated bursts (R),
-        (65536 == INF repetitions).""",
-        validator=strict_range,
-        values=NUM,
-    )
-
-    PERIOD = [1, 5e8] #in microseconds
-    burst_period = Instrument.control(
-        "SOUR{ch}:BURS:INT:PER?",
-        "SOUR{ch}:BURS:INT:PER %d",
-        """ An integer point property that controls the duration of a single burst (P). 
-        This specifies the time between the start of one and the start of the next burst. 
-        The bursts will always have at least 1 microsecond between them: 
-        If the period is shorter than the burst, the software will default to 1 us between bursts.""",
-        validator=strict_range,
-        values=PERIOD,
-    )
+    # BURST_MODES = ('CONTINUOUS', 'BURST')
+    # burst_mode = Instrument.control(
+    #     "SOUR{ch}:BURS:STAT?",
+    #     "SOUR{ch}:BURS:STAT %s",
+    #     """ A string property that controls the generation mode.
+    #     Can be set to: CONTINUOUS or BURST
+    #     Red Pitaya will generate R bursts with N signal periods.
+    #     P is the time between the start of one and the start of the next burst.""",
+    #     validator=strict_discrete_set,
+    #     values=BURST_MODES,
+    # )
+    #
+    # burst_initial_voltage = Instrument.control(
+    #     "SOUR{ch}:BURS:INITValue?",
+    #     "SOUR{ch}:BURS:INITValue %f",
+    #     """ A floating point property that controls the initial voltage value,
+    #     from 0 V to 1V, that appears on the fast analog output once it is enabled
+    #     but before the signal is generated.""",
+    #     validator=strict_range,
+    #     values=AMPLITUDES,
+    # )
+    #
+    # burst_last_voltage = Instrument.control(
+    #     "SOUR{ch}:BURS:LASTValue?",
+    #     "SOUR{ch}:BURS:LASTValue %f",
+    #     """ A floating point property that controls the end value of the
+    #     generated burst signal, from 0 V to 1V.
+    #     The output will stay on this value until a new signal is generated.""",
+    #     validator=strict_range,
+    #     values=AMPLITUDES,
+    # )
+    #
+    # NUM = [1, 65536]
+    # burst_num_cycles= Instrument.control(
+    #     "SOUR{ch}:BURS:NCYC?",
+    #     "SOUR{ch}:BURS:NCYC %d",
+    #     """ An integer point property that controls the number of cycles in one burst (N),
+    #     the number of generated waveforms in a burst.""",
+    #     validator=strict_range,
+    #     values=NUM,
+    # )
+    #
+    # burst_num_repetitions = Instrument.control(
+    #     "SOUR{ch}:BURS:NOR?",
+    #     "SOUR{ch}:BURS:NOR %d",
+    #     """ An integer point property that controls the number of repeated bursts (R),
+    #     (65536 == INF repetitions).""",
+    #     validator=strict_range,
+    #     values=NUM,
+    # )
+    #
+    # PERIOD = [1, 5e8] #in microseconds
+    # burst_period = Instrument.control(
+    #     "SOUR{ch}:BURS:INT:PER?",
+    #     "SOUR{ch}:BURS:INT:PER %d",
+    #     """ An integer point property that controls the duration of a single burst (P).
+    #     This specifies the time between the start of one and the start of the next burst.
+    #     The bursts will always have at least 1 microsecond between them:
+    #     If the period is shorter than the burst, the software will default to 1 us between bursts.""",
+    #     validator=strict_range,
+    #     values=PERIOD,
+    # )
 
 
 class RedPitayaScpi(SCPIMixin, Instrument):
