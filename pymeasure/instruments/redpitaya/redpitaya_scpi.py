@@ -486,7 +486,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
         self.write("ANALOG:RST")
 
     def output_reset(self):
-        """ Reset the Analog Output generation channels """
+        """ Reset the Analog Output generation channels. """
         self.write("GEN:RST")
 
     # ACQUISITION SECTION
