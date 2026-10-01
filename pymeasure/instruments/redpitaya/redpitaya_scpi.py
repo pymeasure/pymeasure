@@ -624,18 +624,3 @@ class RedPitayaScpi(SCPIMixin, Instrument):
         values=[-LV_MAX, LV_MAX],
         dynamic=True,
     )
-
-
-
-if __name__ == '__main__':
-    print("joy")
-    inst = RedPitayaScpi(ip_address='10.42.0.77')
-    inst.aout1.amplitude = 0.05
-    inst.aout1.shape="SINE"
-    inst.aout1.frequency=10e3
-    inst.aout1.enable = True
-    inst.aout1.gen_trigger_source = "INT"
-    inst.aout1.run()
-
-    print("done")
-    pass
