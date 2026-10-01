@@ -228,8 +228,8 @@ class AnalogOutputFastChannel(Channel):
     dutycycle = Instrument.control(
         "SOUR{ch}:DCYC?",
         "SOUR{ch}:DCYC %f",
-        """ A floating point property that controls the duty cycle of a PWM
-        waveform function in percent, from 0% to 100% where 1 is 100%.""",
+        """Control the duty cycle of a PWM
+        waveform function as a fraction - 1 = 100% (float strictly between 0 and 1).""",
         validator=strict_range,
         values= CYCLES,
     )
