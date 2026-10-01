@@ -183,7 +183,7 @@ class AnalogOutputFastChannel(Channel):
     frequency = Instrument.control(
         "SOUR{ch}:FREQ:FIX?",
         "SOUR{ch}:FREQ:FIX %f",
-        """ A floating point property that controls the frequency of the output
+        """ Control the frequency of the output
         waveform in Hz, from 1 uHz to 50 MHz.
         For the ARBITRARY waveform, this is the frequency of one signal period 
         (a buffer of 16384 samples).""",
@@ -195,7 +195,7 @@ class AnalogOutputFastChannel(Channel):
     amplitude = Instrument.control(
         "SOUR{ch}:VOLT?",
         "SOUR{ch}:VOLT %f",
-        """ A floating point property that controls the voltage amplitude of the
+        """ Control the voltage amplitude of the
         output waveform in V, from 0 V to 1 V.""",
         validator=strict_range,
         values= AMPLITUDES,
@@ -205,7 +205,7 @@ class AnalogOutputFastChannel(Channel):
     offset = Instrument.control(
         "SOUR{ch}:VOLT:OFFS?",
         "SOUR{ch}:VOLT:OFFS %f",
-        """ A floating point property that controls the voltage offset of the
+        """ Control the voltage offset of the
         output waveform in V, from -1 V to 1 V, depending on the set
         voltage amplitude (maximum offset = (Vmax - amplitude) / 2).
         """,
@@ -217,7 +217,7 @@ class AnalogOutputFastChannel(Channel):
     phase = Instrument.control(
         "SOUR{ch}:PHAS?",
         "SOUR{ch}:PHAS %f",
-        """ A floating point property that controls the phase of the output
+        """ Control the phase of the output
         waveform in degrees, from -360 degrees to 360 degrees. 
         Not available for arbitrary waveforms.""",
         validator=strict_range,
@@ -256,7 +256,7 @@ class AnalogOutputFastChannel(Channel):
     enable = Instrument.control(
         "OUTPUT{ch}:STATE?",
         "OUTPUT{ch}:STATE %d",
-        """Enable/disable supplying voltage to the specified fast analog output. 
+        """Control the enabled state of the specified fast analog output. 
         When enabled, the signal does not start generating, until triggered""",
         validator=strict_discrete_set,
         map_values=True,
@@ -270,7 +270,7 @@ class AnalogOutputFastChannel(Channel):
     sweep_mode = Instrument.control(
         "SOUR{ch}:SWeep:MODE?",
         "SOUR{ch}:SWeep:MODE %s",
-        """ A string property that controls the mode of the sweep. Can be set to:
+        """ Control the mode of the sweep. Can be set to:
         LINEAR or LOG""",
         validator=strict_discrete_set,
         values=SWEEP_MODES,
@@ -280,7 +280,7 @@ class AnalogOutputFastChannel(Channel):
     sweep_start_frequency = Instrument.control(
         "SOUR{ch}:SWeep:FREQ:START?",
         "SOUR{ch}:SWeep:FREQ:START %f",
-        """ A floating point property that controls the start frequency for the sweep,
+        """ Control the start frequency for the sweep,
          from 1 uHz to 50 MHz.""",
         validator=strict_range,
         values=FREQUENCIES,
@@ -289,7 +289,7 @@ class AnalogOutputFastChannel(Channel):
     sweep_stop_frequency = Instrument.control(
         "SOUR{ch}:SWeep:FREQ:STOP?",
         "SOUR{ch}:SWeep:FREQ:STOP %f",
-        """ A floating point property that controls the stop frequency for the sweep,
+        """ Control the stop frequency for the sweep,
          from 1 uHz to 50 MHz.""",
         validator=strict_range,
         values=FREQUENCIES,
@@ -299,7 +299,7 @@ class AnalogOutputFastChannel(Channel):
     sweep_time = Instrument.control(
         "SOUR{ch}:SWeep:TIME?",
         "SOUR{ch}:SWeep:TIME %d",
-        """ An integer point property that controls the generation time. 
+        """ Control the generation time. 
         How long it takes to transition from the starting frequency to the final frequency, 
         from 1 us to 10 s.""",
         validator=strict_range,
@@ -309,7 +309,7 @@ class AnalogOutputFastChannel(Channel):
     sweep_state = Instrument.control(
         "SOUR{ch}:SWeep:STATE?",
         "SOUR{ch}:SWeep:STATE %s",
-        """Enables/disables generation of the sweep on the specified channel, 
+        """Control the enabled state of the sweep on the specified channel, 
         for this to work we have to enable the output channel too""",
         validator=strict_discrete_set,
         map_values=True,
@@ -320,7 +320,7 @@ class AnalogOutputFastChannel(Channel):
     sweep_direction = Instrument.control(
         "SOUR{ch}:SWeep:DIR?",
         "SOUR{ch}:SWeep:DIR %s",
-        """A string property that controls the direction of the sweep. Can be set to:
+        """Control the direction of the sweep. Can be set to:
         NORMAl (up) or UP_DOWN """,
         validator=strict_discrete_set,
         values=DIRECTION,
