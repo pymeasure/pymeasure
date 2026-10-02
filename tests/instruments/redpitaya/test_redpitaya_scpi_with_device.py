@@ -159,7 +159,7 @@ class TestRedpitaya:
         inst.acq_format = 'ASCII'
         inst.ain1.get_data(1,)
 
-    def test_ao_shape(self,redpitaya_scpi):
+    def test_ao_shape(self, redpitaya_scpi):
         inst = redpitaya_scpi
         inst.aout1.shape = 'SQUARE'
         assert inst.aout1.shape == 'SQUARE'
@@ -201,7 +201,7 @@ class TestRedpitaya:
 
     def test_ao_sweep_mode(self, redpitaya_scpi):
         inst = redpitaya_scpi
-        #Sweep Mode
+        # Sweep Mode
         inst.aout1.sweep_mode = 'LOG'
         assert inst.aout1.sweep_mode == 'LOG'
 

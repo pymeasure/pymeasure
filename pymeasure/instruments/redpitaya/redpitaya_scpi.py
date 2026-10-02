@@ -179,7 +179,7 @@ class AnalogOutputFastChannel(Channel):
         values=SHAPES,
     )
 
-    FREQUENCIES = [1e-6, 50e6] #in Hz
+    FREQUENCIES = [1e-6, 50e6]  # in Hz
     frequency = Instrument.control(
         "SOUR{ch}:FREQ:FIX?",
         "SOUR{ch}:FREQ:FIX %f",
@@ -188,20 +188,20 @@ class AnalogOutputFastChannel(Channel):
         For the ARBITRARY waveform, this is the frequency of one signal period
         (a buffer of 16384 samples).""",
         validator=strict_range,
-        values= FREQUENCIES,
+        values=FREQUENCIES,
     )
 
-    AMPLITUDES = [0, +1] #in V
+    AMPLITUDES = [0, +1]  # in V
     amplitude = Instrument.control(
         "SOUR{ch}:VOLT?",
         "SOUR{ch}:VOLT %f",
         """ Control the voltage amplitude of the
         output waveform in V, from 0 V to 1 V.""",
         validator=strict_range,
-        values= AMPLITUDES,
+        values=AMPLITUDES,
     )
 
-    OFFSETS = [-0.995, +0.995] #in V
+    OFFSETS = [-0.995, +0.995]  # in V
     offset = Instrument.control(
         "SOUR{ch}:VOLT:OFFS?",
         "SOUR{ch}:VOLT:OFFS %f",
@@ -210,10 +210,10 @@ class AnalogOutputFastChannel(Channel):
         voltage amplitude (maximum offset = (Vmax - amplitude) / 2).
         """,
         validator=strict_range,
-        values= OFFSETS,
+        values=OFFSETS,
     )
 
-    PHASES = (-360, 360) #in degrees
+    PHASES = (-360, 360)  # in degrees
     phase = Instrument.control(
         "SOUR{ch}:PHAS?",
         "SOUR{ch}:PHAS %f",
@@ -221,7 +221,7 @@ class AnalogOutputFastChannel(Channel):
         waveform in degrees, from -360 degrees to 360 degrees.
         Not available for arbitrary waveforms.""",
         validator=strict_range,
-        values= PHASES,
+        values=PHASES,
     )
 
     CYCLES = (0, 1)
@@ -231,12 +231,10 @@ class AnalogOutputFastChannel(Channel):
         """Control the duty cycle of a PWM
         waveform function as a fraction - 1 = 100% (float strictly between 0 and 1).""",
         validator=strict_range,
-        values= CYCLES,
+        values=CYCLES,
     )
 
-
     # Generation Trigger
-
     GEN_TRIGGER_SOURCES = ("EXT_PE", "EXT_NE", "INT", "GATED")
     gen_trigger_source = Instrument.control(
         "SOUR{ch}:TRig:SOUR?",
@@ -264,9 +262,7 @@ class AnalogOutputFastChannel(Channel):
         values={True: 1, False: 0},
     )
 
-
     # Sweep mode
-
     SWEEP_MODES = ('LINEAR', 'LOG')
     sweep_mode = Instrument.control(
         "SOUR{ch}:SWeep:MODE?",
@@ -277,7 +273,7 @@ class AnalogOutputFastChannel(Channel):
         values=SWEEP_MODES,
     )
 
-    #START_FREQUENCY_SWEEP= [1e-6, 50e6]
+    # START_FREQUENCY_SWEEP = [1e-6, 50e6]
     sweep_start_frequency = Instrument.control(
         "SOUR{ch}:SWeep:FREQ:START?",
         "SOUR{ch}:SWeep:FREQ:START %f",
@@ -296,7 +292,7 @@ class AnalogOutputFastChannel(Channel):
         values=FREQUENCIES,
     )
 
-    TIME = [1, 60e6] #in microseconds
+    TIME = [1, 60e6]  # in microseconds
     sweep_time = Instrument.control(
         "SOUR{ch}:SWeep:TIME?",
         "SOUR{ch}:SWeep:TIME %d",
@@ -327,9 +323,8 @@ class AnalogOutputFastChannel(Channel):
         values=DIRECTION,
     )
 
-
     # Burst mode
-    #Not working at the moment to be further tested !!!
+    # Not working at the moment to be further tested !!!
 
     # BURST_MODES = ('CONTINUOUS', 'BURST')
     # burst_mode = Instrument.control(
@@ -415,7 +410,6 @@ class RedPitayaScpi(SCPIMixin, Instrument):
 
     TRIGGER_SOURCES = ('DISABLED', 'NOW', 'CH1_PE', 'CH1_NE', 'CH2_PE', 'CH2_NE',
                        'EXT_PE', 'EXT_NE', 'AWG_PE', 'AWG_NE')
-
 
     LV_MAX = 1
     HV_MAX = 20
