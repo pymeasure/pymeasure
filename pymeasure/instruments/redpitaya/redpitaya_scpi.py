@@ -28,8 +28,8 @@ import logging
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -185,7 +185,7 @@ class AnalogOutputFastChannel(Channel):
         "SOUR{ch}:FREQ:FIX %f",
         """ Control the frequency of the output
         waveform in Hz, from 1 uHz to 50 MHz.
-        For the ARBITRARY waveform, this is the frequency of one signal period 
+        For the ARBITRARY waveform, this is the frequency of one signal period
         (a buffer of 16384 samples).""",
         validator=strict_range,
         values= FREQUENCIES,
@@ -218,7 +218,7 @@ class AnalogOutputFastChannel(Channel):
         "SOUR{ch}:PHAS?",
         "SOUR{ch}:PHAS %f",
         """ Control the phase of the output
-        waveform in degrees, from -360 degrees to 360 degrees. 
+        waveform in degrees, from -360 degrees to 360 degrees.
         Not available for arbitrary waveforms.""",
         validator=strict_range,
         values= PHASES,
@@ -241,8 +241,9 @@ class AnalogOutputFastChannel(Channel):
     gen_trigger_source = Instrument.control(
         "SOUR{ch}:TRig:SOUR?",
         "SOUR{ch}:TRig:SOUR %s",
-        """ Control the generator output trigger source (str), one of RedPitayaScpi.GEN_TRIGGER_SOURCES.
-        PE and NE means respectively Positive and Negative edge. 
+        """ Control the generator output trigger source (str), one of
+        RedPitayaScpi.GEN_TRIGGER_SOURCES.
+        PE and NE means respectively Positive and Negative edge.
         Is important to note that it appears that the trigger can only be done internally.
         """,
         validator=strict_discrete_set,
@@ -256,7 +257,7 @@ class AnalogOutputFastChannel(Channel):
     enable = Instrument.control(
         "OUTPUT{ch}:STATE?",
         "OUTPUT{ch}:STATE %d",
-        """Control the enabled state of the specified fast analog output. 
+        """Control the enabled state of the specified fast analog output.
         When enabled, the signal does not start generating, until triggered""",
         validator=strict_discrete_set,
         map_values=True,
@@ -299,8 +300,8 @@ class AnalogOutputFastChannel(Channel):
     sweep_time = Instrument.control(
         "SOUR{ch}:SWeep:TIME?",
         "SOUR{ch}:SWeep:TIME %d",
-        """ Control the generation time. 
-        How long it takes to transition from the starting frequency to the final frequency, 
+        """ Control the generation time.
+        How long it takes to transition from the starting frequency to the final frequency,
         from 1 us to 10 s.""",
         validator=strict_range,
         values=TIME,
@@ -309,7 +310,7 @@ class AnalogOutputFastChannel(Channel):
     sweep_state = Instrument.control(
         "SOUR{ch}:SWeep:STATE?",
         "SOUR{ch}:SWeep:STATE %s",
-        """Control the enabled state of the sweep on the specified channel, 
+        """Control the enabled state of the sweep on the specified channel,
         for this to work we have to enable the output channel too""",
         validator=strict_discrete_set,
         map_values=True,
@@ -388,7 +389,8 @@ class AnalogOutputFastChannel(Channel):
     #     """ An integer point property that controls the duration of a single burst (P).
     #     This specifies the time between the start of one and the start of the next burst.
     #     The bursts will always have at least 1 microsecond between them:
-    #     If the period is shorter than the burst, the software will default to 1 us between bursts.""",
+    #     If the period is shorter than the burst, the software will default to 1 us
+    #     between bursts.""",
     #     validator=strict_range,
     #     values=PERIOD,
     # )
@@ -576,7 +578,8 @@ class RedPitayaScpi(SCPIMixin, Instrument):
 
     acq_last_position = Instrument.measurement(
         "ACQ:WPOS?",
-        """Get the current position of the write pointer, i.e the index of the most recent sample in the buffer""",
+        """Get the current position of the write pointer, i.e the index of the most recent
+        sample in the buffer""",
         cast=int,
     )
 
