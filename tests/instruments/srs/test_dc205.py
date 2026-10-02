@@ -88,9 +88,9 @@ def test_output_enabled_setter():
         inst.output_enabled = True
 
 
-def test_isolation_setter():
+def test_isolation_enabled_setter():
     with expected_protocol(DC205, INIT + [("ISOL 1", None)]) as inst:
-        inst.isolation = "float"
+        inst.isolation_enabled = True
 
 
 def test_sensing_setter():
@@ -159,9 +159,9 @@ def test_scan_shape_getter():
         assert inst.scan_shape == "up-down"
 
 
-def test_scan_cycle_setter():
+def test_scan_cycle_repeated_setter():
     with expected_protocol(DC205, INIT + [("SCAC 1", None)]) as inst:
-        inst.scan_cycle = "repeat"
+        inst.scan_cycle_repeated = True
 
 
 def test_scan_state_getter():

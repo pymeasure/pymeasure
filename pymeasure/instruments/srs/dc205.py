@@ -102,11 +102,11 @@ class DC205(IEEE4882Mixin, Instrument):
         map_values=True,
     )
 
-    isolation = Instrument.control(
+    isolation_enabled = Instrument.control(
         "ISOL?", "ISOL %d",
-        """Control the output common, either 'ground' or 'float' (str).""",
+        """Control whether the output common floats instead of being tied to ground (bool).""",
         validator=strict_discrete_set,
-        values={"ground": 0, "float": 1},
+        values=BOOL_MAP,
         map_values=True,
     )
 
@@ -205,11 +205,11 @@ class DC205(IEEE4882Mixin, Instrument):
         map_values=True,
     )
 
-    scan_cycle = Instrument.control(
+    scan_cycle_repeated = Instrument.control(
         "SCAC?", "SCAC %d",
-        """Control the scan cycling mode, either 'once' or 'repeat' (str).""",
+        """Control whether the scan repeats instead of running once (bool).""",
         validator=strict_discrete_set,
-        values={"once": 0, "repeat": 1},
+        values=BOOL_MAP,
         map_values=True,
     )
 
