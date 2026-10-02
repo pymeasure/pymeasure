@@ -37,6 +37,17 @@ def test_init():
         pass
 
 
+def test_init_syncs_ranges_from_instrument():
+    # The instrument is already in the 100 V output and scan range on connection.
+    with expected_protocol(
+        DC205,
+        [("TOKN 0", None), ("RNGE?", "2"), ("SCAR?", "2"),
+         ("VOLT 50.000000", None), ("SCAE 50.000000", None)],
+    ) as inst:
+        inst.voltage = 50
+        inst.scan_end = 50
+
+
 def test_voltage_setter():
     with expected_protocol(DC205, INIT + [("VOLT 0.500000", None)]) as inst:
         inst.voltage = 0.5
