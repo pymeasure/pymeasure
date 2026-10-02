@@ -23,14 +23,36 @@
 #
 
 import logging
+from warnings import warn
 
 from pyvisa.constants import ControlFlow
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+def _deprecated(prop: InstrumentProperty, name: str, replacement: str) -> property:
+    """Wrap a property of the former flat interface so that each access warns."""
+    message = f"ThorlabsPro8000.{name} is deprecated, use {replacement} instead."
+
+    def fget(self):
+        warn(message, FutureWarning, stacklevel=2)
+        return prop.__get__(self)
+
+    def fset(self, value):
+        warn(message, FutureWarning, stacklevel=2)
+        prop.__set__(self, value)
+
+    doc = f"""{prop.__doc__}
+
+    .. deprecated:: 0.17.0
+        Use {replacement} instead.
+    """
+    return property(fget, fset, doc=doc)
 
 
 class Pro8Channel(Channel):
@@ -44,7 +66,7 @@ class Pro8Channel(Channel):
 
     def write(self, command, **kwargs):
         """Select this channel's slot, then write the module command."""
-        self.parent.write(f":SLOT {self.id}")
+        self.parent.write(f":SLOT {self.id}", **kwargs)
         self.parent.write(command, **kwargs)
 
     module_type = Channel.measurement(
@@ -202,8 +224,8 @@ class PDAPortChannel(Channel):
         """Select the parent module's slot and this port, then write the command."""
         frame = self.parent.parent
         # The slot must be selected first: selecting a slot resets the port to 1.
-        frame.write(f":SLOT {self.parent.id}")
-        frame.write(f":PORT {self.id}")
+        frame.write(f":SLOT {self.parent.id}", **kwargs)
+        frame.write(f":PORT {self.id}", **kwargs)
         frame.write(command, **kwargs)
 
     current = Channel.measurement(
@@ -324,6 +346,10 @@ class ThorlabsPro8000(SCPIMixin, Instrument):
     switches (factory default 19200).
     """
 
+    SLOTS = range(1, 9)
+    LDC_POLARITIES = ["AG", "CG"]
+    STATUS = ["ON", "OFF"]
+
     def __init__(self, adapter, name="Thorlabs Pro 8000", baud_rate=19200, **kwargs):
         kwargs.setdefault("timeout", 5000)
         super().__init__(
@@ -372,3 +398,73 @@ class ThorlabsPro8000(SCPIMixin, Instrument):
                 self.add_child(channel_class, slot, port_count=subtype)
             else:
                 self.add_child(channel_class, slot)
+
+    # Former flat interface, acting on the slot selected with :attr:`slot`.
+
+    slot = _deprecated(
+        Instrument.control(
+            ":SLOT?", ":SLOT %d",
+            """Control the selected slot (int 1 to 8).""",
+            validator=strict_discrete_set,
+            values=SLOTS,
+            cast=int,
+        ),
+        "slot", "the per-slot channels (e.g. ch_1)",
+    )
+
+    LDCCurrent = _deprecated(
+        Instrument.control(
+            ":ILD:SET?", ":ILD:SET %g",
+            """Control the laser diode current setpoint of the selected slot in A (float).""",
+        ),
+        "LDCCurrent", "ch_<slot>.current_setpoint",
+    )
+
+    LDCCurrentLimit = _deprecated(
+        Instrument.control(
+            ":LIMC:SET?", ":LIMC:SET %g",
+            """Control the software current limit of the selected slot in A (float).""",
+        ),
+        "LDCCurrentLimit", "ch_<slot>.current_limit",
+    )
+
+    LDCPolarity = _deprecated(
+        Instrument.control(
+            ":LDPOL?", ":LDPOL %s",
+            """Control the laser diode polarity of the selected slot ('AG' or 'CG').""",
+            validator=strict_discrete_set,
+            values=LDC_POLARITIES,
+            cast=str,
+        ),
+        "LDCPolarity", "ch_<slot>.ld_polarity",
+    )
+
+    LDCStatus = _deprecated(
+        Instrument.control(
+            ":LASER?", ":LASER %s",
+            """Control the laser output of the selected slot ('ON' or 'OFF').""",
+            validator=strict_discrete_set,
+            values=STATUS,
+            cast=str,
+        ),
+        "LDCStatus", "ch_<slot>.laser_enabled",
+    )
+
+    TEDStatus = _deprecated(
+        Instrument.control(
+            ":TEC?", ":TEC %s",
+            """Control the TEC output of the selected slot ('ON' or 'OFF').""",
+            validator=strict_discrete_set,
+            values=STATUS,
+            cast=str,
+        ),
+        "TEDStatus", "ch_<slot>.tec_enabled",
+    )
+
+    TEDSetTemperature = _deprecated(
+        Instrument.control(
+            ":TEMP:SET?", ":TEMP:SET %g",
+            """Control the temperature setpoint of the selected slot in °C (float).""",
+        ),
+        "TEDSetTemperature", "ch_<slot>.temperature_setpoint",
+    )

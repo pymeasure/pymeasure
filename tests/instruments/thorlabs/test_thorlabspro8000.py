@@ -280,3 +280,43 @@ def test_module_type_query():
         INIT + [(":SLOT 1", None), (":TYPE:TXT?", "LDC8xxx")],
     ) as inst:
         assert inst.channels[1].module_type == "LDC8xxx"
+
+
+@pytest.mark.parametrize(
+    "name, value, command",
+    [
+        ("slot", 3, ":SLOT 3"),
+        ("LDCCurrent", 0.05, ":ILD:SET 0.05"),
+        ("LDCCurrentLimit", 0.1, ":LIMC:SET 0.1"),
+        ("LDCPolarity", "CG", ":LDPOL CG"),
+        ("LDCStatus", "ON", ":LASER ON"),
+        ("TEDStatus", "OFF", ":TEC OFF"),
+        ("TEDSetTemperature", 25, ":TEMP:SET 25"),
+    ],
+)
+def test_deprecated_setter(name, value, command):
+    with (
+        expected_protocol(ThorlabsPro8000, INIT + [(command, None)]) as inst,
+        pytest.warns(FutureWarning, match=f"{name} is deprecated"),
+    ):
+        setattr(inst, name, value)
+
+
+@pytest.mark.parametrize(
+    "name, command, reply, value",
+    [
+        ("slot", ":SLOT?", "3", 3),
+        ("LDCCurrent", ":ILD:SET?", "0.05", 0.05),
+        ("LDCCurrentLimit", ":LIMC:SET?", "0.1", 0.1),
+        ("LDCPolarity", ":LDPOL?", "CG", "CG"),
+        ("LDCStatus", ":LASER?", "ON", "ON"),
+        ("TEDStatus", ":TEC?", "OFF", "OFF"),
+        ("TEDSetTemperature", ":TEMP:SET?", "25", 25),
+    ],
+)
+def test_deprecated_getter(name, command, reply, value):
+    with (
+        expected_protocol(ThorlabsPro8000, INIT + [(command, reply)]) as inst,
+        pytest.warns(FutureWarning, match=f"{name} is deprecated"),
+    ):
+        assert getattr(inst, name) == value
