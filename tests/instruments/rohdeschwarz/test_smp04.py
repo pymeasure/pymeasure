@@ -24,7 +24,7 @@
 
 import pytest
 
-from pymeasure.instruments.rohdeschwarz.smp04 import SMP04
+from pymeasure.instruments.rohdeschwarz.smp04 import SMP04, QuestionableStatus
 from pymeasure.test import expected_protocol
 
 
@@ -38,10 +38,14 @@ def test_frequency_getter():
         assert inst.frequency == 40e9
 
 
-def test_frequency_truncates_to_standard_minimum():
-    # Standard model: the 2 GHz lower limit clamps sub-2 GHz requests.
-    with expected_protocol(SMP04, [("FREQ 2000000000.000", None)]) as inst:
+def test_frequency_below_standard_minimum_raises():
+    with expected_protocol(SMP04, []) as inst, pytest.raises(ValueError):
         inst.frequency = 1e9
+
+
+def test_frequency_above_maximum_raises():
+    with expected_protocol(SMP04, []) as inst, pytest.raises(ValueError):
+        inst.frequency = 44e9
 
 
 def test_frequency_extension_option_allows_low_frequency():
@@ -58,10 +62,9 @@ def test_power_setter():
         inst.power = -10
 
 
-def test_power_truncates_to_standard_minimum():
-    # Standard model: truncated_range clamps to the -20 dBm lower limit.
-    with expected_protocol(SMP04, [("POW -20.00", None)]) as inst:
-        inst.power = -200
+def test_power_below_standard_minimum_raises():
+    with expected_protocol(SMP04, []) as inst, pytest.raises(ValueError):
+        inst.power = -30
 
 
 def test_step_attenuator_option_allows_low_power():
@@ -70,7 +73,7 @@ def test_step_attenuator_option_allows_low_power():
         SMP04, [("POW -130.00", None)],
         step_attenuator_option=True,
     ) as inst:
-        inst.power = -200
+        inst.power = -130
 
 
 def test_output_enabled_setter():
@@ -130,7 +133,7 @@ def test_pulse_modulation_enabled_setter():
 
 def test_questionable_condition_getter():
     with expected_protocol(SMP04, [("STAT:QUES:COND?", "32")]) as inst:
-        assert inst.questionable_condition == 32
+        assert inst.questionable_condition == QuestionableStatus.FREQUENCY
 
 
 def test_frequency_ok_when_bit_clear():

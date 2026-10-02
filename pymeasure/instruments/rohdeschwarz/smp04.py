@@ -22,10 +22,25 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+from enum import IntFlag
+
+from pymeasure.instruments import AdapterType, Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 BOOL_MAP = {True: 1, False: 0}
+
+
+class QuestionableStatus(IntFlag):
+    """Enumerate the bits of the questionable status register."""
+
+    #: An output voltage is incorrect or outside its limits, or a protection has responded.
+    VOLTAGE = 1
+    #: The RF output frequency is incorrect or outside the specified values.
+    FREQUENCY = 32
+    #: A modulation is incorrect or operated outside the specifications.
+    MODULATION = 128
+    #: A calibration was not performed properly.
+    CALIBRATION = 256
 
 
 class SMP04(SCPIMixin, Instrument):
@@ -41,9 +56,14 @@ class SMP04(SCPIMixin, Instrument):
         limit from -20 dBm to -130 dBm.
     """
 
-    def __init__(self, adapter, name="Rohde & Schwarz SMP04",
-                 frequency_extension_option=False,
-                 step_attenuator_option=False, **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Rohde & Schwarz SMP04",
+        frequency_extension_option: bool = False,
+        step_attenuator_option: bool = False,
+        **kwargs,
+    ):
         super().__init__(adapter, name, **kwargs)
         if frequency_extension_option:
             self.frequency_values = [10e6, 40e9]
@@ -52,25 +72,23 @@ class SMP04(SCPIMixin, Instrument):
 
     frequency = Instrument.control(
         "FREQ?", "FREQ %.3f",
-        """Control the CW output frequency in Hz (float from 2e9 to 40e9).
+        """Control the CW output frequency in Hz (float strictly from 2e9 to 40e9).
 
-        Values outside the range are clipped to the nearest limit. The lower
-        limit drops to 10 MHz with the SMP-B11 frequency range extension
+        The lower limit drops to 10 MHz with the SMP-B11 frequency range extension
         (``frequency_extension_option=True``).""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[2e9, 40e9],
         dynamic=True,
     )
 
     power = Instrument.control(
         "POW?", "POW %.2f",
-        """Control the RF output level in dBm (float from -20 to 16).
+        """Control the RF output level in dBm (float strictly from -20 to 16).
 
-        Values outside the range are clipped to the nearest limit. The lower
-        limit drops to -130 dBm with the SMP-B15/B17 step attenuator
+        The lower limit drops to -130 dBm with the SMP-B15/B17 step attenuator
         (``step_attenuator_option=True``). +13 dBm is the specified level,
         +16 dBm the overrange ceiling.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[-20, 16],
         dynamic=True,
     )
@@ -158,15 +176,14 @@ class SMP04(SCPIMixin, Instrument):
 
     questionable_condition = Instrument.measurement(
         "STAT:QUES:COND?",
-        """Get the questionable status condition register (int). Bit 5 (value 32)
-        flags a frequency problem, such as an unlocked reference.""",
-        cast=int,
+        """Get the questionable status condition register (:class:`QuestionableStatus`).""",
+        get_process=lambda v: QuestionableStatus(int(v)),
     )
 
     frequency_ok = Instrument.measurement(
         "STAT:QUES:COND?",
-        """Get whether the frequency status is fine (bool): bit 5 (FREQuency) of
-        the questionable condition register is clear. A set bit flags a frequency
-        problem such as an unlocked reference.""",
-        get_process=lambda v: not (int(v) & 32),
+        """Get whether the frequency status is fine (bool), i.e. the
+        :attr:`QuestionableStatus.FREQUENCY` bit is clear. A set bit flags a
+        frequency problem such as an unlocked reference.""",
+        get_process=lambda v: QuestionableStatus.FREQUENCY not in QuestionableStatus(int(v)),
     )
