@@ -34,7 +34,6 @@ from pymeasure.instruments.validators import (
     joined_validators,
     strict_discrete_set,
     strict_range,
-    truncated_discrete_set,
 )
 
 log = logging.getLogger(__name__)
@@ -761,8 +760,8 @@ class HP856Xx(Instrument):
     attenuation = Instrument.control(
         "AT?", "AT %s",
         """
-        Control the input attenuation in decade steps from 10 to 70 db (type 'int') or set to
-        'AUTO' and 'MAN'(ual)
+        Control the input attenuation in decade steps from 10 to 70 dB (0 to 60 dB for the
+        HP 8565E) (type 'int') or set to 'AUTO' and 'MAN'(ual).
 
         Type: :code:`str`, :code:`int`
 
@@ -772,9 +771,11 @@ class HP856Xx(Instrument):
             instr.attenuation = 60
 
         """,
-        validator=joined_validators(strict_discrete_set, truncated_discrete_set),
+        validator=joined_validators(strict_discrete_set, strict_discrete_set),
         values=[["AUTO", "MAN"], [10, 20, 30, 40, 50, 60, 70]],
+        set_process=lambda v: v if isinstance(v, str) else f"{v}DB",
         cast=cast_or_str(int),
+        dynamic=True,
     )
 
     amplitude_unit = Instrument.control(
@@ -3377,3 +3378,4 @@ class HP8565E(HP856XxWithHighBand):
         self.reference_level_calibration_values = [-528, 528]
         self.resolution_bandwidth_values = [["AUTO", "MAN"], [1, 2e6]]
         self.sweep_time_values = [["AUTO", "MAN"], [50e-6, 2000]]
+        self.attenuation_values = [["AUTO", "MAN"], [0, 10, 20, 30, 40, 50, 60]]

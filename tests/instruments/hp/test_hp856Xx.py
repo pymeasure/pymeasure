@@ -60,7 +60,7 @@ class TestHP856Xx:
     def test_attenuation(self):
         with expected_protocol(
                 HP856Xx,
-                [("AT 70", None),
+                [("AT 70DB", None),
                  ("AT?", "70")],
         ) as instr:
             # test set and get of attenuation as integer
@@ -77,14 +77,9 @@ class TestHP856Xx:
             instr.attenuation = "AUTO"
             assert instr.attenuation == 20
 
-    def test_attenuation_truncation(self):
-        with expected_protocol(
-                HP856Xx,
-                [("AT 20", None),
-                 ("AT?", "20")],
-        ) as instr:
+    def test_attenuation_off_step_raises(self):
+        with expected_protocol(HP856Xx, []) as instr, pytest.raises(ValueError):
             instr.attenuation = 16
-            assert instr.attenuation == 20
 
     @pytest.mark.parametrize("amplitude_unit", list(AmplitudeUnits))  # type: ignore
     def test_amplitude_units(self, amplitude_unit):
@@ -1224,6 +1219,19 @@ class TestHP8565E:
     """Confirm the 50 GHz HP8565E wiring of the high-band (external mixer) command set
     shared with the HP8561B via :class:`HP856XxWithHighBand`.
     """
+
+    def test_attenuation_allows_0_db(self):
+        with expected_protocol(
+                HP8565E,
+                [("AT 0DB", None),
+                 ("AT?", "0")]
+        ) as instr:
+            instr.attenuation = 0
+            assert instr.attenuation == 0
+
+    def test_attenuation_above_60_db_raises(self):
+        with expected_protocol(HP8565E, []) as instr, pytest.raises(ValueError):
+            instr.attenuation = 70
 
     @pytest.mark.parametrize("mixer_mode", [e for e in MixerMode])
     def test_external_mixer(self, mixer_mode):
