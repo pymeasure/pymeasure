@@ -1,6 +1,6 @@
-##################################
-HP 8560A / 8561B Spectrum Analyzer
-##################################
+###########################################
+HP 8560A / 8561B / 8565E Spectrum Analyzer
+###########################################
 
 Every unit is used in the base unit, so for time it is s (Seconds), frequency in Hz (Hertz) etc...
 
@@ -173,6 +173,16 @@ Thru Calibration
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.store_thru
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.recall_thru
 
+--------------------------------------------------
+High-Band (External Mixer) Attributes & Methods
+--------------------------------------------------
+
+Shared by the microwave models of the family (e.g. HP 8561B and HP 8565E).
+
+.. autoclass:: pymeasure.instruments.hp.hp856Xx.HP856XxWithHighBand
+    :members:
+    :show-inheritance:
+
 -------------------------------------
 HP8560A Specific Attributes & Methods
 -------------------------------------
@@ -186,6 +196,14 @@ HP8561B Specific Attributes & Methods
 -------------------------------------
 
 .. autoclass:: pymeasure.instruments.hp.HP8561B
+    :members:
+    :show-inheritance:
+
+-------------------------------------
+HP8565E Specific Attributes & Methods
+-------------------------------------
+
+.. autoclass:: pymeasure.instruments.hp.HP8565E
     :members:
     :show-inheritance:
 
@@ -218,6 +236,10 @@ Enumerations
     :show-inheritance:
 
 .. autoclass:: pymeasure.instruments.hp.hp856Xx.ErrorCode
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.hp.hp856Xx.ExternalMixerPreselection
     :members:
     :show-inheritance:
 
