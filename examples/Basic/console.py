@@ -95,10 +95,10 @@ class MainWindow(ManagedWindow):
         self.setWindowTitle('GUI Example')
 
     def queue(self):
-        filename = tempfile.mktemp()
+        fd, filename = tempfile.mkstemp()
 
         procedure = self.make_procedure()
-        results = Results(procedure, filename)
+        results = Results(procedure, filename, file_descriptor=fd)
         experiment = self.new_experiment(results)
 
         self.manager.queue(experiment)

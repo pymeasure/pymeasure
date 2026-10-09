@@ -209,7 +209,17 @@ class Results:
     :param procedure: Procedure object
     :param data_filename: The data filename where the data is or should be
                           stored
+    :param file_descriptor:
+        An open file descriptor reserved by the caller (e.g. the result of
+        :func:`tempfile.mkstemp`) for the primary data file. When provided,
+        the header and labels are written directly to this descriptor via
+        :func:`os.fdopen` and the ``os.path.exists`` reload branch is skipped.
+        When ``data_filename`` is a list or tuple, the remaining (secondary)
+        files also receive the header and labels. The descriptor is closed by
+        this constructor; the file remains on disk. Defaults to ``None``,
+        which creates files as needed or reloads if already existing.
     """
+    _data: pd.DataFrame | None
 
     COMMENT = '#'
     DELIMITER = ','
@@ -217,8 +227,16 @@ class Results:
     CHUNK_SIZE = 1000
     ENCODING = "utf-8"
 
-    def __init__(self, procedure: Procedure, data_filename: list[str] | tuple[str] | str):
+    def __init__(
+        self,
+        procedure: Procedure,
+        data_filename: list[str] | tuple[str] | str,
+        file_descriptor: int | None = None,
+    ):
         if not isinstance(procedure, Procedure):
+            # Close a caller-reserved descriptor before raising, so it does not leak.
+            if file_descriptor is not None:
+                os.close(file_descriptor)
             raise TypeError("Results require a Procedure object")
         self.procedure = procedure
         self.procedure_class = procedure.__class__
@@ -237,7 +255,19 @@ class Results:
         self.data_filename = data_filename
         self.data_filenames = data_filenames
 
-        if os.path.exists(data_filename):  # Assume header is already written
+        if file_descriptor is not None:
+            with os.fdopen(file_descriptor, 'w', encoding=Results.ENCODING) as f:
+                f.write(self.header())
+                f.write(self.labels())
+            # Secondary data files also need the header and labels.
+            for filename in self.data_filenames:
+                if filename == self.data_filename:
+                    continue
+                with open(filename, 'w', encoding=Results.ENCODING) as f:
+                    f.write(self.header())
+                    f.write(self.labels())
+            self._data = None
+        elif os.path.exists(data_filename):  # Assume header is already written
             self.reload()
             self.procedure.status = ProcedureStatus.FINISHED
             # TODO: Correctly store and retrieve status
@@ -246,7 +276,7 @@ class Results:
                 with open(filename, 'w', encoding=Results.ENCODING) as f:
                     f.write(self.header())
                     f.write(self.labels())
-            self._data: pd.DataFrame | None = None
+            self._data = None
 
     def __getstate__(self) -> dict[str, Any]:
         # Get all information needed to reconstruct procedure

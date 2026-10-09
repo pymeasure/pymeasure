@@ -33,7 +33,7 @@ import pytest
 from data.procedure_for_testing import RandomProcedure
 
 from pymeasure.experiment import BooleanParameter
-from pymeasure.experiment.procedure import Parameter, Procedure, UnknownProcedure
+from pymeasure.experiment.procedure import Parameter, Procedure, ProcedureStatus, UnknownProcedure
 from pymeasure.experiment.results import CSVFormatter, Results
 from pymeasure.units import ureg
 
@@ -107,7 +107,9 @@ def test_procedure_filestorage():
     assert RandomProcedure.iterations.value == 100
     procedure = RandomProcedure()
     procedure.iterations = 101
-    resultfile = tempfile.mktemp()
+    fd, resultfile = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(resultfile)
     results = Results(procedure, resultfile)
 
     new_results = pickle.loads(pickle.dumps(results))
@@ -159,6 +161,82 @@ class TestResults:
         result.reload()  # assert no error
         pd.read_csv(filename, comment="#")  # assert no error
         assert (result.parameters['par'].value == np.linspace(1, 100, 17)).all()
+
+    def test_file_descriptor_writes_header_and_skips_reload(self):
+        """A reserved `mkstemp` descriptor is consumed to write the header,
+        skipping the `os.path.exists` reload branch."""
+        procedure = RandomProcedure()
+        fd, path = tempfile.mkstemp(suffix=".csv")
+        try:
+            results = Results(procedure, path, file_descriptor=fd)
+            # (a) the real data file remains on disk
+            assert os.path.exists(path)
+            # (b) its contents are exactly the header followed by the labels
+            with open(path, encoding=Results.ENCODING) as f:
+                contents = f.read()
+            assert contents == results.header() + results.labels()
+            # (c) the reload branch was skipped (procedure not marked FINISHED)
+            assert results.procedure.status != ProcedureStatus.FINISHED
+            # (d) no data has been loaded
+            assert results._data is None
+        finally:
+            if os.path.exists(path):
+                os.unlink(path)
+
+    def test_file_descriptor_none_creates_file_fresh(self, tmpdir):
+        """The default (`file_descriptor=None`) path creates the file when it
+        does not pre-exist."""
+        procedure = RandomProcedure()
+        filename = os.path.join(str(tmpdir), 'fresh_file.csv')
+        assert not os.path.exists(filename)
+        results = Results(procedure, filename)
+        assert os.path.exists(filename)
+        assert results._data is None
+        with open(filename, encoding=Results.ENCODING) as f:
+            contents = f.read()
+        assert contents == results.header() + results.labels()
+
+    def test_file_descriptor_closed_on_invalid_procedure(self):
+        """A reserved descriptor is closed when the procedure check fails."""
+        fd, path = tempfile.mkstemp()
+        try:
+            with pytest.raises(TypeError):
+                Results("not a procedure", path, file_descriptor=fd)  # pyright: ignore[reportArgumentType]
+            # os.close on an already-closed fd raises OSError, proving it was
+            # closed by the constructor instead of leaking.
+            with pytest.raises(OSError):
+                os.close(fd)
+        finally:
+            if os.path.exists(path):
+                os.unlink(path)
+
+    def test_file_descriptor_with_list_data_filename(self, tmpdir):
+        """Write the header to the primary file and create secondary files with it.
+
+        A reserved `mkstemp` descriptor is used for the primary data file.
+        """
+        procedure = RandomProcedure()
+        fd, path = tempfile.mkstemp(suffix=".csv")
+        secondary_path = os.path.join(str(tmpdir), 'secondary_file.csv')
+        try:
+            results = Results(procedure, [path, secondary_path], file_descriptor=fd)
+            expected = results.header() + results.labels()
+            # (a) the primary file was written via the reserved descriptor
+            with open(path, encoding=Results.ENCODING) as f:
+                assert f.read() == expected
+            # (b) the secondary file was created with the same content
+            assert os.path.exists(secondary_path)
+            with open(secondary_path, encoding=Results.ENCODING) as f:
+                assert f.read() == expected
+            # (c) the reload branch was skipped (procedure not marked FINISHED)
+            assert results.procedure.status != ProcedureStatus.FINISHED
+            # (d) primary and secondary filenames are stored correctly
+            assert results.data_filename == path
+            assert results.data_filenames == [path, secondary_path]
+        finally:
+            for file in (path, secondary_path):
+                if os.path.exists(file):
+                    os.unlink(file)
 
 
 class TestPandas3Numpy2Compat:
