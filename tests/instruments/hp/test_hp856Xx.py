@@ -893,6 +893,33 @@ class TestHP856Xx:
         ) as instr:
             assert getattr(instr, function)() == expected_data
 
+    # The reference level is reported in the instrument's active amplitude unit, but the trace
+    # data is always returned in dBm. Expected values are derived from the 50 Ohm relations
+    # P[mW] = V**2 / (50 Ohm * 1 mW), i.e. 0 dBm = 0.2236 V = 46.9897 dBmV = 106.9897 dBuV.
+    @pytest.mark.parametrize("amplitude_unit, reference_level, reference_level_dbm", [
+        (AmplitudeUnits.DBM, "-10.0", -10.0),
+        (AmplitudeUnits.W, "10.0", 40.0),
+        (AmplitudeUnits.V, "0.1", -6.9897),
+        (AmplitudeUnits.DBMV, "50.0", 3.0103),
+        (AmplitudeUnits.DBUV, "107.0", 0.0103),
+    ])
+    def test_trace_data_amplitude_units(self, amplitude_unit, reference_level,
+                                        reference_level_dbm):
+        data = [600, 540, 0]
+        log_scale = 10.0
+        expected_data = [reference_level_dbm + log_scale * (value - 600) / 60 for value in data]
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("TDF M", None),
+                    ("AUNITS?", amplitude_unit),
+                    ("RL?", reference_level),
+                    ("LG?", str(log_scale)),
+                    ("TRA?", ','.join([str(i) for i in data]))
+                ]
+        ) as instr:
+            assert instr.get_trace_data_a() == pytest.approx(expected_data, abs=0.02)
+
     def test_fft_trace_window(self):
         with expected_protocol(
                 HP856Xx,
