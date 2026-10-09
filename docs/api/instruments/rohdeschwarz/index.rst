@@ -10,5 +10,6 @@ This section contains specific documentation on the Rohde & Schwarz instruments 
    :maxdepth: 3
 
    sfm
+   smp04
    fsseries
    hmp
