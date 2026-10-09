@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from .keysight681xB import Keysight6811B, Keysight6812B, Keysight6813B
 from .keysight33250A import Keysight33250A
 from .keysight81160A import Keysight81160A
 from .keysightDSOX1102G import KeysightDSOX1102G
