@@ -141,6 +141,16 @@ This mixin adds default SCPI properties like :attr:`~pymeasure.instruments.gener
 
 You can check whether your instrument can safely inherit from :class:`~pymeasure.instruments.generic_types.SCPIMixin` by running :code:`pytest -k scpi_mixin --device-address "<instrument-address>"`.
 
+If the instrument supports the IEEE 488.2 commands provided by :class:`~pymeasure.instruments.generic_types.IEEE4882Mixin`, but not the additional SCPI commands, use that mixin instead.
+If neither mixin matches the supported command set, inherit from :class:`~pymeasure.instruments.Instrument` without either mixin and implement the supported commands in your driver.
+Check the instrument's programming manual before choosing a mixin.
+
+.. note::
+
+    Do not use :class:`~pymeasure.instruments.generic_types.SCPIUnknownMixin` for new instrument drivers.
+    It preserves compatibility for existing drivers written when SCPI support was assumed by default and whose command sets have not yet been verified.
+    It does not detect SCPI support.
+
 Frequent properties
 -------------------
 If your instrument has an **output** that can be switched on and off, use a :ref:`boolean property <boolean-properties>` called :code:`output_enabled`.
