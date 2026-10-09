@@ -21,6 +21,7 @@ Deprecated
 
 Changed
 -------
+- Fix :class:`.PlotFrame` construction with pyqtgraph >= 0.13, where :code:`pyqtgraph.PlotItem` is a class instead of a module.
 - For property creators :code:`Instrument.control`... the conversion parameters (:code:`cast` etc.) are keyword only, now.
 - Refactored :class:`.Parameter` and :class:`.Metadata` to share a common descriptor base (``_InstanceValueDescriptor``).
   Values are now eagerly converted at assignment time via :meth:`~Parameter.convert` (identity for ``Metadata``).
