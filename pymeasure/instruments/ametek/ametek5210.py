@@ -218,15 +218,16 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Perform an automatic frequency tune.
 
         The ATC command causes the filter frequency to be tuned to the reference frequency,
-        by setting the filter track mode on and then off."""
+        by setting the filter track mode on and then off.
+        """
         self.ask("ATC")
 
     def auto_phase(self):
         """Perform an auto phase (auto quadrature null) operation.
 
         The instrument adjusts the reference phase to maximize the X channel output and
-        minimize the Y channel output signals."""
-
+        minimize the Y channel output signals.
+        """
         self.ask("AQN")
 
     def auto_offset(self):
@@ -240,7 +241,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def status(self) -> list[str]:
         """Get the instrument status.
 
-        :return: list of all status errors received."""
+        :return: list of all status errors received.
+        """
         status_code = int(self.ask("ST"))
         status = [self.STATUS_ARRAY[i] for i in range(8) if status_code & (1 << i)]
 
@@ -249,7 +251,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def report_overload(self):
         """Reports the overload byte status.
 
-        :return: list of all overload errors received."""
+        :return: list of all overload errors received.
+        """
         overload_code = int(self.ask("OL"))
         overload = [self.OVERLOAD_ARRAY[i] for i in range(8) if overload_code & (1 << i)]
 
@@ -366,7 +369,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         it responds with the frequency of the internal oscillator.
 
         :return 0: if the reference channel is unlocked.
-        :return Reference frequency (mHz): if the reference channel is locked."""
+        :return Reference frequency (mHz): if the reference channel is locked.
+        """
         return int(self.ask("FRQ"))
 
     @property
@@ -374,7 +378,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Control whether the second order filter is enabled (bool).
 
         :param setval: 0 is First order (slope 6 dB/octave),
-            1 is Second order (slope 12 dB/octave)."""
+        1 is Second order (slope 12 dB/octave).
+        """
         return int(self.ask("XDB")) == 1
 
     @property
@@ -402,7 +407,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             0 Disables X offset facility
             1 Enables X offset facility
 
-        The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output."""
+        The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output.
+        """
         return self.ask("XOF")
 
     @property
@@ -420,7 +426,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             0 Disables Y offset facility
             1 Enables Y offset facility
 
-        The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output."""
+        The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output.
+        """
         return self.ask("YOF")
 
     @property
@@ -433,7 +440,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             0. Off
             1. Expand X channel output by x10
 
-        :param setval: 0 is Normal, 1 is Expanded output range."""
+        :param setval: 0 is Normal, 1 is Expanded output range.
+        """
         return int(self.ask("EX")) == 1
 
     @property
@@ -445,7 +453,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         which corresponds to an output amplitude of 5.000 V rms.
 
         :param setval: float to set the oscillator amplitude in Volts,
-        truncated range from 0 to 5 V."""
+        truncated range from 0 to 5 V.
+        """
         return float(self.ask("OA"))
 
     @property
@@ -454,6 +463,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         The value of parameter n2 sets or reads the oscillator frequency band
         according to the following table:
+
             n2   frequency band
             0   0.5 Hz to 2 Hz
             1   2.0 Hz to 20 Hz
@@ -466,7 +476,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         in the range 2000 to 20000
         Hence, for example, to set the frequency to 1 kHz, send the command OF 1000 3.
 
-        :param setval: tuple to set the oscillator frequency in Hz."""
+        :param setval: tuple to set the oscillator frequency in Hz.
+        """
         return float(self.ask("OF"))
 
     @property
@@ -474,6 +485,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Control the ADC trigger mode (int).
 
         The value of parameter sets or reads the trigger mode according to the following table:
+
             n   Trigger mode
             0   Reference trigger mode
             1   External trigger mode
@@ -482,7 +494,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             8   "8F" trigger mode
 
         :param setval: integer to set the trigger mode: 0 is Reference, 1 is External,
-        2 is Asynchronous, 4 is Ratio, 8 is "8F"."""
+        2 is Asynchronous, 4 is Ratio, 8 is "8F".
+        """
         return int(self.ask("TRIG"))
 
     @property
@@ -490,11 +503,13 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Control the remote only mode (bool).
 
         The value of parameter sets or reads the remote mode according to the following table:
+
             n   Mode
             0   Local mode, front panel keys active
             1   Remote mode, frontpanel keys locked out, except for LOCAL
 
-        :param setval: integer to set the remote mode: 0 is Local, 1 is Remote."""
+        :param setval: integer to set the remote mode: 0 is Local, 1 is Remote.
+        """
         return int(self.ask("REMOTE")) == 1
 
     @property
@@ -503,6 +518,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         The value of parameter sets or reads the display 1 selection
         according to the following table:
+
             n   Display 1 selection
             0   SET REF PH (Reference Phase)
             1   SET OSC LVL (Oscillator Amplitude)
@@ -513,7 +529,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         :param setval: integer to set the display 1 selection: 0 is Reference Phase,
         1 is Oscillator Amplitude, 2 is Oscillator Frequency, 3 is Filter Frequency,
-        4 is Reference Frequency, 5 is As selected by Display 2 selection control."""
+        4 is Reference Frequency, 5 is As selected by Display 2 selection control.
+        """
         return int(self.ask("D1"))
 
     @property
@@ -522,6 +539,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         The value of parameter sets or reads the display 2 selection
         according to the following table:
+
             n   Display 2 selection
             0   XY % (X and Y as a voltage: 10.000 V = 100%)
             1   XY V (X and Y in volts)
@@ -531,7 +549,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             5   SPEC (Depends on special display modes)
 
         :param setval: integer to set the display 2 selection: 0 is XY %, 1 is XY V,
-        2 is R-Theta, 3 is OFFSET, 4 is NOISE, 5 is SPEC."""
+        2 is R-Theta, 3 is OFFSET, 4 is NOISE, 5 is SPEC.
+        """
         return int(self.ask("D2"))
 
     @property
@@ -540,14 +559,16 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         Range 0.1 to 1.0 s in 0.1 s increments.
 
-        :param setval: float to set the display update rate in seconds, from 0.1 to 1.0 s."""
+        :param setval: float to set the display update rate in seconds, from 0.1 to 1.0 s.
+        """
         return float(self.ask("DISP"))
 
     @property
     def lights_enabled(self):
         """Control whether the front panel lights are enabled (bool).
 
-        :param setval: integer to set the lights mode: 0 is Off, 1 is On."""
+        :param setval: integer to set the lights mode: 0 is Off, 1 is On.
+        """
         return int(self.ask("LTS")) == 1
 
     x = Instrument.measurement(
