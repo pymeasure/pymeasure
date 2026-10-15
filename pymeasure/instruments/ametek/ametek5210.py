@@ -27,7 +27,7 @@ from typing import Literal
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import modular_range, strict_discrete_set, truncated_discrete_set, truncated_range
+from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -45,10 +45,11 @@ def check_read_not_empty(value: Literal[""] | float) -> float:
 
 
 class Ametek5210(SCPIUnknownMixin, Instrument):
-    """This is the class for the 
+    """
+    This is the class for the
     Ametek (EG&G Princeton Applied Research) Signal Recovery 5210 Dual Phase lock-in amplifier.
 
-    Many commands depend on other parameters or may have additional constraints, 
+    Many commands depend on other parameters or may have additional constraints,
     please refer to the documentation for more details.
     """
 
@@ -110,7 +111,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         "reference unlock"
     ]
 
-    sensitivity = Instrument.control( 
+    sensitivity = Instrument.control(
         "SEN", "SEN %d",
         """Control the sensitivity range in Volts
         (float truncated to values from 100 nV to 3 V).""",
@@ -142,7 +143,6 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             read_termination=read_termination,
             write_termination=write_termination,
             **kwargs)
-        
 
     def check_set_errors(self):
         """mandatory to be used for property setter
@@ -193,7 +193,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def abandon_auto(self):
         """Abandon auto-function.
 
-        This command terminates any auto-function in progress, except the auto-measure function, 
+        This command terminates any auto-function in progress, except the auto-measure function,
         when it should be sent twice.
         """
 
@@ -213,14 +213,14 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def auto_tune(self):
         """Perform an automatic frequency tune.
         
-        The ATC command causes the filter frequency to be tuned to the reference frequency, 
+        The ATC command causes the filter frequency to be tuned to the reference frequency,
         by setting the filter track mode on and then off."""
         self.ask("ATC")
 
     def auto_phase(self):
         """Perform an auto phase (auto quadrature null) operation.
         
-        The instrument adjusts the reference phase to maximize the X channel output and 
+        The instrument adjusts the reference phase to maximize the X channel output and
         minimize the Y channel output signals."""
 
         self.ask("AQN")
@@ -228,7 +228,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def auto_offset(self):
         """Perform an auto offset operation.
 
-        The instrument adjusts the X and Y channel output offsets to minimize the 
+        The instrument adjusts the X and Y channel output offsets to minimize the
         X and Y channel output signals.
         """
         self.ask("AXO")
@@ -245,7 +245,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         ]
         
         return status
-    
+
     def report_overload(self):
         """Reports the overload byte status.
 
@@ -286,9 +286,11 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def filter_frequency(self):
         """Control the filter frequency.
         
-        :param (n1,n2): tuple of two integers, where n1 is the frequency within the band and n2 is the band number.
+        :param (n1,n2): tuple of two integers, where n1 is the frequency within the band and
+        n2 is the band number.
         
-        The value of parameter n2 sets or reads the filter frequency band according to the following table:
+        The value of parameter n2 sets or reads the filter frequency band according to
+        the following table:
         
             n2.  frequency band
             0.  0.5 Hz to 12 Hz
@@ -324,7 +326,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     @property
     def reference_internal(self):
-        """Control whether the instrument internal reference is enabled, otherwise it will be external (bool).
+        """Control whether the instrument internal reference is enabled, otherwise it will
+        be external (bool).
 
         :param setval: integer to enable the mode: 0 for External, 1 for Internal
         """
@@ -334,7 +337,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def reference_mode(self):
         """Control whether the instrument frequency reference order is in second harmonic mode.
 
-        :param mode: integer to enable the mode: 0 for First harmonic, 1 for Second harmonic reference.
+        :param mode: integer to enable the mode: 0 for First harmonic,
+        1 for Second harmonic reference.
         """
         return int(self.ask("F2F"))
     
@@ -342,7 +346,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def reference_phase(self):
         """Control the reference phase in degrees*.
 
-        *with a minimum resolution of 5 m°. 
+        *with a minimum resolution of 5 m°.
         
         Note: The instrument uses an intricate quadrants system but I have handled this for you.
 
@@ -358,9 +362,12 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     @property
     def reference_frequency_meter(self):
-        """If the lock-in amplifier is in the external reference source modes, this responds with 0 if the reference channel is unlocked, or with the reference input frequency if it is locked. 
+        """If the lock-in amplifier is in the external reference source modes,
+        this responds with 0 if the reference channel is unlocked,
+        or with the reference input frequency if it is locked.
         
-        If the lock-in amplifier is in the internal reference source mode, it responds with the frequency of the internal oscillator. 
+        If the lock-in amplifier is in the internal reference source mode,
+        it responds with the frequency of the internal oscillator.
         
         :return 0: if the reference channel is unlocked.
         :return Reference frequency (mHz): if the reference channel is locked."""
@@ -371,7 +378,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def second_order_filter(self):
         """Control whether the second order filter is enabled (bool).
         
-        :param setval: 0 is First order (slope 6 dB/octave), 
+        :param setval: 0 is First order (slope 6 dB/octave),
             1 is Second order (slope 12 dB/octave)."""
         return int(self.ask("XDB")) == 1
     
@@ -384,20 +391,22 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         }
         inverse = {v: k for k, v in Dynamic_Reserves.items()}
         return inverse[int(self.ask("DR"))]
-    
+
     @property
     def x_channel_offset(self):
         """X channel output offset control
 
-        :param (n1,n2): tuple of two integers, where n1 is the status and n2 is the level of the X offset facility.
+        :param (n1,n2): tuple of two integers, where n1 is the status and
+        n2 is the level of the X offset facility.
         :param n1:  integer where n1 is the selection.
 
-        The value of parameter n1 sets or reads the status and level of the X offset facility according to the following table: 
-        
+        The value of parameter n1 sets or reads the status and
+        level of the X offset facility according to the following table:
+
             n1 selection
             0 Disables X offset facility
             1 Enables X offset facility
-        
+
         The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output."""
         return self.ask("XOF")
     
@@ -405,15 +414,17 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def y_channel_offset(self):
         """Y channel output offset control
 
-        :param (n1,n2): tuple of two integers, where n1 is the status and n2 is the level of the Y offset facility.
+        :param (n1,n2): tuple of two integers, where n1 is the status and
+        n2 is the level of the Y offset facility.
         :param n1:  integer where n1 is the selection.
-        
-        The value of parameter n1 sets or reads the status and level of the Y offset facility according to the following table: 
-        
+
+        The value of parameter n1 sets or reads the status and
+        level of the Y offset facility according to the following table:
+
             n1 selection
             0 Disables Y offset facility
             1 Enables Y offset facility
-        
+
         The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output."""
         return self.ask("YOF")
 
@@ -435,17 +446,19 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Control the oscillator amplitude in Volts (float).
 
         The value of parameter sets or reads the oscillator amplitude. 
-        The range is 0 to 2000 representing 0 to 2 V rms, but the value 5000 may also be used, 
+        The range is 0 to 2000 representing 0 to 2 V rms, but the value 5000 may also be used,
         which corresponds to an output amplitude of 5.000 V rms.
 
-        :param setval: float to set the oscillator amplitude in Volts, truncated range from 0 to 5 V."""
+        :param setval: float to set the oscillator amplitude in Volts,
+        truncated range from 0 to 5 V."""
         return float(self.ask("OA"))
     
     @property
     def oscillator_frequency(self):
         """Control the oscillator frequency in Hz (n1,n2).
 
-        The value of parameter n2 sets or reads the oscillator frequency band according to the following table:
+        The value of parameter n2 sets or reads the oscillator frequency band
+        according to the following table:
             n2   frequency band
             0   0.5 Hz to 2 Hz
             1   2.0 Hz to 20 Hz
@@ -453,13 +466,14 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             3   200 Hz to 2 kHz
             4   2 kHz to 20 kHz
             5   20 kHz to 120 kHz
-        
-        The value of parameter n1 sets or reads the frequency within each band in the range 2000 to 20000
+
+        The value of parameter n1 sets or reads the frequency within each band
+        in the range 2000 to 20000
         Hence, for example, to set the frequency to 1 kHz, send the command OF 1000 3.
 
         :param setval: tuple to set the oscillator frequency in Hz."""
         return float(self.ask("OF"))
-    
+
     @property
     def trigger_mode(self):
         """Control the ADC trigger mode (int).
@@ -472,7 +486,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             4   Ratio trigger mode
             8   "8F" trigger mode
 
-        :param setval: integer to set the trigger mode: 0 is Reference, 1 is External, 2 is Asynchronous, 4 is Ratio, 8 is "8F"."""
+        :param setval: integer to set the trigger mode: 0 is Reference, 1 is External,
+        2 is Asynchronous, 4 is Ratio, 8 is "8F"."""
         return int(self.ask("TRIG"))
     
     @property
@@ -500,7 +515,9 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             4   REF F (Reference Frequency)
             5   DISP (As selected by Display 2 selection control)
 
-        :param setval: integer to set the display 1 selection: 0 is Reference Phase, 1 is Oscillator Amplitude, 2 is Oscillator Frequency, 3 is Filter Frequency, 4 is Reference Frequency, 5 is As selected by Display 2 selection control."""
+        :param setval: integer to set the display 1 selection: 0 is Reference Phase,
+        1 is Oscillator Amplitude, 2 is Oscillator Frequency, 3 is Filter Frequency,
+        4 is Reference Frequency, 5 is As selected by Display 2 selection control."""
         return int(self.ask("D1"))
     
     @property
@@ -516,9 +533,10 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             4   NOISE
             5   SPEC (Depends on special display modes)
 
-        :param setval: integer to set the display 2 selection: 0 is XY %, 1 is XY V, 2 is R-Theta, 3 is OFFSET, 4 is NOISE, 5 is SPEC."""
+        :param setval: integer to set the display 2 selection: 0 is XY %, 1 is XY V,
+        2 is R-Theta, 3 is OFFSET, 4 is NOISE, 5 is SPEC."""
         return int(self.ask("D2"))
-    
+
     @property
     def display_update_rate(self):
         """Control the display update rate (float).
@@ -527,14 +545,14 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         :param setval: float to set the display update rate in seconds, from 0.1 to 1.0 s."""
         return float(self.ask("DISP"))
-    
+
     @property
     def lights_enabled(self):
         """Control whether the front panel lights are enabled (bool).
 
         :param setval: integer to set the lights mode: 0 is Off, 1 is On."""
         return int(self.ask("LTS")) == 1
-    
+
     x = Instrument.measurement(
         "X",
         """Get X value in millivolts (float).
@@ -582,36 +600,44 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     magpha = Instrument.measurement(
         "MP",
-        """Get both magnitude and phase in millivolts and millidegrees, equivalent to reading MAG and PHA separately.""",
+        """Get both magnitude and phase in millivolts and millidegrees,
+        equivalent to reading MAG and PHA separately.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     ratio = Instrument.measurement(
         "RT",
-        """Reports a number equivalent to (1000*X)/ADC1 where X is the value that would be returned by the X command and ADC1 is the value that would be returned by the ADC1 command.""",
+        """Reports a number equivalent to (1000*X)/ADC1 where X is the value
+        that would be returned by the X command and ADC1 is the value
+        that would be returned by the ADC1 command.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     log_ratio = Instrument.measurement(
         "LR",
-        """Reports a number equivalent to 1000 * log10(X/ADC1) where X is the value that would be returned by the X command and ADC1 is the value that would be returned by the ADC1 command. The response range is 3000 to +2000.""",
+        """Reports a number equivalent to 1000 * log10(X/ADC1) where X is the value
+        that would be returned by the X command and ADC1 is the value
+        that would be returned by the ADC1 command. The response range is 3000 to +2000.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     noise = Instrument.measurement(
         "NN",
-        """Responds with the noise, expressed as a percentage of the present full scale sensitivity, with 10000 corresponding to 100%.
-        The noise is measured in a bandwidth defined by the output filter time constant and slope, centered about the reference frequency.""",
+        """Responds with the noise, expressed as a percentage of the present full scale sensitivity,
+        with 10000 corresponding to 100%.
+        The noise is measured in a bandwidth defined by the output filter time constant and slope,
+        centered about the reference frequency.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     dac = Instrument.measurement(
         "DAC",
-        """Reads the voltage in millivolts appearing at the rear panel DAC AUX OUT output, in the range -15000 to +15000.,
+        """Reads the voltage in millivolts appearing at the rear panel DAC AUX OUT output,
+        in the range -15000 to +15000.,
         """,
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
@@ -619,28 +645,32 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     adc1 = Instrument.measurement(
         "ADC 1",
-        """Reads the voltage in millivolts appearing at the CH1 input, as an integer in the range -15000 to +15000.""",
+        """Reads the voltage in millivolts appearing at the CH1 input, as an integer
+        in the range -15000 to +15000.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     adc2 = Instrument.measurement(
         "ADC 2",
-        """Reads the voltage in millivolts appearing at the CH2 input, as an integer in the range -15000 to +15000.""",
+        """Reads the voltage in millivolts appearing at the CH2 input, as an integer
+        in the range -15000 to +15000.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     adc3 = Instrument.measurement(
         "ADC 3",
-        """Reads the voltage in millivolts appearing at the CH3 input, as an integer in the range -15000 to +15000.""",
+        """Reads the voltage in millivolts appearing at the CH3 input, as an integer
+        in the range -15000 to +15000.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
 
     adc4 = Instrument.measurement(
         "ADC 4",
-        """Reads the voltage in millivolts appearing at the CH4 input, as an integer in the range -15000 to +15000.""",
+        """Reads the voltage in millivolts appearing at the CH4 input, as an integer
+        in the range -15000 to +15000.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
     )
