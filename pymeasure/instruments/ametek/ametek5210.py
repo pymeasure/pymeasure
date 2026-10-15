@@ -337,7 +337,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Control whether the instrument frequency reference order is in second harmonic mode.
 
         :param mode: integer to enable the mode: 0 for First harmonic,
-        1 for Second harmonic reference.
+            1 for Second harmonic reference.
         """
         return int(self.ask("F2F"))
 
@@ -360,7 +360,9 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     @property
     def reference_frequency_meter(self):
-        """If the lock-in amplifier is in the external reference source modes,
+        """Get the status of the reference frequency meter.
+
+        If the lock-in amplifier is in the external reference source modes,
         this responds with 0 if the reference channel is unlocked,
         or with the reference input frequency if it is locked.
 
@@ -377,12 +379,16 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Control whether the second order filter is enabled (bool).
 
         :param setval: 0 is First order (slope 6 dB/octave),
-        1 is Second order (slope 12 dB/octave).
+            1 is Second order (slope 12 dB/octave).
         """
         return int(self.ask("XDB")) == 1
 
     @property
     def dynamic_reserve(self):
+        """Control the dynamic reserve levels.
+
+        :param setval: string that selects the dynamic reserve.
+        """
         Dynamic_Reserves = {
             "HI STAB": 0,
             "NORM": 1,
@@ -393,7 +399,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     @property
     def x_channel_offset(self):
-        """X channel output offset control
+        """Control the X channel output offset
 
         The value of parameter n1 sets or reads the status and
         level of the X offset facility according to the following table:
@@ -405,14 +411,14 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output.
 
         :param (n1,n2): tuple of two integers, where n1 is the status and
-        n2 is the level of the X offset facility.
+            n2 is the level of the X offset facility.
         :param n1:  integer where n1 is the selection.
         """
         return self.ask("XOF")
 
     @property
     def y_channel_offset(self):
-        """Y channel output offset control
+        """Control the Y channel output offset
 
         The value of parameter n1 sets or reads the status and
         level of the Y offset facility according to the following table:
@@ -424,7 +430,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output.
 
         :param (n1,n2): tuple of two integers, where n1 is the status and
-        n2 is the level of the Y offset facility.
+            n2 is the level of the Y offset facility.
         :param n1:  integer where n1 is the selection.
         """
         return self.ask("YOF")
@@ -629,7 +635,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     ratio = Instrument.measurement(
         "RT",
-        """Reports a number equivalent to (1000*X)/ADC1 where X is the value
+        """Measure a number equivalent to (1000*X)/ADC1 where X is the value
         that would be returned by the X command and ADC1 is the value
         that would be returned by the ADC1 command.""",
         cast=cast_or_str(float),
@@ -638,7 +644,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     log_ratio = Instrument.measurement(
         "LR",
-        """Reports a number equivalent to 1000 * log10(X/ADC1) where X is the value
+        """Measure a number equivalent to 1000 * log10(X/ADC1) where X is the value
         that would be returned by the X command and ADC1 is the value
         that would be returned by the ADC1 command. The response range is 3000 to +2000.""",
         cast=cast_or_str(float),
@@ -647,7 +653,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     noise = Instrument.measurement(
         "NN",
-        """Responds with the noise, expressed as a percentage of the present full scale sensitivity,
+        """Measure with the noise, expressed as a percentage of the present full scale sensitivity,
         with 10000 corresponding to 100%.
         The noise is measured in a bandwidth defined by the output filter time constant and slope,
         centered about the reference frequency.""",
@@ -657,7 +663,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     dac = Instrument.measurement(
         "DAC",
-        """Reads the voltage in millivolts appearing at the rear panel DAC AUX OUT output,
+        """Measure the voltage in millivolts appearing at the rear panel DAC AUX OUT output,
         in the range -15000 to +15000.,
         """,
         cast=cast_or_str(float),
@@ -666,7 +672,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     adc1 = Instrument.measurement(
         "ADC 1",
-        """Reads the voltage in millivolts appearing at the CH1 input, as an integer
+        """Measure the voltage in millivolts appearing at the CH1 input, as an integer
         in the range -15000 to +15000.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
@@ -674,7 +680,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     adc2 = Instrument.measurement(
         "ADC 2",
-        """Reads the voltage in millivolts appearing at the CH2 input, as an integer
+        """Measure the voltage in millivolts appearing at the CH2 input, as an integer
         in the range -15000 to +15000.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
@@ -682,7 +688,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     adc3 = Instrument.measurement(
         "ADC 3",
-        """Reads the voltage in millivolts appearing at the CH3 input, as an integer
+        """Measure the voltage in millivolts appearing at the CH3 input, as an integer
         in the range -15000 to +15000.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
@@ -690,7 +696,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     adc4 = Instrument.measurement(
         "ADC 4",
-        """Reads the voltage in millivolts appearing at the CH4 input, as an integer
+        """Measure the voltage in millivolts appearing at the CH4 input, as an integer
         in the range -15000 to +15000.""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
