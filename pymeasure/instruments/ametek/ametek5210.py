@@ -390,6 +390,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """X channel output offset control
 
         :param (n1,n2): tuple of two integers, where n1 is the status and n2 is the level of the X offset facility.
+        :param n1:  integer where n1 is the selection.
 
         The value of parameter n1 sets or reads the status and level of the X offset facility according to the following table: 
         
@@ -405,7 +406,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Y channel output offset control
 
         :param (n1,n2): tuple of two integers, where n1 is the status and n2 is the level of the Y offset facility.
-
+        :param n1:  integer where n1 is the selection.
+        
         The value of parameter n1 sets or reads the status and level of the Y offset facility according to the following table: 
         
             n1 selection
@@ -455,7 +457,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         The value of parameter n1 sets or reads the frequency within each band in the range 2000 to 20000
         Hence, for example, to set the frequency to 1 kHz, send the command OF 1000 3.
 
-        :param setval: float to set the oscillator frequency in Hz."""
+        :param setval: tuple to set the oscillator frequency in Hz."""
         return float(self.ask("OF"))
     
     @property
@@ -687,7 +689,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     @reference_phase.setter
     def reference_phase(self, setval: float):
         setval = setval % 360
-        
+
         # Reference phase control
         if 0 <= setval <= 90:
             # quad 1 = 0
@@ -727,22 +729,34 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         self.ask(f"DR {Dynamic_Reserves[setval]}")
 
     @x_channel_offset.setter
-    def x_channel_offset(self, setval: tuple[int, int]):
-        n1, n2 = setval
-        if n1 not in [0, 1]:
-            raise ValueError('Invalid X channel offset status')
-        if not (-1500 <= n2 <= 1500):
-            raise ValueError('Invalid X channel offset level')
-        self.ask(f"XOF {n1} {n2}")
+    def x_channel_offset(self, setval):
+        if isinstance(setval, (tuple, list)):
+            n1, n2 = setval
+            if n1 not in [0, 1]:
+                raise ValueError('Invalid X channel offset status')
+            if not (-1500 <= n2 <= 1500):
+                raise ValueError('Invalid X channel offset level')
+            self.ask(f"XOF {n1} {n2}")
+        else:
+            n1 = setval
+            if n1 not in [0, 1]:
+                raise ValueError('Invalid X channel offset status')
+            self.ask(f"XOF {n1}")
 
     @y_channel_offset.setter
-    def y_channel_offset(self, setval: tuple[int, int]):
-        n1, n2 = setval
-        if n1 not in [0, 1]:
-            raise ValueError('Invalid Y channel offset status')
-        if not (-1500 <= n2 <= 1500):
-            raise ValueError('Invalid Y channel offset level')
-        self.ask(f"YOF {n1} {n2}")
+    def y_channel_offset(self, setval):
+        if isinstance(setval, (tuple, list)):
+            n1, n2 = setval
+            if n1 not in [0, 1]:
+                raise ValueError('Invalid Y channel offset status')
+            if not (-1500 <= n2 <= 1500):
+                raise ValueError('Invalid Y channel offset level')
+            self.ask(f"YOF {n1} {n2}")
+        else:
+            n1 = setval
+            if n1 not in [0, 1]:
+                raise ValueError('Invalid Y channel offset status')
+            self.ask(f"YOF {n1}")
 
     @oscillator_amplitude.setter
     def oscillator_amplitude(self, setval: float):
@@ -798,7 +812,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             self.ask("LTS 0")
 
     def shutdown(self):
-        """ Ensures the instrument in a safe state """
+        """Ensures the instrument in a safe state to close."""
         log.info(f"Shutting down {self.name}")
-        self.voltage = 0.
+        self.set_oscillator_amplitude(0.0)
+        self.set_remote_only_mode(False)
         super().shutdown()
