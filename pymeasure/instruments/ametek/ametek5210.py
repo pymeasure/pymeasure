@@ -814,6 +814,6 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def shutdown(self):
         """Ensures the instrument in a safe state to close."""
         log.info(f"Shutting down {self.name}")
-        self.set_oscillator_amplitude(0.0)
-        self.set_remote_only_mode(False)
+        self.oscillator_amplitude = 0.0
+        self.remote_only_mode = False
         super().shutdown()
