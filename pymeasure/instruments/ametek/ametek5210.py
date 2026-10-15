@@ -23,12 +23,11 @@
 #
 
 import logging
-from marshal import version
 from typing import Literal
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
+from pymeasure.instruments.validators import modular_range, strict_discrete_set, truncated_discrete_set, truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -46,9 +45,11 @@ def check_read_not_empty(value: Literal[""] | float) -> float:
 
 
 class Ametek5210(SCPIUnknownMixin, Instrument):
-    """This is the class for the Ametek (EG&G Princeton Applied Research) Signal Recovery 5210 Dual Phase lock-in amplifier
+    """This is the class for the 
+    Ametek (EG&G Princeton Applied Research) Signal Recovery 5210 Dual Phase lock-in amplifier.
 
-    Many commands depend on other parameters or may have additional constraints, please refer to the documentation for more details.
+    Many commands depend on other parameters or may have additional constraints, 
+    please refer to the documentation for more details.
     """
 
     SENSITIVITIES = {
@@ -93,7 +94,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         "command parameter error",
         "reference unlock",
         "overload",
-        "new output values available after external trigger",
+        "new output values available after external trigger, or auto function in progress",
         "SRQ asserted",
         "data available"
     ]
@@ -111,8 +112,9 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     sensitivity = Instrument.control( 
         "SEN", "SEN %d",
-        """Control the sensitivity range in Volts (float truncated to values from 100 nV to 3 V).""",
-        validator=truncated_discrete_set,
+        """Control the sensitivity range in Volts
+        (float truncated to values from 100 nV to 3 V).""",
+        validator=strict_discrete_set,
         values=SENSITIVITIES,
         map_values=True,
         check_set_errors=True,
@@ -123,166 +125,10 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         "XTC", "XTC %d",
         """Control the time constant in seconds
         (float truncated to values from 1 millisecond to 3,000 seconds).""",
-        validator=truncated_discrete_set,
+        validator=strict_discrete_set,
         values=TIME_CONSTANTS,
         map_values=True,
         check_set_errors=True,
-    )
-
-    x = Instrument.measurement(
-        "X.",
-        """Get X value in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    y = Instrument.measurement(
-        "Y.",
-        """Get Y value in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    x1 = Instrument.measurement(
-        "X1.",
-        """Get first harmonic X value in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    y1 = Instrument.measurement(
-        "Y1.",
-        """Get first harmonic Y value in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    x2 = Instrument.measurement(
-        "X2.",
-        """Get second harmonic X value in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    y2 = Instrument.measurement(
-        "Y2.",
-        """Get second harmonic Y value in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    xy = Instrument.measurement(
-        "XY.",
-        """Get both X and Y values in Volts (float, tuple).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    mag = Instrument.measurement(
-        "MAG.",
-        """Get magnitude in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    theta = Instrument.measurement(
-        "PHA.",
-        """Get signal phase in degrees (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    harmonic = Instrument.control(
-        "REFN", "REFN %d",
-        """Control the reference harmonic mode (integer truncated to values from 1 to 127).""",
-        validator=truncated_discrete_set,
-        values=list(range(1, 128)),
-        check_set_errors=True,
-    )
-
-    phase = Instrument.control(
-        "REFP.", "REFP. %g",
-        """Control the reference harmonic phase in degrees
-        (float, modular_range, values from 0 to 360).""",
-        validator=modular_range,
-        values=[0, 360],
-        check_set_errors=True,
-    )
-
-    voltage = Instrument.control(
-        "OA.", "OA. %g",
-        """Control the voltage in Volts (float, truncated_range, values from 0 to 5).""",
-        validator=truncated_range,
-        values=[0, 5],
-        check_set_errors=True,
-    )
-
-    frequency = Instrument.control(
-        "OF.", "OF. %g",
-        """Control the lock-in frequency in Hz (float, truncated_range, values from 0 to 2.5e5).""",
-        validator=truncated_range,
-        values=[0, 2.5e5],
-        check_set_errors=True,
-    )
-
-    dac1 = Instrument.control(
-        "DAC. 1", "DAC. 1 %g",
-        """Control the output value on DAC1 in Volts (float truncated to values from -10 to 10).""",
-        validator=truncated_range,
-        values=[-10, 10],
-        check_set_errors=True,
-    )
-
-    dac2 = Instrument.control(
-        "DAC. 2", "DAC. 2 %g",
-        """Control the output value on DAC2 in Volts (float truncated to values from -10 to 10).""",
-        validator=truncated_range,
-        values=[-10, 10],
-        check_set_errors=True,
-    )
-
-    dac3 = Instrument.control(
-        "DAC. 3", "DAC. 3 %g",
-        """Control the output value on DAC3 in Volts (float truncated to values from -10 to 10).""",
-        validator=truncated_range,
-        values=[-10, 10],
-        check_set_errors=True,
-    )
-
-    dac4 = Instrument.control(
-        "DAC. 4", "DAC. 4 %g",
-        """Control the output value on DAC4 in Volts (float truncated to values from -10 to 10).""",
-        validator=truncated_range,
-        values=[-10, 10],
-        check_set_errors=True,
-    )
-
-    adc1 = Instrument.measurement(
-        "ADC. 1",
-        """Get the input value of ADC1 in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    adc2 = Instrument.measurement(
-        "ADC. 2",
-        """Get the input value of ADC2 in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    adc3 = Instrument.measurement(
-        "ADC. 3",
-        """Get the input value of ADC3 in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
-    )
-
-    adc4 = Instrument.measurement(
-        "ADC. 4",
-        """Get the input value of ADC4 in Volts (float).""",
-        cast=cast_or_str(float),
-        get_process=check_read_not_empty,
     )
 
     def __init__(self, adapter, name="5210",
@@ -333,11 +179,12 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def auto_normalize(self):
         """Perform an auto normalize operation.
 
-        The AN command causes the vernier mode to be activated the sensitivity to be adjusted 
+        The AN command causes the vernier mode to be activated the sensitivity to be adjusted
         to achieve an X-output of 100% (full-scale).
 
-        The auto-normalize operation always begins with an auto-sensitivity function. 
-        If none of the sensitivity ranges yields an output magnitude between 25% and 95% of full scale, 
+        The auto-normalize operation always begins with an auto-sensitivity function.
+        If none of the sensitivity ranges yields an output magnitude
+        between 25% and 95% of full scale,
         the sensitivity is set to one extreme or the other and normalization is not attempted.
         """
 
@@ -346,7 +193,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def abandon_auto(self):
         """Abandon auto-function.
 
-        This command terminates any auto-function in progress, except the auto-measure function, when it should be sent twice.
+        This command terminates any auto-function in progress, except the auto-measure function, 
+        when it should be sent twice.
         """
 
         self.ask('AA')
@@ -356,7 +204,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         The instrument adjusts its full-scale sensitivity so that the magnitude output lies
         between 25 % and 95 % of full-scale, 
-        and then performs an auto-phase operation to maximize the X-channel output and minimize the Y-channel output.
+        and then performs an auto-phase operation to maximize the X-channel output and 
+        minimize the Y-channel output.
         """
 
         self.ask('ASM')
@@ -364,20 +213,23 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def auto_tune(self):
         """Perform an automatic frequency tune.
         
-        The ATS command causes the filter frequency to be tuned to the reference frequency, by setting the filter track mode on and then off."""
+        The ATC command causes the filter frequency to be tuned to the reference frequency, 
+        by setting the filter track mode on and then off."""
         self.ask("ATC")
 
     def auto_phase(self):
         """Perform an auto phase (auto quadrature null) operation.
         
-        The instrument adjusts the reference phase to maximize the X channel output and minimize the Y channel output signals."""
+        The instrument adjusts the reference phase to maximize the X channel output and 
+        minimize the Y channel output signals."""
 
         self.ask("AQN")
 
     def auto_offset(self):
         """Perform an auto offset operation.
 
-        The instrument adjusts the X and Y channel output offsets to minimize the X and Y channel output signals.
+        The instrument adjusts the X and Y channel output offsets to minimize the 
+        X and Y channel output signals.
         """
         self.ask("AXO")
 
@@ -497,8 +349,9 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         :param setval: float to set the reference phase in degrees, modular range from 0 to 360.
         """
         ref_phase_read = self.ask("P")
-        read_quad = int(ref_phase_read[0])
-        read_millidegrees = int(ref_phase_read[1])
+        quad_str, mdeg_str = ref_phase_read.split()
+        read_quad = int(quad_str)
+        read_millidegrees = int(mdeg_str)
         read_degrees = read_millidegrees / 1000
         read_ref_phase = read_degrees + read_quad * 90
         return read_ref_phase  
@@ -529,7 +382,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             "NORM": 1,
             "HI RES": 2,
         }
-        return Dynamic_Reserves.get(self.ask("DRES"))
+        inverse = {v: k for k, v in Dynamic_Reserves.items()}
+        return inverse[int(self.ask("DR"))]
     
     @property
     def x_channel_offset(self):
@@ -807,9 +661,9 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         if n2 not in [0, 1, 2, 3, 4]:
             raise ValueError('Invalid filter frequency band')
         if n2 == 1 and not (50 <= n1 <= 1200):
-            raise ValueError('Invalid filter frequency for band 1')
+            raise ValueError('Invalid filter frequency for band 0')
         elif n2 != 1 and not (100 <= n1 <= 1200):
-            raise ValueError('Invalid filter frequency for band {n2}')
+            raise ValueError(f'Invalid filter frequency for band {n2}')
         self.ask(f"FF {n1} {n2}")
 
     @line_frequency_reject_mode.setter
@@ -832,11 +686,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     @reference_phase.setter
     def reference_phase(self, setval: float):
-        if 360 <= setval < -360:
-            raise ValueError('Invalid reference phase, should be in [0, 360)')
-
-        if setval < 0:
-            setval += 360
+        setval = setval % 360
+        
         # Reference phase control
         if 0 <= setval <= 90:
             # quad 1 = 0
