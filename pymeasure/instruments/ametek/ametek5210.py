@@ -268,7 +268,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Control the filter operation mode (int).
 
         :param setval: 0 is Flat/No filter, 1 is Notch/Band-rejection,
-        2 is Low-pass, 3 is High-pass.
+            2 is Low-pass, 3 is High-pass.
         """
         return int(self.ask("FLT"))
 
@@ -277,7 +277,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Control the filter frequency tuning mode (int).
 
         :param setval: 0 is Manual (frequency set by front-panel keys or by the FF command),
-        1 is Auto (filter frequency set to reference channel frequency).
+            1 is Auto (filter frequency set to reference channel frequency).
         """
         return int(self.ask("ATC"))
 
@@ -286,7 +286,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         """Control the filter frequency.
 
         :param (n1,n2): tuple of two integers, where n1 is the frequency within the band and
-        n2 is the band number.
+            n2 is the band number.
 
         The value of parameter n2 sets or reads the filter frequency band according to
         the following table:
@@ -343,10 +343,9 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     @property
     def reference_phase(self):
-        """Control the reference phase in degrees*.
+        """Control the reference phase in degrees (float).
 
-        *with a minimum resolution of 5 m°.
-
+        Minimum resolution of 5 m°.
         Note: The instrument uses an intricate quadrants system but I have handled this for you.
 
         :param setval: float to set the reference phase in degrees, modular range from 0 to 360.
@@ -396,10 +395,6 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def x_channel_offset(self):
         """X channel output offset control
 
-        :param (n1,n2): tuple of two integers, where n1 is the status and
-        n2 is the level of the X offset facility.
-        :param n1:  integer where n1 is the selection.
-
         The value of parameter n1 sets or reads the status and
         level of the X offset facility according to the following table:
 
@@ -408,16 +403,16 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             1 Enables X offset facility
 
         The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output.
+
+        :param (n1,n2): tuple of two integers, where n1 is the status and
+        n2 is the level of the X offset facility.
+        :param n1:  integer where n1 is the selection.
         """
         return self.ask("XOF")
 
     @property
     def y_channel_offset(self):
         """Y channel output offset control
-
-        :param (n1,n2): tuple of two integers, where n1 is the status and
-        n2 is the level of the Y offset facility.
-        :param n1:  integer where n1 is the selection.
 
         The value of parameter n1 sets or reads the status and
         level of the Y offset facility according to the following table:
@@ -427,6 +422,10 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             1 Enables Y offset facility
 
         The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output.
+
+        :param (n1,n2): tuple of two integers, where n1 is the status and
+        n2 is the level of the Y offset facility.
+        :param n1:  integer where n1 is the selection.
         """
         return self.ask("YOF")
 
@@ -453,7 +452,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         which corresponds to an output amplitude of 5.000 V rms.
 
         :param setval: float to set the oscillator amplitude in Volts,
-        truncated range from 0 to 5 V.
+            truncated range from 0 to 5 V.
         """
         return float(self.ask("OA"))
 
@@ -494,7 +493,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             8   "8F" trigger mode
 
         :param setval: integer to set the trigger mode: 0 is Reference, 1 is External,
-        2 is Asynchronous, 4 is Ratio, 8 is "8F".
+            2 is Asynchronous, 4 is Ratio, 8 is "8F".
         """
         return int(self.ask("TRIG"))
 
@@ -527,9 +526,13 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             4   REF F (Reference Frequency)
             5   DISP (As selected by Display 2 selection control)
 
-        :param setval: integer to set the display 1 selection: 0 is Reference Phase,
-        1 is Oscillator Amplitude, 2 is Oscillator Frequency, 3 is Filter Frequency,
-        4 is Reference Frequency, 5 is As selected by Display 2 selection control.
+        :param setval: integer to set the display 1 selection:
+            0 is Reference Phase,
+            1 is Oscillator Amplitude,
+            2 is Oscillator Frequency,
+            3 is Filter Frequency,
+            4 is Reference Frequency,
+            5 is As selected by Display 2 selection control.
         """
         return int(self.ask("D1"))
 
@@ -549,7 +552,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             5   SPEC (Depends on special display modes)
 
         :param setval: integer to set the display 2 selection: 0 is XY %, 1 is XY V,
-        2 is R-Theta, 3 is OFFSET, 4 is NOISE, 5 is SPEC.
+            2 is R-Theta, 3 is OFFSET, 4 is NOISE, 5 is SPEC.
         """
         return int(self.ask("D2"))
 
