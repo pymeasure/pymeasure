@@ -37,9 +37,11 @@ def check_read_not_empty(value: Literal[""] | float) -> float:
     """Called by some properties to check if the reply is not an empty string
     that would mean the properties is currently invalid (probably because the reference mode
     is on single or dual)"""
-    if value == '':
-        raise ValueError('Invalid response from measurement call, '
-                         'probably because the reference mode is set on single or dual')
+    if value == "":
+        raise ValueError(
+            "Invalid response from measurement call, "
+            "probably because the reference mode is set on single or dual"
+        )
     else:
         return value
 
@@ -69,7 +71,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         "100 mV": 12,
         "300 mV": 13,
         "1 V": 14,
-        "3 V": 15
+        "3 V": 15,
     }
 
     TIME_CONSTANTS = {
@@ -86,7 +88,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         "100 s": 10,
         "300 s": 11,
         "1 ks": 12,
-        "3 ks": 13
+        "3 ks": 13,
     }
 
     STATUS_ARRAY = [
@@ -97,7 +99,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         "overload",
         "new output values available after external trigger, or auto function in progress",
         "SRQ asserted",
-        "data available"
+        "data available",
     ]
 
     OVERLOAD_ARRAY = [
@@ -108,11 +110,12 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         "X channel output overload",
         "PSD overload",
         "input overload",
-        "reference unlock"
+        "reference unlock",
     ]
 
     sensitivity = Instrument.control(
-        "SEN", "SEN %d",
+        "SEN",
+        "SEN %d",
         """Control the sensitivity range in Volts
         (float truncated to values from 100 nV to 3 V).""",
         validator=strict_discrete_set,
@@ -123,7 +126,8 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     )
 
     time_constant = Instrument.control(
-        "XTC", "XTC %d",
+        "XTC",
+        "XTC %d",
         """Control the time constant in seconds
         (float truncated to values from 1 millisecond to 3,000 seconds).""",
         validator=strict_discrete_set,
@@ -132,17 +136,17 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         check_set_errors=True,
     )
 
-    def __init__(self, adapter, name="5210",
-                 read_termination='\x00',
-                 write_termination='\x00',
-                 **kwargs):
+    def __init__(
+        self, adapter, name="5210", read_termination="\x00", write_termination="\x00", **kwargs
+    ):
 
         super().__init__(
             adapter,
             name,
             read_termination=read_termination,
             write_termination=write_termination,
-            **kwargs)
+            **kwargs,
+        )
 
     def check_set_errors(self):
         """mandatory to be used for property setter
@@ -151,10 +155,10 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         has been correctly set. With default termination character set as Null character,
         this turns out as an empty string to be read.
         """
-        if self.read() == '':
+        if self.read() == "":
             return []
         else:
-            return ['Incorrect return from previously set property']
+            return ["Incorrect return from previously set property"]
 
     def ask(self, command, query_delay=1):
         """Send a command and read the response, stripping white spaces.
@@ -174,7 +178,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         between 25 % and 95 % of full-scale.
         """
 
-        self.ask('AS')
+        self.ask("AS")
 
     def auto_normalize(self):
         """Perform an auto normalize operation.
@@ -188,7 +192,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         the sensitivity is set to one extreme or the other and normalization is not attempted.
         """
 
-        self.ask('AN')
+        self.ask("AN")
 
     def abandon_auto(self):
         """Abandon auto-function.
@@ -197,29 +201,29 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         when it should be sent twice.
         """
 
-        self.ask('AA')
+        self.ask("AA")
 
     def auto_measure(self):
         """Perform an auto-measure operation.
 
         The instrument adjusts its full-scale sensitivity so that the magnitude output lies
-        between 25 % and 95 % of full-scale, 
-        and then performs an auto-phase operation to maximize the X-channel output and 
+        between 25 % and 95 % of full-scale,
+        and then performs an auto-phase operation to maximize the X-channel output and
         minimize the Y-channel output.
         """
 
-        self.ask('ASM')
+        self.ask("ASM")
 
     def auto_tune(self):
         """Perform an automatic frequency tune.
-        
+
         The ATC command causes the filter frequency to be tuned to the reference frequency,
         by setting the filter track mode on and then off."""
         self.ask("ATC")
 
     def auto_phase(self):
         """Perform an auto phase (auto quadrature null) operation.
-        
+
         The instrument adjusts the reference phase to maximize the X channel output and
         minimize the Y channel output signals."""
 
@@ -235,15 +239,11 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
     def status(self) -> list[str]:
         """Get the instrument status.
-        
+
         :return: list of all status errors received."""
         status_code = int(self.ask("ST"))
-        status = [
-            self.STATUS_ARRAY[i]
-            for i in range(8)
-            if status_code & (1 << i)
-        ]
-        
+        status = [self.STATUS_ARRAY[i] for i in range(8) if status_code & (1 << i)]
+
         return status
 
     def report_overload(self):
@@ -251,24 +251,21 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         :return: list of all overload errors received."""
         overload_code = int(self.ask("OL"))
-        overload = [
-            self.OVERLOAD_ARRAY[i]
-            for i in range(8)
-            if overload_code & (1 << i)
-        ]
-        
+        overload = [self.OVERLOAD_ARRAY[i] for i in range(8) if overload_code & (1 << i)]
+
         return overload
 
     @property
     def id(self):
         """Get the instrument ID and firmware version"""
         return f"{self.ask('ID')}/{self.ask('VER')}"
-    
+
     @property
     def filter_op_mode(self):
         """Control the filter operation mode (int).
 
-        :param setval: 0 is Flat/No filter, 1 is Notch/Band-rejection, 2 is Low-pass, 3 is High-pass.
+        :param setval: 0 is Flat/No filter, 1 is Notch/Band-rejection,
+        2 is Low-pass, 3 is High-pass.
         """
         return int(self.ask("FLT"))
 
@@ -276,29 +273,28 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     def filter_tuning_mode(self):
         """Control the filter frequency tuning mode (int).
 
-        :param setval: 0 is Manual (frequency set by front-panel keys or by the FF command), 
+        :param setval: 0 is Manual (frequency set by front-panel keys or by the FF command),
         1 is Auto (filter frequency set to reference channel frequency).
         """
         return int(self.ask("ATC"))
 
-
     @property
     def filter_frequency(self):
         """Control the filter frequency.
-        
+
         :param (n1,n2): tuple of two integers, where n1 is the frequency within the band and
         n2 is the band number.
-        
+
         The value of parameter n2 sets or reads the filter frequency band according to
         the following table:
-        
+
             n2.  frequency band
             0.  0.5 Hz to 12 Hz
             1.  10 Hz to 120 Hz
             2.  100 Hz to 1200 Hz
             3.  1 kHz to 12 kHz
             4.  10 kHz to 120 kHz
-        
+
         The value of parameter n1 sets or reads the frequency within each band in the range
         100 to 1200, except in the bottom band (n2 = 0) where the range is 50 to 1200
         """
@@ -320,7 +316,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             3.  Enable both filters
 
         :param setval: integer to select the mode: 0 is Off, 1/2/3 is On accordingly.
-        
+
         """
         return int(self.ask("LFR"))
 
@@ -332,7 +328,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         :param setval: integer to enable the mode: 0 for External, 1 for Internal
         """
         return int(self.ask("IE")) == 1
-    
+
     @property
     def reference_mode(self):
         """Control whether the instrument frequency reference order is in second harmonic mode.
@@ -341,13 +337,13 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         1 for Second harmonic reference.
         """
         return int(self.ask("F2F"))
-    
+
     @property
     def reference_phase(self):
         """Control the reference phase in degrees*.
 
         *with a minimum resolution of 5 m°.
-        
+
         Note: The instrument uses an intricate quadrants system but I have handled this for you.
 
         :param setval: float to set the reference phase in degrees, modular range from 0 to 360.
@@ -358,30 +354,29 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         read_millidegrees = int(mdeg_str)
         read_degrees = read_millidegrees / 1000
         read_ref_phase = read_degrees + read_quad * 90
-        return read_ref_phase  
+        return read_ref_phase
 
     @property
     def reference_frequency_meter(self):
         """If the lock-in amplifier is in the external reference source modes,
         this responds with 0 if the reference channel is unlocked,
         or with the reference input frequency if it is locked.
-        
+
         If the lock-in amplifier is in the internal reference source mode,
         it responds with the frequency of the internal oscillator.
-        
+
         :return 0: if the reference channel is unlocked.
         :return Reference frequency (mHz): if the reference channel is locked."""
         return int(self.ask("FRQ"))
 
-
     @property
     def second_order_filter(self):
         """Control whether the second order filter is enabled (bool).
-        
+
         :param setval: 0 is First order (slope 6 dB/octave),
             1 is Second order (slope 12 dB/octave)."""
         return int(self.ask("XDB")) == 1
-    
+
     @property
     def dynamic_reserve(self):
         Dynamic_Reserves = {
@@ -409,7 +404,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         The range of n2 is +/-1500 corresponding to +/-150% of the full-scale output."""
         return self.ask("XOF")
-    
+
     @property
     def y_channel_offset(self):
         """Y channel output offset control
@@ -440,19 +435,19 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
 
         :param setval: 0 is Normal, 1 is Expanded output range."""
         return int(self.ask("EX")) == 1
-    
+
     @property
     def oscillator_amplitude(self):
         """Control the oscillator amplitude in Volts (float).
 
-        The value of parameter sets or reads the oscillator amplitude. 
+        The value of parameter sets or reads the oscillator amplitude.
         The range is 0 to 2000 representing 0 to 2 V rms, but the value 5000 may also be used,
         which corresponds to an output amplitude of 5.000 V rms.
 
         :param setval: float to set the oscillator amplitude in Volts,
         truncated range from 0 to 5 V."""
         return float(self.ask("OA"))
-    
+
     @property
     def oscillator_frequency(self):
         """Control the oscillator frequency in Hz (n1,n2).
@@ -489,7 +484,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         :param setval: integer to set the trigger mode: 0 is Reference, 1 is External,
         2 is Asynchronous, 4 is Ratio, 8 is "8F"."""
         return int(self.ask("TRIG"))
-    
+
     @property
     def remote_only_mode(self):
         """Control the remote only mode (bool).
@@ -497,16 +492,17 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         The value of parameter sets or reads the remote mode according to the following table:
             n   Mode
             0   Local mode, front panel keys active
-            1   Remote mode, frontpanel keys locked out, except for LOCAL 
+            1   Remote mode, frontpanel keys locked out, except for LOCAL
 
         :param setval: integer to set the remote mode: 0 is Local, 1 is Remote."""
         return int(self.ask("REMOTE")) == 1
-    
+
     @property
     def display1_selection(self):
         """Control the display 1 selection (int).
 
-        The value of parameter sets or reads the display 1 selection according to the following table:
+        The value of parameter sets or reads the display 1 selection
+        according to the following table:
             n   Display 1 selection
             0   SET REF PH (Reference Phase)
             1   SET OSC LVL (Oscillator Amplitude)
@@ -519,12 +515,13 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
         1 is Oscillator Amplitude, 2 is Oscillator Frequency, 3 is Filter Frequency,
         4 is Reference Frequency, 5 is As selected by Display 2 selection control."""
         return int(self.ask("D1"))
-    
+
     @property
     def display2_selection(self):
         """Control the display 2 selection (int).
 
-        The value of parameter sets or reads the display 2 selection according to the following table:
+        The value of parameter sets or reads the display 2 selection
+        according to the following table:
             n   Display 2 selection
             0   XY % (X and Y as a voltage: 10.000 V = 100%)
             1   XY V (X and Y in volts)
@@ -556,7 +553,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     x = Instrument.measurement(
         "X",
         """Get X value in millivolts (float).
-        
+
         Responds with the X-channel output in the range ‡15000, full-scale being ‡10000""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
@@ -565,7 +562,7 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     y = Instrument.measurement(
         "Y",
         """Get Y value in millivolts (float).
-        
+
         Responds with the Y-channel output in the range ‡15000, full-scale being ‡10000""",
         cast=cast_or_str(float),
         get_process=check_read_not_empty,
@@ -678,43 +675,43 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     @filter_op_mode.setter
     def filter_op_mode(self, setval: int):
         if setval not in [0, 1, 2, 3]:
-            raise ValueError('Invalid filter operation mode')
+            raise ValueError("Invalid filter operation mode")
         self.ask(f"FLT {setval}")
 
     @filter_tuning_mode.setter
     def filter_tuning_mode(self, setval: int):
         if setval not in [0, 1]:
-            raise ValueError('Invalid filter tuning mode')
+            raise ValueError("Invalid filter tuning mode")
         self.ask(f"ATC {setval}")
 
     @filter_frequency.setter
     def filter_frequency(self, setval: tuple[int, int]):
         n1, n2 = setval
         if n2 not in [0, 1, 2, 3, 4]:
-            raise ValueError('Invalid filter frequency band')
+            raise ValueError("Invalid filter frequency band")
         if n2 == 1 and not (50 <= n1 <= 1200):
-            raise ValueError('Invalid filter frequency for band 0')
+            raise ValueError("Invalid filter frequency for band 0")
         elif n2 != 1 and not (100 <= n1 <= 1200):
-            raise ValueError(f'Invalid filter frequency for band {n2}')
+            raise ValueError(f"Invalid filter frequency for band {n2}")
         self.ask(f"FF {n1} {n2}")
 
     @line_frequency_reject_mode.setter
     def line_frequency_reject_mode(self, setval: int):
         if setval not in [0, 1, 2, 3]:
-            raise ValueError('Invalid line frequency reject mode')
+            raise ValueError("Invalid line frequency reject mode")
         self.ask(f"LFR {setval}")
 
     @reference_internal.setter
     def reference_internal(self, setval: int):
         if setval not in [0, 1]:
-            raise ValueError('Invalid reference internal mode')
+            raise ValueError("Invalid reference internal mode")
         self.ask(f"IE {setval}")
 
     @reference_mode.setter
     def reference_mode(self, setval: int):
         if setval not in [0, 1]:
-            raise ValueError('Invalid reference mode')
-        self.ask(f'F2F {setval}')
+            raise ValueError("Invalid reference mode")
+        self.ask(f"F2F {setval}")
 
     @reference_phase.setter
     def reference_phase(self, setval: float):
@@ -754,59 +751,61 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
             "HI RES": 2,
         }
         if setval not in Dynamic_Reserves:
-            raise ValueError(f"Invalid dynamic reserve value: {setval}. "
-                             f"Valid values are: {list(Dynamic_Reserves.keys())}")
+            raise ValueError(
+                f"Invalid dynamic reserve value: {setval}. "
+                f"Valid values are: {list(Dynamic_Reserves.keys())}"
+            )
         self.ask(f"DR {Dynamic_Reserves[setval]}")
 
     @x_channel_offset.setter
-    def x_channel_offset(self, setval):
+    def x_channel_offset(self, setval: tuple[int, int] | int):
         if isinstance(setval, (tuple, list)):
             n1, n2 = setval
             if n1 not in [0, 1]:
-                raise ValueError('Invalid X channel offset status')
+                raise ValueError("Invalid X channel offset status")
             if not (-1500 <= n2 <= 1500):
-                raise ValueError('Invalid X channel offset level')
+                raise ValueError("Invalid X channel offset level")
             self.ask(f"XOF {n1} {n2}")
         else:
             n1 = setval
             if n1 not in [0, 1]:
-                raise ValueError('Invalid X channel offset status')
+                raise ValueError("Invalid X channel offset status")
             self.ask(f"XOF {n1}")
 
     @y_channel_offset.setter
-    def y_channel_offset(self, setval):
+    def y_channel_offset(self, setval: tuple[int, int] | int):
         if isinstance(setval, (tuple, list)):
             n1, n2 = setval
             if n1 not in [0, 1]:
-                raise ValueError('Invalid Y channel offset status')
+                raise ValueError("Invalid Y channel offset status")
             if not (-1500 <= n2 <= 1500):
-                raise ValueError('Invalid Y channel offset level')
+                raise ValueError("Invalid Y channel offset level")
             self.ask(f"YOF {n1} {n2}")
         else:
             n1 = setval
             if n1 not in [0, 1]:
-                raise ValueError('Invalid Y channel offset status')
+                raise ValueError("Invalid Y channel offset status")
             self.ask(f"YOF {n1}")
 
     @oscillator_amplitude.setter
     def oscillator_amplitude(self, setval: float):
         if not (0 <= setval <= 5):
-            raise ValueError('Invalid oscillator amplitude, should be in [0, 5]')
+            raise ValueError("Invalid oscillator amplitude, should be in [0, 5]")
         self.ask(f"OA {setval}")
 
     @oscillator_frequency.setter
     def oscillator_frequency(self, setval: tuple[int, int]):
         n1, n2 = setval
         if n2 not in [0, 1, 2, 3, 4, 5]:
-            raise ValueError('Invalid oscillator frequency band')
+            raise ValueError("Invalid oscillator frequency band")
         if not (500 <= n1 <= 20000):
-            raise ValueError('Invalid oscillator frequency within band')
+            raise ValueError("Invalid oscillator frequency within band")
         self.ask(f"OF {n1} {n2}")
 
     @trigger_mode.setter
     def trigger_mode(self, setval: int):
         if setval not in [0, 1, 2, 4, 8]:
-            raise ValueError('Invalid trigger mode')
+            raise ValueError("Invalid trigger mode")
         self.ask(f"TRIG {setval}")
 
     @remote_only_mode.setter
@@ -819,19 +818,19 @@ class Ametek5210(SCPIUnknownMixin, Instrument):
     @display1_selection.setter
     def display1_selection(self, setval: int):
         if setval not in [0, 1, 2, 3, 4, 5]:
-            raise ValueError('Invalid display 1 selection')
+            raise ValueError("Invalid display 1 selection")
         self.ask(f"D1 {setval}")
 
     @display2_selection.setter
     def display2_selection(self, setval: int):
         if setval not in [0, 1, 2, 3, 4, 5]:
-            raise ValueError('Invalid display 2 selection')
+            raise ValueError("Invalid display 2 selection")
         self.ask(f"D2 {setval}")
 
     @display_update_rate.setter
     def display_update_rate(self, setval: float):
         if not (0.1 <= setval <= 1.0):
-            raise ValueError('Invalid display update rate, should be in [0.1, 1.0]')
+            raise ValueError("Invalid display update rate, should be in [0.1, 1.0]")
         self.ask(f"DISP {setval}")
 
     @lights_enabled.setter

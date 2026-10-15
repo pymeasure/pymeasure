@@ -22,5 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .ametek7270 import Ametek7270
 from .ametek5210 import Ametek5210
+from .ametek7270 import Ametek7270
