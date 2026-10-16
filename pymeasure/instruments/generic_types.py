@@ -111,8 +111,15 @@ class SCPIMixin(IEEE4882Mixin):
 
 
 class SCPIUnknownMixin(SCPIMixin):
-    """Mixin which adds SCPI commands to an instrument from which it is not known whether it
-    supports SCPI commands or not.
+    """Preserve assumed SCPI support for existing instruments with unverified command sets.
+
+    This mixin is a transitional compatibility aid for drivers written when instruments
+    included SCPI commands by default. It does not detect or verify SCPI support.
+
+    Do not use this mixin in new instrument drivers. Use :class:`SCPIMixin` when the
+    instrument supports its commands, or :class:`IEEE4882Mixin` when only its IEEE 488.2
+    commands are supported. Otherwise, inherit from :class:`~pymeasure.instruments.Instrument`
+    without either mixin and implement the commands the instrument supports.
     """
 
     def __init__(self, *args, **kwargs):
