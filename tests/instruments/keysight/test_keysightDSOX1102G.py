@@ -37,7 +37,6 @@ CH = 1
 # Channel properties
 # ---------------------------
 
-
 @pytest.mark.parametrize("ch_number", [1, 2])
 @pytest.mark.parametrize("state, as_int", [(True, 1), (False, 0)])
 def test_ch_bwlimit(ch_number, state, as_int):
@@ -218,7 +217,6 @@ def test_ch_current_configuration():
 # ---------------------------
 # Channel.setup
 # ---------------------------
-
 
 def test_ch_setup_warns_when_both_range_and_scale_given(caplog):
     caplog.set_level(logging.WARNING)
@@ -500,7 +498,6 @@ def test_waveform_format(case, mapped):
 # waveform_preamble
 # ---------------------------
 
-
 def test_waveform_preamble():
     # format=4 -> ASCII, type=0 -> NORMAL
     raw_preamble = "4,0,62500,1,1.6E-08,-5.0E-04,0,7.851759E-04,0,32768"
@@ -567,7 +564,6 @@ def test_waveform_preamble_type_mapping(type_int, type_str):
 # waveform_data
 # ---------------------------
 
-
 def test_waveform_data_forces_ascii_and_strips_header():
     # waveform_data setter first sets format to ascii, then queries data.
     # Device returns an IEEE 488.2 arbitrary block: '#9' header, 9-digit
@@ -598,7 +594,6 @@ def test_waveform_data_single_element():
 # ---------------------------
 # System methods
 # ---------------------------
-
 
 def test_autoscale():
     with expected_protocol(
@@ -708,7 +703,6 @@ def test_ch_invalid_raises_value_error():
 # ---------------------------
 # download_data
 # ---------------------------
-
 
 def test_download_data():
     preamble_raw = "4,0,100,1,1.6E-08,-5.0E-04,0,7.851759E-04,0,32768"

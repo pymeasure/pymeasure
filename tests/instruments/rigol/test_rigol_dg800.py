@@ -118,14 +118,6 @@ def test_channel_1_output_enabled_setter(comm_pairs, value):
         inst.channel_1.output_enabled = value
 
 
-def test_channel_1_output_enabled_getter():
-    with expected_protocol(
-            DG800,
-            [(b':OUTP1?', b'OFF\n')],
-    ) as inst:
-        assert inst.channel_1.output_enabled is False
-
-
 def test_channel_1_pulse_setter():
     with expected_protocol(
             DG800,
@@ -188,23 +180,110 @@ def test_channel_1_triangle_setter():
         inst.channel_1.triangle = (500, 1, 0, 0)
 
 
-@pytest.mark.parametrize("comm_pairs, value", (
-    ([(b':SOUR1:APPL?', b'"SIN,5.000000E+02,1.000000E+00,0.000000E+00,0.000000E+00"\n')],
-     ['"SIN', 500.0, 1.0, 0.0, '0.000000E+00"']),
-    ([(b':SOUR1:APPL?', b'"SQU,5.000000E+02,1.000000E+00,0.000000E+00,0.000000E+00"\n')],
-     ['"SQU', 500.0, 1.0, 0.0, '0.000000E+00"']),
-    ([(b':SOUR1:APPL?', b'"RAMP,5.000000E+02,1.000000E+00,0.000000E+00,0.000000E+00"\n')],
-     ['"RAMP', 500.0, 1.0, 0.0, '0.000000E+00"']),
-    ([(b':SOUR1:APPL?', b'"NOISE,DEF,2.000000E+00,0.000000E+00,DEF"\n')],
-     ['"NOISE', 'DEF', 2.0, 0.0, 'DEF"']),
-    ([(b':SOUR1:APPL?', b'"DC,DEF,DEF,1.000000E+00"\n')],
-     ['"DC', 'DEF', 'DEF', '1.000000E+00"']),
-    ([(b':SOUR1:APPL?', b'"PULSE,5.000000E+01,1.000000E+00,0.000000E+00,0.000000E+00"\n')],
-     ['"PULSE', 50.0, 1.0, 0.0, '0.000000E+00"']),
-))
-def test_channel_1_waveform_getter(comm_pairs, value):
+def test_channel_1_frequency_setter():
     with expected_protocol(
             DG800,
-            comm_pairs,
+            [(b':SOUR1:FREQ 1000.000000', None)],
     ) as inst:
-        assert inst.channel_1.waveform == value
+        inst.channel_1.frequency = 1000
+
+
+def test_channel_1_shape_setter():
+    with expected_protocol(
+            DG800,
+            [(b':SOUR1:FUNC SIN', None)],
+    ) as inst:
+        inst.channel_1.shape = "SIN"
+
+
+@pytest.mark.parametrize("channel, sour_prefix, outp_prefix", (
+    ("channel_1", b':SOUR1', b':OUTP1'),
+    ("channel_2", b':SOUR2', b':OUTP2'),
+))
+def test_channel_frequency_getter(channel, sour_prefix, outp_prefix):
+    with expected_protocol(
+            DG800,
+            [(sour_prefix + b':FREQ?', b'1.000000E+03\n')],
+    ) as inst:
+        assert getattr(inst, channel).frequency == 1000.0
+
+
+@pytest.mark.parametrize("channel, sour_prefix", (
+    ("channel_1", b':SOUR1'),
+    ("channel_2", b':SOUR2'),
+))
+def test_channel_shape_getter(channel, sour_prefix):
+    with expected_protocol(
+            DG800,
+            [(sour_prefix + b':FUNC?', b'SIN\n')],
+    ) as inst:
+        assert getattr(inst, channel).shape == "SIN"
+
+
+@pytest.mark.parametrize("channel, outp_prefix, reply, value", (
+    ("channel_1", b':OUTP1', b'ON\n', True),
+    ("channel_2", b':OUTP2', b'ON\n', True),
+    ("channel_1", b':OUTP1', b'OFF\n', False),
+    ("channel_2", b':OUTP2', b'OFF\n', False),
+))
+def test_channel_output_enabled_getter(channel, outp_prefix, reply, value):
+    with expected_protocol(
+            DG800,
+            [(outp_prefix + b'?', reply)],
+    ) as inst:
+        assert getattr(inst, channel).output_enabled is value
+
+
+@pytest.mark.parametrize("channel, outp_prefix", (
+    ("channel_1", b':OUTP1'),
+    ("channel_2", b':OUTP2'),
+))
+def test_channel_sync_enabled_getter(channel, outp_prefix):
+    with expected_protocol(
+            DG800,
+            [(outp_prefix + b':SYNC?', b'ON\n')],
+    ) as inst:
+        assert getattr(inst, channel).sync_enabled is True
+
+
+@pytest.mark.parametrize("channel, outp_prefix", (
+    ("channel_1", b':OUTP1'),
+    ("channel_2", b':OUTP2'),
+))
+def test_channel_high_impedance_getter(channel, outp_prefix):
+    with expected_protocol(
+            DG800,
+            [(outp_prefix + b':IMP?', b'INF\n')],
+    ) as inst:
+        assert getattr(inst, channel).high_impedance is True
+
+
+@pytest.mark.parametrize("channel, sour_prefix, reply, value", (
+    ("channel_1", b':SOUR1',
+     b'"SIN,5.000000E+02,1.000000E+00,0.000000E+00,0.000000E+00"\n',
+     ['SIN', 500.0, 1.0, 0.0, 0.0]),
+    ("channel_1", b':SOUR1',
+     b'"SQU,5.000000E+02,1.000000E+00,0.000000E+00,0.000000E+00"\n',
+     ['SQU', 500.0, 1.0, 0.0, 0.0]),
+    ("channel_1", b':SOUR1',
+     b'"RAMP,5.000000E+02,1.000000E+00,0.000000E+00,0.000000E+00"\n',
+     ['RAMP', 500.0, 1.0, 0.0, 0.0]),
+    ("channel_1", b':SOUR1',
+     b'"NOISE,DEF,2.000000E+00,0.000000E+00,DEF"\n',
+     ['NOISE', 'DEF', 2.0, 0.0, 'DEF']),
+    ("channel_1", b':SOUR1',
+     b'"DC,DEF,DEF,1.000000E+00"\n',
+     ['DC', 'DEF', 'DEF', 1.0]),
+    ("channel_1", b':SOUR1',
+     b'"PULSE,5.000000E+01,1.000000E+00,0.000000E+00,0.000000E+00"\n',
+     ['PULSE', 50.0, 1.0, 0.0, 0.0]),
+    ("channel_2", b':SOUR2',
+     b'"SIN,5.000000E+02,1.000000E+00,0.000000E+00,0.000000E+00"\n',
+     ['SIN', 500.0, 1.0, 0.0, 0.0]),
+))
+def test_channel_waveform_getter(channel, sour_prefix, reply, value):
+    with expected_protocol(
+            DG800,
+            [(sour_prefix + b':APPL?', reply)],
+    ) as inst:
+        assert getattr(inst, channel).waveform == value

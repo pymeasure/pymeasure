@@ -55,7 +55,7 @@ class ATS545(ATSBase):
 
     mode_values = {'manual': 10,    # 5 in ATSbase
                    'program': 0,    # 6 in ATSbase
-                   'initial': 63},  # after power up, reading is 63
+                   'initial': 63}   # after power up, reading is 63
 
     def next_setpoint(self):
         """not implemented in ATS545
