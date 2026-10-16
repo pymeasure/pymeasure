@@ -2618,16 +2618,16 @@ class HP856Xx(Instrument):
 
         values = self.values(cmd_str, cast=int)
 
-        if amp_units is AmplitudeUnits.W:
+        if amp_units == AmplitudeUnits.W:
             # calculate dbm from watts
             ref_lvl = (10 * log10(ref_lvl)) + 30
-        elif amp_units is AmplitudeUnits.DBUV:
+        elif amp_units == AmplitudeUnits.DBUV:
             # calculate dbm from dbuv in 50 Ohm system
             ref_lvl = ref_lvl - 107
-        elif amp_units is AmplitudeUnits.V:
-            # calculate dbm from volts in 50 Ohm system
-            ref_lvl = 20 * log10((ref_lvl / 0.05) ** 0.5)
-        elif amp_units is AmplitudeUnits.DBMV:
+        elif amp_units == AmplitudeUnits.V:
+            # calculate dbm from volts in 50 Ohm system: P[mW] = V**2 / (50 Ohm * 1 mW)
+            ref_lvl = 10 * log10(ref_lvl ** 2 / 0.05)
+        elif amp_units == AmplitudeUnits.DBMV:
             # calculate dbm from dbmv
             ref_lvl = ref_lvl - 46.9897
 
