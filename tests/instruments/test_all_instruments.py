@@ -101,6 +101,7 @@ need_init_communication = [
     "SwissArmyFake",
     "FakeInstrument",
     "ThorlabsPM100USB",
+    "ThorlabsPro8000",
     "Keithley2400",
     "Keithley2700",
     "TC038",
