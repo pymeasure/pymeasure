@@ -113,7 +113,7 @@ class TestProcedure(Procedure):
         estimates.append(('Measurement finished at', str(datetime.now() + timedelta(
             seconds=duration))[:-7]))
         estimates.append(('Sequence finished at', str(datetime.now() + timedelta(
-            seconds=duration * sequence_length))[:-7]))
+            seconds=duration * sequence_length))[:-7]))  # pyright: ignore[reportOperatorIssue]
 
         return estimates
 

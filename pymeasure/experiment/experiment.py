@@ -46,18 +46,18 @@ except ImportError:
     log.warning("IPython could not be imported")
 
 
-def get_array(start, stop, step):
+def get_array(start: float, stop: float, step: float):
     """Returns a numpy array from start to stop"""
     step = np.sign(stop - start) * abs(step)
     return np.arange(start, stop + step, step)
 
 
-def get_array_steps(start, stop, numsteps):
+def get_array_steps(start: float, stop: float, numsteps: int):
     """Returns a numpy array from start to stop in numsteps"""
     return get_array(start, stop, (abs(stop - start) / numsteps))
 
 
-def get_array_zero(maxval, step):
+def get_array_zero(maxval: float, step: float):
     """Returns a numpy array from 0 to maxval to -maxval to 0"""
     return np.concatenate((np.arange(0, maxval, step), np.arange(maxval, -maxval, -step),
                            np.arange(-maxval, 0, step)))
@@ -74,8 +74,8 @@ def create_filename(title: str) -> tuple[int | None, str]:
         branch.
     """
     config = get_config()
-    if 'Filename' in config._sections:
-        filename = unique_filename(suffix=f'_{title}', **config._sections['Filename'])
+    if config.has_section('Filename'):
+        filename = unique_filename(suffix=f"_{title}", **dict(config.items("Filename", raw=True)))  # pyright: ignore[reportArgumentType]
         fd = None
     else:
         fd, filename = tempfile.mkstemp()
@@ -129,8 +129,8 @@ class Experiment:
 
         config = get_config()
         set_mpl_rcparams(config)
-        if 'Logging' in config._sections:
-            self.scribe = setup_logging(log, **config._sections['Logging'])
+        if config.has_section('Logging'):
+            self.scribe = setup_logging(log, **dict(config.items("Logging", raw=True)))  # pyright: ignore[reportArgumentType]
         else:
             self.scribe = console_log(log)
         self.scribe.start()

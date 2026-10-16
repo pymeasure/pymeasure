@@ -23,28 +23,26 @@
 #
 
 import configparser
-import logging
 import os
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+
+def set_file(filename: str) -> None:
+    os.environ["CONFIG"] = filename
 
 
-def set_file(filename):
-    os.environ['CONFIG'] = filename
-
-
-def get_config(filename='default_config.ini'):
-    if 'CONFIG' in os.environ:
-        filename = os.environ['CONFIG']
+def get_config(filename: str = "default_config.ini") -> configparser.ConfigParser:
+    if "CONFIG" in os.environ:
+        filename = os.environ["CONFIG"]
     config = configparser.ConfigParser()
     config.read(filename)
     return config
 
 
 # noinspection PyProtectedMember
-def set_mpl_rcparams(config):
-    if 'matplotlib.rcParams' in config._sections:
+def set_mpl_rcparams(config: configparser.ConfigParser) -> None:
+    config.items()
+    if config.has_section("matplotlib.rcParams"):
         import matplotlib
-        for key in config._sections['matplotlib.rcParams']:
-            matplotlib.rcParams[key] = eval(config._sections['matplotlib.rcParams'][key])
+
+        for key, value in config.items("matplotlib.rcParams", raw=True):
+            matplotlib.rcParams[key] = eval(value)  # pyright: ignore[reportArgumentType]

@@ -105,7 +105,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             help_fields = [('units are', 'units')] + kwargs.pop('help_fields')
             desc = kwargs.pop('desc')
             kwargs['help'] = self._cli_help_fields(desc, kwargs, help_fields)
-            special_opts_group.add_argument("--" + option, **kwargs)
+            special_opts_group.add_argument("--" + option, **kwargs)  # type: ignore
 
         experiment_opts_group = self.add_argument_group("Experiment options")
         for name in parameter_objects:

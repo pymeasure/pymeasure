@@ -38,7 +38,7 @@ dependencies = [
 
 [project.optional-dependencies]
 gui = [
-    "pyqtgraph>=0.12",
+    "pyqtgraph>=0.13.3",
     "qtpy>=2.4",
 ]
 tcp = [

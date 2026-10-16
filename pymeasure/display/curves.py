@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pyqtgraph as pg
+from numpy.typing import DTypeLike
 
 from pymeasure.experiment.results import Results
 
@@ -209,7 +210,7 @@ class BufferCurve(pg.PlotDataItem):
         super().__init__(**kwargs)
         self._buffer = None
 
-    def prepare(self, size, dtype=np.float32):
+    def prepare(self, size: int, dtype: DTypeLike | None = np.float32) -> None:
         """ Prepares the buffer based on its size, data type """
         self._buffer = np.empty((size, 2), dtype=dtype)
         self._ptr = 0

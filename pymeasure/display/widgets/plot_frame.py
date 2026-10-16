@@ -76,7 +76,7 @@ class PlotFrame(QtWidgets.QFrame):
         vbox.addWidget(self.plot_widget)  # pyright: ignore[reportArgumentType]
         self.setLayout(vbox)
 
-        self.plot = cast(pg.PlotItem.PlotItem, self.plot_widget.getPlotItem())
+        self.plot = cast(pg.PlotItem, self.plot_widget.getPlotItem())
 
         style = dict(self.LABEL_STYLE, justify='right')
         if "font-size" in style:  # LabelItem wants the size as 'size' rather than 'font-size'
