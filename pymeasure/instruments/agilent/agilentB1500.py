@@ -59,7 +59,10 @@ class AgilentB1500(SCPIMixin, Instrument):
     measurements.
     """
 
+    # Created dynamically by :meth:`initialize_units`
     smus: dict[int, SMU]
+    spgus: dict[int, SPGU]
+    cmu: CMU
 
     def __init__(
         self,
@@ -68,7 +71,6 @@ class AgilentB1500(SCPIMixin, Instrument):
         **kwargs,
     ):
         super().__init__(adapter, name, read_termination="\r\n", write_termination="\r\n", **kwargs)
-        self._smu_references: dict[int, SMU] = {}
         self._data_format: AgilentB1500._data_formatting_generic | None = None
 
     @property
@@ -121,7 +123,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         :param query_type: Query type (number according to manual)
         """
-        return QueryLearn.query_learn_header(self.ask, query_type, self._smu_references, **kwargs)
+        smu_references = {cast(int, smu.id): smu for smu in getattr(self, "smus", {}).values()}
+        return QueryLearn.query_learn_header(self.ask, query_type, smu_references, **kwargs)
 
     def query_modules(self) -> dict[int, str]:
         """Query module models from the instrument.
@@ -154,12 +157,55 @@ class AgilentB1500(SCPIMixin, Instrument):
                     raise NotImplementedError(f"Module {module[0]} is not implemented yet!") from e
         return out
 
+    def initialize_units(self) -> None:
+        """Initialize all supported units.
+
+        Query available modules once and create a :class:`.SMU`, :class:`.SPGU`
+        or :class:`.CMU` instance for every module that is supported by this driver.
+        The units are numbered consecutively per type and are accessible via
+        attributes such as ``.smu1``, ``.spgu1`` and ``.cmu``.
+        The slot a unit is installed in is available as its ``id``.
+        """
+        modules = self.query_modules()
+        smu_index = 1
+        spgu_index = 1
+        for channel, module_type in modules.items():
+            if "SMU" in module_type:
+                self.add_child(
+                    SMU,
+                    smu_index,
+                    collection="smus",
+                    prefix="smu",
+                    smu_type=module_type,
+                    slot=channel,
+                )
+                smu_index += 1
+            elif "CMU" in module_type:
+                self.add_child(CMU, id=channel, collection="cmu", prefix=None)
+            elif module_type == "SPGU":
+                self.add_child(
+                    SPGU,
+                    spgu_index,
+                    collection="spgus",
+                    prefix="spgu",
+                    slot=channel,
+                )
+                spgu_index += 1
+
     def initialize_all_smus(self) -> None:
         """Initialize all SMUs.
 
         Query available modules and create a :class:`.SMU` instance for each.
         SMUs are accessible via attributes such as ``.smu1``, etc.
+
+        .. deprecated:: 0.17.0
+            Use :meth:`initialize_units` instead.
         """
+        warnings.warn(
+            "`initialize_all_smus` is deprecated, use `initialize_units` instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
         modules = self.query_modules()
         i = 1
         for channel, module_type in modules.items():
@@ -172,7 +218,6 @@ class AgilentB1500(SCPIMixin, Instrument):
                     smu_type=module_type,
                     slot=channel,
                 )
-                self._smu_references[channel] = self.smus[i]
                 i += 1
 
     def initialize_all_spgus(self) -> None:
@@ -180,18 +225,42 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         Query available modules and create a :class:`.SPGU` instance for each.
         SPGUs are accessible via attributes such as ``.spgu1``, etc.
+
+        .. deprecated:: 0.17.0
+            Use :meth:`initialize_units` instead.
         """
+        warnings.warn(
+            "`initialize_all_spgus` is deprecated, use `initialize_units` instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
         modules = self.query_modules()
+        i = 1
         for channel, module_type in modules.items():
             if module_type == "SPGU":
-                self.add_child(SPGU, channel, collection="spgus", prefix="spgu")
+                self.add_child(
+                    SPGU,
+                    i,
+                    collection="spgus",
+                    prefix="spgu",
+                    slot=channel,
+                )
+                i += 1
 
     def initialize_cmu(self) -> None:
         """Initialize CMU.
 
         Query available modules and create a :class:`.CMU` instance for the CMU.
         CMU is accessible via attribute ``.cmu``.
+
+        .. deprecated:: 0.17.0
+            Use :meth:`initialize_units` instead.
         """
+        warnings.warn(
+            "`initialize_cmu` is deprecated, use `initialize_units` instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
         modules = self.query_modules()
         for channel, module_type in modules.items():
             if "CMU" in module_type:
@@ -1791,11 +1860,13 @@ class SPGU(Channel):
     """Provide specific methods for the SPGU module of the Agilent B1500 mainframe.
 
     :param parent: Instance of the B1500 mainframe class
-    :param channel: Channel number of the SPGU
+    :param index: Index of the SPGU
+    :param slot: Slot number of the SPGU
     """
 
-    def __init__(self, parent: AgilentB1500, channel: int, **kwargs):
-        super().__init__(parent, channel, **kwargs)
+    def __init__(self, parent: AgilentB1500, index: int, slot: int, **kwargs):
+        slot = strict_discrete_set(slot, range(1, 11))
+        super().__init__(parent, slot, **kwargs)
         self.ch1 = self.add_child(SPGUChannel, int(f"{self.id}01"), prefix="ch")
         self.ch2 = self.add_child(SPGUChannel, int(f"{self.id}02"), prefix="ch")
 
