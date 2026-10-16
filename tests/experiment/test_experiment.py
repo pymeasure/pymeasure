@@ -28,7 +28,6 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
-from data.procedure_for_testing import RandomProcedure
 
 from pymeasure.experiment.experiment import (
     Experiment,
@@ -37,6 +36,7 @@ from pymeasure.experiment.experiment import (
     get_array_steps,
     get_array_zero,
 )
+from tests.experiment.data.procedure_for_testing import RandomProcedure
 
 # ---------------------------------------------------------------------------
 # get_array tests
