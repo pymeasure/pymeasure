@@ -108,14 +108,18 @@ def test_parse_memory_depth_invalid_reply():
         _parse_memory_depth("banana")
 
 
-def test_display_grab_image_includes_optional_arguments():
+@pytest.mark.parametrize("kwargs, command", [
+    ({}, b":DISP:DATA?"),
+    ({"image_format": DisplayImageFormat.PNG}, b":DISP:DATA? ON,OFF,PNG"),
+    ({"image_format": "jpeg"}, b":DISP:DATA? ON,OFF,JPEG"),
+    ({"color": False, "invert": True}, b":DISP:DATA? OFF,ON,BMP24"),
+])
+def test_display_grab_image(kwargs, command):
     with expected_protocol(
         RigolDS1000Z,
-        [(b":DISP:DATA? [ON,OFF,PNG]", b"#40004data\n")]
+        [(command, b"#40004data\n")]
     ) as inst:
-        result = inst.display.grab_image(color=True, invert=False,
-                                         image_format=DisplayImageFormat.PNG)
-        assert result == b"data"
+        assert inst.display.grab_image(**kwargs) == b"data"
 
 
 def test_display_grab_image_rejects_unsupported_format():

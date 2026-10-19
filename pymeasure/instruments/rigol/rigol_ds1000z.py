@@ -321,14 +321,14 @@ class RigolDS1000ZDisplay(Channel):
 
     def grab_image(
         self,
-        color: Optional[bool] = None,
-        invert: Optional[bool] = None,
+        color: bool = True,
+        invert: bool = False,
         image_format: Union[DisplayImageFormat, str] = DisplayImageFormat.BMP24,
     ) -> bytes:
         """Return the current screen image bytes (payload only, TMC header removed).
 
-        :param bool color: True=color, False=intensity graded color, None=use current setting.
-        :param bool invert: True to invert, False normal, None=use current setting.
+        :param bool color: True for color, False for intensity graded color. Defaults to True.
+        :param bool invert: True to invert the colors, False for normal colors. Defaults to False.
         :param DisplayImageFormat | str image_format: One of BMP24, BMP8, PNG, JPEG, TIFF.
             Defaults to BMP24.
         :return bytes: Image file bytes (e.g. PNG, BMP, …), without the TMC header.
@@ -340,18 +340,15 @@ class RigolDS1000ZDisplay(Channel):
             if fmt not in {f.value for f in DisplayImageFormat}:
                 raise ValueError(f"Unsupported image format: {image_format}")
 
-        # Build optional argument block [<color>,<invert>,<format>]
-        if color is not None or invert is not None:
-            col = "ON" if bool(color) else "OFF" if color is not None else ""
-            inv = "ON" if bool(invert) else "OFF" if invert is not None else ""
-            # If either color or invert is specified, include both positions; empty slots allowed
-            args = f"[{col},{inv},{fmt}]"
+        # The brackets in the manual's syntax ":DISP:DATA? [<color>,<invert>,<format>]" mark the
+        # arguments as optional; they must not be sent. The bare query keeps working on firmware
+        # that does not accept the arguments.
+        if color and not invert and fmt == DisplayImageFormat.BMP24.value:
+            cmd = ":DISP:DATA?"
         else:
-            # Caller supplied neither color nor invert; only supply format if non-default BMP24?
-            # Spec says default is BMP24 when omitted, so omit entirely to use instrument defaults.
-            args = ""
-
-        cmd = f":DISP:DATA? {args}".rstrip()
+            col = "ON" if color else "OFF"
+            inv = "ON" if invert else "OFF"
+            cmd = f":DISP:DATA? {col},{inv},{fmt}"
         self.write(cmd)
         return _parse_tmc_block(self.read_bytes)
 
@@ -458,7 +455,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
         from pathlib import Path
 
-        image = scope.display.grab_image(color=True, image_format="PNG")
+        image = scope.display.grab_image(image_format="PNG")
         Path("screenshot.png").write_bytes(image)
 
     Optional ``color`` and ``invert`` parameters map to the oscilloscope arguments, allowing
