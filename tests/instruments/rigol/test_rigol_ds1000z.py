@@ -27,8 +27,8 @@ import io
 import pytest
 
 from pymeasure.instruments.rigol.rigol_ds1000z import (
-    RigolDS1000Z,
     DisplayImageFormat,
+    RigolDS1000Z,
     _normalize_memory_depth_value,
     _parse_memory_depth,
     _parse_tmc_block,
@@ -123,9 +123,8 @@ def test_display_grab_image(kwargs, command):
 
 
 def test_display_grab_image_rejects_unsupported_format():
-    with expected_protocol(RigolDS1000Z, []) as inst:
-        with pytest.raises(ValueError):
-            inst.display.grab_image(image_format="svg")
+    with expected_protocol(RigolDS1000Z, []) as inst, pytest.raises(ValueError):
+        inst.display.grab_image(image_format="svg")
 
 
 def test_display_type_set_and_get():
@@ -148,9 +147,8 @@ def test_channel_invert_set_and_get():
 
 
 def test_display_type_setter_rejects_invalid_mode():
-    with expected_protocol(RigolDS1000Z, []) as inst:
-        with pytest.raises(ValueError):
-            inst.display.type = "lines"
+    with expected_protocol(RigolDS1000Z, []) as inst, pytest.raises(ValueError):
+        inst.display.type = "lines"
 
 
 def test_display_persistence_set_and_get_inf():
@@ -172,15 +170,13 @@ def test_display_persistence_set_numeric():
 
 
 def test_display_persistence_rejects_invalid_value():
-    with expected_protocol(RigolDS1000Z, []) as inst:
-        with pytest.raises(ValueError):
-            inst.display.persistence = 99
+    with expected_protocol(RigolDS1000Z, []) as inst, pytest.raises(ValueError):
+        inst.display.persistence = 99
 
 
 def test_waveform_brightness_setter_rejects_out_of_range():
-    with expected_protocol(RigolDS1000Z, []) as inst:
-        with pytest.raises(ValueError):
-            inst.display.waveform_brightness = 200
+    with expected_protocol(RigolDS1000Z, []) as inst, pytest.raises(ValueError):
+        inst.display.waveform_brightness = 200
 
 
 def test_memory_depth_single_channel_allows_maximum_depth():
@@ -209,9 +205,11 @@ def test_memory_depth_two_channels_accepts_mid_range_depth():
 
 def test_memory_depth_requires_digital_channel_hint():
     commands = _display_queries({1})
-    with expected_protocol(RigolDS1000Z, commands) as inst:
-        with pytest.raises(ValueError, match="set_digital_channel_hint"):
-            inst.memory_depth = 12000
+    with (
+        expected_protocol(RigolDS1000Z, commands) as inst,
+        pytest.raises(ValueError, match="set_digital_channel_hint"),
+    ):
+        inst.memory_depth = 12000
 
 
 def test_memory_depth_respects_digital_channel_hint():
@@ -243,6 +241,5 @@ def test_memory_depth_getter_parses_numeric_value():
 
 
 def test_set_digital_channel_hint_rejects_invalid_value():
-    with expected_protocol(RigolDS1000Z, []) as inst:
-        with pytest.raises(ValueError):
-            inst.set_digital_channel_hint(4)
+    with expected_protocol(RigolDS1000Z, []) as inst, pytest.raises(ValueError):
+        inst.set_digital_channel_hint(4)

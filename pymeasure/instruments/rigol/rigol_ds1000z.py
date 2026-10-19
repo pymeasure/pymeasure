@@ -21,22 +21,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        """Until StrEnum is broadly available from the standard library"""
-        # Python>3.10 remove it.
-
 import logging
-from typing import Union, Optional
+from collections.abc import Callable
 
 import numpy as np
-import pyvisa
+from pyvisa.constants import StatusCode
+from pyvisa.errors import VisaIOError
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -132,7 +125,7 @@ class DisplayImageFormat(StrEnum):
     TIFF = "TIFF"
 
 
-def _parse_waveform_preamble(reply: str) -> dict[str, Union[int, float]]:
+def _parse_waveform_preamble(reply: str) -> dict[str, int | float]:
     """Parse the `:WAV:PRE?` reply into a structured dictionary."""
 
     fields = reply.split(",")
@@ -168,19 +161,19 @@ def _parse_tmc_block(read_bytes_func) -> bytes:
     # The trailing terminator is not sent by every firmware revision.
     try:
         read_bytes_func(1, break_on_termchar=True)
-    except pyvisa.errors.VisaIOError as exc:
-        if exc.error_code != pyvisa.constants.StatusCode.error_timeout:
+    except VisaIOError as exc:
+        if exc.error_code != StatusCode.error_timeout:
             raise
         log.debug("No trailing terminator after binary block.")
     return payload
 
 
 def _normalize_memory_depth_value(
-    value: Union[str, int],
+    value: str | int,
     *,
-    allowed_values: Optional[set[int]] = None,
-    allowed_values_factory=None,
-) -> tuple[str, Optional[int]]:
+    allowed_values: set[int] | None = None,
+    allowed_values_factory: Callable[[], set[int]] | None = None,
+) -> tuple[str, int | None]:
     """Normalise memory depth input, returning the SCPI text and numeric form.
 
     :param value: Either ``"AUTO"`` (case-insensitive) or an integer number of points.
@@ -208,7 +201,7 @@ def _normalize_memory_depth_value(
             f"Valid values are {_MEMORY_DEPTH_VALUES} or 'AUTO'."
         )
 
-    if allowed_values is None and callable(allowed_values_factory):
+    if allowed_values is None and allowed_values_factory is not None:
         allowed_values = allowed_values_factory()
     if allowed_values is not None and numeric not in allowed_values:
         raise ValueError(
@@ -218,7 +211,7 @@ def _normalize_memory_depth_value(
     return str(numeric), numeric
 
 
-def _parse_memory_depth(reply: str) -> Union[int, str]:
+def _parse_memory_depth(reply: str) -> int | str:
     """Parse the `:ACQ:MDEP?` reply into `AUTO` or an integer."""
 
     cleaned = reply.strip().upper()
@@ -327,7 +320,7 @@ class RigolDS1000ZDisplay(Channel):
         self,
         color: bool = True,
         invert: bool = False,
-        image_format: Union[DisplayImageFormat, str] = DisplayImageFormat.BMP24,
+        image_format: DisplayImageFormat | str = DisplayImageFormat.BMP24,
     ) -> bytes:
         """Return the current screen image bytes (payload only, TMC header removed).
 
@@ -487,13 +480,13 @@ class RigolDS1000Z(SCPIMixin, Instrument):
             index: getattr(self, f"channel_{index}")
             for index in range(1, channel_count + 1)
         }
-        self._digital_channel_hint: Optional[int] = None
+        self._digital_channel_hint: int | None = None
 
     channel_1 = Instrument.ChannelCreator(RigolDS1000ZChannel, "1")
     channel_2 = Instrument.ChannelCreator(RigolDS1000ZChannel, "2")
     channel_3 = Instrument.ChannelCreator(RigolDS1000ZChannel, "3")
     channel_4 = Instrument.ChannelCreator(RigolDS1000ZChannel, "4")
-    display: RigolDS1000ZDisplay = Instrument.ChannelCreator(RigolDS1000ZDisplay, "")
+    display = Instrument.ChannelCreator(RigolDS1000ZDisplay, "")
 
     acquisition_type = Instrument.control(
         ":ACQ:TYPE?",
@@ -521,7 +514,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     )
 
     @property
-    def memory_depth(self) -> Union[int, str]:
+    def memory_depth(self) -> int | str:
         """Control the acquisition memory depth in points or 'AUTO'.
 
         The allowable discrete values depend on how many analogue and digital
@@ -537,7 +530,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         return _parse_memory_depth(reply)
 
     @memory_depth.setter
-    def memory_depth(self, value: Union[str, int]) -> None:
+    def memory_depth(self, value: str | int) -> None:
         target, _ = _normalize_memory_depth_value(
             value,
             allowed_values_factory=self._allowed_memory_depth_values,
@@ -677,7 +670,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
     def configure_edge_trigger(
         self,
-        source: Union[str, int],
+        source: str | int,
         level: float = 0.0,
         slope_positive: bool = True,
         coupling: str = "DC",
@@ -711,18 +704,18 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         """
         self.write(":TFOR")
 
-    def get_waveform_preamble(self) -> dict[str, Union[int, float]]:
+    def get_waveform_preamble(self) -> dict[str, int | float]:
         """Return the parsed contents of `:WAVeform:PREamble?`."""
         reply = self.ask(":WAV:PRE?")
         return _parse_waveform_preamble(reply)
 
     def read_waveform(
         self,
-        source: Union[str, int] = "CHAN1",
-        mode: Union[WaveformMode, str] = WaveformMode.NORMAL,
-        data_format: Union[WaveformFormat, str] = WaveformFormat.BYTE,
-        start: Optional[int] = None,
-        stop: Optional[int] = None,
+        source: str | int = "CHAN1",
+        mode: WaveformMode | str = WaveformMode.NORMAL,
+        data_format: WaveformFormat | str = WaveformFormat.BYTE,
+        start: int | None = None,
+        stop: int | None = None,
         force_stop_for_raw: bool = True,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Read a waveform and return time and voltage arrays."""
@@ -737,7 +730,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         self._configure_waveform_transfer(source_value, mode_enum, format_enum)
 
         preamble = self.get_waveform_preamble()
-        total_points = preamble["points"]
+        total_points = int(preamble["points"])
         if total_points <= 0:
             empty = np.array([], dtype=float)
             return empty, empty
@@ -750,7 +743,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
         return time, voltage
 
-    def _resolve_waveform_source(self, source: Union[str, int]) -> str:
+    def _resolve_waveform_source(self, source: str | int) -> str:
         if isinstance(source, int):
             if not 1 <= source <= self._channel_count:
                 raise ValueError("Invalid channel index for waveform read.")
@@ -758,7 +751,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         return str(source).upper()
 
     @staticmethod
-    def _resolve_waveform_mode(mode: Union[WaveformMode, str]) -> WaveformMode:
+    def _resolve_waveform_mode(mode: WaveformMode | str) -> WaveformMode:
         if isinstance(mode, WaveformMode):
             return mode
         mode_value = str(mode).upper()
@@ -768,7 +761,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
             raise ValueError(f"Unsupported waveform mode: {mode}") from exc
 
     @staticmethod
-    def _resolve_waveform_format(data_format: Union[WaveformFormat, str]) -> WaveformFormat:
+    def _resolve_waveform_format(data_format: WaveformFormat | str) -> WaveformFormat:
         if isinstance(data_format, WaveformFormat):
             return data_format
         format_value = str(data_format).upper()
@@ -790,8 +783,8 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     @staticmethod
     def _derive_waveform_window(
         total_points: int,
-        start: Optional[int],
-        stop: Optional[int],
+        start: int | None,
+        stop: int | None,
     ) -> tuple[int, int]:
         start_idx = 1 if start is None else start
         stop_idx = total_points if stop is None else stop
@@ -834,7 +827,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     def _scale_waveform_data(
         format_enum: WaveformFormat,
         raw_data: np.ndarray,
-        preamble: dict[str, Union[int, float]],
+        preamble: dict[str, int | float],
     ) -> np.ndarray:
         if format_enum == WaveformFormat.ASCII:
             return raw_data
@@ -845,7 +838,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
     @staticmethod
     def _generate_time_axis(
-        preamble: dict[str, Union[int, float]],
+        preamble: dict[str, int | float],
         start: int,
         sample_count: int,
     ) -> np.ndarray:
@@ -864,7 +857,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         self.write(f':STOR:IMAG "USB:\\{filename}"')
 
     # --- Helpers ---
-    def set_digital_channel_hint(self, active_lines: Optional[int]) -> None:
+    def set_digital_channel_hint(self, active_lines: int | None) -> None:
         """Hint the number of enabled digital lines for memory-depth validation.
 
         :param int active_lines: Use 0 when the MSO pod is disabled, 8 or 16 when the
@@ -902,9 +895,10 @@ class RigolDS1000Z(SCPIMixin, Instrument):
             try:
                 if bool(channel.display_enabled):
                     count += 1
-            except Exception:
-                # If the query fails, assume the channel is active to keep the
+            except ValueError:
+                # If the reply cannot be parsed, assume the channel is active to keep the
                 # validation conservative.
+                log.debug("Could not read display state of channel %d.", index)
                 count += 1
         return count
 
