@@ -137,6 +137,16 @@ def test_display_type_set_and_get():
         assert inst.display.type == "VECT"
 
 
+def test_channel_invert_set_and_get():
+    with expected_protocol(
+        RigolDS1000Z,
+        [(b":CHAN1:INV 1", None), (b":CHAN1:INV?", b"1"), (b":CHAN1:INV?", b"0")]
+    ) as inst:
+        inst.channel_1.invert = True
+        assert inst.channel_1.invert is True
+        assert inst.channel_1.invert is False
+
+
 def test_display_type_setter_rejects_invalid_mode():
     with expected_protocol(RigolDS1000Z, []) as inst:
         with pytest.raises(ValueError):

@@ -249,6 +249,7 @@ class RigolDS1000ZChannel(Channel):
         "Control the channel coupling mode (str): 'DC', 'AC', or 'GND'.",
         validator=strict_discrete_set,
         values=["DC", "AC", "GND"],
+        cast=str,
     )
 
     bandwidth_limit_enabled = Channel.control(
@@ -258,6 +259,7 @@ class RigolDS1000ZChannel(Channel):
         validator=strict_discrete_set,
         values={True: "20M", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     display_enabled = Channel.control(
@@ -275,8 +277,9 @@ class RigolDS1000ZChannel(Channel):
         ":CHAN{ch}:INV %s",
         "Control signal inversion (bool).",
         validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
+        values={True: 1, False: 0},
         map_values=True,
+        cast=int,
     )
 
     scale = Channel.control(
@@ -305,6 +308,7 @@ class RigolDS1000ZChannel(Channel):
         "Control the channel unit (str): 'VOLT', 'WATT', 'AMP', or 'UNKN'.",
         validator=strict_discrete_set,
         values=["VOLT", "WATT", "AMP", "UNKN"],
+        cast=str,
     )
 
 
@@ -358,6 +362,7 @@ class RigolDS1000ZDisplay(Channel):
         "Control the display type (str): 'VECT' (vectors) or 'DOTS'.",
         validator=strict_discrete_set,
         values=[DisplayType.VECTORS.value, DisplayType.DOTS.value],
+        cast=str,
     )
 
     persistence = Channel.control(
@@ -372,6 +377,7 @@ class RigolDS1000ZDisplay(Channel):
         },
         map_values=True,
         get_process=lambda v: str(v).upper(),
+        cast=str,
     )
 
     waveform_brightness = Channel.control(
@@ -389,6 +395,7 @@ class RigolDS1000ZDisplay(Channel):
         "Control the display grid (str): 'FULL','HALF','NONE'.",
         validator=strict_discrete_set,
         values=[g.value for g in DisplayGrid],
+        cast=str,
     )
 
     grid_brightness = Channel.control(
@@ -494,6 +501,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         "Control the acquisition type (str): 'NORM', 'AVER', 'PEAK', or 'HRES'.",
         validator=strict_discrete_set,
         values=[mode.value for mode in AcquireType],
+        cast=str,
     )
 
     average_count = Instrument.control(
@@ -543,6 +551,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         "'D0'..'D15'.",
         validator=strict_discrete_set,
         values=_WAVEFORM_SOURCES,
+        cast=str,
     )
 
     trigger_slope_positive = Instrument.control(
@@ -552,6 +561,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: "POS", False: "NEG"},
+        cast=str,
     )
 
     trigger_coupling = Instrument.control(
@@ -560,6 +570,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         "Control the trigger coupling mode (str).",
         validator=strict_discrete_set,
         values=["AC", "DC", "HFRej", "LFRej", "NOIS"],
+        cast=str,
     )
 
     trigger_sweep = Instrument.control(
@@ -568,6 +579,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         "Control the trigger sweep mode (str): 'AUTO', 'NORM', or 'SING'.",
         validator=strict_discrete_set,
         values=["AUTO", "NORM", "SING"],
+        cast=str,
     )
 
     trigger_level = Instrument.control(
@@ -582,6 +594,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         "Control the waveform source used for data transfers (str).",
         validator=strict_discrete_set,
         values=_WAVEFORM_SOURCES,
+        cast=str,
     )
 
     waveform_mode = Instrument.control(
@@ -592,6 +605,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         values=WaveformMode,
         get_process=WaveformMode,
         set_process=lambda mode: mode.value,
+        cast=str,
     )
 
     waveform_format = Instrument.control(
@@ -602,6 +616,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         values=WaveformFormat,
         get_process=WaveformFormat,
         set_process=lambda fmt: fmt.value,
+        cast=str,
     )
 
     waveform_start = Instrument.control(
