@@ -67,6 +67,7 @@ class LD400P(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["C", "P", "R", "G", "V"],
         get_process=lambda v: v.replace("MODE ", ""),
+        cast=str,
     )
 
     level_select = Instrument.control(
@@ -79,6 +80,7 @@ class LD400P(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["A", "B", "T", "V", "E"],
         get_process=lambda v: v.replace("LVLSEL ", ""),
+        cast=str,
     )
 
     level_a = Instrument.control(

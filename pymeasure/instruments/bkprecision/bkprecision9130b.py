@@ -73,4 +73,4 @@ class BKPrecision9130B(SCPIUnknownMixin, Instrument):
     def voltage(self, level):
         voltage_range = [0, 5] if self.channel == 3 else [0, 30]
         new_level = truncated_range(level, voltage_range)
-        self.write("SOURce:VOLTage:LEVel:IMMediate:AMPLitude %g" % new_level)
+        self.write(f"SOURce:VOLTage:LEVel:IMMediate:AMPLitude {new_level:g}")

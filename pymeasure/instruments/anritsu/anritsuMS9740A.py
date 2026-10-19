@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 import logging
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.anritsu import AnritsuMS9710C
 from pymeasure.instruments.validators import (

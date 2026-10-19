@@ -23,6 +23,7 @@
 #
 
 import logging
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureChannel
 

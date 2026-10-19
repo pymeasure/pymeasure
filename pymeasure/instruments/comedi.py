@@ -22,15 +22,16 @@
 # THE SOFTWARE.
 #
 
-import numpy as np
-from time import sleep
+from collections.abc import Callable
 from importlib.util import find_spec
+from time import sleep
+
+import numpy as np
 
 if find_spec('pycomedi'):  # Guard against pycomedi not being installed
-    from pycomedi.subdevice import StreamingSubdevice
-    from pycomedi.constant import AREF, CMDF, SUBDEVICE_TYPE, TRIG_SRC, UNIT
-    from pycomedi.constant import _NamedInt
     from pycomedi.channel import AnalogChannel
+    from pycomedi.constant import AREF, CMDF, SUBDEVICE_TYPE, TRIG_SRC, UNIT, _NamedInt
+    from pycomedi.subdevice import StreamingSubdevice
     from pycomedi.utility import inttrig_insn
 
 
@@ -58,8 +59,8 @@ def getAO(device, channel, range=None):
 
 def readAI(device, channel, range=None, count=1):
     """ Reads a single measurement (count==1) from the analog input channel
-    of the device specified. Multiple readings can be preformed with count
-    not equal to one, which are seperated by an arbitrary time
+    of the device specified. Multiple readings can be performed with count
+    not equal to one, which are separated by an arbitrary time
     """
     ai = getAI(device, channel, range)
     converter = ai.get_converter()
@@ -106,7 +107,7 @@ class SynchronousAI:
         command.flags = CMDF.wake_eos
         return command
 
-    def _verifyCommand(self):
+    def _verifyCommand(self) -> None:
         """ Checks the command over three times and allows comedi to correct
         the command given any device specific conflicts
         """
@@ -115,7 +116,7 @@ class SynchronousAI:
             if rc is None:
                 break
 
-    def measure(self, hasAborted=lambda: False):
+    def measure(self, hasAborted: Callable[[], bool] = lambda: False) -> None:
         """ Initiates the scan after first checking the command
         and does not block, returns the starting timestamp
         """
@@ -143,7 +144,7 @@ class SynchronousAI:
                 bin_slice += self.subdevice.device.file.read(size)
             previous_bin_slice = bin_slice[size:]
             bin_slice = bin_slice[:size]
-            slice = np.fromstring(
+            slice = np.fromstring(  # type: ignore
                 bin_slice,
                 dtype=dtype,
                 count=length

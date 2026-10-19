@@ -208,7 +208,7 @@ def test_buffer_frequency_time_series():
             (b":INIT", None),
         ],
     ) as inst:
-        assert inst.buffer_frequency_time_series(*("A", 10), **{"gate_time": 0.1}) is None
+        assert inst.buffer_frequency_time_series("A", 10, gate_time=0.1) is None
 
 
 @pytest.mark.parametrize(
@@ -219,7 +219,7 @@ def test_buffer_frequency_time_series():
                 (b"*OPC?", b"1\n"),
                 (
                     b":FETC:ARR? 7",
-                    b"+9.999992027E+06,+9.999991980E+06,+9.999992043E+06,+9.999992031E+06,+9.999992042E+06,+9.999992041E+06,+9.999992004E+06\n",  # noqa: E501
+                    b"+9.999992027E+06,+9.999991980E+06,+9.999992043E+06,+9.999992031E+06,+9.999992042E+06,+9.999992041E+06,+9.999992004E+06\n",
                 ),
             ],
             (7,),

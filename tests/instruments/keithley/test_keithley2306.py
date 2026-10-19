@@ -22,9 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.keithley.keithley2306 import Keithley2306
+from pymeasure.test import expected_protocol
 
 
 def test_init():

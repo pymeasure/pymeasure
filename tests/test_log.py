@@ -25,11 +25,11 @@
 import time
 from unittest import mock
 
-from pymeasure.process import context
 from pymeasure.log import Scribe, setup_logging
-
+from pymeasure.process import context
 
 # TODO: Add tests for logging convenience functions and TopicQueueHandler
+
 
 def test_scribe_stop():
     q = context.Queue()

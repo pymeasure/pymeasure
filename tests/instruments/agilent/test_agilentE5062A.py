@@ -22,13 +22,11 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
 import pytest
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.agilent.agilentE5062A import AgilentE5062A
-
-import numpy as np
+from pymeasure.test import expected_protocol
 
 DISPLAY_LAYOUT_OPTIONS = [
         "D1",

@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.instruments.teledyne.teledyne_oscilloscope import sanitize_source
 from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import sanitize_source
 from pymeasure.test import expected_protocol
 
 INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", "CHANNEL"]
@@ -376,7 +376,7 @@ def test_math_define():
              ]
     ) as instr:
         instr.math_define = ("channel2", "*", "channel4")
-        assert instr.math_define == ["EQN", "'C2*C4'"]
+        assert instr.math_define == ("EQN", "'C2*C4'")
 
 
 def test_acquisition_type_average():
@@ -421,7 +421,7 @@ def test_display_parameter():
              ]
     ) as instr:
         instr.display_parameter(parameter="PKPK", channel=1)
-        instr.ch(2).display_parameter = "MEAN"
+        instr.ch_2.display_parameter = "MEAN"
 
 
 def test_measure_parameter():

@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
+import logging
 from time import sleep, time
 
-import logging
+from pymeasure.instruments import Instrument, SCPIMixin
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -49,7 +50,7 @@ class AMI430(SCPIMixin, Instrument):
         magnet.ramp_rate_field = 0.0422         # Sets the ramp rate in kGauss/s
         magnet.ramp                             # Initiates the ramping
         magnet.pause                            # Pauses the ramping
-        magnet.status                           # Returns the status of the magnet
+        magnet.magnet_status                    # Returns the status of the magnet
 
         magnet.ramp_to_current(5)             # Ramps the current to 5 A
 
@@ -116,10 +117,12 @@ class AMI430(SCPIMixin, Instrument):
         """
                                    )
 
-    state = Instrument.measurement("STATE?",
-                                   """Get the field in kGauss of the magnet.
-        """
-                                   )
+    state = Instrument.measurement(
+        "STATE?",
+        """Get the magnet status value (int).
+        """,
+        cast=int,
+    )
 
     def zero(self):
         """ Initiates the ramping of the magnetic field to zero
@@ -138,7 +141,7 @@ class AMI430(SCPIMixin, Instrument):
 
     def has_persistent_switch_enabled(self):
         """ Returns a boolean if the persistent switch is enabled. """
-        return bool(self.ask("PSwitch?"))
+        return int(self.ask("PSwitch?")) == 1
 
     def enable_persistent_switch(self):
         """ Enables the persistent switch. """
@@ -194,15 +197,13 @@ class AMI430(SCPIMixin, Instrument):
 
     def wait_for_holding(self, should_stop=lambda: False,
                          timeout=800, interval=0.1):
-        """
-        """
         t = time()
         while self.state != 2 and self.state != 3 and self.state != 8:
             sleep(interval)
             if should_stop():
                 return
             if (time() - t) > timeout:
-                raise Exception("Timed out waiting for AMI430 switch to warm up.")
+                raise TimeoutError("Timed out waiting for AMI430 switch to warm up.")
 
     def shutdown(self, ramp_rate=0.0357):
         """ Turns on the persistent switch,

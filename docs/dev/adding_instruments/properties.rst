@@ -30,16 +30,16 @@ For example, if our "Extreme 5000" has the :code:`:TEMP?` command, we can write 
 
      Extreme5000.cell_temp = Instrument.measurement(
         ":TEMP?",
-        """Measure the temperature of the reaction cell.""",
+        """Measure the temperature of the reaction cell in Kelvin (float).""",
      )
 
 .. testcode::
     :hide:
-    
+
     # We have to fake this silently because the FakeInstrument cannot do
     # a measurement property, it only mirrors values that you sent first.
     Extreme5000.cell_temp = 127.2
-    
+
 You will notice that a documentation string is required, see :ref:`docstrings` for details.
 
 When we use this property we will get the temperature of the reaction cell.
@@ -98,12 +98,12 @@ The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.cont
 In a restricted range
 ---------------------
 
-If you have a property with a restricted range, you can use the :func:`strict_range <pymeasure.instruments.validators.strict_range>` and :func:`truncated_range <pymeasure.instruments.validators.strict_range>` functions.
+If you have a property with a restricted range, you can use the :func:`strict_range <pymeasure.instruments.validators.strict_range>` and :func:`truncated_range <pymeasure.instruments.validators.truncated_range>` functions.
 
 For example, if our "Extreme 5000" can only support voltages from -1 V to 1 V, we can modify our previous example to use a strict validator over this range.
 
 .. testcode::
-  
+
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
         """Control the voltage in Volts (float strictly from -1 to 1).""",
@@ -121,15 +121,18 @@ Now our voltage will raise a ValueError if the value is out of the range.
     ...
     ValueError: Value of 100 is not in range [-1,1]
 
-This is useful if you want to alert the programmer that they are using an invalid value. However, sometimes it can be nicer to truncate the value to be within the range.
+This is useful if you want to alert the programmer that they are using an invalid value.
+However, sometimes it can be nicer to truncate the value to be within the range.
 
 .. testcode::
 
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """Control the voltage in Volts (float from -1 to 1).
+        """Control the voltage in Volts (float truncated from -1 to 1).
 
-        Invalid voltages are truncated.
+        Invalid voltages are silently truncated to the closest bound without
+        raising an error or otherwise informing the user; the value actually
+        sent to the device may differ from the value set.
         """,
         validator=truncated_range,
         values=[-1, 1]
@@ -144,6 +147,18 @@ Now our voltage will not raise an error, and will truncate the value to the rang
     >>> extreme.voltage
     1.0
 
+.. note::
+
+    Truncated validators silently change invalid values to some other
+    valid value without raising an error or otherwise informing the user.
+    A user setting ``voltage = 20`` when the limit is ``1`` will see no error,
+    yet only ``1`` is actually sent to the device.
+    Prefer the strict validators (:func:`strict_range<pymeasure.instruments.validators.strict_range>`,
+    :func:`strict_discrete_set<pymeasure.instruments.validators.strict_discrete_set>`) by default,
+    which raise a :class:`ValueError` for invalid values.
+    Only use a truncated validator when silent clipping is genuinely the desired behavior, and
+    document that fact in the property docstring.
+
 In a discrete set
 -----------------
 
@@ -155,7 +170,7 @@ For example, if our "Extreme 5000" has a :code:`:RANG <float>` command that sets
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %g",
-        """Control the voltage range in Volts (float in 10e-3, 100e-3, 1).""",
+        """Control the voltage range in Volts (float truncated in 10e-3, 100e-3, 1).""",
         validator=truncated_discrete_set,
         values=[10e-3, 100e-3, 1]
     )
@@ -181,14 +196,14 @@ If your set of values is a list, then the command will use the index of the list
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
-        """Control the voltage range in Volts (float in 10 mV, 100 mV and 1 V).
+        """Control the voltage range in Volts (float truncated in 10 mV, 100 mV and 1 V).
         """,
         validator=truncated_discrete_set,
         values=[10e-3, 100e-3, 1],
         map_values=True
     )
 
-Now the actual GPIB/SCIP command is ":RANG 1" for a value of 100 mV, since the index of 100 mV in the values list is 1.
+Now the actual GPIB/SCPI command is ":RANG 1" for a value of 100 mV, since the index of 100 mV in the values list is 1.
 
 .. doctest::
 
@@ -206,10 +221,10 @@ Dictionaries provide a more flexible method for mapping between real-values and 
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
-        """Control the voltage range in Volts (float in 10 mV, 100 mV and 1 V).
+        """Control the voltage range in Volts (float truncated in 10 mV, 100 mV and 1 V).
         """,
         validator=truncated_discrete_set,
-        values={10e-3:1, 100e-3:2, 1:3},
+        values={10e-3: 1, 100e-3: 2, 1: 3},
         map_values=True
     )
 
@@ -226,12 +241,12 @@ Dictionaries provide a more flexible method for mapping between real-values and 
 The dictionary now maps the keys to specific values. The values and keys can be any type, so this can support properties that use strings:
 
 .. testcode::
-  
+
     Extreme5000.channel = Instrument.control(
         ":CHAN?", ":CHAN %d",
         """Control the measurement channel (string strictly in 'X', 'Y', 'Z').""",
         validator=strict_discrete_set,
-        values={'X':1, 'Y':2, 'Z':3},
+        values={'X': 1, 'Y': 2, 'Z': 3},
         map_values=True
     )
 
@@ -246,6 +261,7 @@ The dictionary now maps the keys to specific values. The values and keys can be 
     'Y'
 
 As you have seen, the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function can be significantly extended by using validators and maps.
+See :ref:`type-hints-property-creators` for how :code:`map_values` and the other parameters affect the inferred property type.
 
 .. _boolean-properties:
 
@@ -258,7 +274,7 @@ The idea of using maps can be leveraged to implement properties where the user-f
 
     Extreme5000.output_enabled = Instrument.control(
         "OUTP?", "OUTP %d",
-        """Control the instrument output is enabled (boolean).""",
+        """Control whether the instrument output is enabled (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},  # the dict values could also be "on" and "off", etc. depending on the device
@@ -371,6 +387,135 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
         # notice how we don't need to cast to float anymore
     )
 
+Dynamic properties
+******************
+
+As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
+One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
+This feature allows accommodating some interesting use cases with a very compact syntax.
+
+Dynamic features of a property are enabled by setting its :code:`dynamic` parameter to :code:`True`.
+
+Afterwards, creating specifically-named attributes (either in class definitions or on instances) allows modifying the parameters used at the time of property definition.
+You need to define an attribute whose name is `<property name>_<property_parameter>` and assign to it the desired value.
+Pay attention *not* to inadvertently define other class attribute or instance attribute names matching this pattern, since they could unintentionally modify the property behaviour.
+
+.. note::
+   To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read.
+
+The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`.
+
+Dynamic validity range
+----------------------
+Let's assume we have an instrument with a command that accepts a different valid range of values depending on its current state.
+The code below shows how this can be accomplished with dynamic properties.
+
+.. testcode::
+
+    Extreme5000.voltage = Instrument.control(
+        ":VOLT?", ":VOLT %g",
+        """Control the voltage in Volts (float strictly).""",
+        validator=strict_range,
+        values=[-1, 1],
+        dynamic = True,
+    )
+    def set_bipolar_mode(self, enabled: bool = True) -> None:
+        """Safely switch between bipolar/unipolar mode."""
+
+        # some code to switch off the output first
+        # ...
+
+        if enabled:
+            self.mode = "BIPOLAR"
+            # set valid range of "voltage" property
+            self.voltage_values = [-1, 1]
+        else:
+            self.mode = "UNIPOLAR"
+            # note the "propertyname_parametername" form of the attribute
+            self.voltage_values = [0, 1]
+
+
+Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
+A side effect of this is that the property's docstring should be less specific, to avoid it containing dynamically changed information (like the admissible value range).
+In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
+
+.. _type-hints-property-creators:
+
+Type hints for property creators
+================================
+
+The property creators :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` are overloaded so that type checkers (see :ref:`coding-standards`) and IDEs can infer the return type of a property from its definition parameters (:code:`cast`, :code:`get_process`, :code:`get_process_list`, :code:`set_process`, and :code:`validator`).
+This contract is pinned by :code:`assert_type` tests in :mod:`tests.instruments.test_common_base`, which fail at type-check time if the inferred type drifts.
+
+Single-value vs. list return type
+*********************************
+
+By default, a property returns a **single value**.
+Its type follows :code:`cast` (default :code:`float`), or the return type of :code:`get_process` if one is supplied.
+
+Supplying :code:`get_process_list` switches the property to **list mode**: the property returns a :code:`list` of values (more precisely, whatever :code:`get_process_list` returns).
+This happens even if :code:`get_process_list` is the no-op :func:`identity <pymeasure.instruments.common_base.identity>`, which exists precisely to opt into list mode without transforming the list.
+
+.. code-block:: python
+
+    from pymeasure.instruments.common_base import identity
+
+    # Returns a single int (cast=int, single-value mode)
+    voltage: InstrumentProperty[int] = Instrument.control(
+        ":VOLT?", ":VOLT %d",
+        """Control the voltage in Volts (int).""",
+        cast=int,
+    )
+
+    # Returns a list[int] (get_process_list=identity enables list mode)
+    voltages: InstrumentProperty[list[int]] = Instrument.control(
+        ":VOLT?", ":VOLT %d",
+        """Control the voltages in Volts (list[int]).""",
+        cast=int,
+        get_process_list=identity,
+    )
+
+How each parameter contributes to the inferred type
+***************************************************
+
+:code:`cast`
+    The element type. Defaults to :code:`float`.
+
+:code:`get_process`
+    Its return type replaces the single-value type. Only relevant in single-value mode (i.e. when :code:`get_process_list` is not given).
+
+:code:`get_process_list`
+    Its return type becomes the whole property type and enables list mode. Supplying :code:`identity` keeps the list unchanged while opting into list mode.
+
+:code:`set_process`
+    On :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`, its input type informs the property type.
+
+:code:`validator`
+    Informative to type checkers only when :code:`map_values=True` (on :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`) or on :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`; otherwise it is ignored for type inference.
+
+.. _map-values-type-hints:
+
+Mapped properties
+*****************
+
+When :code:`map_values=True` is used, the property's return type cannot be inferred automatically and falls back to :code:`Any`.
+This means type checkers and IDEs will not know the expected type of the property value. You can add an explicit type hint to the property assignment to restore type information:
+
+.. code-block:: python
+
+    sensitivity: InstrumentProperty[str] = Instrument.control(
+        ":SENS?", ":SENS %s",
+        """Control the sweep sensitivity (str strictly in 'LOW', 'MID', 'HIGH').""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"LOW": 0, "MID": 1, "HIGH": 2},
+    )
+
+Without the :code:`InstrumentProperty[str]` annotation, a type checker would infer the property type as :code:`InstrumentProperty[Any]`.
+The annotation makes it clear that accessing :code:`instrument.sensitivity` returns a :code:`str`.
+
+:code:`InstrumentProperty` is available from :mod:`pymeasure.instruments.common_base`.
+
 Checking the instrument for errors
 **********************************
 If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.common_base.CommonBase.control`, respectively.
@@ -394,7 +539,7 @@ The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.cont
         """
     )
 
-In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and read both values immediately afterwards. 
+In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and read both values immediately afterwards.
 
 .. doctest::
 
@@ -404,58 +549,6 @@ In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and rea
     [0.2, 931.0]
 
 This interface is not too convenient, but luckily not often needed.
-
-Dynamic properties
-******************
-
-As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
-One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
-This feature allows accommodating some interesting use cases with a very compact syntax.
-
-Dynamic features of a property are enabled by setting its :code:`dynamic` parameter to :code:`True`.
-
-Afterwards, creating specifically-named attributes (either in class definitions or on instances) allows modifying the parameters used at the time of property definition.
-You need to define an attribute whose name is `<property name>_<property_parameter>` and assign to it the desired value.
-Pay attention *not* to inadvertently define other class attribute or instance attribute names matching this pattern, since they could unintentionally modify the property behaviour.
-
-.. note::
-   To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read. 
-
-The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`.
-
-Dynamic validity range
-----------------------
-Let's assume we have an instrument with a command that accepts a different valid range of values depending on its current state.
-The code below shows how this can be accomplished with dynamic properties.
-
-.. testcode::
-  
-    Extreme5000.voltage = Instrument.control(
-        ":VOLT?", ":VOLT %g",
-        """Control the voltage in Volts (float).""",
-        validator=strict_range,
-        values=[-1, 1],
-        dynamic = True,
-    )
-    def set_bipolar_mode(self, enabled = True):
-        """Safely switch between bipolar/unipolar mode."""
-
-        # some code to switch off the output first
-        # ...
-
-        if enabled:
-            self.mode = "BIPOLAR"
-            # set valid range of "voltage" property
-            self.voltage_values = [-1, 1]
-        else:
-            self.mode = "UNIPOLAR"
-            # note the "propertyname_parametername" form of the attribute
-            self.voltage_values = [0, 1]
-
-
-Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
-A side effect of this is that the property's docstring should be less specific, to avoid it containing dynamically changed information (like the admissible value range).
-In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
 
 .. _instruments_with_similar_features:
 
@@ -490,7 +583,7 @@ In this case you would update the specific class parameter range without rewriti
     class FictionalInstrumentFamily(Instrument):
         frequency = Instrument.setting(
             "FREQ %g",
-            """Set the frequency (float).""",
+            """Set the frequency (float strictly).""",
             validator=strict_range,
             values=[0, 1e9],
             dynamic=True,
@@ -530,7 +623,7 @@ Another use case involves maintaining compatibility between instruments with com
         # ...full class definition code here
 
     class MultimeterB(MultimeterA):
-        # Same as brand A multimeter, but the command to read voltage 
+        # Same as brand A multimeter, but the command to read voltage
         # is slightly different
         voltage_get_command = "VOLTAGE?"
 

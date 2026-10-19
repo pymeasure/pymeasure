@@ -23,11 +23,12 @@
 #
 
 import logging
-
 import os
 
-from ..Qt import QtCore, QtWidgets
+from ...display.widgets.tab_widget import TabWidget
+from ...experiment.procedure import Procedure
 from ...experiment.results import Results
+from ..Qt import QtCore, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -42,10 +43,15 @@ class ResultsDialog(QtWidgets.QFileDialog):
     :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>` class
     """
 
-    def __init__(self, procedure_class, widget_list=(), parent=None):
-        super().__init__(parent)
+    def __init__(
+        self,
+        procedure_class: type[Procedure],
+        widget_list: list[TabWidget] | None = None,
+        parent: QtWidgets.QWidget | None = None,
+    ):
+        super().__init__(parent=parent)
         self.procedure_class = procedure_class
-        self.widget_list = widget_list
+        self.widget_list = widget_list or []
         self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
         self._setup_ui()
 
@@ -85,7 +91,7 @@ class ResultsDialog(QtWidgets.QFileDialog):
         metadata_vbox_widget.setLayout(metadata_vbox)
         preview_tab.addTab(param_vbox_widget, "Run Parameters")
         preview_tab.addTab(metadata_vbox_widget, "Metadata")
-        self.layout().addWidget(preview_tab, 0, 5, 4, 1)
+        self.layout().addWidget(preview_tab, 0, 5, 4, 1)  # type: ignore
         self.layout().setColumnStretch(5, 1)
         self.setMinimumSize(900, 500)
         self.resize(900, 500)
@@ -105,13 +111,13 @@ class ResultsDialog(QtWidgets.QFileDialog):
                 widget.load(widget.new_curve(results))
 
             self.preview_param.clear()
-            for key, param in results.procedure.parameter_objects().items():
+            for param in results.procedure.parameter_objects().values():
                 new_item = QtWidgets.QTreeWidgetItem([param.name, str(param)])
                 self.preview_param.addTopLevelItem(new_item)
             self.preview_param.sortItems(0, QtCore.Qt.SortOrder.AscendingOrder)
 
             self.preview_metadata.clear()
-            for key, metadata in results.procedure.metadata_objects().items():
+            for metadata in results.procedure.metadata_objects().values():
                 new_item = QtWidgets.QTreeWidgetItem([metadata.name, str(metadata)])
                 self.preview_metadata.addTopLevelItem(new_item)
             self.preview_metadata.sortItems(0, QtCore.Qt.SortOrder.AscendingOrder)

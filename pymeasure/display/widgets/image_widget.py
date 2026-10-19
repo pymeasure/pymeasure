@@ -23,25 +23,36 @@
 #
 
 import logging
+from collections.abc import Sequence
+from typing import cast
 
-import pyqtgraph as pg
+from ...experiment.results import Results
 from ..curves import ResultsImage
 from ..Qt import QtCore, QtWidgets
-from .tab_widget import TabWidget
 from .image_frame import ImageFrame
+from .tab_widget import DEFAULT_COLOR, TabWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class ImageWidget(TabWidget, QtWidgets.QWidget):
+class ImageWidget(TabWidget[ResultsImage], QtWidgets.QWidget):
     """ Extends the :class:`ImageFrame<pymeasure.display.widgets.image_frame.ImageFrame>`
     to allow different columns of the data to be dynamically chosen
     """
 
-    def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2,
-                 check_status=True, parent=None):
-        super().__init__(name, parent)
+    def __init__(
+        self,
+        name: str,
+        columns: Sequence[str],
+        x_axis: str,
+        y_axis: str,
+        z_axis: str | None = None,
+        refresh_time: float = 0.2,
+        check_status: bool = True,
+        parent: QtWidgets.QWidget | None = None,
+    ):
+        super().__init__(name=name, parent=parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -53,7 +64,7 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
             self.columns_z.setCurrentIndex(self.columns_z.findText(z_axis))
             self.image_frame.change_z_axis(z_axis)
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.columns_z_label = QtWidgets.QLabel(self)
         self.columns_z_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_z_label.setText('Z Axis:')
@@ -74,7 +85,7 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
         self.plot = self.image_frame.plot
         self.columns_z.setCurrentIndex(2)
 
-    def _layout(self):
+    def _layout(self) -> None:
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
@@ -88,28 +99,28 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
         vbox.addWidget(self.image_frame)
         self.setLayout(vbox)
 
-    def sizeHint(self):
+    def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(300, 600)
 
-    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+    def new_curve(self, results: Results, color=DEFAULT_COLOR, **kwargs) -> ResultsImage:
         """ Creates a new image """
         image = ResultsImage(results,
                              wdg=self,
                              x=self.image_frame.x_axis,
                              y=self.image_frame.y_axis,
-                             z=self.image_frame.z_axis,
+                             z=cast(str, self.image_frame.z_axis),
                              **kwargs
                              )
         return image
 
-    def update_z_column(self, index):
+    def update_z_column(self, index: int) -> None:
         axis = self.columns_z.itemText(index)
         self.image_frame.change_z_axis(axis)
 
-    def load(self, curve):
+    def load(self, curve: ResultsImage) -> None:
         curve.z = self.columns_z.currentText()
         curve.update_data()
         self.plot.addItem(curve)
 
-    def remove(self, curve):
+    def remove(self, curve: ResultsImage) -> None:
         self.plot.removeItem(curve)

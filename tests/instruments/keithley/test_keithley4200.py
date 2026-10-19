@@ -23,9 +23,10 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.keithley import Keithley4200
 from pymeasure.instruments.keithley.keithley4200 import StatusCode
+from pymeasure.test import expected_protocol
 
 INITIALIZATION = ("*OPT?", "SMU1,SMUPA2,SMU3,SMU4,VM1,VS2,CVU1")
 

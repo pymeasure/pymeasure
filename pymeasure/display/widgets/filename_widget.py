@@ -26,7 +26,7 @@ import logging
 import re
 import textwrap
 
-from ..Qt import QtCore, QtWidgets, QtGui
+from ..Qt import QtCore, QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

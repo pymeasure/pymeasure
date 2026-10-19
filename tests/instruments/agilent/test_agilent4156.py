@@ -24,9 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.agilent.agilent4156 import Agilent4156
+from pymeasure.test import expected_protocol
 
 
 def test_init():

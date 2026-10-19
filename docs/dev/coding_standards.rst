@@ -1,3 +1,5 @@
+.. _coding-standards:
+
 ################
 Coding Standards
 ################
@@ -14,32 +16,64 @@ The `PEP8 style guide`_ and `PEP257 docstring conventions`_ should be followed.
 
 Function and variable names should be lower case with underscores as needed to separate words. CamelCase should only be used for class names, unless working with Qt, where its use is common.
 
-In addition, there is a configuration for the `flake8`_ linter present. Our codebase should not trigger any warnings.
-Many editors/IDEs can run this tool in the background while you work, showing results inline. Alternatively, you can run ``flake8`` in the repository root to check for problems. In addition, our automation on Github also runs some checkers. As this results in a much slower feedback loop for you, it's not recommended to rely only on this.
+In addition, there is a configuration for the `ruff`_ linter present. Our codebase should not trigger any warnings.
+Many editors/IDEs can run this tool in the background while you work, showing results inline.
+Alternatively, you can run ``ruff check`` in the repository root to check for problems.
+In addition, our automation on Github also runs some checkers.
+As this results in a much slower feedback loop for you, it's not recommended to rely only on this.
 
-.. _flake8: https://flake8.pycqa.org/en/latest/
+.. _ruff: https://docs.astral.sh/ruff/
 
-It is allowed but not required to use the `black`_ code formatter. 
-To avoid introducing unrelated changes when working on an existing file, it is recommended to use the `darker`_ tool instead of `black`.
+It is recommended to format your code with ``ruff format`` (part of the :code:`dev` extra) before committing.
+Only format the regions you changed, not entire files: reformatting an untouched file produces large, unrelated diffs that make code reviews harder.
+To format only your changes, use the `darker`_ tool, which runs :code:`ruff format`/:code:`black` but limits reformatting to regions that show as changed in Git.
 This helps to keep the focus on the implementation instead of unrelated formatting, and thereby facilitates code reviews.
-:code:`darker` is compatible with :code:`black`, but only formats regions that show as changed in Git.
-If there are conflicts between :code:`black`/:code:`darker`'s output and flake8 (especially related to `E203`_), flake8 takes precedence. Use ``#noqa : E203`` to disable E203 warnings for a specific line if appropriate.
+If there are conflicts between :code:`ruff format`/:code:`darker`'s output and the ruff linter (especially related to `E203`_), the linter takes precedence. Use ``# noqa : E203`` to disable E203 warnings for a specific line if appropriate.
 
-.. _black: https://black.readthedocs.io/en/stable/
 .. _darker: https://github.com/akaihola/darker
 .. _E203: https://www.flake8rules.com/rules/E203.html
 
 You may add type hints as you see fit.
 All type hints should adhere to the guidelines set out in the `typing`_ package.
+Changes must keep the :code:`pyright` check green in continuous integration (see :ref:`type_checking`); do not silence type errors by removing annotations or casting unsoundly.
+Fix the underlying types or add precise annotations instead.
 
 .. _typing: https://docs.python.org/3/library/typing.html
+
+.. _type_checking:
+
+Type checking
+=============
+
+The `pyright`_ type checker is configured for PyMeasure and runs on every change in our continuous integration.
+You can install it together with the linter via the :code:`dev` extra::
+
+    pip install -e .[dev]
+
+Run it from the repository root::
+
+    pyright
+
+Many editors and IDEs can integrate pyright for inline feedback while you work, which is recommended over relying only on CI.
+The property creators (see :ref:`type-hints-property-creators`) are heavily overloaded so that pyright can infer precise return types for instrument properties.
+
+.. _pyright: https://github.com/microsoft/pyright
 
 Documentation
 =============
 
-PyMeasure documents code using reStructuredText and the `Sphinx documentation generator`_. All functions, classes, and methods should be documented in the code using a docstring, see section :ref:`docstrings`.
+PyMeasure documents code using reStructuredText and the `Sphinx documentation generator`_.
+All functions, classes, and public methods should be documented in the code using a docstring, see section :ref:`docstrings`.
+Private methods may omit a docstring when their name and signature (including type hints) make their behavior self-evident.
+Test methods (functions named :code:`test_*`) do not need a docstring, as their name and body make their intent clear.
 
 .. _Sphinx documentation generator: http://www.sphinx-doc.org/en/stable/
+
+reStructuredText heading underlines must be exactly as long as the heading text.
+For example, for a heading "HCP TC038 crystal oven" (22 characters), use exactly 22 hash characters: ``######################``.
+
+In Markdown and reStructuredText prose, start each sentence on a new line (semantic line breaks) so that diffs show which sentence is affected.
+This does not apply to code blocks or tables.
 
 
 Usage of getter and setter functions
@@ -60,6 +94,9 @@ Most importantly:
 * Use triple-quoted strings (:code:`"""`) to delimit docstrings.
 * One short summary line in imperative voice, with a period at the end.
 * Optionally, after a blank line, include more detailed information.
+* Do not add a docstring to :code:`__init__` methods; document the class instead.
+  Per `PEP257 <https://peps.python.org/pep-0257/>`_, the class docstring covers constructor behavior, including parameters.
+* Property setters do not need a docstring: only the getter's docstring is exposed (as :code:`__doc__`) on the property.
 * For functions and methods, you can add documentation on their parameters using the `reStructuredText docstring format <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#info-field-lists>`__.
 
 Specific to properties, start them with "Control", "Get", "Measure", or "Set" to indicate the kind of property, as it is not visible after import, whether a property is gettable ("Get" or "Measure", e.g. for a :meth:`measurement`), settable ("Set", for a :meth:`setting`), or both ("Control", for a :meth:`control`).

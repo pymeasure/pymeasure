@@ -22,9 +22,11 @@
 # THE SOFTWARE.
 #
 
+from typing import Any, Literal
+
 import numpy as np
 
-from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments import AdapterType, Channel, Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 
@@ -108,6 +110,7 @@ class Trace(Channel):
         """Get the measurement parameter of the trace (str).""",
         preprocess_reply=lambda v: v.strip('"'),
         maxsplit=0,
+        cast=str,
         )
 
     @property
@@ -127,6 +130,7 @@ class Trace(Channel):
 
         :return: ``FREQ``, ``POW``, ``PHAS``, ``DC``, ``POIN`` or ``DEF``
         """,
+        cast=str,
         )
 
     @property
@@ -169,19 +173,23 @@ class Trace(Channel):
             ``PRH``, ``VPH``, ``DBV`` or ``DEF``
 
         """,
+        cast=str,
         )
 
 
 class MeasurementChannel(Channel):
     """A class representing a Keysight PNA measurement channel."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self,
+                 *args: Any,
+                 **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.update_traces()
 
-    def initiate(self):
-        """Initiate an immidiate trigger.
+    def initiate(self) -> None:
+        """Initiate an immediate trigger.
+
 
         .. note::
             The trigger source has to be set to `MANUAL` for this command.
@@ -190,19 +198,19 @@ class MeasurementChannel(Channel):
         """
         self.write("INIT{ch}:IMM")
 
-    def single(self):
+    def single(self) -> None:
         """Trigger a single sweep."""
         self.write("SENS{ch}:SWE:MODE SING")
 
-    def continuous(self):
+    def continuous(self) -> None:
         """Set the channel to `CONTINUOUS` mode."""
         self.write("SENS{ch}:SWE:MODE CONT")
 
-    def hold(self):
+    def hold(self) -> None:
         """Set the channel on `HOLD` mode."""
         self.write("SENS{ch}:SWE:MODE HOLD")
 
-    def update_traces(self):
+    def update_traces(self) -> None:
         """Update the trace instances of the channel to reflect the current
         trace configuration."""
 
@@ -270,11 +278,12 @@ class KeysightPNA(SCPIMixin, Instrument):
 
     """
 
-    def __init__(self, adapter,
-                 name="Keysight PNA",
-                 data_format="real64",
-                 byte_order_swapped=True,
-                 **kwargs):
+    def __init__(self,
+                 adapter: AdapterType,
+                 name: str = "Keysight PNA",
+                 data_format: Literal["ascii", "real32", "real64"] = "real64",
+                 byte_order_swapped: bool = True,
+                 **kwargs: Any) -> None:
         super().__init__(
             adapter,
             name,
@@ -286,22 +295,22 @@ class KeysightPNA(SCPIMixin, Instrument):
         self.byte_order_swapped = byte_order_swapped
         self.update_channels()
 
-    def abort(self):
+    def abort(self) -> None:
         """Stop all sweeps.
 
         Note that the configured trigger will restart the sweeps.
         """
         self.write("ABOR")
 
-    def load_state(self, file_name):
+    def load_state(self, file_name: str) -> None:
         """Load an instrument state from file.
 
-        :param str file_name: e.g. ``D:/my_pna_state.csa``
+        :param file_name: e.g. ``D:/my_pna_state.csa``
         """
         self.write(f"MMEM:LOAD '{file_name}'")
         self.update_channels()
 
-    def update_channels(self):
+    def update_channels(self) -> None:
         """Update the channel instances of the PNA driver to reflect the current
         channel configuration."""
 
@@ -318,7 +327,7 @@ class KeysightPNA(SCPIMixin, Instrument):
                            id=channel,
                            )
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self.update_channels()
 
@@ -329,7 +338,7 @@ class KeysightPNA(SCPIMixin, Instrument):
         Control whether the byte order is swapped for data transfer (bool).
 
         Some computers read data from the analyzer in the reverse order. This property is only
-        effective if :attr:`.data_format` set to ``real32`` or ``real64``. If :attr:`.data_format`
+        effective if :attr:`.data_format` set to ``real32`` or ``real64``. If :attr:`data_format`
         is set to ``ascii``, :attr:`.byte_order_swapped` is ignored.
 
         - ``True``: Use for IBM compatible computers.
@@ -342,6 +351,7 @@ class KeysightPNA(SCPIMixin, Instrument):
         values={False: "NORM",
                 True: "SWAP",
                 },
+        cast=str,
         )
 
     data_format = Instrument.control(
@@ -373,6 +383,7 @@ class KeysightPNA(SCPIMixin, Instrument):
                 "real64": "REAL,64",
                 },
         maxsplit=0,
+        cast=str,
         )
 
     measurement_channels = Instrument.measurement(

@@ -33,16 +33,22 @@ python script_plotter.py
 
 """
 
+import logging
 import random
 import tempfile
 from time import sleep
 
-from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results, Worker
 from pymeasure.display import Plotter
+from pymeasure.experiment import (
+    FloatParameter,
+    IntegerParameter,
+    Parameter,
+    Procedure,
+    Results,
+    Worker,
+)
+from pymeasure.log import console_log
 
-import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -66,7 +72,7 @@ class TestProcedure(Procedure):
                 'Iteration': i,
                 'Random Number': random.random()
             }
-            log.debug("Produced numbers: %s" % data)
+            log.debug(f"Produced numbers: {data}")
             self.emit('results', data)
             self.emit('progress', 100. * i / self.iterations)
             sleep(self.delay)
@@ -83,15 +89,15 @@ if __name__ == "__main__":
     scribe = console_log(log, level=logging.DEBUG)
     scribe.start()
 
-    filename = tempfile.mktemp()
-    log.info("Using data file: %s" % filename)
+    fd, filename = tempfile.mkstemp()
+    log.info(f"Using data file: {filename}")
 
     procedure = TestProcedure()
     procedure.iterations = 200
     procedure.delay = 0.1
-    log.info("Set up TestProcedure with %d iterations" % procedure.iterations)
+    log.info(f"Set up TestProcedure with {procedure.iterations} iterations")
 
-    results = Results(procedure, filename)
+    results = Results(procedure, filename, file_descriptor=fd)
     log.info("Set up Results")
 
     plotter = Plotter(results)

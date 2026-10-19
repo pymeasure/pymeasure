@@ -35,13 +35,13 @@ class BrowserWidget(QtWidgets.QWidget):
     """
     Widget wrapper for :class:`Browser<pymeasure.display.browser.Browser>` class
     """
-    def __init__(self, *args, parent=None):
+    def __init__(self, *args, parent: QtWidgets.QWidget | None = None):
         super().__init__(parent)
         self.browser_args = args
         self._setup_ui()
         self._layout()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.browser = Browser(*self.browser_args, parent=self)
         self.clear_button = QtWidgets.QPushButton('Clear all', self)
         self.clear_button.setEnabled(False)
@@ -52,7 +52,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self.open_button = QtWidgets.QPushButton('Open', self)
         self.open_button.setEnabled(True)
 
-    def _layout(self):
+    def _layout(self) -> None:
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 

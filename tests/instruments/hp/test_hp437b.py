@@ -23,10 +23,9 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.hp import HP437B
 from pymeasure.instruments.hp.hp437b import SensorType
+from pymeasure.test import expected_protocol
 
 
 def test_calibrate():
@@ -89,7 +88,7 @@ def test_resolution_linear(resolution):
     with expected_protocol(
             HP437B,
             [("SM", "000000110017000A0002000000"),
-             ("RE%dEN" % code, None),
+             (f"RE{code}EN", None),
              ("ERR?", "000")],
     ) as instr:
         instr.resolution = value
@@ -101,7 +100,7 @@ def test_resolution_logarithmic(resolution):
     with expected_protocol(
             HP437B,
             [("SM", "000000110017001A0002000001"),
-             ("RE%dEN" % code, None),
+             (f"RE{code}EN", None),
              ("ERR?", "000")],
     ) as instr:
         instr.resolution = value
@@ -111,7 +110,7 @@ def test_resolution_logarithmic(resolution):
 def test_sensor_type(sensor_type):
     with expected_protocol(
             HP437B,
-            [("SE%dEN" % int(sensor_type.value), None),
+            [(f"SE{int(sensor_type.value)}EN", None),
              ("ERR?", "000")],
     ) as instr:
         instr.sensor_type = sensor_type

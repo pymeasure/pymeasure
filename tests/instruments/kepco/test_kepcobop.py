@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.kepco import KepcoBOP3612
+from pymeasure.test import expected_protocol
 
 
 def test_init():

@@ -21,8 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.siglenttechnologies.siglent_spd1168x import SPD1168X
+from pymeasure.test import expected_protocol
 
 
 def test_enable_4W_mode():

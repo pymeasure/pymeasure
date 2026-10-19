@@ -22,17 +22,20 @@
 # THE SOFTWARE.
 #
 
-import logging
-import time
-import tempfile
 import gc
+import logging
+import tempfile
+import time
+from collections.abc import Callable
 
 import numpy as np
+import pandas as pd
 
-from .results import unique_filename
+from ..log import console_log, setup_logging
 from .config import get_config, set_mpl_rcparams
-from pymeasure.log import setup_logging, console_log
-from pymeasure.experiment import Results, Worker
+from .procedure import Procedure
+from .results import Results, unique_filename
+from .workers import Worker
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -60,17 +63,23 @@ def get_array_zero(maxval, step):
                            np.arange(-maxval, 0, step)))
 
 
-def create_filename(title):
-    """
-    Create a new filename according to the style defined in the config file.
-    If no config is specified, create a temporary file.
+def create_filename(title: str) -> tuple[int | None, str]:
+    """Create a new filename according to the style defined in the config file.
+
+    If no config is specified, create a temporary file via ``mkstemp`` and keep
+    the descriptor open so the file reservation can be handed to ``Results``.
+
+    :returns: A ``(fd, filename)`` tuple. The fd is ``None`` in the config branch
+        (no reservation held) and an open ``mkstemp`` descriptor in the temp
+        branch.
     """
     config = get_config()
-    if 'Filename' in config._sections.keys():
-        filename = unique_filename(suffix='_%s' % title, **config._sections['Filename'])
+    if 'Filename' in config._sections:
+        filename = unique_filename(suffix=f'_{title}', **config._sections['Filename'])
+        fd = None
     else:
-        filename = tempfile.mktemp()
-    return filename
+        fd, filename = tempfile.mkstemp()
+    return fd, filename
 
 
 class Experiment:
@@ -102,7 +111,12 @@ class Experiment:
     :param _data_timeout: Time limit for how long live plotting should wait for datapoints.
     """
 
-    def __init__(self, title, procedure, analyse=(lambda x: x)):
+    def __init__(
+        self,
+        title: str,
+        procedure: Procedure,
+        analyse: Callable[[pd.DataFrame], pd.DataFrame] = (lambda x: x),
+    ):
         self.title = title
         self.procedure = procedure
         self.measlist = []
@@ -115,16 +129,16 @@ class Experiment:
 
         config = get_config()
         set_mpl_rcparams(config)
-        if 'Logging' in config._sections.keys():
+        if 'Logging' in config._sections:
             self.scribe = setup_logging(log, **config._sections['Logging'])
         else:
             self.scribe = console_log(log)
         self.scribe.start()
 
-        self.filename = create_filename(self.title)
-        log.info("Using data file: %s" % self.filename)
+        fd, self.filename = create_filename(self.title)
+        log.info(f"Using data file: {self.filename}")
 
-        self.results = Results(self.procedure, self.filename)
+        self.results = Results(self.procedure, self.filename, file_descriptor=fd)
         log.info("Set up Results")
 
         self.worker = Worker(self.results, self.scribe.queue, logging.DEBUG)
@@ -191,7 +205,7 @@ class Experiment:
         """Update the plots in the plots list with new data from the experiment.data
         pandas dataframe."""
         try:
-            self.data
+            _ = self.data
             for plot in self.plots:
                 ax = plot['ax']
                 if plot['type'] == 'plot':

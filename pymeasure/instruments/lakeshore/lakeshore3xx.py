@@ -23,8 +23,10 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureChannel, \
-    LakeShoreHeaterChannel
+from pymeasure.instruments.lakeshore.lakeshore_base import (
+    LakeShoreHeaterChannel,
+    LakeShoreTemperatureChannel,
+)
 
 
 class LakeShore3xx(SCPIMixin, Instrument):

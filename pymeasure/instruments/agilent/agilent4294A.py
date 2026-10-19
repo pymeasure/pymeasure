@@ -22,11 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
-import pandas as pd
-import numpy as np
 import os
+
+import numpy as np
+import pandas as pd
+
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 # Set of valid arguments for the MEAS? command
 MEASUREMENT_TYPES = [
@@ -92,13 +94,21 @@ class Agilent4294A(SCPIMixin, Instrument):
     )
 
     measurement_type = Instrument.control(
-        "MEAS?", "MEAS %d", "Control the measurement type. See MEASUREMENT_TYPES",
-        validator=strict_discrete_set, values=MEASUREMENT_TYPES,
+        "MEAS?",
+        "MEAS %d",
+        "Control the measurement type. See MEASUREMENT_TYPES",
+        validator=strict_discrete_set,
+        values=MEASUREMENT_TYPES,
+        cast=str,
     )
 
     active_trace = Instrument.control(
-        "TRAC?", "TRAC %s", "Control the active trace",
-        validator=strict_discrete_set, values=["A", "B"]
+        "TRAC?",
+        "TRAC %s",
+        "Control the active trace",
+        validator=strict_discrete_set,
+        values=["A", "B"],
+        cast=str,
     )
 
     title = Instrument.control(
@@ -126,7 +136,7 @@ class Agilent4294A(SCPIMixin, Instrument):
         self.write(f'SAVDTIF "{REMOTE_FILE}"')
 
         vErr = self.ask("OUTPERRO?").split(",")
-        if not int(vErr[0]) == 0:
+        if int(vErr[0]) != 0:
             self.write(f'PURG "{REMOTE_FILE}"')
             self.write(f'SAVDTIF "{REMOTE_FILE}"')
             vErr = self.ask("OUTPERRO?").split(",")
@@ -169,7 +179,7 @@ class Agilent4294A(SCPIMixin, Instrument):
 
         df = pd.DataFrame(
             np.hstack((freqs.reshape(-1, 1), adata, bdata)),
-            columns=["Frequency", "A Real", "A Imag", "B Real", "B Imag"]
+            columns=["Frequency", "A Real", "A Imag", "B Real", "B Imag"]  # type: ignore
         )
 
         if path is not None:

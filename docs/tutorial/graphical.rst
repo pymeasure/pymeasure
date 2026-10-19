@@ -378,8 +378,47 @@ In order to get familiar with the mechanism, users can check the following widge
 - :class:`~pymeasure.display.widgets.log_widget.LogWidget`
 - :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
 - :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
-- :class:`~pymeasure.display.widgets.image_widget.DockWidget`
+- :class:`~pymeasure.display.widgets.dock_widget.DockWidget`
 - :class:`~pymeasure.display.widgets.table_widget.TableWidget`
+- :class:`~pymeasure.display.widgets.console_widget.ConsoleWidget`
+
+Using the interactive Python console
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes it is useful to interact with the application live while it is running, to query the state of the instrument or control the instrument. PyMeasure provides a :class:`~pymeasure.display.widgets.console_widget.ConsoleWidget` which can be embedded directly into the :class:`~pymeasure.display.windows.managed_window.ManagedWindow`.
+
+You can expose variables, instruments, and modules to this console by passing a ``namespace`` dictionary during initialization. Because :class:`~pymeasure.display.windows.managed_window.ManagedWindow` places its default widgets (like the plot and log) at the end of the ``widget_list`` parameter, it is common to manually append the :class:`~pymeasure.display.widgets.console_widget.ConsoleWidget` after ``super().__init__()`` if you want it to appear as the right-most tab.
+
+.. code-block:: python
+   :emphasize-lines: 1,15,16,17,18,19,20,22,23
+
+    from pymeasure.display.widgets.console_widget import ConsoleWidget
+
+    class MainWindow(ManagedWindow):
+
+        def __init__(self):
+            super().__init__(
+                procedure_class=RandomProcedure,
+                inputs=['iterations', 'delay', 'seed'],
+                displays=['iterations', 'delay', 'seed'],
+                x_axis='Iteration',
+                y_axis='Random Number',
+            )
+            self.setWindowTitle('GUI Example')
+            
+            # 1. Create the console widget and expose variables to it
+            self.console_widget = ConsoleWidget(
+                "Script Console",
+                namespace={
+                    'window': self, 
+                    'device': '<your_instrument>', # replace with your instrument instance
+                    'np': '<numpy_module>' # replace with numpy if imported
+                }
+            )
+            
+            # 2. Append it manually so it appears as the last tab
+            self.widget_list += (self.console_widget,)
+            self.tabs.addTab(self.console_widget, self.console_widget.name)
 
 Using the sequencer
 ~~~~~~~~~~~~~~~~~~~
@@ -648,7 +687,7 @@ The list of strings for :code:`x_axis` and :code:`y_axis` set the default labels
    x_axis=['Iteration', 'Random Number 1'],
    y_axis=['Random Number 1','Random Number 2', 'Random Number 3']
 
-If one list is longer than the last element if the other list is used as the default label for the rest of the dockable plots.
+If one list is longer, the last element of the other list is used as the default label for the rest of the dockable plots.
 In our example that is why we have two **X Axis** labels with "Random Number 1".
 The longest list between :code:`x_axis` and :code:`y_axis` determines the number of plots.
 In our example :code:`y_axis` has the longest list with a length of three so three plots are created.

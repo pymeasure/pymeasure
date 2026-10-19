@@ -36,19 +36,18 @@ python iv_yokogawa.py
 
 """
 
+import logging
 import sys
 from time import sleep
+
 import numpy as np
 
-from pymeasure.instruments.keithley import Keithley2000
-from pymeasure.instruments.yokogawa import Yokogawa7651
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
-from pymeasure.experiment import (
-    Procedure, FloatParameter, unique_filename, Results
-)
+from pymeasure.experiment import FloatParameter, Procedure, Results, unique_filename
+from pymeasure.instruments.keithley import Keithley2000
+from pymeasure.instruments.yokogawa import Yokogawa7651
 
-import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
@@ -86,7 +85,7 @@ class IVProcedure(Procedure):
 
         log.info("Starting to sweep through current")
         for i, current in enumerate(currents):
-            log.debug("Measuring current: %g mA" % current)
+            log.debug(f"Measuring current: {current:g} mA")
 
             self.source.source_current = current
             # Or use self.source.ramp_to_current(current, delay=0.1)

@@ -21,10 +21,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
+from enum import IntFlag
+from time import sleep
+from warnings import warn
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
-from time import sleep
-from enum import IntFlag
 
 
 class Thermotron3800(Instrument):
@@ -37,12 +40,11 @@ class Thermotron3800(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
 
-    def write(self, command):
-        super().write(command)
+    def write(self, command: str, **kwargs) -> None:
+        super().write(command, **kwargs)
         # Insert wait time after sending command.
         # This wait time should be >1000ms for consistent results.
         sleep(1)
@@ -84,7 +86,7 @@ class Thermotron3800(Instrument):
         values=[-55, 150]
     )
 
-    def run(self):
+    def run(self) -> None:
         '''
         Starts temperature forcing. The oven will ramp to the setpoint.
 
@@ -92,7 +94,7 @@ class Thermotron3800(Instrument):
         '''
         self.write("RUNM")
 
-    def stop(self):
+    def stop(self) -> None:
         '''
         Stops temperature forcing on the oven.
 
@@ -100,8 +102,19 @@ class Thermotron3800(Instrument):
         '''
         self.write("STOP")
 
-    def initalize_oven(self, wait=True):
-        '''
+    def initalize_oven(self, wait: bool = True) -> None:
+        """Initialize the oven.
+
+        .. deprecated:: 0.17.0
+            Use :meth:`initialize_oven` instead.
+        """
+        warn("The method `initalize_oven` is deprecated, use `initialize_oven` instead.",
+             FutureWarning)
+        self.initialize_oven(wait=wait)
+
+    def initialize_oven(self, wait: bool = True) -> None:
+        """Initialize the oven and optionally wait some time.
+
         The manufacturer recommends a 3 second wait time after after initializing the oven.
         The optional "wait" variable should remain true, unless the 3 second wait time is
         taken care of on the user end. The wait time is split up in the following way:
@@ -109,7 +122,7 @@ class Thermotron3800(Instrument):
         2 seconds (optional wait time from this function (initialize_oven)).
 
         :return: None
-        '''
+        """
         self.write("INIT")
         if wait:
             sleep(2)
@@ -146,7 +159,7 @@ class Thermotron3800(Instrument):
         CALIBRATION_MODE = 128
 
     @staticmethod
-    def __translate_mode(mode_coded_integer):
+    def __translate_mode(mode_coded_integer) -> "Thermotron3800.Thermotron3800Mode":
 
         mode = Thermotron3800.Thermotron3800Mode(int(mode_coded_integer))
 

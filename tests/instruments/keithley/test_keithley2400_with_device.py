@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -136,7 +136,6 @@ def test_voltage_source(keithley2400):
         ("source_delay", 0.1),
         ("source_delay_auto_enabled", True),
         ("source_delay_auto_enabled", False),
-        ("auto_zero_enabled", True),
         ("auto_zero_enabled", True),
         ("output_off_state", "disconnected"),
         ("output_off_state", "normal"),

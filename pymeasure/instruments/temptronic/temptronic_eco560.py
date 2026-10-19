@@ -31,8 +31,9 @@ Revision B
 September, 2018
 """
 
-from pymeasure.instruments.temptronic.temptronic_base import ATSBase
 from enum import IntFlag
+
+from pymeasure.instruments.temptronic.temptronic_base import ATSBase
 
 
 class ECO560ErrorCode(IntFlag):

@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.agilent.agilentN8975A import AgilentN8975A
+from pymeasure.test import expected_protocol
 
 
 class TestAgilentN8975A:

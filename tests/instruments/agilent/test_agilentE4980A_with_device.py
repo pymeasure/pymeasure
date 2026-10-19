@@ -29,6 +29,7 @@
 
 
 import pytest
+
 from pymeasure.instruments.agilent.agilentE4980 import AgilentE4980
 
 

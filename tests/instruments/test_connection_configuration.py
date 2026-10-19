@@ -56,8 +56,8 @@ class MultiprotocolInstrument(Instrument):
 
         super().__init__(adapter,
                          name=name,
-                         gpib=dict(enable_repeat_addressing=False,
-                                   read_termination='\r'),
+                         gpib={"enable_repeat_addressing": False,
+                                   "read_termination": '\r'},
                          asrl={'baud_rate': baud_rate,
                                'read_termination': '\r\n'},
                          **kwargs,  # all others/generally valid kwargs

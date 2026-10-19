@@ -24,10 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
-
 from pymeasure.instruments.hcp import TC038D
+from pymeasure.test import expected_protocol
 
 
 # Testing the 'write multiple values' method of the device.
@@ -59,9 +57,8 @@ def test_write_values_CRC_error():
         TC038D,
         [(b"\x01\x10\x01\x06\x00\x02\x04\x00\x00\x01A\xbf\xb5",
           b"\x01\x10\x01\x06\x00\x02\x01\x02")],
-    ) as inst:
-        with pytest.raises(ConnectionError):
-            inst.setpoint = 32.1
+    ) as inst, pytest.raises(ConnectionError):
+        inst.setpoint = 32.1
 
 
 def test_write_multiple_handle_wrong_start_address():
@@ -70,9 +67,8 @@ def test_write_multiple_handle_wrong_start_address():
         TC038D,
         [(b"\x01\x10\x01\x06\x00\x02\x04\x00\x00\x01A\xbf\xb5",
           b"\x01\x90\x02\xcd\xc1")],
-    ) as inst:
-        with pytest.raises(ValueError, match="Wrong start address"):
-            inst.setpoint = 32.1
+    ) as inst, pytest.raises(ValueError, match="Wrong start address"):
+        inst.setpoint = 32.1
 
 
 # Test the 'read register' method of the device
@@ -82,9 +78,8 @@ def test_read_CRC_error():
         TC038D,
         [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
           b"\x01\x03\x04\x00\x00\x03\xE8\x01\x02")],
-    ) as inst:
-        with pytest.raises(ConnectionError):
-            inst.temperature
+    ) as inst, pytest.raises(ConnectionError):
+        _ = inst.temperature
 
 
 def test_read_address_error():
@@ -93,9 +88,8 @@ def test_read_address_error():
         TC038D,
         [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
           b"\x01\x83\x02\xc0\xf1")],
-    ) as inst:
-        with pytest.raises(ValueError, match="start address"):
-            inst.temperature
+    ) as inst, pytest.raises(ValueError, match="start address"):
+        _ = inst.temperature
 
 
 def test_read_elements_error():
@@ -104,9 +98,8 @@ def test_read_elements_error():
             TC038D,
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
               b"\x01\x83\x03\x011")],
-    ) as inst:
-        with pytest.raises(ValueError, match="Variable data"):
-            inst.temperature
+    ) as inst, pytest.raises(ValueError, match="Variable data"):
+        _ = inst.temperature
 
 
 def test_read_any_error():
@@ -115,9 +108,8 @@ def test_read_any_error():
             TC038D,
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
               b"\x01\x43\x05\xd13")],
-    ) as inst:
-        with pytest.raises(ConnectionError):
-            inst.temperature
+    ) as inst, pytest.raises(ConnectionError):
+        _ = inst.temperature
 
 
 # Test properties

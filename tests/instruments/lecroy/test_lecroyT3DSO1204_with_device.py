@@ -263,7 +263,6 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.parametrize("ch_number", CHANNELS)
     def test_channel_setup(self, instrument, ch_number):
         # Only autoscale on the first channel
-        instrument = instrument
         if ch_number == self.CHANNELS[0]:
             instrument.reset()
             sleep(7)

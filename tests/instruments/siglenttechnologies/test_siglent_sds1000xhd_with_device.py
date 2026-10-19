@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 
-import pytest
 import time
+
+import pytest
+
 from pymeasure.instruments.siglenttechnologies import SDS1000XHD
 
 """
@@ -290,8 +292,7 @@ def test_save_waveform_csv(sds1000xhd, tmp_path):
     csv_path = tmp_path / "waveform_data.csv"
     with open(csv_path, 'w') as f:
         f.write("Time (s),Voltage (V)\n")
-        for t, v in zip(time_values, volt_values):
-            f.write(f"{t},{v}\n")
+        f.writelines(f"{t},{v}\n" for t, v in zip(time_values, volt_values))
 
     # Verify file was created and has content
     assert csv_path.exists()

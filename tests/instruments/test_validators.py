@@ -23,11 +23,16 @@
 #
 
 import pytest
+
 from pymeasure.instruments.validators import (
-    strict_range, strict_discrete_range, strict_discrete_set,
-    truncated_range, truncated_discrete_set,
-    modular_range, modular_range_bidirectional,
-    joined_validators
+    joined_validators,
+    modular_range,
+    modular_range_bidirectional,
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+    truncated_discrete_set,
+    truncated_range,
 )
 
 

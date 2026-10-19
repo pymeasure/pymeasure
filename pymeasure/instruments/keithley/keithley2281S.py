@@ -330,6 +330,7 @@ class BatterySimulationChannel(Channel):
         validator=strict_discrete_set,
         values={True: "DYN", False: "STAT"},
         map_values=True,
+        cast=str,
     )
 
     capacity_limit = Instrument.control(
@@ -475,6 +476,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         """,
         validator=strict_discrete_set,
         values=["POWER", "TEST", "SIMULATOR"],
+        cast=str,
     )
 
     buffer_points = Instrument.control(

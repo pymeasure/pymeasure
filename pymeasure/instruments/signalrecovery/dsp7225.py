@@ -26,8 +26,9 @@
 # Libraries / modules
 # =============================================================================
 
-from .dsp_base import DSPBase
 import logging
+
+from .dsp_base import DSPBase
 
 # =============================================================================
 # Logging

@@ -23,9 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
-from pymeasure.instruments.agilent.agilentB298x import AgilentB2987
 
+from pymeasure.instruments.agilent.agilentB298x import AgilentB2987
+from pymeasure.test import expected_protocol
 
 TRIGGER_LAYERS = {'ALL': 'all',
                   'ACQ': 'acquisition',

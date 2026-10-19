@@ -23,6 +23,7 @@
 #
 
 from .channel import Channel
-from .instrument import Instrument
+from .common_base import IdType, InstrumentProperty, cast_or_str, identity
+from .generic_types import IEEE4882Mixin, SCPIMixin, SCPIUnknownMixin
+from .instrument import AdapterType, Instrument
 from .resources import find_serial_port, list_resources
-from .generic_types import SCPIMixin, SCPIUnknownMixin

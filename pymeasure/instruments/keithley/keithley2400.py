@@ -28,12 +28,13 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.common_base import cast_or_str, identity
 from pymeasure.instruments.validators import (
-    strict_range,
     strict_discrete_range,
     strict_discrete_set,
+    strict_range,
 )
 
 from .buffer import KeithleyBuffer
@@ -107,6 +108,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={"current": "CURR", "voltage": "VOLT"},
         map_values=True,
+        cast=str,
     )
 
     source_delay = Instrument.control(
@@ -171,6 +173,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
            Instead use :attr:`~.auto_zero_enabled` or :meth:`~.auto_zero_once`.""",
         values={True: 1, False: 0, "ONCE": "ONCE"},
         map_values=True,
+        cast=cast_or_str(float),
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.auto_zero`. "
             "Instead use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`"
@@ -208,6 +211,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "GUAR": "GUAR",  # ''
         },
         map_values=True,
+        cast=str,
     )
 
     auto_output_off_enabled = Instrument.control(
@@ -286,6 +290,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         map_values=False,
+        cast=str,
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.filter_state`. "
             "Instead use `Keithley2400.filter_enabled`."
@@ -303,6 +308,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True: "REP", False: "MOV"},
         map_values=True,
+        cast=str,
     )
 
     filter_type = Instrument.control(
@@ -318,6 +324,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["REP", "MOV"],
         map_values=False,
+        cast=str,
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.filter_type`. "
             "Instead use `Keithley2400.repeat_filter_enabled`."
@@ -441,8 +448,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             range via `Keithley2400.current_range` or `Keithley2400.current_range_auto_enabled`.""",
             FutureWarning,
         )
-        log.info("%s is measuring current." % self.name)
-        self.write(":SENS:FUNC 'CURR';:SENS:CURR:NPLC %f;" % nplc)
+        log.info(f"{self.name} is measuring current.")
+        self.write(f":SENS:FUNC 'CURR';:SENS:CURR:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO 1;")
         else:
@@ -473,7 +480,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     source_current_range_auto_enabled = Instrument.control(
         ":SOURCE:CURRENT:RANGE:AUTO?",
         ":SOURCE:CURRENT:RANGE:AUTO %d",
-        """Control whether souce current auto-range is enabled (bool).""",
+        """Control whether source current auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -515,7 +522,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             and compliance voltage via `Keithley2400.compliance_voltage`.""",
             FutureWarning,
         )
-        log.info("%s is sourcing current." % self.name)
+        log.info(f"{self.name} is sourcing current.")
         self.source_mode = "current"
         if current_range is None:
             self.auto_range_source()
@@ -598,8 +605,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             range via `Keithley2400.voltage_range` or `Keithley2400.voltage_range_auto_enabled`.""",
             FutureWarning,
         )
-        log.info("%s is measuring voltage." % self.name)
-        self.write(":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC %f;" % nplc)
+        log.info(f"{self.name} is measuring voltage.")
+        self.write(f":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:VOLT:RANG:AUTO 1;")
         else:
@@ -672,7 +679,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             and compliance current via `Keithley2400.compliance_current`.""",
             FutureWarning,
         )
-        log.info("%s is sourcing voltage." % self.name)
+        log.info(f"{self.name} is sourcing voltage.")
         self.source_mode = "voltage"
         if voltage_range is None:
             self.auto_range_source()
@@ -700,6 +707,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         selected. When `False`, `source_current` and `voltage_range` are controlled manually.""",
         values={True: "AUTO", False: "MAN"},
         map_values=True,
+        cast=str,
     )
 
     resistance_range = Instrument.control(
@@ -757,8 +765,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             `Keithley2400.resistance_range_auto_enabled`.""",
             FutureWarning,
         )
-        log.info("%s is measuring resistance." % self.name)
-        self.write(":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC %f;" % nplc)
+        log.info(f"{self.name} is measuring resistance.")
+        self.write(f":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:RES:RANG:AUTO 1;")
         else:
@@ -773,24 +781,28 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":CALCULATE3:FORMAT MEAN;:CALCULATE3:DATA?;",
         """Get the calculated means for voltage, current, and resistance from the buffer data
         (list of floats).""",
+        get_process_list=identity,
     )
 
     maximums = Instrument.measurement(
         ":CALCULATE3:FORMAT MAX;:CALCULATE3:DATA?;",
         """Get the calculated maximums for voltage, current, and resistance from the buffer data
         (list of floats).""",
+        get_process_list=identity,
     )
 
     minimums = Instrument.measurement(
         ":CALCULATE3:FORMAT MIN;:CALCULATE3:DATA?;",
         """Get the calculated minimums for voltage, current, and resistance from the buffer data
         (list of floats).""",
+        get_process_list=identity,
     )
 
     standard_devs = Instrument.measurement(
         ":CALCULATE3:FORMAT SDEVIATION;:CALCULATE3:DATA?;",
         """Get the calculated standard deviations for voltage, current, and resistance from the
         buffer data (list of floats).""",
+        get_process_list=identity,
     )
 
     @property
@@ -919,6 +931,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={"immediate": "IMM", "trigger_link": "TLIN"},
         map_values=True,
+        cast=str,
     )
 
     arm_source = Instrument.control(
@@ -935,6 +948,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "bus": "BUS",
         },
         map_values=True,
+        cast=str,
     )
 
     trigger_output_event = Instrument.control(
@@ -950,6 +964,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "none": "NONE",
         },
         map_values=True,
+        cast=str,
     )
 
     arm_output_event = Instrument.control(
@@ -964,6 +979,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "none": "NONE",
         },
         map_values=True,
+        cast=str,
     )
 
     def disable_output_triggers(self):
@@ -1064,9 +1080,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         if arm * trigger > 2500 or arm * trigger < 0:
             raise RangeException("Keithley 2400 has a combined maximum of 2500 counts")
         if arm < trigger:
-            self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
+            self.write(f":ARM:COUN {arm};:TRIG:COUN {trigger}")
         else:
-            self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
+            self.write(f":TRIG:COUN {trigger};:ARM:COUN {arm}")
 
     def set_timed_arm(self, interval):
         """Set up the measurement to be taken with the internal
@@ -1085,7 +1101,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         )
         if interval > 99999.99 or interval < 0.001:
             raise RangeException("Keithley 2400 can only be time triggered between 1 mS and 1 Ms")
-        self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
+        self.write(f":ARM:SOUR TIM;:ARM:TIM {interval:.3f}")
 
     def disable_output_trigger(self):
         """Disable the output trigger for the Trigger layer
@@ -1122,7 +1138,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             and `Keithley2400.trigger_output_line`.""",
             FutureWarning,
         )
-        self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
+        self.write(f":TRIG:OUTP {after};:TRIG:OLIN {line};")
 
     ######
     # UI #
@@ -1216,6 +1232,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True: "FRON", False: "REAR"},
         map_values=True,
+        cast=str,
     )
 
     def use_rear_terminals(self):
@@ -1244,7 +1261,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     def shutdown(self):
         """Ensure that the current or voltage is turned to zero and disable the output."""
-        log.info("Shutting down %s." % self.name)
+        log.info(f"Shutting down {self.name}.")
         if self.source_mode == "current":
             self.ramp_to_current(0.0)
         else:
