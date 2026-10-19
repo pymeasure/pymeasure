@@ -30,13 +30,17 @@ except ImportError:
         """Until StrEnum is broadly available from the standard library"""
         # Python>3.10 remove it.
 
+import logging
 from typing import Union, Optional
 
 import numpy as np
+import pyvisa
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 _ANALOG_SOURCES: tuple[str, ...] = ("CHAN1", "CHAN2", "CHAN3", "CHAN4", "MATH")
 _DIGITAL_SOURCES: tuple[str, ...] = tuple(f"D{idx}" for idx in range(16))
@@ -157,15 +161,17 @@ def _parse_tmc_block(read_bytes_func) -> bytes:
     """Read and return the payload of a SCPI binary block (#Nxxxx...payload)."""
     header = read_bytes_func(2)
     if len(header) != 2 or not header.startswith(b"#"):
-        raise RuntimeError("Invalid binary block header for display data.")
+        raise RuntimeError("Invalid binary block header.")
     length_digits = int(header[1:2].decode("ascii"))
     length = int(read_bytes_func(length_digits).decode("ascii"))
     payload = read_bytes_func(length)
-    # consume optional trailing terminator without failing if absent
+    # The trailing terminator is not sent by every firmware revision.
     try:
         read_bytes_func(1, break_on_termchar=True)
-    except Exception:
-        pass
+    except pyvisa.errors.VisaIOError as exc:
+        if exc.error_code != pyvisa.constants.StatusCode.error_timeout:
+            raise
+        log.debug("No trailing terminator after binary block.")
     return payload
 
 
@@ -410,7 +416,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
         with RigolDS1000Z("TCPIP0::10.0.0.5::INSTR") as scope:
             scope.reset()
-            scope.clear_status()
+            scope.clear()
 
             # Configure analogue channel 1
             scope.channel_1.display_enabled = True
@@ -527,7 +533,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
     @memory_depth.setter
     def memory_depth(self, value: Union[str, int]) -> None:
-        target, numeric = _normalize_memory_depth_value(
+        target, _ = _normalize_memory_depth_value(
             value,
             allowed_values_factory=self._allowed_memory_depth_values,
         )
@@ -631,10 +637,6 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         """Perform automatic scaling (vertical and timebase)."""
         self.write(":AUT")
 
-    def clear_status(self):
-        """Clear the instrument status register."""
-        self.write("*CLS")
-
     def clear_waveforms(self):
         """Clear all the waveforms on the screen."""
         self.write(":CLE")
@@ -642,10 +644,6 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     def clear_registers(self):
         """Clear all the event registers and clear the error queue."""
         self.write(":CLS")
-
-    def reset(self):
-        """Reset the instrument to factory defaults."""
-        self.write("*RST")
 
     def start_calibration(self):
         """Run the self-calibration procedure.
@@ -816,16 +814,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
     def _read_binary_waveform_chunk(self, format_enum: WaveformFormat) -> np.ndarray:
         self.write(":WAV:DATA?")
-        header = self.read_bytes(2)
-        if len(header) != 2 or not header.startswith(b"#"):
-            raise RuntimeError("Invalid binary block header.")
-        length_digits = int(header[1:2].decode("ascii"))
-        length = int(self.read_bytes(length_digits).decode("ascii"))
-        payload = self.read_bytes(length)
-        try:
-            self.read_bytes(1, break_on_termchar=True)
-        except Exception:
-            pass
+        payload = _parse_tmc_block(self.read_bytes)
         dtype = np.uint8 if format_enum == WaveformFormat.BYTE else np.uint16
         return np.frombuffer(payload, dtype=dtype).astype(np.float64)
 

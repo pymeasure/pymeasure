@@ -42,8 +42,9 @@ def test_idn_responds(rigolDS1000Z: RigolDS1000Z):
 
 def test_memory_depth_round_trip(rigolDS1000Z: RigolDS1000Z):
     rigolDS1000Z.memory_depth = "AUTO"
+    assert rigolDS1000Z.memory_depth == "AUTO"
     rigolDS1000Z.memory_depth = 12_000
-    assert rigolDS1000Z.memory_depth in ("AUTO", 12_000)
+    assert rigolDS1000Z.memory_depth == 12_000
 
 
 def test_autoscale_executes(rigolDS1000Z: RigolDS1000Z):

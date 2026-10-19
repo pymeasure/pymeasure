@@ -111,7 +111,7 @@ def test_parse_memory_depth_invalid_reply():
 def test_display_grab_image_includes_optional_arguments():
     with expected_protocol(
         RigolDS1000Z,
-        [(b":DISP:DATA? [ON,OFF,PNG]", b"#40004data")]
+        [(b":DISP:DATA? [ON,OFF,PNG]", b"#40004data\n")]
     ) as inst:
         result = inst.display.grab_image(color=True, invert=False,
                                          image_format=DisplayImageFormat.PNG)
