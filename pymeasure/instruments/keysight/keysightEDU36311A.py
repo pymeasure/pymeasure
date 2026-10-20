@@ -316,7 +316,7 @@ class KeysightEDU36311A(SCPIMixin, Instrument):
         super().__init__(
             adapter,
             name,
-            tcpip={"write_termination": "\n", "read_termination": "\n"},
+            tcpip={"read_termination": "\n"},
             **kwargs,
         )
         self.ch_1.voltage_setpoint_values = [0, 6.18]
