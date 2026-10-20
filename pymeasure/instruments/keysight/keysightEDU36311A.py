@@ -313,7 +313,12 @@ class KeysightEDU36311A(SCPIMixin, Instrument):
     ch_3 = Instrument.ChannelCreator(EDU36311AChannel, 3)
 
     def __init__(self, adapter: AdapterType, name: str = "Keysight EDU36311A", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+        super().__init__(
+            adapter,
+            name,
+            tcpip={"write_termination": "\n", "read_termination": "\n"},
+            **kwargs,
+        )
         self.ch_1.voltage_setpoint_values = [0, 6.18]
         self.ch_1.triggered_voltage_values = [0, 6.18]
         self.ch_1.current_limit_values = [0.002, 5.15]
