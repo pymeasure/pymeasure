@@ -39,6 +39,7 @@ from .keysightE364xA import (
 )
 from .keysightE3631A import KeysightE3631A
 from .keysightE36312A import KeysightE36312A
+from .keysightEDU36311A import KeysightEDU36311A
 from .keysightN5767A import KeysightN5767A
 from .keysightN7776C import KeysightN7776C
 from .keysightPNA import KeysightPNA
