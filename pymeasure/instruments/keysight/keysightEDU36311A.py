@@ -112,7 +112,7 @@ class EDU36311AChannel(Channel):
         """Control the delay in seconds before the output turns off (float strictly from
         0 to 3600).
 
-        Turning off due to a protection function is not delayed.
+        Turning off due to a protection function (like over-voltage) is not delayed.
         """,
         validator=strict_range,
         values=[0, 3600],
