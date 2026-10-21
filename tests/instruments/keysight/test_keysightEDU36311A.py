@@ -109,8 +109,8 @@ def test_output_enabled():
     "reply, mode",
     [
         ("+0", OperatingMode.OFF),
-        ("+1", OperatingMode.CC),
-        ("+2", OperatingMode.CV),
+        ("+1", OperatingMode.CONSTANT_CURRENT),
+        ("+2", OperatingMode.CONSTANT_VOLTAGE),
         ("+3", OperatingMode.HARDWARE_FAILURE),
     ],
 )
