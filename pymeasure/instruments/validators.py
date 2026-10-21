@@ -107,7 +107,7 @@ def strict_discrete_set(value: T, values: Iterable[T] | dict[T, Any]) -> T:
 def strict_discrete_case_insensitive_set(value: T, values: Iterable[T] | dict[T, Any]) -> T:
     """Validate a value against a discrete set, ignoring the case of strings.
 
-    Returns the element of ``values`` that matches ``value``.
+    Returns the element of ``values`` that matches ``value`` case insensitively.
     Strings are compared case-insensitively, all other values with ``==``.
     A ValueError is raised if ``values`` contains no matching element.
     The matched element of ``values`` is returned instead of ``value`` itself, so that

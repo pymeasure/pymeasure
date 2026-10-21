@@ -72,6 +72,7 @@ def test_strict_discrete_case_insensitive_set():
     assert strict_discrete_case_insensitive_set("normal", values) == "NORMal"
     assert strict_discrete_case_insensitive_set("AvErAgE", values) == "AVERage"
     assert strict_discrete_case_insensitive_set("ON", {"ON": 1, "OFF": 0}) == "ON"
+    assert strict_discrete_case_insensitive_set("oN", {"ON": 1, "OFF": 0}) == "ON"
     assert strict_discrete_case_insensitive_set(5, range(10)) == 5
     with pytest.raises(ValueError):
         strict_discrete_case_insensitive_set("NONSENSE", values)
