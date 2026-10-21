@@ -433,8 +433,8 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
     Digital pod usage varies between models, so the driver exposes
     :meth:`set_digital_channel_hint` for callers to provide the number of active digital lines
-    (0, 8, or 16). This hint is optional—if omitted, the logic assumes the pod is disabled—but it
-    enables strict validation when logic channels are in use.
+    (0, 8, or 16). The hint is required before setting a numeric memory depth; without it the
+    setter raises :class:`ValueError`. ``"AUTO"`` does not require the hint.
 
     Waveform acquisition
     --------------------
@@ -501,9 +501,9 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         ":ACQ:AVE?",
         ":ACQ:AVE %d",
         "Control the number of waveforms averaged when the acquisition type is 'AVER' "
-        "(int strictly between 2 and 1024).",
-        validator=strict_range,
-        values=[2, 1024],
+        "(int, power of two strictly from 2 to 1024).",
+        validator=strict_discrete_set,
+        values=[2**n for n in range(1, 11)],
         cast=int,
     )
 
@@ -519,11 +519,11 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
         The allowable discrete values depend on how many analogue and digital
         channels are currently enabled. The driver counts the active analogue
-        inputs and uses :meth:`set_digital_channel_hint` as an optional cue for
-        the digital pod state before applying validation.
+        inputs and uses :meth:`set_digital_channel_hint` for the digital pod state
+        before applying validation.
 
         Digital pod activity cannot be queried reliably across all models, so you must set the
-        hint manually when using logic channels.
+        hint before setting a numeric memory depth. ``"AUTO"`` does not require the hint.
         """
 
         reply = self.ask(":ACQ:MDEP?")
@@ -560,9 +560,9 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     trigger_coupling = Instrument.control(
         ":TRIG:COUP?",
         ":TRIG:COUP %s",
-        "Control the trigger coupling mode (str).",
+        "Control the trigger coupling mode (str strictly 'AC', 'DC', 'LFR', or 'HFR').",
         validator=strict_discrete_set,
-        values=["AC", "DC", "HFRej", "LFRej", "NOIS"],
+        values=["AC", "DC", "LFR", "HFR"],
         cast=str,
     )
 
@@ -645,10 +645,6 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     def clear_waveforms(self):
         """Clear all the waveforms on the screen."""
         self.write(":CLE")
-
-    def clear_registers(self):
-        """Clear all the event registers and clear the error queue."""
-        self.write(":CLS")
 
     def start_calibration(self):
         """Run the self-calibration procedure.
@@ -861,8 +857,8 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         """Hint the number of enabled digital lines for memory-depth validation.
 
         :param int active_lines: Use 0 when the MSO pod is disabled, 8 or 16 when the
-            corresponding digital groups are enabled. ``None`` clears the hint and reverts
-            to the default assumption (no digital channels enabled).
+            corresponding digital groups are enabled. ``None`` clears the hint; numeric
+            memory depths are then rejected until a new hint is set.
             See :attr:`memory_depth` for details on memory depth validation.
         """
 

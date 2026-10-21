@@ -243,3 +243,26 @@ def test_memory_depth_getter_parses_numeric_value():
 def test_set_digital_channel_hint_rejects_invalid_value():
     with expected_protocol(RigolDS1000Z, []) as inst, pytest.raises(ValueError):
         inst.set_digital_channel_hint(4)
+
+
+def test_average_count_accepts_power_of_two():
+    with expected_protocol(RigolDS1000Z, [(b":ACQ:AVE 64", None)]) as inst:
+        inst.average_count = 64
+
+
+def test_average_count_rejects_non_power_of_two():
+    with expected_protocol(RigolDS1000Z, []) as inst, pytest.raises(ValueError):
+        inst.average_count = 100
+
+
+@pytest.mark.parametrize("coupling", ["AC", "DC", "LFR", "HFR"])
+def test_trigger_coupling_round_trip(coupling):
+    with expected_protocol(
+        RigolDS1000Z,
+        [
+            (f":TRIG:COUP {coupling}".encode("ascii"), None),
+            (b":TRIG:COUP?", f"{coupling}\n".encode("ascii")),
+        ],
+    ) as inst:
+        inst.trigger_coupling = coupling
+        assert inst.trigger_coupling == coupling

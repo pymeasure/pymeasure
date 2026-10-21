@@ -41,6 +41,10 @@ def test_idn_responds(rigolDS1000Z: RigolDS1000Z):
 
 
 def test_memory_depth_round_trip(rigolDS1000Z: RigolDS1000Z):
+    rigolDS1000Z.set_digital_channel_hint(0)
+    rigolDS1000Z.channel_1.display_enabled = True
+    for channel in (rigolDS1000Z.channel_2, rigolDS1000Z.channel_3, rigolDS1000Z.channel_4):
+        channel.display_enabled = False
     rigolDS1000Z.memory_depth = "AUTO"
     assert rigolDS1000Z.memory_depth == "AUTO"
     rigolDS1000Z.memory_depth = 12_000
