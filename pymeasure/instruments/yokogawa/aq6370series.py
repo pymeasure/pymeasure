@@ -106,11 +106,23 @@ class AQ6370Series(SCPIMixin, Instrument):
     TRG = Instrument.ChannelCreator(Trace, "TRG")
 
     def authenticate_ethernet(self, username: str, password: str = "") -> None:
-        """Authenticate for an ethernet connection."""
+        """Authenticate for an ethernet connection.
+
+        :param username: User name to log in with.
+        :param password: Password to log in with (empty by default).
+        :raises ConnectionError: If the instrument does not return the expected
+            handshake responses.
+        """
         # Open the connection. It has to be closed at the end.
-        assert self.ask(f'OPEN "{username}"') == "AUTHENTICATE CRAM-MD5."
+        # The comparison is case-insensitive because older firmware (e.g. the
+        # AQ6370B) answers in lower case.
+        response = self.ask(f'OPEN "{username}"').strip()
+        if response.upper() != "AUTHENTICATE CRAM-MD5.":
+            raise ConnectionError(f"Unexpected response to OPEN: {response!r}")
         # Encrypted password transfer is possible.
-        assert self.ask(password) == "READY"
+        response = self.ask(password).strip()
+        if response.upper() != "READY":
+            raise ConnectionError(f"Authentication failed: {response!r}")
 
     # Control sweep status -------------------------------------------------------------------------
 
@@ -255,9 +267,9 @@ class AQ6370Series(SCPIMixin, Instrument):
     wavelength_start = Instrument.control(
         ":SENSe:WAVelength:STARt?",
         ":SENSe:WAVelength:STARt %g",
-        "Control the measurement start wavelength (float from 50e-9 to 2250e-9 in m).",
+        "Control the measurement start wavelength (float from 50e-9 to 1700e-9 in m).",
         validator=strict_range,
-        values=[50e-9, 1700 - 9],
+        values=[50e-9, 1700e-9],
         dynamic=True,
     )
 

@@ -25,7 +25,7 @@
 import logging
 from collections.abc import Sequence
 from copy import copy
-from typing import Protocol, runtime_checkable
+from typing import Protocol, final, runtime_checkable
 
 import numpy as np
 from pyvisa.util import BINARY_DATATYPES, to_binary_block, to_hp_block, to_ieee_block
@@ -91,6 +91,7 @@ class Adapter:
         self.log.debug("WRITE:%s", command)
         self._write(command, **kwargs)
 
+    @final
     def write_bytes(self, content: bytes, **kwargs) -> None:
         """Write the bytes `content` to the instrument.
 
@@ -102,6 +103,7 @@ class Adapter:
         self.log.debug("WRITE:%s", content)
         self._write_bytes(content, **kwargs)
 
+    @final
     def read(self, **kwargs) -> str:
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
@@ -114,6 +116,7 @@ class Adapter:
         self.log.debug("READ:%s", read)
         return read
 
+    @final
     def read_bytes(self, count: int = -1, break_on_termchar: bool = False, **kwargs) -> bytes:
         """Read a certain number of bytes from the instrument.
 

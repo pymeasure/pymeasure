@@ -620,6 +620,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if procedure is None:
             procedure = self.make_procedure()
 
+        # fd is only reserved in the temp-file branch below; Results expects
+        # None when the file is not pre-created via a descriptor.
+        fd = None
         if self.store_measurement:
             try:
                 filename = unique_filename(
@@ -635,9 +638,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 log.error(f"Invalid filename provided: {E.args[0]}")
                 return
         else:
-            filename = tempfile.mktemp(prefix='TempFile_', suffix='.csv')
+            fd, filename = tempfile.mkstemp(prefix='TempFile_', suffix='.csv')
 
-        results = Results(procedure, filename)
+        results = Results(procedure, filename, file_descriptor=fd)
 
         experiment = self.new_experiment(results)
         self.manager.queue(experiment)

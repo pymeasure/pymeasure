@@ -178,6 +178,11 @@ def test_wavelength_start_setter():
         inst.wavelength_start = 8e-07
 
 
+def test_wavelength_start_upper_bound():
+    with expected_protocol(AQ6370D, []) as inst, pytest.raises(ValueError):
+        inst.wavelength_start = 1800e-9
+
+
 def test_wavelength_stop_setter():
     with expected_protocol(
         AQ6370D,
@@ -618,3 +623,39 @@ def test_trace_get_y_data_of_area():
             1.55001e-6,
             1.55002e-6,
         ]
+
+
+def test_authenticate_ethernet_lowercase_response():
+    # Older firmware (e.g. the AQ6370B) answers in lower case, which must
+    # still be accepted (case-insensitive comparison).
+    with expected_protocol(
+        AQ6370D,
+        [
+            ('OPEN "user"', "authenticate cram-md5."),
+            ("password", "ready"),
+        ],
+    ) as inst:
+        inst.authenticate_ethernet("user", "password")
+
+
+def test_authenticate_ethernet_open_failure_raises():
+    # An unexpected response to OPEN aborts before the password is sent, and
+    # the raised error reports the received response.
+    with expected_protocol(
+        AQ6370D,
+        [('OPEN "user"', "denied")],
+    ) as inst, pytest.raises(ConnectionError, match="denied"):
+        inst.authenticate_ethernet("user", "password")
+
+
+def test_authenticate_ethernet_password_failure_raises():
+    # A wrong password is rejected after OPEN succeeded, and the raised error
+    # reports the received response.
+    with expected_protocol(
+        AQ6370D,
+        [
+            ('OPEN "user"', "AUTHENTICATE CRAM-MD5."),
+            ("wrong", "error"),
+        ],
+    ) as inst, pytest.raises(ConnectionError, match="error"):
+        inst.authenticate_ethernet("user", "wrong")

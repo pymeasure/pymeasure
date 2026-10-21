@@ -8,3 +8,11 @@ For more informations, see :ref:`common_instrument_types`.
 
 .. autoclass:: pymeasure.instruments.generic_types.SCPIMixin
     :members:
+
+.. autoclass:: pymeasure.instruments.generic_types.IEEE4882Mixin
+    :members:
+
+Legacy compatibility
+====================
+
+.. autoclass:: pymeasure.instruments.generic_types.SCPIUnknownMixin
