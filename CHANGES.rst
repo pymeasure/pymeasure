@@ -18,6 +18,7 @@ Deprecated
 - Deprecate :code:`discreteTruncate` validator, use :code:`truncated_discrete_set_positive` instead.
 - Deprecate :code:`Procedure.refresh_parameters` as it is a no-op now.
 - Deprecate unused :code:`console.py` module with :code:`ProgressBar` and :code:`display`.
+- Deprecate Thorlabs PRO8000 flat properties (:code:`slot`, :code:`LDCCurrent`, :code:`LDCStatus`, ...), use the per-slot channels instead.
 
 Changed
 -------
