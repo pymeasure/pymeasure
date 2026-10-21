@@ -37,8 +37,8 @@ class OperatingMode(IntEnum):
     """Operating mode of an output, as reported by the instrument."""
 
     OFF = 0  #: The output is off or unregulated.
-    CC = 1  #: The output is in constant current mode.
-    CV = 2  #: The output is in constant voltage mode.
+    CONSTANT_CURRENT = 1  #: The output is in constant current mode.
+    CONSTANT_VOLTAGE = 2  #: The output is in constant voltage mode.
     HARDWARE_FAILURE = 3  #: The output has a hardware failure.
 
 
