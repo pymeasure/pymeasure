@@ -158,7 +158,7 @@ class Adapter:
         self,
         header_bytes: int = 0,
         termination_bytes: int | None = None,
-        dtype=np.float32,
+        dtype: np.dtype | type = np.float32,
         sep: str = "",
         **kwargs,
     ):
@@ -174,8 +174,6 @@ class Adapter:
         """
         binary = self.read_bytes(-1)
         # header = binary[:header_bytes]
-        # The termination bytes are stripped from the end of the message, therefore a
-        # positive number of bytes has to be negated; 0 and None strip nothing.
         data = binary[header_bytes:-abs(termination_bytes) if termination_bytes else None]
         if sep == "":
             return np.frombuffer(data, dtype=dtype, **kwargs)
