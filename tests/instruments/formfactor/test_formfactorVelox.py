@@ -113,11 +113,15 @@ class TestWaferMap:
         with expected_protocol(
             Velox,
             [("StepNextDie 5 6", "0: 5 6 1 2"),
+             ("StepNextDie 5 6", "0: 5 6 1 2"),
+             ("StepNextDie 5 6 1", "0: 5 6 1 2"),
              ("StepNextDie 5 6 1", "0: 5 6 1 2"),
              ]
         ) as inst:
             inst.wafermap.step_to_die(5, 6)
+            inst.wafermap.step_to_die(x_index=5, y_index=6)
             inst.wafermap.step_to_die(5, 6, 1)
+            inst.wafermap.step_to_die(x_index=5, y_index=6, s_index=1)
 
     @pytest.mark.parametrize("enabled, mapping", [
                              (True, 1),
