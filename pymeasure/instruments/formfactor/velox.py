@@ -149,8 +149,8 @@ class WaferMap(Channel):
 
                     - item[0]: X index
                     - item[1]: Y index
-                    - item[2]: Current subdie index
-                    - item[3]: Total number of subdies in the die
+                    - item[2]: Current subsite index
+                    - item[3]: Total number of subsites in the die
 
         """
         return self.values("StepFirstDie",
@@ -165,8 +165,8 @@ class WaferMap(Channel):
 
             - item[0]: X index
             - item[1]: Y index
-            - item[2]: Current subdie index
-            - item[3]: Total number of subdies in the die
+            - item[2]: Current subsite index
+            - item[3]: Total number of subsites in the die
 
         """
         return self.values("StepNextDie",
@@ -179,7 +179,7 @@ class WaferMap(Channel):
 
         :param x_index: X index.
         :param y_index: Y index.
-        :param s_index: subdie index.
+        :param s_index: subsite index.
 
         """
 
