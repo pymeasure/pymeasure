@@ -174,7 +174,9 @@ class Adapter:
         """
         binary = self.read_bytes(-1)
         # header = binary[:header_bytes]
-        data = binary[header_bytes:termination_bytes]
+        # The termination bytes are stripped from the end of the message, therefore a
+        # positive number of bytes has to be negated; 0 and None strip nothing.
+        data = binary[header_bytes : -abs(termination_bytes) if termination_bytes else None]
         if sep == "":
             return np.frombuffer(data, dtype=dtype, **kwargs)
         else:

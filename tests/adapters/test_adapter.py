@@ -97,6 +97,24 @@ def test_read_binary_values(response, options, result):
     assert list(a.read_binary_values(**options)) == pytest.approx(result)
 
 
+@pytest.mark.parametrize(
+    "termination_bytes, result",
+    (
+        (1, [1, 2, 3, 4]),
+        (-1, [1, 2, 3, 4]),
+        (0, [1, 2, 3, 4, 10]),
+        (None, [1, 2, 3, 4, 10]),
+    ),
+)
+def test_read_binary_values_termination_bytes(termination_bytes, result):
+    """Test the stripping of the termination at the message end, regardless of the sign."""
+    response = b"\x00\x00" + bytes([1, 2, 3, 4]) + b"\n"
+    a = ProtocolAdapter([(None, response)])
+    options = {"dtype": np.uint8, "termination_bytes": termination_bytes}
+    values = a.read_binary_values(header_bytes=2, **options)
+    assert list(values) == result
+
+
 def test_write_binary_values():
     """Test write_binary_values in the ieee header format."""
     a = ProtocolAdapter([(b'CMD#212\x00\x00\x80?\x00\x00\x00@\x00\x00@@\n', None)])
