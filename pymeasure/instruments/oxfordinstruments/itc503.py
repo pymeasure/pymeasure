@@ -131,13 +131,13 @@ class ITC503(OxfordInstrumentsBase):
 
     version = Instrument.measurement(
         "V",
-        """ A string property that returns the version of the IPS. """,
+        """Get the version of the IPS.""",
         cast=str,
     )
 
     control_mode = Instrument.control(
         "X", "C%d",
-        """ A string property that sets the ITC in `local` or `remote` and `locked`
+        """Control the ITC in `local` or `remote` and `locked`
         or `unlocked`, locking the LOC/REM button. Allowed values are:
 
         =====   =================
@@ -158,8 +158,7 @@ class ITC503(OxfordInstrumentsBase):
 
     heater_gas_mode = Instrument.control(
         "X", "A%d",
-        """ A string property that sets the heater and gas flow control to
-        `auto` or `manual`. Allowed values are:
+        """Control the heater and gas flow control to `auto` or `manual`. Allowed values are:
 
         ======   =======================
         value    state
@@ -178,61 +177,64 @@ class ITC503(OxfordInstrumentsBase):
     )
 
     heater = Instrument.control(
-        "R5", "O%f",
-        """ A floating point property that represents the heater output power
-        as a percentage of the maximum voltage. Can be set if the heater is in
-        manual mode. Valid values are in range 0 [off] to 99.9 [%]. """,
+        "R5",
+        "O%f",
+        """Control the heater output power as a percentage of the maximum voltage.
+        Can be set if the heater is in manual mode. (float truncated between 0 [off] and 99.9)""",
         validator=truncated_range,
-        values=[0, 99.9]
+        values=[0, 99.9],
     )
 
     heater_voltage = Instrument.measurement(
         "R6",
-        """ A floating point property that represents the heater output power
-        in volts. For controlling the heater, use the :class:`ITC503.heater`
-        property. """,
+        """Get the heater output power in volts.
+        For controlling the heater, use the :meth:`ITC503.heater` property (float).""",
     )
 
     gasflow = Instrument.control(
-        "R7", "G%f",
-        """ A floating point property that controls gas flow when in manual
-        mode. The value is expressed as a percentage of the maximum gas flow.
-        Valid values are in range 0 [off] to 99.9 [%]. """,
+        "R7",
+        "G%f",
+        """Control the gas flow when in manual mode.
+        The value is expressed as a percentage of the maximum gas flow.
+        (float truncated from 0 [off] to 99.9 [%]).""",
         validator=truncated_range,
-        values=[0, 99.9]
+        values=[0, 99.9],
     )
 
     proportional_band = Instrument.control(
-        "R8", "P%f",
-        """ A floating point property that controls the proportional band
-        for the PID controller in Kelvin. Can be set if the PID controller
-        is in manual mode. Valid values are 0 [K] to 1677.7 [K]. """,
+        "R8",
+        "P%f",
+        """Control the proportional band for the PID controller in Kelvin.
+        Can be set if the PID controller is in manual mode.
+        (float truncated from 0 [K] to 1677.7 [K]).""",
         validator=truncated_range,
-        values=[0, 1677.7]
+        values=[0, 1677.7],
     )
 
     integral_action_time = Instrument.control(
-        "R9", "I%f",
-        """ A floating point property that controls the integral action time
+        "R9",
+        "I%f",
+        """Control the integral action time
         for the PID controller in minutes. Can be set if the PID controller
-        is in manual mode. Valid values are 0 [min.] to 140 [min.]. """,
+        is in manual mode (float truncated from 0 [min.] to 140 [min.]). """,
         validator=truncated_range,
-        values=[0, 140]
+        values=[0, 140],
     )
 
     derivative_action_time = Instrument.control(
-        "R10", "D%f",
-        """ A floating point property that controls the derivative action time
+        "R10",
+        "D%f",
+        """Control the derivative action time
         for the PID controller in minutes. Can be set if the PID controller
-        is in manual mode. Valid values are 0 [min.] to 273 [min.]. """,
+        is in manual mode (float truncated from 0 [min.] to 273 [min.]).""",
         validator=truncated_range,
-        values=[0, 273]
+        values=[0, 273],
     )
 
     auto_pid = Instrument.control(
-        "X", "L%d",
-        """ A boolean property that sets the Auto-PID mode on (True) or off (False).
-        """,
+        "X",
+        "L%d",
+        """Control whether the Auto-PID mode is on (True) or off (False).""",
         preprocess_reply=lambda v: v[12:13],
         cast=int,
         validator=strict_discrete_set,
@@ -242,7 +244,7 @@ class ITC503(OxfordInstrumentsBase):
 
     sweep_status = Instrument.control(
         "X", "S%d",
-        """ An integer property that sets the sweep status. Values are:
+        """Control the sweep status (int). Values are:
 
         =========   =========================================
         value       meaning
@@ -256,13 +258,13 @@ class ITC503(OxfordInstrumentsBase):
         preprocess_reply=lambda v: v[7:9],
         cast=int,
         validator=strict_range,
-        values=[0, 32]
+        values=[0, 32],
     )
 
     temperature_setpoint = Instrument.control(
-        "R0", "T%f",
-        """ A floating point property that controls the temperature set-point of
-        the ITC in kelvin. """,
+        "R0",
+        "T%f",
+        """Control the temperature set-point of the ITC in kelvin (float).""",
         validator=truncated_range,
         values=[0, 1677.7],  # Kelvin, 0 - 1677.7K is the maximum range of the instrument
         dynamic=True,
@@ -270,30 +272,30 @@ class ITC503(OxfordInstrumentsBase):
 
     temperature_1 = Instrument.measurement(
         "R1",
-        """ Reads the temperature of the sensor 1 in Kelvin. """,
+        """Measure the temperature of the sensor 1 in Kelvin.""",
     )
 
     temperature_2 = Instrument.measurement(
         "R2",
-        """ Reads the temperature of the sensor 2 in Kelvin. """,
+        """Measure the temperature of the sensor 2 in Kelvin.""",
     )
 
     temperature_3 = Instrument.measurement(
         "R3",
-        """ Reads the temperature of the sensor 3 in Kelvin. """,
+        """Measure the temperature of the sensor 3 in Kelvin.""",
     )
 
     temperature_error = Instrument.measurement(
         "R4",
-        """ Reads the difference between the set-point and the measured
+        """Get the difference between the set-point and the measured
         temperature in Kelvin. Positive when set-point is larger than
-        measured. """,
+        measured.""",
     )
 
     front_panel_display = Instrument.setting(
         "F%d",
-        """ A string property that controls what value is displayed on
-        the front panel of the ITC. Valid values are:
+        """Control what value is displayed on
+        the front panel of the ITC (str). Valid values are:
         'temperature setpoint', 'temperature 1', 'temperature 2',
         'temperature 3', 'temperature error', 'heater', 'heater voltage',
         'gasflow', 'proportional band', 'integral action time',
@@ -322,35 +324,36 @@ class ITC503(OxfordInstrumentsBase):
 
     x_pointer = Instrument.setting(
         "x%d",
-        """ An integer property to set pointers into tables for loading and
-        examining values in the table. The significance and valid values for
+        """Set the pointers into tables for loading and
+        examining values in the table (int). The significance and valid values for
         the pointer depends on what property is to be read or set. """,
         validator=strict_range,
-        values=[0, 128]
+        values=[0, 128],
     )
 
     y_pointer = Instrument.setting(
         "y%d",
-        """ An integer property to set pointers into tables for loading and
-        examining values in the table. The significance and valid values for
+        """Set the pointers into tables for loading and
+        examining values in the table (int). The significance and valid values for
         the pointer depends on what property is to be read or set. """,
         validator=strict_range,
-        values=[0, 128]
+        values=[0, 128],
     )
 
     pointer = Instrument.setting(
         "$x%d\r$y%d",
-        """ A tuple property to set pointers into tables for loading and
-        examining values in the table, of format (x, y). The significance
+        """Set the pointers into tables for loading and examining values in the table,
+        tuple of two ints in format (x, y). The significance
         and valid values for the pointer depends on what property is to be
         read or set. The value for x and y can be in the range 0 to 128. """,
         validator=pointer_validator,
-        values=[0, 128]
+        values=[0, 128],
     )
 
     sweep_table = Instrument.control(
-        "r", "s%f",
-        """ A property that controls values in the sweep table. Relies on
+        "r",
+        "s%f",
+        """Control the values in the sweep table. Relies on
         :class:`ITC503.x_pointer` and :class:`ITC503.y_pointer` (or
         :class:`ITC503.pointer`) to point at the location in the table that is
         to be set or read.
@@ -370,7 +373,7 @@ class ITC503(OxfordInstrumentsBase):
 
     auto_pid_table = Instrument.control(
         "q", "p%f",
-        """ A property that controls values in the auto-pid table. Relies on
+        """Control values in the auto-pid table. Relies on
         :class:`ITC503.x_pointer` and :class:`ITC503.y_pointer` (or
         :class:`ITC503.pointer`) to point at the location in the table that
         is to be set or read.
@@ -391,7 +394,7 @@ class ITC503(OxfordInstrumentsBase):
 
     target_voltage_table = Instrument.control(
         "t", "v%f",
-        """ A property that controls values in the target heater voltage table.
+        """Control values in the target heater voltage table.
         Relies on the :class:`ITC503.x_pointer` to select the entry in the table
         that is to be set or read (1 to 64).
         """,
@@ -399,7 +402,7 @@ class ITC503(OxfordInstrumentsBase):
 
     gasflow_configuration_parameter = Instrument.control(
         "d", "c%f",
-        """ A property that controls the gas flow configuration parameters.
+        """Control the gas flow configuration parameters.
         Relies on the :class:`ITC503.x_pointer` to select which parameter
         is set or read:
 
@@ -418,7 +421,7 @@ class ITC503(OxfordInstrumentsBase):
 
     gasflow_control_status = Instrument.measurement(
         "m",
-        """ A property that reads the gas-flow control status. Returns
+        """Get the gas-flow control status. Returns
         the status in the form of a :class:`ITC503.FLOW_CONTROL_STATUS`
         IntFlag. """,
         cast=int,
@@ -427,15 +430,13 @@ class ITC503(OxfordInstrumentsBase):
 
     target_voltage = Instrument.measurement(
         "n",
-        """ A float property that reads the current heater target voltage
-        with which the actual heater voltage is being compared. Only valid
-        if gas-flow in auto mode. """,
+        """Get the current heater target voltage with which the actual heater voltage is being
+        compared. Only valid if gas-flow in auto mode (float).""",
     )
 
     valve_scaling = Instrument.measurement(
         "o",
-        """ A float property that reads the valve scaling parameter. Only
-        valid if gas-flow in auto mode. """,
+        """Get the valve scaling parameter. Only valid if gas-flow in auto mode (float).""",
     )
 
     def wait_for_temperature(
