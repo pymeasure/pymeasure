@@ -28,7 +28,7 @@ import time
 from abc import ABCMeta
 from collections.abc import Callable, Sequence
 from decimal import Decimal
-from typing import Any, Literal, cast
+from typing import Any, Literal, Self, cast
 
 import numpy as np
 
@@ -196,7 +196,7 @@ class _ChunkResizer:
 
     """
 
-    def __init__(self, adapter: Adapter, chunk_size: int | None):
+    def __init__(self, adapter: Adapter, chunk_size: int | None) -> None:
         """Just initialize the object attributes.
 
         :param adapter: Adapter of the instrument. This is usually accessed through the
@@ -207,7 +207,7 @@ class _ChunkResizer:
         self.old_chunk_size = None
         self.new_chunk_size = int(chunk_size) if chunk_size else 0
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """Only resize the chunk size if the adapter support this feature."""
         connection = visa_resource(self.adapter)
         if (
@@ -217,8 +217,9 @@ class _ChunkResizer:
         ):
             self.old_chunk_size = connection.chunk_size
             connection.chunk_size = self.new_chunk_size
+        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if self.old_chunk_size is not None:
             visa_resource(self.adapter).chunk_size = self.old_chunk_size
 
