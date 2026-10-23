@@ -230,6 +230,19 @@ class BufferCurve(pg.PlotDataItem):
         self.data_updated.emit()
 
 
+class _SafeInfiniteLine(pg.InfiniteLine):
+    """Infinite line that tolerates being queried after its ViewBox is gone."""
+
+    def boundingRect(self) -> QtCore.QRectF | None:
+        # Keep the ViewBox alive while pyqtgraph recomputes the rect: getViewBox()
+        # caches only a weak reference, and the wrapper can be collected before
+        # pyqtgraph calls getViewBox() again.
+        viewbox = self.getViewBox()
+        if viewbox is None:
+            return QtCore.QRectF()
+        return super().boundingRect()
+
+
 class Crosshairs(QtCore.QObject):
     """ Attaches crosshairs to the a plot and provides a signal with the
     x and y graph coordinates
@@ -245,8 +258,8 @@ class Crosshairs(QtCore.QObject):
         """
         super().__init__()
 
-        self.vertical = pg.InfiniteLine(angle=90, movable=False, pen=pen)
-        self.horizontal = pg.InfiniteLine(angle=0, movable=False, pen=pen)
+        self.vertical = _SafeInfiniteLine(angle=90, movable=False, pen=pen)
+        self.horizontal = _SafeInfiniteLine(angle=0, movable=False, pen=pen)
         plot.addItem(self.vertical, ignoreBounds=True)
         plot.addItem(self.horizontal, ignoreBounds=True)
 

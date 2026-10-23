@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import gc
+import weakref
 from typing import cast
 from unittest import mock
 
@@ -303,3 +305,50 @@ class TestCrosshairs:
         _widget, _plot, ch = self._make_crosshairs(qtbot)
         with pytest.raises(Exception, match="Mouse location not known"):
             ch.mouseMoved(None)
+
+    def test_bounding_rect_survives_detached_view(self, qtbot):
+        """Emulate Qt querying the line geometry after its ViewBox is gone."""
+        _widget, _plot, ch = self._make_crosshairs(qtbot)
+        for line in (ch.vertical, ch.horizontal):
+            # The first call caches the mapped view rect (_cachedView via viewRect()).
+            # Clearing only _boundingRect then reproduces the teardown state: a stale
+            # view rect lingers while the bounding rect is recomputed without a ViewBox.
+            line.boundingRect()
+            line._boundingRect = None
+            # Reaching into private pyqtgraph state couples this test to pyqtgraph
+            # internals, but is needed for a deterministic reproduction of the teardown
+            # crash (verified against pyqtgraph 0.13.7 and 0.14.0).
+            with mock.patch.object(line, "getViewBox", return_value=None):
+                assert line.boundingRect().isEmpty()
+
+    def test_bounding_rect_keeps_viewbox_alive(self, qtbot, monkeypatch):
+        """The guard must keep the ViewBox alive until pyqtgraph has used it."""
+        _widget, _plot, ch = self._make_crosshairs(qtbot)
+        line = ch.vertical
+
+        class FakeViewBox:
+            def size(self):
+                return QtCore.QSizeF(1, 1)
+
+        viewbox = FakeViewBox()
+        # Inject the fake through pyqtgraph's private cache to make the
+        # collection timing deterministic.
+        line._viewBox = weakref.ref(viewbox)
+        line._boundingRect = None
+        rect = QtCore.QRectF(0, 0, 1, 1)
+
+        def view_rect():
+            nonlocal viewbox
+            viewbox = None  # drop the test's only strong reference
+            gc.collect()
+            return rect
+
+        monkeypatch.setattr(line, "viewRect", view_rect)
+        # pyqtgraph derives the rect height from the orthogonal pixel vector.
+        monkeypatch.setattr(
+            line, "pixelVectors", lambda direction=None: (None, QtCore.QPointF(0, 1))
+        )
+
+        # Without the strong reference in boundingRect, view_rect() collects the
+        # fake ViewBox and pyqtgraph's next getViewBox() returns None.
+        assert not line.boundingRect().isEmpty()
