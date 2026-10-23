@@ -28,7 +28,7 @@ import time
 from abc import ABCMeta
 from collections.abc import Callable, Sequence
 from decimal import Decimal
-from typing import Any, Literal, cast
+from typing import Any, Literal, Self, cast
 
 import numpy as np
 
@@ -207,7 +207,7 @@ class _ChunkResizer:
         self.old_chunk_size = None
         self.new_chunk_size = int(chunk_size) if chunk_size else 0
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """Only resize the chunk size if the adapter support this feature."""
         if (
             self.adapter.connection is not None
@@ -216,8 +216,9 @@ class _ChunkResizer:
         ):
             self.old_chunk_size = self.adapter.connection.chunk_size
             self.adapter.connection.chunk_size = self.new_chunk_size  # type: ignore
+        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if self.old_chunk_size is not None:
             self.adapter.connection.chunk_size = self.old_chunk_size
 

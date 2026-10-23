@@ -31,7 +31,7 @@ import warnings
 from collections import Counter, OrderedDict, namedtuple
 from collections.abc import Callable, Sequence, ValuesView
 from enum import IntEnum
-from typing import Literal, cast
+from typing import Literal, Self, cast
 
 import numpy as np
 import pandas as pd
@@ -2216,7 +2216,7 @@ class CustomIntEnum(IntEnum):
         # str() conversion just because of pylint bug
 
     @classmethod
-    def get(cls, input_value: int | str) -> CustomIntEnum:
+    def get(cls, input_value: int | str) -> Self:
         """Give Enum member by specifying name or value.
 
         :param input_value: Enum name or value
