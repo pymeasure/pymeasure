@@ -28,12 +28,12 @@ import logging
 import re
 import sys
 from copy import deepcopy
+from enum import StrEnum
 from typing import Any
 from warnings import warn
 
 from pint import UndefinedUnitError, facets
 
-from pymeasure.instruments._strenum import StrEnum
 from pymeasure.units import ureg
 
 from .parameters import Measurable, Metadata, Parameter

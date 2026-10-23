@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 try:
-    from typing_extensions import assert_type
+    from typing import assert_type
     TYPING_EXTENSION = True
 except ImportError:
     TYPING_EXTENSION = False
