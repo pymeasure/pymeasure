@@ -35,13 +35,29 @@ matching branch unambiguously.
 """
 
 import sys
+from warnings import warn
 
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
+if sys.version_info >= (3, 11):  # noqa: UP036
+    from enum import StrEnum as _StrEnum
+
+    class StrEnum(_StrEnum):
+        """Deprecated backport of `enum.StrEnum`, use it instead.
+
+        .. deprecated:: 0.17.0
+            Use `enum.StrEnum` instead.
+        """
+
+        def __init__(self, *args) -> None:
+            warn(
+                "It is deprecated to import StrEnum from pymeasure, import it from `enum` instead.",
+                FutureWarning,
+            )
+            super().__init__(*args)
+
 else:  # pragma: no cover
     from enum import Enum
 
-    class StrEnum(str, Enum):
+    class StrEnum(str, Enum):  # noqa: UP042
         """Backport of :class:`enum.StrEnum` for Python 3.10."""
 
         def __str__(self) -> str:

@@ -19,6 +19,7 @@ Deprecated
 - Deprecate :code:`Procedure.refresh_parameters` as it is a no-op now.
 - Deprecate unused :code:`console.py` module with :code:`ProgressBar` and :code:`display`.
 - Deprecate Thorlabs PRO8000 flat properties (:code:`slot`, :code:`LDCCurrent`, :code:`LDCStatus`, ...), use the per-slot channels instead.
+- Deprecate pymeasure defined :code:`StrEnum` as pymeasure now supports Python 3.11 which has proper :code:`enum.StrEnum`.
 
 Changed
 -------
