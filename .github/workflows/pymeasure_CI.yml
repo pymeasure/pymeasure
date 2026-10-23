@@ -19,7 +19,7 @@ env:
   LATEST_PYTHON: "3.14"
   # Oldest Python version supported by PyMeasure
   # (see `requires-python` in pyproject.toml).
-  OLDEST_PYTHON: "3.10"
+  OLDEST_PYTHON: "3.11"
 
 jobs:
   lint_typecheck:
@@ -147,7 +147,7 @@ jobs:
       fail-fast: true
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
         with:

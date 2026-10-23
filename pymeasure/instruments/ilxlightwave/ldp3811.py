@@ -23,9 +23,9 @@
 #
 
 import logging
+from enum import StrEnum
 
 from pymeasure.instruments import Instrument, cast_or_str
-from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)

@@ -23,13 +23,13 @@
 #
 import logging
 from collections.abc import Callable
+from enum import StrEnum
 
 import numpy as np
 from pyvisa.constants import StatusCode
 from pyvisa.errors import VisaIOError
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
-from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
