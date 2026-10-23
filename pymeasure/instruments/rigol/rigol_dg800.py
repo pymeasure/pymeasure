@@ -160,6 +160,7 @@ class VoltageChannel(Channel):
     waveform = Channel.measurement(
         ":SOUR{ch}:APPL?", """Get a descriptor of the waveform applied.""",
         cast=cast_or_str(float),
+        preprocess_reply=lambda v: v.strip('"'),
     )
 
 

@@ -30,12 +30,12 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
-from data.procedure_for_testing import RandomProcedure
 
 from pymeasure.experiment import BooleanParameter
 from pymeasure.experiment.procedure import Parameter, Procedure, ProcedureStatus, UnknownProcedure
 from pymeasure.experiment.results import CSVFormatter, Results
 from pymeasure.units import ureg
+from tests.experiment.data.procedure_for_testing import RandomProcedure
 
 
 def test_procedure():

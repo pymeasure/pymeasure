@@ -122,12 +122,21 @@ class LakeShore425(Instrument):
 
     def measure(self, points, has_aborted=lambda: False, delay=1e-3):
         """Returns the mean and standard deviation of a given number
-        of points while blocking
+        of points while blocking.
+
+        If :code:`has_aborted` is already True before the first read,
+        no data is collected and :code:`(nan, nan)` is returned.
         """
         data = np.zeros(points, dtype=np.float32)
+        read = 0
         for i in range(points):
             if has_aborted():
                 break
             data[i] = self.field
+            read += 1
             sleep(delay)
-        return data.mean(), data.std()
+        # Statistics cover only the samples actually read, so an early abort
+        # does not pollute the result with the untouched zero-filled tail.
+        if read == 0:
+            return np.nan, np.nan
+        return data[:read].mean(), data[:read].std()

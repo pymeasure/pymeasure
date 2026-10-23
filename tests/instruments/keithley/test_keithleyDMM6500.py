@@ -877,3 +877,491 @@ def test_trigger_single_autozero():
              (b'AZER:ONCE', None)],
     ) as inst:
         assert inst.trigger_single_autozero() is None
+
+
+###################
+# Property setters #
+###################
+
+# One row per former hand-written `test_*_setter` function: after the
+# `*LANG SCPI` handshake every one of them sent exactly one command and
+# assigned exactly one attribute.
+SETTER_CASES = (
+    # --- current ---------------------------------------------------------
+    ("current_range", 0.01, b':SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG 0.01'),
+    ("current_relative", 0.5, b':SENS:CURR:REL 0.5'),
+    ("current_relative_enabled", True, b':SENS:CURR:REL:STAT 1'),
+    ("current_nplc", 2, b':SENS:CURR:NPLC 2'),
+    ("current_digits", 3, b':DISP:CURR:DIG 3'),
+    ("current_ac_range", 0.01, b':SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG 0.01'),
+    ("current_ac_relative", 0.5, b':SENS:CURR:AC:REL 0.5'),
+    ("current_ac_relative_enabled", True, b':SENS:CURR:AC:REL:STAT 1'),
+    ("current_ac_digits", 3, b':DISP:CURR:AC:DIG 3'),
+    ("current_ac_bandwidth", 30, b':SENS:CURR:AC:DET:BAND 30'),
+    # --- voltage ---------------------------------------------------------
+    ("voltage_range", 1, b':SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG 1'),
+    ("voltage_relative", 0.5, b':SENS:VOLT:REL 0.5'),
+    ("voltage_relative_enabled", True, b':SENS:VOLT:REL:STAT 1'),
+    ("voltage_nplc", 1, b':SENS:VOLT:NPLC 1'),
+    ("voltage_digits", 3, b':DISP:VOLT:DIG 3'),
+    # NOTE: the auto-range-off prefix is *not* under the AC subnode here.
+    ("voltage_ac_range", 1, b':SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG 1'),
+    ("voltage_ac_relative", 0.5, b':SENS:VOLT:AC:REL 0.5'),
+    ("voltage_ac_relative_enabled", True, b':SENS:VOLT:AC:REL:STAT 1'),
+    ("voltage_ac_digits", 3, b':DISP:VOLT:AC:DIG 3'),
+    ("voltage_ac_bandwidth", 3, b':SENS:VOLT:AC:DET:BAND 3'),
+    # --- resistance ------------------------------------------------------
+    ("resistance_range", 1e7, b':SENS:RES:RANG:AUTO 0;:SENS:RES:RANG 1e+07'),
+    ("resistance_relative", 1.0, b':SENS:RES:REL 1'),
+    ("resistance_relative_enabled", True, b':SENS:RES:REL:STAT 1'),
+    ("resistance_nplc", 1, b':SENS:RES:NPLC 1'),
+    ("resistance_digits", 3, b':DISP:RES:DIG 3'),
+    ("resistance_4W_range", 1e7, b':SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG 1e+07'),
+    ("resistance_4W_relative", 1.0, b':SENS:FRES:REL 1'),
+    ("resistance_4W_relative_enabled", True, b':SENS:FRES:REL:STAT 1'),
+    ("resistance_4W_nplc", 1, b':SENS:FRES:NPLC 1'),
+    ("resistance_4W_digits", 3, b':DISP:FRES:DIG 3'),
+    # --- frequency -------------------------------------------------------
+    ("frequency_relative", 100, b':SENS:FREQ:REL 100'),
+    ("frequency_relative_enabled", True, b':SENS:FREQ:REL:STAT 1'),
+    ("frequency_digits", 3, b':DISP:FREQ:DIG 3'),
+    ("frequency_threshold", 10, b':SENS:FREQ:THR:RANG 10'),
+    ("frequency_threshold_auto_enabled", True, b':SENS:FREQ:THR:RANG:AUTO 1'),
+    ("frequency_aperature", 0.2, b':SENS:FREQ:APER 0.2'),
+    # --- period ----------------------------------------------------------
+    ("period_relative", 0.5, b':SENS:PER:REL 0.5'),
+    ("period_relative_enabled", True, b':SENS:PER:REL:STAT 1'),
+    ("period_digits", 3, b':DISP:PER:DIG 3'),
+    ("period_threshold", 0.1, b':SENS:PER:THR:RANG 0.1'),
+    ("period_threshold_auto_enabled", True, b':SENS:PER:THR:RANG:AUTO 1'),
+    ("period_aperature", 0.2, b':SENS:PER:APER 0.2'),
+    # --- temperature -----------------------------------------------------
+    ("temperature_relative", 1.0, b':SENS:TEMP:REL 1'),
+    ("temperature_relative_enabled", True, b':SENS:TEMP:REL:STAT 1'),
+    ("temperature_nplc", 2, b':SENS:TEMP:NPLC 2'),
+    ("temperature_digits", 4, b':DISP:TEMP:DIG 4'),
+    # --- capacitance -----------------------------------------------------
+    ("capacitance_relative", 0.0001, b':SENS:CAP:REL 0.0001'),
+    ("capacitance_relative_status", True, b':SENS:CAP:REL:STAT 1'),
+    ("capacitance_range", 1e-6, b':SENS:CAP:RANG:AUTO 0;:SENS:CAP:RANG 1e-06'),
+    ("capacitance_digits", 4, b':DISP:CAP:DIG 4'),
+    # --- diode -----------------------------------------------------------
+    ("diode_bias", 0.001, b':SENS:DIOD:BIAS:LEV 0.001'),
+    ("diode_nplc", 2, b':SENS:DIOD:NPLC 2'),
+    # --- miscellaneous ---------------------------------------------------
+    ("command_set", 'TSP', b'*LANG TSP'),
+    ("system_time", '2023, 09, 21', b':SYST:TIME 2023, 09, 21'),
+    ("display_screen", 'HOME', b':DISP:SCR HOME'),
+    ("buffer_points", 100, b':TRAC:POIN 100'),
+    ("scan_count", 5, b':ROUT:SCAN:COUN:SCAN 5'),
+    ("scan_interval", 10, b':ROUT:SCAN:INT 10'),
+    ("data_format", 'ASC', b'FORMAT:DATA ASC'),
+)
+
+
+@pytest.mark.parametrize(("attr", "value", "command"), SETTER_CASES,
+                         ids=[row[0] for row in SETTER_CASES])
+def test_setter(attr, value, command):
+    """One template: after the *LANG handshake exactly one command is sent."""
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (command, None)],
+    ) as inst:
+        setattr(inst, attr, value)
+
+
+############################
+# Additional methods #
+############################
+
+
+def test_close():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None)],
+    ) as inst:
+        assert inst.close() is None
+
+
+def test_exit():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None)],
+    ) as inst:
+        assert inst.__exit__(None, None, None) is None
+
+
+#######################
+# Additional methods #
+#######################
+
+
+def test_enable_filter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC?', b'CURR:DC\n'),
+             (b':SENS:CURR:DC:AVER:STAT 1', None),
+             (b':SENS:CURR:DC:AVER:TCON repeat', None),
+             (b':SENS:CURR:DC:AVER:COUN 1', None),
+             (b':SENS:CURR:DC:AVER:STAT?', b'1\n')],
+    ) as inst:
+        assert inst.enable_filter() == '1\n'
+
+
+def test_enable_filter_mode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:DC:AVER:STAT 1', None),
+             (b':SENS:VOLT:DC:AVER:TCON repeat', None),
+             (b':SENS:VOLT:DC:AVER:COUN 1', None),
+             (b':SENS:VOLT:DC:AVER:STAT?', b'1\n')],
+    ) as inst:
+        assert inst.enable_filter(mode="voltage") == '1\n'
+
+
+def test_disable_filter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC?', b'CURR:DC\n'),
+             (b':SENS:CURR:DC:AVER:STAT 0', None),
+             (b':SENS:CURR:DC:AVER:STAT?', b'0\n')],
+    ) as inst:
+        assert inst.disable_filter() == '0\n'
+
+
+def test_disable_filter_mode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:DC:AVER:STAT 0', None),
+             (b':SENS:VOLT:DC:AVER:STAT?', b'0\n')],
+    ) as inst:
+        assert inst.disable_filter(mode="voltage") == '0\n'
+
+
+def test_beep():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SYST:BEEP 1000, 0.5', None)],
+    ) as inst:
+        assert inst.beep(1000, 0.5) is None
+
+
+#########################
+# Temperature measure #
+#########################
+
+
+def test_measure_temperature():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "TEMP"', None)],
+    ) as inst:
+        assert inst.measure_temperature() is None
+
+
+def test_temperature_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':READ?', b'25.5\n')],
+    ) as inst:
+        assert inst.temperature == 25.5
+
+
+def test_temperature_relative_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:TEMP:REL?', b'1\n')],
+    ) as inst:
+        assert inst.temperature_relative == 1.0
+
+
+def test_temperature_relative_enabled_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:TEMP:REL:STAT?', b'1\n')],
+    ) as inst:
+        assert inst.temperature_relative_enabled is True
+
+
+def test_temperature_nplc_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:TEMP:NPLC?', b'1\n')],
+    ) as inst:
+        assert inst.temperature_nplc == 1.0
+
+
+def test_temperature_digits_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:TEMP:DIG?', b'4\n')],
+    ) as inst:
+        assert inst.temperature_digits == 4
+
+
+######################
+# Capacitance measure #
+#######################
+
+
+def test_measure_capacitance():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "CAP"', None),
+             (b':SENS:CAP:RANG:AUTO 0;:SENS:CURR:RANG 0.001', None)],
+    ) as inst:
+        assert inst.measure_capacitance() is None
+
+
+def test_capacitance_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':READ?', b'1e-06\n')],
+    ) as inst:
+        assert inst.capacitance == 1e-6
+
+
+def test_capacitance_relative_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CAP:REL?', b'0.0001\n')],
+    ) as inst:
+        assert inst.capacitance_relative == 0.0001
+
+
+def test_capacitance_relative_status_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CAP:REL:STAT?', b'1\n')],
+    ) as inst:
+        assert inst.capacitance_relative_status is True
+
+
+def test_capacitance_range_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CAP:RANG?', b'1e-06\n')],
+    ) as inst:
+        assert inst.capacitance_range == 1e-6
+
+
+def test_capacitance_digits_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:CAP:DIG?', b'4\n')],
+    ) as inst:
+        assert inst.capacitance_digits == 4
+
+
+##############
+# Diode measure #
+##############
+
+
+def test_measure_diode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "DIOD"', None)],
+    ) as inst:
+        assert inst.measure_diode() is None
+
+
+def test_diode_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':READ?', b'0.7\n')],
+    ) as inst:
+        assert inst.diode == 0.7
+
+
+def test_diode_bias_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:DIOD:BIAS:LEV?', b'0.001\n')],
+    ) as inst:
+        assert inst.diode_bias == 0.001
+
+
+def test_diode_nplc_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:DIOD:NPLC?', b'1\n')],
+    ) as inst:
+        assert inst.diode_nplc == 1.0
+
+
+####################
+# Continuity measure #
+####################
+
+
+def test_measure_continuity():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "CONT"', None)],
+    ) as inst:
+        assert inst.measure_continuity() is None
+
+
+######################
+# Scanner card properties #
+#######################
+
+
+def test_points_in_buffer_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'TRAC:ACT?', b'100\n')],
+    ) as inst:
+        assert inst.points_in_buffer == 100
+
+
+def test_data_format_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'FORMAT:DATA?', b'ASC\n')],
+    ) as inst:
+        assert inst.data_format == 'ASC'
+
+
+def test_scan_id_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SYST:CARD1:IDN?', b'Keithley|Model 2000-SCAN\n')],
+    ) as inst:
+        assert inst.scan_id == ['Keithley', 'Model 2000-SCAN']
+
+
+def test_scan_vch_start_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'SYST:CARD1:VCH:STAR?', b'1\n')],
+    ) as inst:
+        assert inst.scan_vch_start == 1
+
+
+def test_scan_vch_end_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'SYST:CARD1:VCH:END?', b'10\n')],
+    ) as inst:
+        assert inst.scan_vch_end == 10
+
+
+def test_scan_card_vmax_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'SYST:CARD1:VMAX?', b'300\n')],
+    ) as inst:
+        assert inst.scan_card_vmax == 300
+
+
+@pytest.mark.parametrize("value, command", (
+    (True, b':SYST:PCAR1 2000'),
+    (False, b':SYST:PCAR1 0'),
+))
+def test_pseudo_scanner_enabled_setter(value, command):
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (command, None)],
+    ) as inst:
+        inst.pseudo_scanner_enabled = value
+
+
+###############################
+# ScannerCard2000Channel tests #
+###############################
+
+
+def test_channel_mode_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "VOLT:DC", (@1)', None)],
+    ) as inst:
+        inst.channels[1].mode = "voltage"
+
+
+def test_channel_mode_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC? (@1)', b'"VOLT:DC"\n')],
+    ) as inst:
+        assert inst.channels[1].mode == "voltage"
+
+
+def test_channel_enable_filter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC? (@1)', b'"VOLT:DC"\n'),
+              (b':SENS:VOLT:DC:AVER:STAT 1, (@1)', None),
+              (b':SENS:VOLT:DC:AVER:TCON repeat, (@1)', None),
+              (b':SENS:VOLT:DC:AVER:COUN 1, (@1)', None),
+              (b':SENS:VOLT:DC:AVER:STAT? (@1)', b'1\n')],
+    ) as inst:
+        assert inst.channels[1].enable_filter() == '1\n'
+
+
+def test_channel_enable_filter_mode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:DC:AVER:STAT 1, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:TCON repeat, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:COUN 1, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:STAT? (@1)', b'1\n')],
+    ) as inst:
+        assert inst.channels[1].enable_filter(mode="voltage") == '1\n'
+
+
+def test_channel_disable_filter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC? (@1)', b'"VOLT:DC"\n'),
+             (b':SENS:VOLT:DC:AVER:STAT 0, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:STAT? (@1)', b'0\n')],
+    ) as inst:
+        assert inst.channels[1].disable_filter() == '0\n'
+
+
+def test_channel_disable_filter_mode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:DC:AVER:STAT 0, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:STAT? (@1)', b'0\n')],
+    ) as inst:
+        assert inst.channels[1].disable_filter(mode="voltage") == '0\n'

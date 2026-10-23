@@ -58,7 +58,9 @@ class Danfysik8500(Instrument):
     """
 
     id = Instrument.measurement(
-        "PRINT", """Get the identification information. """
+        "PRINT",
+        """Get the identification information.""",
+        cast=str,
     )
 
     def __init__(self, adapter: AdapterType, name: str = "Danfysik 8500 Current Supply", **kwargs):

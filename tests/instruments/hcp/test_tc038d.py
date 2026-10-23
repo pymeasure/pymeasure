@@ -149,3 +149,40 @@ def test_ping():
         [(b"\x01\x08\x00\x00\x12\x34\xed\x7c", b"\x01\x08\x00\x00\x12\x34\xed\x7c")],
     ) as inst:
         inst.ping(4660)
+
+
+def test_ping_non_default_test_data():
+    # Verify ECHO path with non-default test data (255 = 0x00FF).
+    with expected_protocol(
+        TC038D,
+        [(b"\x01\x08\x00\x00\x00\xff\xa0K", b"\x01\x08\x00\x00\x00\xff\xa0K")],
+    ) as inst:
+        inst.ping(255)
+
+
+@pytest.mark.parametrize("code, message", [
+    (0x02, "Wrong start address"),
+    (0x03, "Variable data"),
+])
+def test_read_variable_data_error(code, message):
+    """Test whether read error codes 0x02 and 0x03 raise the right error.
+
+    The error branch does not validate the CRC, so arbitrary trailing bytes
+    are acceptable.
+    """
+    with expected_protocol(
+        TC038D,
+        [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
+          bytes([0x01, 0x80 | 0x03, code, 0x01, 0x30 + code]))],
+    ) as inst, pytest.raises(ValueError, match=message):
+        _ = inst.temperature
+
+
+def test_write_operation_error():
+    """Test whether error code 0x04 raises the right error on write."""
+    with expected_protocol(
+        TC038D,
+        [(b"\x01\x10\x01\x06\x00\x02\x04\x00\x00\x01A\xbf\xb5",
+          b"\x01\x90\x04@\xf3")],
+    ) as inst, pytest.raises(ValueError, match="Operation error"):
+        inst.setpoint = 32.1

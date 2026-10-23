@@ -927,7 +927,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
     )
     period_threshold = Instrument.control(
         ":SENS:PER:THR:RANG?",
-        ":SENS:PRE:THR:RANG %g",
+        ":SENS:PER:THR:RANG %g",
         """ Control the expected input level in Volts for the period measurement
         (float strictly from 0.1 to 750V).""",
         validator=truncated_range,

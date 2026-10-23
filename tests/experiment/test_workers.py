@@ -28,12 +28,12 @@ import tempfile
 from time import sleep
 
 import pytest
-from data.procedure_for_testing import RandomProcedure
 
 from pymeasure.experiment import Listener, Procedure
 from pymeasure.experiment.procedure import ProcedureStatus
 from pymeasure.experiment.results import Results
 from pymeasure.experiment.workers import Worker
+from tests.experiment.data.procedure_for_testing import RandomProcedure
 
 tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
                           and importlib.util.find_spec('zmq'))

@@ -25,11 +25,11 @@
 import pickle
 
 import pytest
-from data.procedure_for_testing import RandomProcedure
 
 from pymeasure.experiment.parameters import Parameter
 from pymeasure.experiment.procedure import Procedure, ProcedureWrapper, UnknownProcedure
 from pymeasure.units import ureg
+from tests.experiment.data.procedure_for_testing import RandomProcedure
 
 
 def test_parameters():
