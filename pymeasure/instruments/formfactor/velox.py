@@ -145,12 +145,12 @@ class WaferMap(Channel):
     def step_first_die(self) -> list[int | str]:
         """Move the chuck to the first die and clear the the binning results.
 
-        :return: List of the int containing the coordinates of the first die.
+        :return: List of the int containing the indices of the first die.
 
-                    - item[0]: X coordinate
-                    - item[1]: Y coordinate
-                    - item[2]: Current subdie index
-                    - item[3]: Total number of subdies in the die
+                    - item[0]: X index
+                    - item[1]: Y index
+                    - item[2]: Current subsite index
+                    - item[3]: Total number of subsites in the die
 
         """
         return self.values("StepFirstDie",
@@ -161,12 +161,12 @@ class WaferMap(Channel):
     def step_next_die(self) -> list[int | str]:
         """Move the chuck to the next logical die.
 
-        :return: List of the int containing the coordinates of the new die.
+        :return: List of the int containing the indices of the new die.
 
-            - item[0]: X coordinate
-            - item[1]: Y coordinate
-            - item[2]: Current subdie index
-            - item[3]: Total number of subdies in the die
+            - item[0]: X index
+            - item[1]: Y index
+            - item[2]: Current subsite index
+            - item[3]: Total number of subsites in the die
 
         """
         return self.values("StepNextDie",
@@ -174,18 +174,18 @@ class WaferMap(Channel):
                            cast=cast_or_str(int),
                            )
 
-    def step_to_die(self, x_pos: int, y_pos: int, s_pos: int | None = None) -> None:
+    def step_to_die(self, x_index: int, y_index: int, s_index: int | None = None) -> None:
         """Move the chuck to the specified die coordinates.
 
-        :param x_pos: X coordinate.
-        :param y_pos: Y coordinate.
-        :param s_pos: subdie index.
+        :param x_index: X index.
+        :param y_index: Y index.
+        :param s_index: subsite index.
 
         """
 
-        coordinates = [x_pos, y_pos]
-        if s_pos is not None:
-            coordinates.append(s_pos)
+        coordinates = [x_index, y_index]
+        if s_index is not None:
+            coordinates.append(s_index)
 
         _coord = " ".join(map(str, coordinates))
         self.ask(f"StepNextDie {_coord}")
