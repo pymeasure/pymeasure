@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pyqtgraph as pg
+from numpy.typing import DTypeLike
 
 from pymeasure.experiment.results import Results
 
@@ -209,13 +210,13 @@ class BufferCurve(pg.PlotDataItem):
         super().__init__(**kwargs)
         self._buffer = None
 
-    def prepare(self, size, dtype=np.float32):
+    def prepare(self, size: int, dtype: DTypeLike | None = np.float32) -> None:
         """ Prepares the buffer based on its size, data type """
         self._buffer = np.empty((size, 2), dtype=dtype)
         self._ptr = 0
 
-    def append(self, x, y):
-        """ Appends data to the curve with optional errors """
+    def append(self, x, y) -> None:
+        """ Appends data to the curve with optional errors."""
         if self._buffer is None:
             raise ValueError("BufferCurve buffer must be prepared")
         if len(self._buffer) <= self._ptr:
@@ -223,10 +224,23 @@ class BufferCurve(pg.PlotDataItem):
 
         # Set x-y data
         self._buffer[self._ptr, :2] = [x, y]
+        self._ptr += 1
         self.setData(self._buffer[:self._ptr, :2])
 
-        self._ptr += 1
         self.data_updated.emit()
+
+
+class _SafeInfiniteLine(pg.InfiniteLine):
+    """Infinite line that tolerates being queried after its ViewBox is gone."""
+
+    def boundingRect(self) -> QtCore.QRectF | None:
+        # Keep the ViewBox alive while pyqtgraph recomputes the rect: getViewBox()
+        # caches only a weak reference, and the wrapper can be collected before
+        # pyqtgraph calls getViewBox() again.
+        viewbox = self.getViewBox()
+        if viewbox is None:
+            return QtCore.QRectF()
+        return super().boundingRect()
 
 
 class Crosshairs(QtCore.QObject):
@@ -236,7 +250,7 @@ class Crosshairs(QtCore.QObject):
 
     coordinates = QtCore.Signal(float, float)
 
-    def __init__(self, plot, pen=None):
+    def __init__(self, plot: pg.PlotItem, pen=None):
         """ Initiates the crosshars onto a plot given the pen style.
 
         Example pen:
@@ -244,8 +258,8 @@ class Crosshairs(QtCore.QObject):
         """
         super().__init__()
 
-        self.vertical = pg.InfiniteLine(angle=90, movable=False, pen=pen)
-        self.horizontal = pg.InfiniteLine(angle=0, movable=False, pen=pen)
+        self.vertical = _SafeInfiniteLine(angle=90, movable=False, pen=pen)
+        self.horizontal = _SafeInfiniteLine(angle=0, movable=False, pen=pen)
         plot.addItem(self.vertical, ignoreBounds=True)
         plot.addItem(self.horizontal, ignoreBounds=True)
 
@@ -254,15 +268,15 @@ class Crosshairs(QtCore.QObject):
                                     slot=self.mouseMoved)
         self.plot = plot
 
-    def hide(self):
+    def hide(self) -> None:
         self.vertical.hide()
         self.horizontal.hide()
 
-    def show(self):
+    def show(self) -> None:
         self.vertical.show()
         self.horizontal.show()
 
-    def update(self):
+    def update(self) -> None:
         """ Updates the mouse position based on the data in the plot. For
         dynamic plots, this is called each time the data changes to ensure
         the x and y values correspond to those on the display.
@@ -273,7 +287,7 @@ class Crosshairs(QtCore.QObject):
             self.vertical.setPos(mouse_point.x())
             self.horizontal.setPos(mouse_point.y())
 
-    def mouseMoved(self, event=None):
+    def mouseMoved(self, event: list | None = None) -> None:
         """ Updates the mouse position upon mouse movement """
         if event is not None:
             self.position = event[0]

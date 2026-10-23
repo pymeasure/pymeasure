@@ -36,10 +36,10 @@ class RandomProcedure(Procedure):
 
     DATA_COLUMNS = ['Iteration', 'Random Number']
 
-    def startup(self):
+    def startup(self) -> None:
         random.seed(self.seed)
 
-    def execute(self):
+    def execute(self) -> None:
         for i in range(self.iterations):
             data = {
                 'Iteration': i,
