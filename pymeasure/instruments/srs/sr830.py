@@ -27,7 +27,7 @@ import time
 from collections.abc import Callable
 from enum import IntFlag
 from threading import Event
-from typing import Literal
+from typing import Literal, cast
 
 import numpy as np
 
@@ -67,6 +67,21 @@ class ERRStatus(IntFlag):
     MATH_ERR = 128
 
 
+PARAMETERS = Literal[
+    "X",
+    "Y",
+    "R",
+    "Theta",
+    "Aux In 1",
+    "Aux In 2",
+    "Aux In 3",
+    "Aux In 4",
+    "Frequency",
+    "CH1",
+    "CH2",
+]
+
+
 class SR830(IEEE4882Mixin, Instrument):
     SAMPLE_FREQUENCIES: list[float] = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
@@ -98,19 +113,6 @@ class SR830(IEEE4882Mixin, Instrument):
     REFERENCE_SOURCE_TRIGGER = ['SINE', 'POS EDGE', 'NEG EDGE']
     INPUT_FILTER = ['Off', 'On']
 
-    PARAMETERS = Literal[
-        "X",
-        "Y",
-        "R",
-        "Theta",
-        "Aux In 1",
-        "Aux In 2",
-        "Aux In 3",
-        "Aux In 4",
-        "Frequency",
-        "CH1",
-        "CH2",
-    ]
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -632,7 +634,7 @@ class SR830(IEEE4882Mixin, Instrument):
             vals = vals[0]
 
         # make a list of all vals
-        val_list = [val1, val2] + list(vals)
+        val_list = [val1, val2] + list(cast(tuple[PARAMETERS], vals))
 
         vals_idx = [str(self.SNAP_ENUMERATION[val.lower()]) for val in val_list]
 

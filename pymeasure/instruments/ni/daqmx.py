@@ -166,7 +166,6 @@ class DAQmx:
             nidaq.DAQmxGetErrorString(err, ctypes.byref(buf), buf_size)
             raise RuntimeError(f'nidaq generated warning {err}: {buf.value!r}')
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.stop()
         self.terminated = True
-        super().shutdown()
