@@ -40,3 +40,8 @@ from .keithley6221 import Keithley6221
 from .keithley6517b import Keithley6517B
 from .keithleyDAQ6510 import KeithleyDAQ6510
 from .keithleyDMM6500 import KeithleyDMM6500
+from .keithleydmm7510 import (
+    DMM7510MeasurementError,
+    DMM7510SCPIError,
+    KeithleyDMM7510,
+)
