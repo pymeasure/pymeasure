@@ -418,7 +418,9 @@ class Results:
                 if partitioned_line[1] != separator:
                     raise ValueError(f"Error partitioning header line {line}.")
                 else:
-                    parameters[partitioned_line[0]] = partitioned_line[2]
+                    # Values were written with "unicode_escape" (see `header`), so undo it.
+                    value = partitioned_line[2].encode("latin-1", "backslashreplace")
+                    parameters[partitioned_line[0]] = value.decode("unicode_escape")
 
         if procedure_class is not None:
             procedure = procedure_class()

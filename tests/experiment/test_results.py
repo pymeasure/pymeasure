@@ -32,7 +32,7 @@ import pandas as pd
 import pytest
 from data.procedure_for_testing import RandomProcedure
 
-from pymeasure.experiment import BooleanParameter
+from pymeasure.experiment import BooleanParameter, FloatParameter
 from pymeasure.experiment.procedure import Parameter, Procedure, ProcedureStatus, UnknownProcedure
 from pymeasure.experiment.results import CSVFormatter, Results
 from pymeasure.units import ureg
@@ -349,6 +349,26 @@ def test_parameter_reading():
     assert results.parameters["check_true"].value is True
     assert results.parameters["check_false"].value is False
     assert results.parameters["check_dir"].value == test_string
+
+
+def test_load_round_trips_escaped_parameter_values(tmpdir):
+    class _EscapedProcedure(Procedure):
+        path = Parameter('Path')
+        mode = Parameter('Mode')
+        current = FloatParameter('Current', units='µA')
+        DATA_COLUMNS = ('x',)
+
+    procedure = _EscapedProcedure()
+    procedure.path = r"C:\data\run1"
+    procedure.mode = "Ω"
+    procedure.current = 3.0
+    filename = os.path.join(str(tmpdir), 'escaped_test.csv')
+    Results(procedure, filename)
+
+    loaded = Results.load(filename, procedure_class=_EscapedProcedure).procedure
+    assert loaded.path == r"C:\data\run1"
+    assert loaded.mode == "Ω"
+    assert loaded.current == 3.0
 
 
 def test_parse_header_with_missing_parameter_and_none_default():
