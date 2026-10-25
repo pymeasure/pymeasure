@@ -165,6 +165,8 @@ class SMC100(Instrument):
     """
 
     def __init__(self, adapter, name="Newport SMC100 motion controller", address=1, **kwargs):
+        # Validate before the adapter opens the port; int() turns e.g. 1.0 into a valid prefix.
+        self.address = int(strict_discrete_set(address, range(1, 32)))
         super().__init__(
             adapter,
             name,
@@ -176,7 +178,6 @@ class SMC100(Instrument):
             },
             **kwargs,
         )
-        self.address = strict_range(address, (1, 31))
         self._last_mnemonic = ""
 
     def write(self, command: str, **kwargs) -> None:
@@ -258,7 +259,7 @@ class SMC100(Instrument):
 
     position = Instrument.control(
         "TP",
-        "PA%g",
+        "PA%.9g",
         """Control the position in preset units (float).
 
         Setting starts an absolute move, which is only possible in READY state.
@@ -276,7 +277,7 @@ class SMC100(Instrument):
 
         :param displacement: Displacement in preset units.
         """
-        self.write(f"PR{displacement:g}")
+        self.write(f"PR{displacement:.9g}")
         self.check_set_errors()
 
     def get_motion_time(self, displacement: float) -> float:
@@ -285,7 +286,7 @@ class SMC100(Instrument):
         :param displacement: Displacement in preset units.
         :return: Motion time in seconds.
         """
-        return float(self.ask(f"PT{abs(displacement):g}"))
+        return float(self.ask(f"PT{abs(displacement):.9g}"))
 
     def stop(self) -> None:
         """Stop the ongoing motion or home search."""

@@ -49,14 +49,15 @@ def test_init():
         pass
 
 
-@pytest.mark.parametrize("address", (0, 32))
+@pytest.mark.parametrize("address", (0, 32, 2.5))
 def test_invalid_address(address):
     with pytest.raises(ValueError):
         SMC100PP(adapter=None, address=address)
 
 
-def test_address_prefix():
-    with expected_protocol(SMC100PP, [("3TP", "3TP12.5")], address=3) as inst:
+@pytest.mark.parametrize("address", (3, 3.0))
+def test_address_prefix(address):
+    with expected_protocol(SMC100PP, [("3TP", "3TP12.5")], address=address) as inst:
         assert inst.position == 12.5
 
 
@@ -104,9 +105,10 @@ def test_position_getter():
         assert inst.position == -1.234
 
 
-def test_position_setter():
-    with expected_protocol(SMC100PP, [("1PA45", None), OK]) as inst:
-        inst.position = 45
+@pytest.mark.parametrize("value, command", ((45, "1PA45"), (123.45678, "1PA123.45678")))
+def test_position_setter(value, command):
+    with expected_protocol(SMC100PP, [(command, None), OK]) as inst:
+        inst.position = value
 
 
 def test_position_setter_error():
@@ -122,9 +124,10 @@ def test_setpoint():
         assert inst.setpoint == 45
 
 
-def test_move_relative():
-    with expected_protocol(SMC100PP, [("1PR-2.5", None), OK]) as inst:
-        inst.move_relative(-2.5)
+@pytest.mark.parametrize("value, command", ((-2.5, "1PR-2.5"), (-123.45678, "1PR-123.45678")))
+def test_move_relative(value, command):
+    with expected_protocol(SMC100PP, [(command, None), OK]) as inst:
+        inst.move_relative(value)
 
 
 def test_get_motion_time():
