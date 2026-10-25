@@ -169,7 +169,11 @@ def test_wait_until_ready_stuck(no_sleep):
         inst.wait_until_ready()
 
 
-def test_wait_until_ready_timeout(no_sleep):
+def test_wait_until_ready_timeout(no_sleep, monkeypatch):
+    # Windows' coarse monotonic clock may not advance between calls, hence a fake one.
+    monkeypatch.setattr(
+        "pymeasure.instruments.newport.smc100.time.monotonic", iter([0.0, 1.0]).__next__
+    )
     with expected_protocol(SMC100PP, [("1TS", "1TS000028")]) as inst, pytest.raises(TimeoutError):
         inst.wait_until_ready(timeout=0)
 
