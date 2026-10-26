@@ -9,4 +9,5 @@ This section contains specific documentation on the Ametek instruments that are 
 .. toctree::
    :maxdepth: 2
 
+   ametek5210
    ametek7270
