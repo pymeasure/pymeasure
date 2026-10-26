@@ -131,7 +131,7 @@ class ITC503(OxfordInstrumentsBase):
 
     version = Instrument.measurement(
         "V",
-        """Get the version of the IPS.""",
+        """Get the version of the device.""",
         cast=str,
     )
 

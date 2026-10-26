@@ -113,7 +113,6 @@ class SR830(IEEE4882Mixin, Instrument):
     REFERENCE_SOURCE_TRIGGER = ['SINE', 'POS EDGE', 'NEG EDGE']
     INPUT_FILTER = ['Off', 'On']
 
-
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
         """ A floating point property that represents the reference sine-wave
