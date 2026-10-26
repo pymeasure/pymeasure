@@ -192,6 +192,7 @@ class WaferMap(Channel):
         .. deprecated:: 0.17.0
         The arguments `x_pos`, `y_pos`, and `s_pos` are deprecated use `x_index`,
         `y_index`, and `s_index` instead.
+
         """
         # --- start remove after deprecation
         if x_pos is not None:
