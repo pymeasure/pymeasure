@@ -145,8 +145,10 @@ These finite open-input readings do not establish measurement accuracy,
 calibration, external-load behavior, operation of other functions, or operation
 on other models.
 This result is a smoke test only for that driver revision, model, firmware, and
-bounded flow; the full upstream Sphinx HTML and doctest CI has not run on the
-new PR head and remains pending.
+bounded flow.
+Full upstream Sphinx HTML and doctest CI is revision-specific; consult the
+`PR #1577 checks <https://github.com/pymeasure/pymeasure/pull/1577/checks>`_ for
+the current revision.
 
 API
 ===
