@@ -738,25 +738,20 @@ class B2910BLChannel(Channel):
         self._write_checked(":SOURce1:VOLTage:MODE FIXed")
         self._write_checked(":SOURce1:CURRent:MODE FIXed")
 
-        if mode == "VOLT":
-            self._write_checked(f":SENSe1:CURRent:DC:PROTection:LEVel {compliance:g}")
-            self._write_checked(
-                f":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude {source_value:g}"
-            )
-            self._write_checked(
-                f":SOURce1:VOLTage:LEVel:TRIGgered:AMPLitude {source_value:g}"
-            )
-        else:
-            self._write_checked(f":SENSe1:VOLTage:DC:PROTection:LEVel {compliance:g}")
-            self._write_checked(
-                f":SOURce1:CURRent:LEVel:IMMediate:AMPLitude {source_value:g}"
-            )
-            self._write_checked(
-                f":SOURce1:CURRent:LEVel:TRIGgered:AMPLitude {source_value:g}"
-            )
-        self._write_checked(f":SOURce1:FUNCtion:MODE {mode}")
+        compliance_function = "CURRent" if mode == "VOLT" else "VOLTage"
+        self._write_checked(
+            f":SENSe1:{compliance_function}:DC:PROTection:LEVel {compliance:g}"
+        )
         self._write_checked(":SOURce1:VOLTage:RANGe:AUTO 1")
         self._write_checked(":SOURce1:CURRent:RANGe:AUTO 1")
+        source_function = "VOLTage" if mode == "VOLT" else "CURRent"
+        self._write_checked(
+            f":SOURce1:{source_function}:LEVel:IMMediate:AMPLitude {source_value:g}"
+        )
+        self._write_checked(
+            f":SOURce1:{source_function}:LEVel:TRIGgered:AMPLitude {source_value:g}"
+        )
+        self._write_checked(f":SOURce1:FUNCtion:MODE {mode}")
 
         self._write_checked(':SENSe1:FUNCtion:ON "VOLT","CURR"')
         self._write_checked(

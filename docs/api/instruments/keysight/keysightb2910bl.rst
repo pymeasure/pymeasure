@@ -50,6 +50,13 @@ counts with AINT sources.
 Configuration does not enable output.
 Enable it explicitly when a constant source is wanted.
 
+The independently accepted driver revision used in the 2026-10-27 smoke run
+below enables both source autoranges before writing the immediate and triggered
+source levels in either source mode.
+This ordering lets the instrument select source ranges before applying the
+requested level.
+Other revisions are outside that validated scope.
+
 The current-source setup uses the voltage compliance limit instead::
 
     try:
@@ -161,13 +168,35 @@ DC measurement commands.
 The B2910BL is described as a multimeter, but an output-off ``HIGHZ`` or
 ``NORM`` mode opens the output relay, and ``READ`` or ``INIT`` can enable output
 when automatic output-on is enabled.
-These driver behaviors, relay state, circuit loading, and current burden have
-not been verified on physical hardware (``NOT_RUN``).
-The measurement properties do not promise passive output-off readings and do
-not replace an isolated DMM for arbitrary circuits.
+The 2026-10-27 smoke run used voltage sourcing and did not exercise passive
+output-off readings, relay state, circuit loading, or current burden.
+Those behaviors remain ``NOT_RUN``, and the measurement properties do not
+promise passive output-off readings or replace an isolated DMM for arbitrary
+circuits.
 
-Hardware validation has not been run (``NOT_RUN``).
-Only protocol tests are included for this change.
+No-wire smoke validation (2026-10-27)
+=====================================
+
+A no-wire, no-load smoke run used that driver revision on a B2910BL with firmware
+5.0.2029.1911.
+It ran on Windows 11 with CPython 3.14.3 through PyVISA and the system VISA
+backend.
+The constant-voltage flow used a 100 µA current limit and NPLC 0.1.
+It took single points at requested 0 V, 0.1 V, and 0 V, then ran a host-stepped
+0 V, 0.1 V, 0 V sweep with a 0.1 s settle delay.
+The instrument returned finite voltage and current readings, and no point
+reported a compliance trip.
+These no-load readings do not establish measurement accuracy, calibration,
+external-load behavior, current-source operation, physical protection or
+interlock action, terminal voltage, or deterministic sweep timing.
+The flow requested output off and the instrument finally reported ``OFF``; this
+does not establish physical zero volts at the terminals.
+The SCPI error queues were empty before and after the flow, and cleanup reported
+no errors.
+Only that driver revision, the B2910BL, and these bounded constant-voltage
+flows were exercised.
+The full upstream Sphinx HTML and doctest CI has not run on the new PR head and
+remains pending.
 
 API reference
 =============

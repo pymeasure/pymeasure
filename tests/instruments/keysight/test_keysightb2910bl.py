@@ -58,38 +58,21 @@ def add_config(protocol, mode, source_value, compliance, nplc=0.1, voltage_range
     add_write(protocol, ":SOURce1:FUNCtion:SHAPe DC")
     add_write(protocol, ":SOURce1:VOLTage:MODE FIXed")
     add_write(protocol, ":SOURce1:CURRent:MODE FIXed")
-    if mode == "VOLT":
-        add_write(protocol, f":SENSe1:CURRent:DC:PROTection:LEVel {compliance:g}")
-        add_write(
-            protocol,
-            f":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude {source_value:g}",
-        )
-        add_write(
-            protocol,
-            f":SOURce1:VOLTage:LEVel:TRIGgered:AMPLitude {source_value:g}",
-        )
-        add_checked_query(
-            protocol,
-            ":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?",
-            f"{source_value:g}",
-        )
-    else:
-        add_write(protocol, f":SENSe1:VOLTage:DC:PROTection:LEVel {compliance:g}")
-        add_write(
-            protocol,
-            f":SOURce1:CURRent:LEVel:IMMediate:AMPLitude {source_value:g}",
-        )
-        add_write(
-            protocol,
-            f":SOURce1:CURRent:LEVel:TRIGgered:AMPLitude {source_value:g}",
-        )
-        add_checked_query(
-            protocol,
-            ":SENSe1:VOLTage:DC:PROTection:LEVel?",
-            f"{compliance:g}",
-        )
-    add_write(protocol, f":SOURce1:FUNCtion:MODE {mode}")
-    add_checked_query(protocol, ":SOURce1:FUNCtion:MODE?", mode)
+    compliance_function = "CURRent" if mode == "VOLT" else "VOLTage"
+    add_write(protocol, f":SENSe1:{compliance_function}:DC:PROTection:LEVel {compliance:g}")
+    add_checked_query(protocol, ":SOURce1:FUNCtion:MODE?", "VOLT")
+    add_checked_query(protocol, ":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?", "0")
+    add_write(protocol, ":SOURce1:VOLTage:RANGe:AUTO 1")
+    add_write(protocol, ":SOURce1:CURRent:RANGe:AUTO 1")
+    source_function = "VOLTage" if mode == "VOLT" else "CURRent"
+    add_write(
+        protocol,
+        f":SOURce1:{source_function}:LEVel:IMMediate:AMPLitude {source_value:g}",
+    )
+    add_write(
+        protocol,
+        f":SOURce1:{source_function}:LEVel:TRIGgered:AMPLitude {source_value:g}",
+    )
     active_value_command = (
         ":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?"
         if mode == "VOLT"
@@ -97,8 +80,7 @@ def add_config(protocol, mode, source_value, compliance, nplc=0.1, voltage_range
     )
     active_value = source_value if mode == "VOLT" else compliance
     add_checked_query(protocol, active_value_command, f"{active_value:g}")
-    add_write(protocol, ":SOURce1:VOLTage:RANGe:AUTO 1")
-    add_write(protocol, ":SOURce1:CURRent:RANGe:AUTO 1")
+    add_write(protocol, f":SOURce1:FUNCtion:MODE {mode}")
     add_write(protocol, ':SENSe1:FUNCtion:ON "VOLT","CURR"')
     add_write(protocol, f":SENSe1:VOLTage:DC:RANGe:AUTO {int(voltage_range is None)}")
     if voltage_range is not None:
@@ -360,6 +342,73 @@ def test_configure_current_uses_voltage_compliance_and_fixed_source():
     add_config(protocol, "CURR", -0.02, 10.0, 0.1, 2.0, None)
     with expected_protocol(KeysightB2910BL, protocol) as instrument:
         instrument.ch1.configure_current(-0.02, 10.0, voltage_range=2.0)
+
+
+@pytest.mark.parametrize(
+    ("mode", "source_value", "compliance", "voltage_range", "current_range"),
+    [
+        ("VOLT", 20.0, 1.0, None, 1.0),
+        ("CURR", -0.02, 10.0, 2.0, None),
+    ],
+)
+def test_configure_enables_source_autoranges_before_levels(
+    mode, source_value, compliance, voltage_range, current_range, monkeypatch
+):
+    protocol = []
+    add_config(
+        protocol,
+        mode,
+        source_value,
+        compliance,
+        0.1,
+        voltage_range,
+        current_range,
+    )
+    with expected_protocol(KeysightB2910BL, protocol) as instrument:
+        channel = instrument.ch1
+        commands = []
+        original_write = channel._write_checked
+
+        def record_write(command):
+            commands.append(command)
+            original_write(command)
+
+        monkeypatch.setattr(channel, "_write_checked", record_write)
+        if mode == "VOLT":
+            channel.configure_voltage(
+                source_value,
+                compliance,
+                current_range=current_range if current_range is not None else "AUTO",
+            )
+        else:
+            channel.configure_current(
+                source_value,
+                compliance,
+                voltage_range=voltage_range if voltage_range is not None else "AUTO",
+            )
+
+    source_function = "VOLTage" if mode == "VOLT" else "CURRent"
+    level_commands = [
+        f":SOURce1:{source_function}:LEVel:IMMediate:AMPLitude {source_value:g}",
+        f":SOURce1:{source_function}:LEVel:TRIGgered:AMPLitude {source_value:g}",
+    ]
+    autorange_commands = [
+        ":SOURce1:VOLTage:RANGe:AUTO 1",
+        ":SOURce1:CURRent:RANGe:AUTO 1",
+    ]
+    compliance_command = (
+        f":SENSe1:CURRent:DC:PROTection:LEVel {compliance:g}"
+        if mode == "VOLT"
+        else f":SENSe1:VOLTage:DC:PROTection:LEVel {compliance:g}"
+    )
+
+    assert max(commands.index(command) for command in autorange_commands) < min(
+        commands.index(command) for command in level_commands
+    )
+    assert commands.index(":OUTPut1 0") < commands.index(compliance_command)
+    assert commands.index(compliance_command) < min(
+        commands.index(command) for command in autorange_commands
+    )
 
 
 @pytest.mark.parametrize(
