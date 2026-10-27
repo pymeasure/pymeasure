@@ -7,6 +7,17 @@ DMM7510 native SCPI command set.
 The instrument must already be in SCPI mode before it is connected.
 The constructor does not query, reset, configure, or change the command set.
 
+The independently accepted driver revision used in the 2026-10-27 smoke run
+below decodes only complete supported ``:SENS:FUNC?`` replies in its
+``function`` getter.
+``VOLT`` and ``VOLT:DC`` map to ``DCV``; ``CURR`` and ``CURR:DC`` map to
+``DCI``; ``FREQ`` and ``FREQ:VOLT`` map to ``FREQ``; and ``PER`` and
+``PER:VOLT`` map to ``PER``.
+``RES``, ``FRES``, ``CONT``, and ``DIOD`` map to the same-named functions.
+An unsupported or truncated reply raises ``DMM7510MeasurementError`` instead of
+accepting an arbitrary function prefix.
+Other revisions are outside that validated scope.
+
 .. autoclass:: pymeasure.instruments.keithley.KeithleyDMM7510
     :members:
     :show-inheritance:
@@ -153,5 +164,21 @@ Timing and validation notes
 
 The 0.2 s delay after an NPLC write and the autozero-before-NPLC ordering are
 inherited device and firmware-specific workarounds from earlier JLDevKit DMM7510 use.
-They are not claims of current hardware validation.
-Hardware validation is deferred; the protocol tests use an offline adapter.
+The smoke run below does not independently validate these timing assumptions.
+
+On 2026-10-27, a no-wire, open-input smoke run used that driver revision on a
+DMM7510 with firmware 1.7.7b.
+It ran on Windows 11 with CPython 3.14.3 through PyVISA and the system VISA
+backend.
+The flow used FRONT terminals and configured the 10 V DC voltage range at NPLC 1.
+It acquired a command-triggered group of three readings and one immediate
+scalar reading.
+The instrument reported empty SCPI error queues before and after the flow, and
+cleanup reported no errors.
+The acquisition was aborted after the run.
+Finite open-input readings do not establish measurement accuracy, calibration,
+external-load behavior, DCI or resistance operation, or operation on other
+models.
+This result is a smoke test only for that driver revision, model, firmware, and
+bounded flow; full upstream Sphinx HTML and doctest CI has not run on the new
+PR head and remains pending.

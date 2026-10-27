@@ -31,7 +31,7 @@ import numbers
 import time
 from collections.abc import Callable
 from types import TracebackType
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar, overload
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.common_base import InstrumentProperty
@@ -47,6 +47,20 @@ FUNCTION_PATHS = {
     "FRES": "FRES",
     "FREQ": "FREQ",
     "PER": "PER",
+    "CONT": "CONT",
+    "DIOD": "DIOD",
+}
+_FUNCTION_REPLIES = {
+    "VOLT": "DCV",
+    "VOLT:DC": "DCV",
+    "CURR": "DCI",
+    "CURR:DC": "DCI",
+    "RES": "RES",
+    "FRES": "FRES",
+    "FREQ": "FREQ",
+    "FREQ:VOLT": "FREQ",
+    "PER": "PER",
+    "PER:VOLT": "PER",
     "CONT": "CONT",
     "DIOD": "DIOD",
 }
@@ -164,6 +178,58 @@ def _validate_bool(value: Any, name: str) -> bool:
     return value
 
 
+_T = TypeVar("_T")
+
+
+class _DMM7510Property(InstrumentProperty[_T]):
+    """Define a DMM7510 property whose instance docstring works on Python 3.10."""
+
+    @overload
+    def __init__(
+        self,
+        fget: Callable[[Any], _T],
+        fset: Callable[[Any, _T], None] | None = None,
+        fdel: Callable[[Any], None] | None = None,
+        doc: str | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        fget: None = None,
+        fset: Callable[[Any, _T], None] | None = None,
+        fdel: Callable[[Any], None] | None = None,
+        doc: str | None = None,
+    ) -> None: ...
+
+    def __init__(
+        self,
+        fget: Callable[[Any], _T] | None = None,
+        fset: Callable[[Any, _T], None] | None = None,
+        fdel: Callable[[Any], None] | None = None,
+        doc: str | None = None,
+    ) -> None:
+        self._explicit_doc = doc is not None
+        if not self._explicit_doc and fget is not None:
+            doc = getattr(fget, "__doc__", None)
+        super().__init__(fget, fset, fdel, doc)
+        # Python 3.10 property subclasses keep their class docstring even when a
+        # different doc argument is supplied, so apply the instance doc explicitly.
+        self.__doc__ = doc
+
+    def getter(self, fget: Callable[[Any], Any], /) -> _DMM7510Property[Any]:
+        doc = self.__doc__ if self._explicit_doc else None
+        return type(self)(fget, self.fset, self.fdel, doc)
+
+    def setter(self, fset: Callable[[Any, Any], None], /) -> _DMM7510Property[Any]:
+        doc = self.__doc__ if self._explicit_doc else None
+        return type(self)(self.fget, fset, self.fdel, doc)
+
+    def deleter(self, fdel: Callable[[Any], None], /) -> _DMM7510Property[Any]:
+        doc = self.__doc__ if self._explicit_doc else None
+        return type(self)(self.fget, self.fset, fdel, doc)
+
+
 class _LoggedExceptionSuppressor:
     def __init__(self, message: str) -> None:
         self.message = message
@@ -228,13 +294,13 @@ class KeithleyDMM7510(SCPIMixin, Instrument):
     change its command set or issue identification, reset, or setup commands.
     """
 
-    function: InstrumentProperty[str] = InstrumentProperty(
+    function: InstrumentProperty[str] = _DMM7510Property(
         fget=lambda self: self._get_function(),
         fset=lambda self, value: self._set_function(value),
         doc="""Control the active function: DCV, DCI, RES, FRES, FREQ, PER, CONT, or DIOD.""",
     )
 
-    line_frequency: InstrumentProperty[float] = InstrumentProperty(
+    line_frequency: InstrumentProperty[float] = _DMM7510Property(
         fget=lambda self: self._query_float_property(":SYST:LFR?"),
         doc="""Get the detected power-line frequency in Hz.""",
     )
@@ -363,7 +429,7 @@ class KeithleyDMM7510(SCPIMixin, Instrument):
         check_set_errors=True,
     )
 
-    four_wire_offset_compensation: InstrumentProperty[str] = InstrumentProperty(
+    four_wire_offset_compensation: InstrumentProperty[str] = _DMM7510Property(
         fget=lambda self: self._query_offset_compensation(),
         fset=lambda self, value: self._set_offset_compensation(value),
         doc="""Control four-wire offset compensation: OFF, ON, or AUTO. ON is unavailable
@@ -421,7 +487,7 @@ class KeithleyDMM7510(SCPIMixin, Instrument):
         check_set_errors=True,
     )
 
-    dry_circuit_enabled: InstrumentProperty[bool] = InstrumentProperty(
+    dry_circuit_enabled: InstrumentProperty[bool] = _DMM7510Property(
         fget=lambda self: self._get_on_off_property(":SENS:FRES:DCIR?"),
         fset=lambda self, value: self._set_dry_circuit(value),
         doc="""Control four-wire dry circuit. It limits open-circuit voltage below 20 mV
@@ -439,27 +505,27 @@ class KeithleyDMM7510(SCPIMixin, Instrument):
         check_set_errors=True,
     )
 
-    terminal_selection: InstrumentProperty[str] = InstrumentProperty(
+    terminal_selection: InstrumentProperty[str] = _DMM7510Property(
         fget=lambda self: self._query_terminal_selection(),
         doc="""Get FRONT or REAR terminal selection; it can only be changed physically.""",
     )
-    reading_buffer_count: InstrumentProperty[int] = InstrumentProperty(
+    reading_buffer_count: InstrumentProperty[int] = _DMM7510Property(
         fget=lambda self: self._query_int_property(':TRAC:ACT? "defbuffer1"'),
         doc="""Get the current number of readings in defbuffer1.""",
     )
-    reading_buffer_capacity: InstrumentProperty[int] = InstrumentProperty(
+    reading_buffer_capacity: InstrumentProperty[int] = _DMM7510Property(
         fget=lambda self: self._query_int_property(':TRAC:POIN? "defbuffer1"'),
         doc="""Get the current capacity of defbuffer1.""",
     )
 
-    current_range: InstrumentProperty[float] = InstrumentProperty(
+    current_range: InstrumentProperty[float] = _DMM7510Property(
         fget=lambda self: self._get_range("CURR"),
         fset=lambda self, value: self._set_range("DCI", "CURR", value),
         doc="""Control expected DC current magnitude in A (10 µA to 10 A). The 10 A
         range requires REAR terminals; FRONT terminals support at most 3 A. The
         DMM7510 selects the next sufficient fixed range.""",
     )
-    four_wire_resistance_range: InstrumentProperty[float] = InstrumentProperty(
+    four_wire_resistance_range: InstrumentProperty[float] = _DMM7510Property(
         fget=lambda self: self._get_range("FRES"),
         fset=lambda self, value: self._set_range("FRES", "FRES", value),
         doc="""Control expected four-wire resistance magnitude in ohms (1 Ω to 1 GΩ).
@@ -467,31 +533,31 @@ class KeithleyDMM7510(SCPIMixin, Instrument):
         The DMM7510 selects the next sufficient fixed range.""",
     )
 
-    voltage_nplc: InstrumentProperty[float] = InstrumentProperty(
+    voltage_nplc: InstrumentProperty[float] = _DMM7510Property(
         fget=lambda self: self._get_nplc("VOLT"),
         fset=lambda self, value: self._set_nplc("VOLT", value),
         doc="""Control DC voltage integration in PLC (0.0005 to 12 at 50 Hz or 15 at
         60 Hz). Values above 12 first query line frequency.""",
     )
-    current_nplc: InstrumentProperty[float] = InstrumentProperty(
+    current_nplc: InstrumentProperty[float] = _DMM7510Property(
         fget=lambda self: self._get_nplc("CURR"),
         fset=lambda self, value: self._set_nplc("CURR", value),
         doc="""Control DC current integration in PLC (0.0005 to 12 at 50 Hz or 15 at
         60 Hz). Values above 12 first query line frequency.""",
     )
-    resistance_nplc: InstrumentProperty[float] = InstrumentProperty(
+    resistance_nplc: InstrumentProperty[float] = _DMM7510Property(
         fget=lambda self: self._get_nplc("RES"),
         fset=lambda self, value: self._set_nplc("RES", value),
         doc="""Control two-wire resistance integration in PLC (0.0005 to 12 at 50 Hz or
         15 at 60 Hz). Values above 12 first query line frequency.""",
     )
-    four_wire_resistance_nplc: InstrumentProperty[float] = InstrumentProperty(
+    four_wire_resistance_nplc: InstrumentProperty[float] = _DMM7510Property(
         fget=lambda self: self._get_nplc("FRES"),
         fset=lambda self, value: self._set_nplc("FRES", value),
         doc="""Control four-wire resistance integration in PLC (0.0005 to 12 at 50 Hz or
         15 at 60 Hz). Values above 12 first query line frequency.""",
     )
-    reading_count: InstrumentProperty[int] = InstrumentProperty(
+    reading_count: InstrumentProperty[int] = _DMM7510Property(
         fget=lambda self: self._get_reading_count(),
         fset=lambda self, value: self._set_reading_count(value),
         doc="""Control reading count from 1 through 1,000,000 and no greater than the
@@ -546,10 +612,9 @@ class KeithleyDMM7510(SCPIMixin, Instrument):
         with _CleanupOnFailure(self):
             response = self.ask(":SENS:FUNC?")
             self.check_get_errors()
-            function_path = _strip_reply(response).split(":")[0]
-            for function_key, known_path in FUNCTION_PATHS.items():
-                if known_path == function_path:
-                    return function_key
+            function_key = _FUNCTION_REPLIES.get(_strip_reply(response))
+            if function_key is not None:
+                return function_key
             raise DMM7510MeasurementError(
                 f"Unsupported DMM7510 function response: {response!r}."
             )

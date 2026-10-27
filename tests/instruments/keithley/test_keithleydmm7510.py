@@ -24,15 +24,18 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
 
+from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.keithley import (
     DMM7510MeasurementError,
     DMM7510SCPIError,
     KeithleyDMM7510,
 )
+from pymeasure.instruments.keithley.keithleydmm7510 import _DMM7510Property
 from pymeasure.test import expected_protocol
 
 
@@ -92,6 +95,104 @@ def test_constructor_is_silent_and_does_not_change_scpi_mode():
         pass
 
 
+@pytest.mark.parametrize(
+    ("property_name", "doc_prefix"),
+    [
+        ("function", "Control the active function"),
+        ("line_frequency", "Get the detected power-line frequency"),
+        ("four_wire_offset_compensation", "Control four-wire offset compensation"),
+        ("dry_circuit_enabled", "Control four-wire dry circuit"),
+        ("terminal_selection", "Get FRONT or REAR terminal selection"),
+        ("reading_buffer_count", "Get the current number of readings"),
+        ("reading_buffer_capacity", "Get the current capacity"),
+        ("current_range", "Control expected DC current magnitude"),
+        ("four_wire_resistance_range", "Control expected four-wire resistance magnitude"),
+        ("voltage_nplc", "Control DC voltage integration"),
+        ("current_nplc", "Control DC current integration"),
+        ("resistance_nplc", "Control two-wire resistance integration"),
+        ("four_wire_resistance_nplc", "Control four-wire resistance integration"),
+        ("reading_count", "Control reading count"),
+    ],
+)
+def test_property_docs_are_specific_on_all_supported_python_versions(property_name, doc_prefix):
+    prop = getattr(KeithleyDMM7510, property_name)
+    assert isinstance(prop, InstrumentProperty)
+    assert prop.__doc__ is not None
+    assert prop.__doc__ != InstrumentProperty.__doc__
+    assert prop.__doc__.startswith(doc_prefix)
+
+
+def test_property_constructor_preserves_standard_arguments_and_infers_getter_doc():
+    def getter(instance: Any) -> int:
+        """Get the downstream test value."""
+        return instance._value
+
+    def setter(instance: Any, value: int) -> None:
+        instance._value = value
+
+    def deleter(instance: Any) -> None:
+        del instance._value
+
+    def replacement(instance: Any) -> int:
+        """Get the replacement test value."""
+        return 8
+
+    prop = _DMM7510Property(getter, setter, deleter)
+
+    assert prop.fget is getter
+    assert prop.fset is setter
+    assert prop.fdel is deleter
+    assert prop.__doc__ == "Get the downstream test value."
+    assert prop.getter(replacement).__doc__ == "Get the replacement test value."
+
+    explicit_prop = _DMM7510Property(
+        fget=getter,
+        fset=setter,
+        fdel=deleter,
+        doc="Control the explicit downstream test value.",
+    )
+    assert explicit_prop.__doc__ == "Control the explicit downstream test value."
+    assert _DMM7510Property().__doc__ is None
+
+    class Holder:
+        value = prop
+
+    holder = Holder()
+    holder.value = 7
+    assert holder.value == 7
+    del holder.value
+    assert not hasattr(holder, "_value")
+
+
+def test_downstream_property_decorators_clone_accessors_and_retain_doc():
+    class DownstreamDMM7510(KeithleyDMM7510):
+        @KeithleyDMM7510.function.getter
+        def function(self):
+            """Control the downstream test function."""
+            return "DCV"
+
+        @function.setter
+        def function(self, value):
+            self._downstream_function = value
+
+        @function.deleter
+        def function(self):
+            self._downstream_function = None
+
+    prop = DownstreamDMM7510.function
+    assert isinstance(prop, _DMM7510Property)
+    assert prop.__doc__ == KeithleyDMM7510.function.__doc__
+    assert prop.__doc__ is not None
+    assert prop.__doc__.startswith("Control the active function")
+
+    with expected_protocol(DownstreamDMM7510, []) as instrument:
+        assert instrument.function == "DCV"
+        instrument.function = "DCI"
+        assert instrument._downstream_function == "DCI"
+        del instrument.function
+        assert instrument._downstream_function is None
+
+
 def test_function_property_maps_native_function_names():
     with expected_protocol(
         KeithleyDMM7510,
@@ -101,6 +202,59 @@ def test_function_property_maps_native_function_names():
         ],
     ) as instrument:
         assert instrument.function == "DCV"
+
+
+@pytest.mark.parametrize(
+    ("reply", "expected"),
+    [
+        (b'"VOLT"', "DCV"),
+        (b'"VOLT:DC"', "DCV"),
+        (b'"CURR"', "DCI"),
+        (b'"CURR:DC"', "DCI"),
+        (b'"RES"', "RES"),
+        (b'"FRES"', "FRES"),
+        (b'"FREQ"', "FREQ"),
+        (b' "freq:volt" ', "FREQ"),
+        (b'"PER"', "PER"),
+        (b'"PER:VOLT"', "PER"),
+        (b'"CONT"', "CONT"),
+        (b'"DIOD"', "DIOD"),
+    ],
+)
+def test_function_property_maps_supported_full_replies_and_aliases(reply, expected):
+    with expected_protocol(
+        KeithleyDMM7510,
+        [
+            (b":SENS:FUNC?", reply),
+            _error_ok(),
+        ],
+    ) as instrument:
+        assert instrument.function == expected
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        b'"VOLT:AC"',
+        b'"CURR:AC"',
+        b'"FREQ:CURR"',
+        b'"PER:CURR"',
+        b'"VOLT:AC:FREQ"',
+        b'"VOLT:DC:FREQ"',
+        b'"VOLT:DC,CURR:DC"',
+        b'"CAP"',
+        b'""',
+    ],
+)
+def test_function_property_rejects_unsupported_full_replies(reply):
+    with expected_protocol(
+        KeithleyDMM7510,
+        [
+            (b":SENS:FUNC?", reply),
+            _error_ok(),
+        ],
+    ) as instrument, pytest.raises(DMM7510MeasurementError, match="Unsupported"):
+        _ = instrument.function
 
 
 def test_configure_uses_frequency_input_voltage_threshold_range():
