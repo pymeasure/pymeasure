@@ -51,10 +51,16 @@ Configuration does not enable output.
 Enable it explicitly when a constant source is wanted.
 
 The independently accepted driver revision used in the 2026-10-27 smoke run
-below enables both source autoranges before writing the immediate and triggered
-source levels in either source mode.
-This ordering lets the instrument select source ranges before applying the
-requested level.
+below first requests output off and verifies the reported state, then aborts
+pending source and acquisition activity.
+For either source mode, it next applies the requested compliance, writes a zero
+immediate voltage setpoint to clear any stale voltage level, selects the
+requested source mode, and enables both source autoranges.
+Only then does it write the requested immediate and triggered source levels.
+The autoranges therefore precede the requested target levels; the preparatory
+zero is not the level whose range is being selected.
+This ordering avoids applying a target level under stale fixed source-range
+settings.
 Other revisions are outside that validated scope.
 
 The current-source setup uses the voltage compliance limit instead::
@@ -195,8 +201,11 @@ The SCPI error queues were empty before and after the flow, and cleanup reported
 no errors.
 Only that driver revision, the B2910BL, and these bounded constant-voltage
 flows were exercised.
-The full upstream Sphinx HTML and doctest CI has not run on the new PR head and
-remains pending.
+The accepted high-voltage and current-source configuration regressions are
+protocol-only and were not physically exercised here.
+Full upstream Sphinx HTML and doctest CI is revision-specific; consult the
+`PR #1578 checks <https://github.com/pymeasure/pymeasure/pull/1578/checks>`_ for
+the current revision.
 
 API reference
 =============

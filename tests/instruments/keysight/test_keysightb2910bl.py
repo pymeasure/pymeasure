@@ -27,6 +27,7 @@ from unittest.mock import patch
 
 import pytest
 
+from pymeasure.adapters import ProtocolAdapter
 from pymeasure.instruments.keysight.keysightb2910bl import (
     B2910BLReading,
     B2910BLSweepPoint,
@@ -60,8 +61,17 @@ def add_config(protocol, mode, source_value, compliance, nplc=0.1, voltage_range
     add_write(protocol, ":SOURce1:CURRent:MODE FIXed")
     compliance_function = "CURRent" if mode == "VOLT" else "VOLTage"
     add_write(protocol, f":SENSe1:{compliance_function}:DC:PROTection:LEVel {compliance:g}")
-    add_checked_query(protocol, ":SOURce1:FUNCtion:MODE?", "VOLT")
-    add_checked_query(protocol, ":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?", "0")
+    add_write(protocol, ":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude 0")
+    active_value_command = (
+        ":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?"
+        if mode == "VOLT"
+        else ":SENSe1:VOLTage:DC:PROTection:LEVel?"
+    )
+    active_value = "0" if mode == "VOLT" else f"{compliance:g}"
+    add_checked_query(protocol, active_value_command, active_value)
+    add_write(protocol, f":SOURce1:FUNCtion:MODE {mode}")
+    add_checked_query(protocol, ":SOURce1:FUNCtion:MODE?", mode)
+    add_checked_query(protocol, active_value_command, active_value)
     add_write(protocol, ":SOURce1:VOLTage:RANGe:AUTO 1")
     add_write(protocol, ":SOURce1:CURRent:RANGe:AUTO 1")
     source_function = "VOLTage" if mode == "VOLT" else "CURRent"
@@ -73,14 +83,6 @@ def add_config(protocol, mode, source_value, compliance, nplc=0.1, voltage_range
         protocol,
         f":SOURce1:{source_function}:LEVel:TRIGgered:AMPLitude {source_value:g}",
     )
-    active_value_command = (
-        ":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?"
-        if mode == "VOLT"
-        else ":SENSe1:VOLTage:DC:PROTection:LEVel?"
-    )
-    active_value = source_value if mode == "VOLT" else compliance
-    add_checked_query(protocol, active_value_command, f"{active_value:g}")
-    add_write(protocol, f":SOURce1:FUNCtion:MODE {mode}")
     add_write(protocol, ':SENSe1:FUNCtion:ON "VOLT","CURR"')
     add_write(protocol, f":SENSe1:VOLTage:DC:RANGe:AUTO {int(voltage_range is None)}")
     if voltage_range is not None:
@@ -177,6 +179,72 @@ def add_sweep(protocol, mode, points, compliance, samples):
         add_checked_query(protocol, ":OUTPut1?", "1")
     add_write(protocol, ":OUTPut1 0")
     add_checked_query(protocol, ":OUTPut1?", "0")
+
+
+class B2910BLStateAdapter(ProtocolAdapter):
+    """Model B2910BL source state and record every SCPI command."""
+
+    def __init__(self, mode, source_voltage, voltage_protection):
+        super().__init__()
+        self.mode = mode
+        self.source_voltage = source_voltage
+        self.source_current = 0.0
+        self.voltage_protection = voltage_protection
+        self.current_protection = 0.1
+        self.output_enabled = False
+        self.commands = []
+        self.interlock_queries = 0
+        self._response = None
+
+    def _write(self, command, **kwargs):
+        self.commands.append(command)
+        header, _, parameter = command.strip().partition(" ")
+        header = header.upper()
+        parameter = parameter.strip()
+        if header == ":SYSTEM:INTERLOCK:TRIPPED?":
+            self.interlock_queries += 1
+            self._response = "1"
+        elif header.endswith("?"):
+            self._response = self._query(header)
+        else:
+            self._apply(header, parameter)
+            self._response = None
+
+    def _read(self, **kwargs):
+        if self._response is None:
+            raise AssertionError(f"Unexpected read after {self.commands[-1]!r}.")
+        response = self._response
+        self._response = None
+        return response
+
+    def _query(self, header):
+        responses = {
+            ":OUTPUT1?": "1" if self.output_enabled else "0",
+            ":SOURCE1:FUNCTION:MODE?": self.mode,
+            ":SOURCE1:VOLTAGE:LEVEL:IMMEDIATE:AMPLITUDE?": f"{self.source_voltage:g}",
+            ":SENSE1:VOLTAGE:DC:PROTECTION:LEVEL?": f"{self.voltage_protection:g}",
+            ":SENSE1:CURRENT:DC:PROTECTION:LEVEL?": f"{self.current_protection:g}",
+            ":SYSTEM:LFREQUENCY?": "50",
+            "SYST:ERR?": NO_ERROR,
+        }
+        try:
+            return responses[header]
+        except KeyError:
+            raise AssertionError(f"Unexpected query {header!r}.") from None
+
+    def _apply(self, header, parameter):
+        if header == ":OUTPUT1":
+            self.output_enabled = parameter.upper() in {"1", "ON"}
+        elif header == ":SOURCE1:FUNCTION:MODE":
+            self.mode = parameter.upper()
+        elif header == ":SOURCE1:VOLTAGE:LEVEL:IMMEDIATE:AMPLITUDE":
+            self.source_voltage = float(parameter)
+        elif header == ":SOURCE1:CURRENT:LEVEL:IMMEDIATE:AMPLITUDE":
+            self.source_current = float(parameter)
+        elif header == ":SENSE1:VOLTAGE:DC:PROTECTION:LEVEL":
+            self.voltage_protection = float(parameter)
+        elif header == ":SENSE1:CURRENT:DC:PROTECTION:LEVEL":
+            self.current_protection = float(parameter)
 
 
 def test_constructor_has_only_explicit_channel_one_and_no_traffic():
@@ -388,6 +456,8 @@ def test_configure_enables_source_autoranges_before_levels(
             )
 
     source_function = "VOLTage" if mode == "VOLT" else "CURRent"
+    source_mode_command = f":SOURce1:FUNCtion:MODE {mode}"
+    voltage_zero_command = ":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude 0"
     level_commands = [
         f":SOURce1:{source_function}:LEVel:IMMediate:AMPLitude {source_value:g}",
         f":SOURce1:{source_function}:LEVel:TRIGgered:AMPLitude {source_value:g}",
@@ -402,12 +472,66 @@ def test_configure_enables_source_autoranges_before_levels(
         else f":SENSe1:VOLTage:DC:PROTection:LEVel {compliance:g}"
     )
 
+    assert commands.index(":OUTPut1 0") < commands.index(compliance_command)
+    assert commands.index(compliance_command) < commands.index(voltage_zero_command)
+    assert commands.index(voltage_zero_command) < commands.index(source_mode_command)
+    assert commands.index(source_mode_command) < min(
+        commands.index(command) for command in autorange_commands
+    )
     assert max(commands.index(command) for command in autorange_commands) < min(
         commands.index(command) for command in level_commands
     )
-    assert commands.index(":OUTPut1 0") < commands.index(compliance_command)
-    assert commands.index(compliance_command) < min(
-        commands.index(command) for command in autorange_commands
+    assert commands.count(source_mode_command) == 1
+
+
+@pytest.mark.parametrize(
+    ("stale_mode", "stale_voltage", "stale_voltage_protection"),
+    [
+        ("VOLT", 100.0, 0.1),
+        ("CURR", 0.0, 100.0),
+    ],
+)
+@pytest.mark.parametrize(
+    ("mode", "source_value", "compliance"),
+    [
+        ("VOLT", 0.1, 100e-6),
+        ("CURR", 1e-6, 0.1),
+    ],
+)
+def test_configure_replaces_stale_high_state_before_source_autorange(
+    stale_mode,
+    stale_voltage,
+    stale_voltage_protection,
+    mode,
+    source_value,
+    compliance,
+):
+    adapter = B2910BLStateAdapter(stale_mode, stale_voltage, stale_voltage_protection)
+    with KeysightB2910BL(adapter) as instrument:
+        if mode == "VOLT":
+            instrument.ch1.configure_voltage(source_value, compliance)
+        else:
+            instrument.ch1.configure_current(source_value, compliance)
+
+    assert adapter.interlock_queries == 0
+    assert adapter.output_enabled is False
+    assert adapter.mode == mode
+    if mode == "VOLT":
+        assert adapter.source_voltage == source_value
+        assert adapter.current_protection == compliance
+    else:
+        assert adapter.source_current == source_value
+        assert adapter.voltage_protection == compliance
+
+    zero_command = ":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude 0"
+    mode_command = f":SOURce1:FUNCtion:MODE {mode}"
+    autorange_commands = (
+        ":SOURce1:VOLTage:RANGe:AUTO 1",
+        ":SOURce1:CURRent:RANGe:AUTO 1",
+    )
+    assert adapter.commands.index(zero_command) < adapter.commands.index(mode_command)
+    assert adapter.commands.index(mode_command) < min(
+        adapter.commands.index(command) for command in autorange_commands
     )
 
 
@@ -425,7 +549,16 @@ def test_invalid_configuration_is_rejected_before_first_write(args, error_type):
         instrument.ch1.configure_voltage(*args)
 
 
-def test_high_voltage_configuration_requires_closed_interlock_before_writing():
+@pytest.mark.parametrize(
+    ("configure_method", "args"),
+    [
+        ("configure_voltage", (50.0, 0.05)),
+        ("configure_current", (1e-6, 50.0)),
+    ],
+)
+def test_high_voltage_configuration_requires_closed_interlock_before_writing(
+    configure_method, args
+):
     protocol = []
     add_write(protocol, ":OUTPut1 0")
     add_checked_query(protocol, ":OUTPut1?", "0")
@@ -434,7 +567,7 @@ def test_high_voltage_configuration_requires_closed_interlock_before_writing():
     with expected_protocol(KeysightB2910BL, protocol) as instrument, pytest.raises(
         RuntimeError, match="interlock reports open"
     ):
-        instrument.ch1.configure_voltage(50, 0.05)
+        getattr(instrument.ch1, configure_method)(*args)
 
 
 @pytest.mark.parametrize(
