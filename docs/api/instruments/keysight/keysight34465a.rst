@@ -1,8 +1,8 @@
 .. module:: pymeasure.instruments.keysight.keysight34465a
 
-####################
+###################
 Keysight 34465A DMM
-####################
+###################
 
 This driver supports the Keysight 34465A Truevolt digital multimeter.
 It does not claim support for other Truevolt models.
@@ -126,7 +126,27 @@ Close the adapter explicitly with ``dmm.adapter.close()``, as in the examples.
 
 The protocol tests verify software command exchange and reply handling.
 They do not validate measurement accuracy or physical operation.
-No hardware validation, upstream acceptance, or full Sphinx build is claimed here.
+
+No-wire smoke validation (2026-10-27)
+=====================================
+
+A no-wire, open-input smoke run used the independently accepted driver revision
+on a 34465A with firmware A.03.03-03.15-03.03-00.52-05-02.
+It ran on Windows 11 with CPython 3.14.3 through PyVISA and the system VISA
+backend.
+The flow configured the 10 V DC voltage range at NPLC 1 and acquired a
+BUS-triggered group of three readings plus one immediate scalar reading.
+The instrument reported empty SCPI error queues before and after the flow, and
+cleanup reported no errors.
+The flow aborted the acquisition and restored the immediate trigger source with
+one sample and one trigger.
+Cleanup aborted the trigger system again and observed that restored state.
+These finite open-input readings do not establish measurement accuracy,
+calibration, external-load behavior, operation of other functions, or operation
+on other models.
+This result is a smoke test only for that driver revision, model, firmware, and
+bounded flow; the full upstream Sphinx HTML and doctest CI has not run on the
+new PR head and remains pending.
 
 API
 ===
@@ -134,3 +154,5 @@ API
 .. autoclass:: Keysight34465A
    :members:
    :inherited-members:
+
+.. autoclass:: pymeasure.instruments.keysight.keysight34465a.MeasurementError
