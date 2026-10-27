@@ -275,6 +275,83 @@ def _validate_settle(value: Any) -> float:
     return delay
 
 
+def _scpi_keyword(keyword: str) -> str:
+    """Return a regex matching only the documented short and full keyword forms."""
+    short_end = next(
+        (index for index, character in enumerate(keyword) if character.islower()),
+        len(keyword),
+    )
+    forms = sorted(
+        {keyword[:short_end].upper(), keyword.upper()}, key=len, reverse=True
+    )
+    return rf"(?:{'|'.join(forms)})"
+
+
+def _optional_scpi_node(keyword: str) -> str:
+    """Return a regex fragment for one documented optional header node."""
+    return rf"(?::{_scpi_keyword(keyword)})?"
+
+
+def _optional_scpi_nodes(*keywords: str) -> str:
+    """Return regex fragments for consecutive optional header nodes."""
+    return "".join(_optional_scpi_node(keyword) for keyword in keywords)
+
+
+_OUTPUT_HEADER = re.compile(
+    rf"{_scpi_keyword('OUTPut')}(?:1)?{_optional_scpi_node('STATe')}"
+)
+_SOURCE_PREFIX = rf"(?:{_scpi_keyword('SOURce')}(?:1)?:)?"
+_SOURCE_VOLTAGE_LEVEL_HEADER = re.compile(
+    rf"{_SOURCE_PREFIX}{_scpi_keyword('VOLTage')}"
+    rf"{_optional_scpi_nodes('LEVel', 'IMMediate', 'AMPLitude')}"
+)
+_SOURCE_VOLTAGE_TRIGGERED_HEADER = re.compile(
+    rf"{_SOURCE_PREFIX}{_scpi_keyword('VOLTage')}"
+    rf"{_optional_scpi_node('LEVel')}:{_scpi_keyword('TRIGgered')}"
+    rf"{_optional_scpi_node('AMPLitude')}"
+)
+_SOURCE_VOLTAGE_RANGE_AUTO_HEADER = re.compile(
+    rf"{_SOURCE_PREFIX}{_scpi_keyword('VOLTage')}:{_scpi_keyword('RANGe')}:AUTO"
+)
+_SOURCE_VOLTAGE_RANGE_HEADER = re.compile(
+    rf"{_SOURCE_PREFIX}{_scpi_keyword('VOLTage')}:{_scpi_keyword('RANGe')}"
+)
+_SOURCE_FUNCTION_MODE_HEADER = re.compile(
+    rf"{_SOURCE_PREFIX}{_scpi_keyword('FUNCtion')}:MODE"
+)
+_SENSE_VOLTAGE_PREFIX = (
+    rf"{_scpi_keyword('SENSe')}(?:1)?:{_scpi_keyword('VOLTage')}"
+    rf"{_optional_scpi_node('DC')}"
+)
+_SENSE_VOLTAGE_PROTECTION_HEADER = re.compile(
+    rf"{_SENSE_VOLTAGE_PREFIX}:{_scpi_keyword('PROTection')}"
+    rf"{_optional_scpi_nodes('LEVel', 'BOTH')}"
+)
+_SENSE_VOLTAGE_NPLC_HEADER = re.compile(
+    rf"{_SENSE_VOLTAGE_PREFIX}:{_scpi_keyword('NPLCycles')}"
+)
+
+_GUARDED_HEADER_PATTERNS = (
+    (_OUTPUT_HEADER, "output_enable"),
+    (_SOURCE_FUNCTION_MODE_HEADER, "source_mode"),
+    (_SOURCE_VOLTAGE_LEVEL_HEADER, "voltage_value"),
+    (_SOURCE_VOLTAGE_TRIGGERED_HEADER, "voltage_value"),
+    (_SENSE_VOLTAGE_PROTECTION_HEADER, "voltage_value"),
+    (_SOURCE_VOLTAGE_RANGE_AUTO_HEADER, "voltage_autorange"),
+    (_SOURCE_VOLTAGE_RANGE_HEADER, "voltage_value"),
+    (_SENSE_VOLTAGE_NPLC_HEADER, "nplc"),
+)
+
+
+def _guarded_header_kind(header: str) -> str | None:
+    """Return the guard kind for a documented standalone header, if any."""
+    normalized = header.upper().removeprefix(":")
+    for pattern, kind in _GUARDED_HEADER_PATTERNS:
+        if pattern.fullmatch(normalized):
+            return kind
+    return None
+
+
 class B2910BLChannel(Channel):
     """Control the single source-measure channel on a Keysight B2910BL."""
 
@@ -588,12 +665,12 @@ class B2910BLChannel(Channel):
         """Check high-voltage changes before forwarding a channel command."""
         rendered = self.insert_id(command)
         header, _, parameter = rendered.strip().partition(" ")
-        normalized_header = header.upper()
+        guard_kind = _guarded_header_kind(header)
         normalized_parameter = parameter.strip().upper()
 
-        if normalized_header == ":OUTPUT1" and normalized_parameter in ("1", "ON"):
+        if guard_kind == "output_enable" and normalized_parameter in ("1", "ON"):
             self._check_active_high_voltage()
-        elif normalized_header == ":SOURCE1:FUNCTION:MODE":
+        elif guard_kind == "source_mode":
             mode = _parse_mode(normalized_parameter)
             limit = self._query_number(
                 ":SENSe1:VOLTage:DC:PROTection:LEVel?" if mode == "CURR"
@@ -601,20 +678,12 @@ class B2910BLChannel(Channel):
             )
             if abs(limit) > HIGH_VOLTAGE_THRESHOLD:
                 self._require_closed_interlock()
-        elif normalized_header in {
-            ":SOURCE1:VOLTAGE:LEVEL:IMMEDIATE:AMPLITUDE",
-            ":SOURCE1:VOLTAGE:LEVEL:TRIGGERED:AMPLITUDE",
-            ":SENSE1:VOLTAGE:DC:PROTECTION:LEVEL",
-            ":SOURCE1:VOLTAGE:RANGE",
-        }:
+        elif guard_kind == "voltage_value":
             if abs(_parse_float(parameter)) > HIGH_VOLTAGE_THRESHOLD:
                 self._require_closed_interlock()
-        elif (
-            normalized_header == ":SOURCE1:VOLTAGE:RANGE:AUTO"
-            and normalized_parameter in ("1", "ON")
-        ):
+        elif guard_kind == "voltage_autorange" and normalized_parameter in ("1", "ON"):
             self._check_active_high_voltage()
-        elif normalized_header == ":SENSE1:VOLTAGE:DC:NPLCYCLES":
+        elif guard_kind == "nplc":
             integration = _parse_float(parameter)
             self._validate_native_nplc(integration)
             self._write_checked(":SENSe1:VOLTage:DC:APERture:AUTO 0")

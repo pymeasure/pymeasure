@@ -618,6 +618,321 @@ def test_raw_high_voltage_controls_block_before_write_when_interlock_is_open(
         setattr(instrument.ch1, attribute, value)
 
 
+_SHORT_SCPI = {
+    "amplitude": "AMPL",
+    "function": "FUNC",
+    "immediate": "IMM",
+    "level": "LEV",
+    "nplc": "NPLC",
+    "output": "OUTP",
+    "protection": "PROT",
+    "range": "RANG",
+    "sense": "SENS",
+    "source": "SOUR",
+    "state": "STAT",
+    "triggered": "TRIG",
+    "voltage": "VOLT",
+}
+_FULL_SCPI = {
+    "amplitude": "AMPLITUDE",
+    "function": "FUNCTION",
+    "immediate": "IMMEDIATE",
+    "level": "LEVEL",
+    "nplc": "NPLCycles",
+    "output": "OUTPut",
+    "protection": "PROTection",
+    "range": "RANGe",
+    "sense": "SENSe",
+    "source": "SOURce",
+    "state": "STATe",
+    "triggered": "TRIGgered",
+    "voltage": "VOLTage",
+}
+_ACTIVE_VOLTAGE_QUERIES = (
+    (":SOURce1:FUNCtion:MODE?", "VOLT"),
+    (":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?", "100"),
+)
+_SOURCE_MODE_QUERIES = (
+    (":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?", "100"),
+)
+_LOW_ACTIVE_VOLTAGE_QUERIES = (
+    (":SOURce1:FUNCtion:MODE?", "VOLT"),
+    (":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?", "1"),
+)
+_LOW_SOURCE_MODE_QUERIES = (
+    (":SOURce1:VOLTage:LEVel:IMMediate:AMPLitude?", "1"),
+)
+_CURRENT_MODE_VOLTAGE_QUERIES = (
+    (":SENSe1:VOLTage:DC:PROTection:LEVel?", "100"),
+)
+
+
+def _source_header(parts, nodes, channel):
+    prefix = "" if channel is None else f"{parts['source']}{channel}:"
+    return f":{prefix}{':'.join(nodes)}"
+
+
+def _sense_header(parts, nodes, channel):
+    suffix = "" if channel is None else channel
+    return f":{parts['sense']}{suffix}:{':'.join(nodes)}"
+
+
+def _source_level_commands(parts):
+    for channel, level, immediate, amplitude in itertools.product(
+        (None, "", "1"), (False, True), (False, True), (False, True)
+    ):
+        nodes = [parts["voltage"]]
+        if level:
+            nodes.append(parts["level"])
+        if immediate:
+            nodes.append(parts["immediate"])
+        if amplitude:
+            nodes.append(parts["amplitude"])
+        yield f"{_source_header(parts, nodes, channel)} 100"
+
+
+def _source_triggered_commands(parts):
+    for channel, level, amplitude in itertools.product(
+        (None, "", "1"), (False, True), (False, True)
+    ):
+        nodes = [parts["voltage"]]
+        if level:
+            nodes.append(parts["level"])
+        nodes.append(parts["triggered"])
+        if amplitude:
+            nodes.append(parts["amplitude"])
+        yield f"{_source_header(parts, nodes, channel)} 100"
+
+
+def _source_range_commands(parts):
+    for channel in (None, "", "1"):
+        nodes = [parts["voltage"], parts["range"]]
+        yield f"{_source_header(parts, nodes, channel)} 100"
+
+
+def _source_autorange_commands(parts):
+    for channel in (None, "", "1"):
+        nodes = [parts["voltage"], parts["range"], "AUTO"]
+        yield f"{_source_header(parts, nodes, channel)} ON"
+
+
+def _source_mode_commands(parts):
+    for channel in (None, "", "1"):
+        nodes = [parts["function"], "MODE"]
+        yield f"{_source_header(parts, nodes, channel)} VOLT"
+
+
+def _sense_protection_commands(parts):
+    for channel, dc, level, both in itertools.product(
+        (None, "1"), (False, True), (False, True), (False, True)
+    ):
+        nodes = [parts["voltage"]]
+        if dc:
+            nodes.append("DC")
+        nodes.append(parts["protection"])
+        if level:
+            nodes.append(parts["level"])
+        if both:
+            nodes.append("BOTH")
+        yield f"{_sense_header(parts, nodes, channel)} 100"
+
+
+def _output_commands(parts):
+    for channel, state in itertools.product((None, "1"), (False, True)):
+        suffix = "" if channel is None else channel
+        header = f"{parts['output']}{suffix}"
+        if state:
+            header += f":{parts['state']}"
+        yield f":{header} ON"
+
+
+def _nplc_commands(parts):
+    for channel, dc in itertools.product((None, "1"), (False, True)):
+        nodes = [parts["voltage"]]
+        if dc:
+            nodes.append("DC")
+        nodes.append(parts["nplc"])
+        yield _sense_header(parts, nodes, channel)
+
+
+def _documented_high_voltage_commands():
+    commands = []
+    for parts in (_SHORT_SCPI, _FULL_SCPI):
+        commands.extend((command, ()) for command in _source_level_commands(parts))
+        commands.extend(
+            (command, ()) for command in _source_triggered_commands(parts)
+        )
+        commands.extend(
+            (command, ()) for command in _sense_protection_commands(parts)
+        )
+        commands.extend((command, ()) for command in _source_range_commands(parts))
+        commands.extend(
+            (command, _ACTIVE_VOLTAGE_QUERIES)
+            for command in _source_autorange_commands(parts)
+        )
+        commands.extend(
+            (command, _SOURCE_MODE_QUERIES)
+            for command in _source_mode_commands(parts)
+        )
+        commands.extend(
+            (command, _ACTIVE_VOLTAGE_QUERIES)
+            for command in _output_commands(parts)
+        )
+    return tuple(commands)
+
+
+_DOCUMENTED_HIGH_VOLTAGE_COMMANDS = _documented_high_voltage_commands()
+_DOCUMENTED_NPLC_COMMANDS = tuple(
+    command for parts in (_SHORT_SCPI, _FULL_SCPI) for command in _nplc_commands(parts)
+)
+
+
+@pytest.mark.parametrize(
+    "interlock_response,forwards",
+    [pytest.param("1", False, id="open"), pytest.param("0", True, id="closed")],
+)
+@pytest.mark.parametrize(("command", "queries"), _DOCUMENTED_HIGH_VOLTAGE_COMMANDS)
+def test_documented_high_voltage_header_combinations_apply_existing_guards(
+    command, queries, interlock_response, forwards
+):
+    protocol = []
+    for query, response in queries:
+        add_checked_query(protocol, query, response)
+    add_interlock_query(protocol, interlock_response)
+    if forwards:
+        protocol.append((command, None))
+
+    with expected_protocol(KeysightB2910BL, protocol) as instrument:
+        if forwards:
+            instrument.ch1.write(command)
+        else:
+            with pytest.raises(RuntimeError, match="interlock reports open"):
+                instrument.ch1.write(command)
+
+
+@pytest.mark.parametrize(
+    ("command", "queries"),
+    [
+        ("sour:volt 100", ()),
+        ("Volt:Imm 100", ()),
+        ("sens:volt:prot 100", ()),
+        ("outp:stat on", _ACTIVE_VOLTAGE_QUERIES),
+        ("func:mode volt", _SOURCE_MODE_QUERIES),
+        ("volt:rang:auto on", _ACTIVE_VOLTAGE_QUERIES),
+    ],
+)
+def test_documented_headers_ignore_case_and_optional_leading_colon(command, queries):
+    protocol = []
+    for query, response in queries:
+        add_checked_query(protocol, query, response)
+    add_interlock_query(protocol, "1")
+    with expected_protocol(KeysightB2910BL, protocol) as instrument, pytest.raises(
+        RuntimeError, match="interlock reports open"
+    ):
+        instrument.ch1.write(command)
+
+
+@pytest.mark.parametrize(
+    ("command", "forwarded"),
+    [
+        (":SOUR:VOLT 1.5", None),
+        ("SOURCE:VOLTAGE:LEVEL:IMMEDIATE:AMPLITUDE -2.5", None),
+        (":VOLT:TRIG 1.0", None),
+        ("SENS:VOLT:DC:PROT:LEV:BOTH 30", None),
+        ("SOUR:VOLT:RANG 20", None),
+        (":VOLT:RANG:AUTO 0", None),
+        ("OUTP:STAT OFF", None),
+        (":Sour{ch}:Volt:Lev 1.5", ":Sour1:Volt:Lev 1.5"),
+    ],
+)
+def test_safe_low_voltage_headers_forward_rendered_command_unchanged(
+    command, forwarded
+):
+    expected = command if forwarded is None else forwarded
+    with expected_protocol(KeysightB2910BL, [(expected, None)]) as instrument:
+        instrument.ch1.write(command)
+
+
+@pytest.mark.parametrize(
+    ("command", "queries"),
+    [
+        ("OUTP:STAT ON", _LOW_ACTIVE_VOLTAGE_QUERIES),
+        ("FUNC:MODE VOLT", _LOW_SOURCE_MODE_QUERIES),
+        ("VOLT:RANG:AUTO ON", _LOW_ACTIVE_VOLTAGE_QUERIES),
+    ],
+)
+def test_guard_queries_allow_safe_abbreviated_commands_to_forward(command, queries):
+    protocol: list[tuple[str, str | None]] = []
+    for query, response in queries:
+        add_checked_query(protocol, query, response)
+    protocol.append((command, None))
+    with expected_protocol(KeysightB2910BL, protocol) as instrument:
+        instrument.ch1.write(command)
+
+
+@pytest.mark.parametrize(
+    ("command", "queries"),
+    [
+        ("FUNC:MODE CURR", _CURRENT_MODE_VOLTAGE_QUERIES),
+        (
+            "OUTP:STAT ON",
+            ((":SOURce1:FUNCtion:MODE?", "CURR"),) + _CURRENT_MODE_VOLTAGE_QUERIES,
+        ),
+    ],
+)
+def test_abbreviated_current_mode_headers_use_voltage_compliance_guard(command, queries):
+    protocol = []
+    for query, response in queries:
+        add_checked_query(protocol, query, response)
+    add_interlock_query(protocol, "1")
+    with expected_protocol(KeysightB2910BL, protocol) as instrument, pytest.raises(
+        RuntimeError, match="interlock reports open"
+    ):
+        instrument.ch1.write(command)
+
+
+@pytest.mark.parametrize("command", _DOCUMENTED_NPLC_COMMANDS)
+def test_documented_nplc_headers_use_existing_checks_and_forward(command):
+    command_with_value = f"{command} 0.1"
+    protocol: list[tuple[str, str | None]] = [
+        (":SYSTem:LFRequency?", "60"),
+        ("SYST:ERR?", NO_ERROR),
+    ]
+    add_write(protocol, ":SENSe1:VOLTage:DC:APERture:AUTO 0")
+    add_write(protocol, ":SENSe1:VOLTage:DC:NPLCycles:AUTO 0")
+    protocol.append((command_with_value, None))
+    with expected_protocol(KeysightB2910BL, protocol) as instrument:
+        instrument.ch1.write(command_with_value)
+
+
+@pytest.mark.parametrize("command", _DOCUMENTED_NPLC_COMMANDS)
+def test_documented_nplc_headers_reject_before_forwarding(command):
+    command_with_value = f"{command} 0.0004"
+    protocol = [(":SYSTem:LFRequency?", "60"), ("SYST:ERR?", NO_ERROR)]
+    with expected_protocol(KeysightB2910BL, protocol) as instrument, pytest.raises(
+        ValueError, match="outside the native range"
+    ):
+        instrument.ch1.write(command_with_value)
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        ":TRIG1:ACQ:COUN 1",
+        ":SOU1:VOLT:LEV:IMM:AMPL 100",
+        ":SOURC1:VOLT:LEV:IMM:AMPL 100",
+        ":SOUR1:VOLTA:LEV:IMM:AMPL 100",
+        ":SOURCE1X:VOLT:LEV:IMM:AMPL 100",
+        ":OUTP1:STATX ON",
+        ":SENS:VOLT:PROTX 100",
+        ":VOLTAGE:LEVELX 100",
+    ],
+)
+def test_unknown_or_malformed_headers_forward_unchanged(command):
+    with expected_protocol(KeysightB2910BL, [(command, None)]) as instrument:
+        instrument.ch1.write(command)
+
+
 @pytest.mark.parametrize("voltage,current", [(21.0, 1.515), (210.0, 0.105), (-210.0, 0.105)])
 def test_b2910bl_envelope_boundary_is_accepted(voltage, current):
     with expected_protocol(KeysightB2910BL, []) as instrument:
