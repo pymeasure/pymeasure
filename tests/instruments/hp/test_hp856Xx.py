@@ -918,7 +918,7 @@ class TestHP856Xx:
                     ("TRA?", ','.join([str(i) for i in data]))
                 ]
         ) as instr:
-            assert instr.get_trace_data_a() == pytest.approx(expected_data, abs=0.02)
+            assert instr.get_trace_data_a() == pytest.approx(expected_data, abs=0.01)
 
     def test_fft_trace_window(self):
         with expected_protocol(
