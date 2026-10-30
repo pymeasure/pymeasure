@@ -27,11 +27,11 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 from functools import partial
-from typing import Any, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
-from qtpy.QtCore import QAbstractItemModel, QPoint
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QPoint
 
 from ...experiment.procedure import ProcedureStatus
 from ...experiment.results import Results
@@ -52,12 +52,12 @@ class ResultsTable(QtCore.QObject):
     def __init__(
         self,
         results: Results,
-        color,
-        column_index=None,
+        color: QtGui.QColor,
+        column_index: str | None = None,
         force_reload: bool = False,
         wdg: TableWidget | None = None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.results = results
         self.color = color
@@ -110,10 +110,10 @@ class ResultsTable(QtCore.QObject):
                                    current_row_count - 1, columns - 1)
             self.last_row_count = current_row_count
 
-    def set_color(self, color) -> None:
+    def set_color(self, color: QtGui.QColor) -> None:
         self.color = color
 
-    def set_index(self, index) -> None:
+    def set_index(self, index: str | None) -> None:
         self.column_index = index
 
 
@@ -140,7 +140,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
     def __init__(
         self, column_index: str | None = None, results_list: list | None = None, parent=None
-    ):
+    ) -> None:
         super().__init__(parent=parent)
         self.column_index = column_index
         self._init_data(results_list)
@@ -178,13 +178,13 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         results.stop()
         self.endResetModel()
 
-    def rowCount(self, parent=None):
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         return self.row_count
 
-    def columnCount(self, parent=None):
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         return self.column_count
 
-    def data(self, index, role: int = QtCore.Qt.ItemDataRole.DisplayRole):
+    def data(self, index, role: int = QtCore.Qt.ItemDataRole.DisplayRole) -> str | float | None:
         if index.isValid() and role in (QtCore.Qt.ItemDataRole.DisplayRole, SORT_ROLE):
             try:
                 results, row, col = self.translate_to_local(index.row(), index.column())
@@ -209,7 +209,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
     def _get_new_rows_columns(
         self, results: ResultsTable, r1: int, c1: int, r2: int, c2: int
-    ) -> tuple[int, int, int | Any, int | Any]:
+    ) -> tuple[int, int, int, int]:
         new_rows = self.pandas_row_count() - self.row_count
         new_rows_start = self.row_count
 
@@ -505,10 +505,10 @@ class Table(QtWidgets.QTableView):
         check_status: bool = True,
         force_reload: bool = False,
         layout_class: type[PandasModelBase] = PandasModelByColumn,
-        column_index=None,
+        column_index: str | None = None,
         float_digits: int = 6,
         parent: QtWidgets.QWidget | None = None,
-    ):
+    ) -> None:
         super().__init__(parent)
         self.force_reload = force_reload
         self.float_digits = float_digits
@@ -612,7 +612,7 @@ class Table(QtWidgets.QTableView):
                                          QtCore.Qt.ItemDataRole.DisplayRole)
                 self.setColumnHidden(i, label not in self.parent().columns)
 
-    def set_color(self, table, color) -> None:
+    def set_color(self, table: ResultsTable, color: QtGui.QColor) -> None:
         table.set_color(color)
 
     def add_table(self, table: ResultsTable) -> None:
@@ -666,7 +666,7 @@ class TableWidget(TabWidget[ResultsTable], QtWidgets.QWidget):
         float_digits: int = 6,
         check_status: bool = True,
         parent: QtWidgets.QWidget | None = None,
-    ):
+    ) -> None:
         super().__init__(name=name, parent=parent)
         self.columns = columns
         self.layout_names = list(self.layout_class_map.keys())
