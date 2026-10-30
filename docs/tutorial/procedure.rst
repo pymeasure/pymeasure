@@ -127,6 +127,11 @@ At the top of the SimpleProcedure class we define the required Parameters. In th
 
 We define the data columns that will be recorded in a list stored in :python:`DATA_COLUMNS`. This sets the order by which columns are stored in the file. In this example, we will store the Iteration number for each loop iteration.
 
+Column names can also declare physical units in parentheses, for example :python:`DATA_COLUMNS = ['Time (s)', 'Voltage (V)']`.
+The full column name, including the unit, must also be used as the key in the emitted data dictionary.
+For a :code:`'Voltage (V)'` column, a plain number such as :python:`0.5` is assumed to be in volts, while a quantity such as :code:`'500 mV'` is converted to volts when stored.
+See :attr:`Procedure.DATA_COLUMNS <pymeasure.experiment.procedure.Procedure.DATA_COLUMNS>` for the unit syntax and conversion rules.
+
 The :python:`execute` methods defines the main body of the procedure.
 Our example method consists of a loop over the number of iterations, in which we emit the data to be recorded (the Iteration number).
 The data is broadcast to any number of listeners by using the :code:`emit` method, which takes a topic as the first argument.
@@ -427,9 +432,8 @@ Now that you have a background on how to use the different features of the Proce
         worker.join(timeout=3600)  # wait at most 1 hr (3600 sec)
         log.info("Finished the measurement")
 
-The parentheses in the :code:`COLUMN` entries indicate the physical unit of the data in the corresponding column, e.g. :code:`'Voltage Std (V)'` indicates Volts. If you want to indicate a dimensionless value, e.g. Mach number, you can use `(1)` instead. Combined units like `(m/s)` or the long form `(meter/second)` are also possible. The class :class:`Results` ensures, that the data is stored in the correct unit, here Volts. For example a :python:`pint.Quantity` of 500 mV will be stored as 0.5 V. A string will be converted first to a `Quantity` and a mere number (e.g. float, int, ...) is assumed to be already in the right unit (e.g 5 will be stored as 5 V).
-If the data entry is not compatible, either because it has the wrong unit, e.g. meters which is not a unit of voltage, or because it is no number at all, a warning is logged and `'nan'` will be stored in the file.
-If you do not specify a unit (i.e. no parentheses), no unit check is performed for this column, unless the data entry is a `Quantity` for that column. In this case, this column's unit is set to the base unit (e.g. meter if unit of the data entry is kilometers) of the data entry. From this point on, unit checks are enabled for this column. Also use columns without unit checks (i.e. without parentheses) for strings or booleans.
+The units in this example's :python:`DATA_COLUMNS` entries specify that current is stored in amperes and voltage in volts.
+The unit syntax and conversion rules are described in :attr:`Procedure.DATA_COLUMNS <pymeasure.experiment.procedure.Procedure.DATA_COLUMNS>`.
 
 
 At this point, you are familiar with how to construct a Procedure sub-class. The next section shows how to put these procedures to work in a graphical environment, where will have live-plotting of the data and the ability to easily queue up a number of experiments in sequence. All of these features come from using the Procedure object.
