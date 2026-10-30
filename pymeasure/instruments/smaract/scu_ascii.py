@@ -23,6 +23,7 @@
 #
 
 from enum import Enum
+from typing import cast
 
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.smaract.utils import convert_quantity_to_magnitude
@@ -276,7 +277,7 @@ class SCUChannelStepper(SCUChannel):
         """ Get the current estimated position in steps."""
         return self._current_steps
 
-    def move_rel(self, steps: int | Q_):
+    def move_rel(self, steps: int | Q_) -> None:
         """Move to the relative position given in steps from the current position.
 
         :param steps : A quantity with the step as unit, given as integer,
@@ -284,7 +285,7 @@ class SCUChannelStepper(SCUChannel):
         """
         old_steps = self._current_steps
         if isinstance(steps, Q_):
-            steps_val = int(steps.magnitude)
+            steps_val = int(cast(Q_, steps).magnitude)
         else:
             steps_val = int(steps)
 
@@ -295,11 +296,11 @@ class SCUChannelStepper(SCUChannel):
             self.move_steps_down(abs(steps_val))
             self._current_steps = steps_val + old_steps
 
-    def move_abs(self, position: int | Q_):
+    def move_abs(self, position: int | Q_) -> None:
         """Move to the absolute position given in steps from the reference position.
         """
         if isinstance(position, Q_):
-            target_steps = int(position.magnitude)
+            target_steps = int(cast(Q_, position).magnitude)
         else:
             target_steps = int(position)
 

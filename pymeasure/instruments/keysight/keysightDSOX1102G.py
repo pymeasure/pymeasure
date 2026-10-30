@@ -360,7 +360,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         validator=strict_discrete_set,
         values={"channel1": "CHAN1", "channel2": "CHAN2", "function": "FUNC", "math": "MATH",
                 "fft": "FFT", "abus": "ABUS", "ext": "EXT"},
-        map_values=True
+        map_values=True,
     )
 
     def digitize(self, source: str) -> None:

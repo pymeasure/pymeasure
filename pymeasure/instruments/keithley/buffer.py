@@ -23,21 +23,26 @@
 #
 
 import logging
+from collections.abc import Callable
 from time import sleep, time
 
 import numpy as np
 
 from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.common_base import CommonBase
 from pymeasure.instruments.validators import truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class KeithleyBuffer:
+class KeithleyBuffer(CommonBase):
     """ Implements the basic buffering capability found in
-    many Keithley instruments. """
+    many Keithley instruments.
+
+    Use it as a Mixin to an `Instrument` or `Channel`.
+    """
 
     buffer_points = Instrument.control(
         ":TRAC:POIN?", ":TRAC:POIN %d",
@@ -48,7 +53,7 @@ class KeithleyBuffer:
         cast=int
     )
 
-    def config_buffer(self, points=64, delay=0):
+    def config_buffer(self, points: int = 64, delay: float = 0) -> None:
         """ Configure the measurement buffer for a number of points, to be
         taken with a specified delay.
 
@@ -65,14 +70,18 @@ class KeithleyBuffer:
         self.write(":TRAC:FEED SENSE;:TRAC:FEED:CONT NEXT;")
         self.check_errors()
 
-    def is_buffer_full(self):
+    def is_buffer_full(self) -> bool:
         """ Return True if the buffer is full of measurements. """
         status_byte = int(self.ask("*STB?"))
         return (status_byte & 65) == 65
 
-    def wait_for_buffer(self, should_stop=lambda: False,
-                        timeout=60, interval=0.1):
-        """ Block the program, waiting for a full buffer. This function
+    def wait_for_buffer(
+        self,
+        should_stop: Callable[[], bool] = lambda: False,
+        timeout: float = 60,
+        interval: float = 0.1,
+    ) -> None:
+        """Block the program, waiting for a full buffer. This function
         returns early if the :code:`should_stop` function returns True or
         the timeout is reached before the buffer is full.
 
@@ -96,15 +105,15 @@ class KeithleyBuffer:
         self.write(":FORM:DATA ASCII")
         return np.array(self.values(":TRAC:DATA?"), dtype=np.float64)
 
-    def start_buffer(self):
+    def start_buffer(self) -> None:
         """ Starts the buffer. """
         self.write(":INIT")
 
-    def reset_buffer(self):
+    def reset_buffer(self) -> None:
         """ Reset the buffer. """
         self.write(":STAT:PRES;*CLS;:TRAC:CLEAR;:TRAC:FEED:CONT NEXT;")
 
-    def stop_buffer(self):
+    def stop_buffer(self) -> None:
         """ Abort the buffering measurement, by stopping the measurement
         arming and triggering sequence. If possible, a Selected Device
         Clear (SDC) is used. """
@@ -113,7 +122,7 @@ class KeithleyBuffer:
         else:
             self.write(":ABOR")
 
-    def disable_buffer(self):
+    def disable_buffer(self) -> None:
         """ Disable the connection between measurements and the
         buffer, but does not abort the measurement process.
         """
