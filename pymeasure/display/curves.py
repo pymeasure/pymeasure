@@ -258,6 +258,7 @@ class Crosshairs(QtCore.QObject):
         """
         super().__init__()
 
+        self._torn_down = False
         self.vertical = _SafeInfiniteLine(angle=90, movable=False, pen=pen)
         self.horizontal = _SafeInfiniteLine(angle=0, movable=False, pen=pen)
         plot.addItem(self.vertical, ignoreBounds=True)
@@ -267,6 +268,37 @@ class Crosshairs(QtCore.QObject):
         self.proxy = pg.SignalProxy(plot.scene().sigMouseMoved, rateLimit=60,
                                     slot=self.mouseMoved)
         self.plot = plot
+
+    def teardown(self) -> None:
+        """Release the signal proxy and detach the lines from the plot.
+
+        Afterwards the crosshairs must not be used anymore.
+        The method is idempotent and tolerates a plot that is already gone.
+        """
+        if self._torn_down:
+            return
+        self._torn_down = True
+        proxy = getattr(self, "proxy", None)
+        if proxy is not None:
+            # pyqtgraph keeps only a weak reference to the bound ``mouseMoved`` slot; the
+            # strong reference comes from the Qt signal connection, which would otherwise
+            # call it while the plot is being destroyed.
+            if hasattr(proxy, "disconnect"):
+                try:
+                    proxy.disconnect()
+                except (RuntimeError, TypeError):
+                    pass
+            else:
+                proxy.blockSignal = True
+        plot = self.plot
+        if plot is not None:
+            for line in (self.vertical, self.horizontal):
+                try:
+                    plot.removeItem(line)
+                except (RuntimeError, TypeError, AttributeError):
+                    pass
+        self.plot = None
+        self.position = None
 
     def hide(self) -> None:
         self.vertical.hide()
@@ -281,6 +313,9 @@ class Crosshairs(QtCore.QObject):
         dynamic plots, this is called each time the data changes to ensure
         the x and y values correspond to those on the display.
         """
+        # A queued proxy flush may still arrive after teardown.
+        if self._torn_down or self.plot is None:
+            return
         if self.position is not None:
             mouse_point = self.plot.vb.mapSceneToView(self.position)
             self.coordinates.emit(mouse_point.x(), mouse_point.y())
@@ -289,6 +324,8 @@ class Crosshairs(QtCore.QObject):
 
     def mouseMoved(self, event: list | None = None) -> None:
         """ Updates the mouse position upon mouse movement """
+        if self._torn_down:
+            return
         if event is not None:
             self.position = event[0]
             self.update()
