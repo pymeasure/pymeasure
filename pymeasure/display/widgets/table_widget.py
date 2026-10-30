@@ -184,7 +184,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
     def columnCount(self, parent=None):
         return self.column_count
 
-    def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
+    def data(self, index, role: int = QtCore.Qt.ItemDataRole.DisplayRole):
         if index.isValid() and role in (QtCore.Qt.ItemDataRole.DisplayRole, SORT_ROLE):
             try:
                 results, row, col = self.translate_to_local(index.row(), index.column())
