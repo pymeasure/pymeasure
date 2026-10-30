@@ -41,6 +41,7 @@ Instruments by manufacturer:
    fluke/index
    formfactor/index
    fwbell/index
+   granville-phillips/index
    heidenhain/index
    hcp/index
    hp/index
