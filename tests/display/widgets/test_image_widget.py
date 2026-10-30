@@ -203,6 +203,32 @@ def test_remove_removes_curve_from_plot(qtbot):
     assert image not in wdg.plot.items
 
 
+def test_close_tears_down_image_frame(qtbot):
+    """Closing the widget forwards teardown to its image frame and drops the plot alias."""
+    wdg = _make_widget(qtbot)
+    frame = wdg.image_frame
+
+    wdg.close()
+
+    assert frame._torn_down is True
+    assert wdg.plot is None
+
+
+def test_never_shown_image_widget_tears_down_when_window_deleted(qtbot, qapp):
+    """A frame on a never-shown image tab is reached through its window filter."""
+    window = QtWidgets.QMainWindow()
+    wdg = ImageWidget("image", columns=COLUMNS, x_axis="x", y_axis="y")
+    window.setCentralWidget(wdg)
+    frame = wdg.image_frame
+    qtbot.addWidget(window)
+
+    window.deleteLater()
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+    qapp.processEvents()
+
+    assert frame._torn_down is True
+
+
 def test_remove_removes_plain_plot_item(qtbot):
     """remove works on any plot item that was added directly to the plot."""
     wdg = _make_widget(qtbot)

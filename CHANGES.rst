@@ -36,6 +36,10 @@ Instruments
 -----------
 - Fix Yokogawa AQ6370 :code:`authenticate_ethernet` to compare responses case-insensitively (older firmware such as the AQ6370B answers in lower case) and raise :code:`ConnectionError` instead of asserting.
 
+GUI
+---
+- Tear down plot frames and their crosshairs safely when a plot is closed or deleted, which fixes intermittent crashes during window and test teardown.
+
 Version 0.16.0 (2026-05-20)
 ===========================
 
