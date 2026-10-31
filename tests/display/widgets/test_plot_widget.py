@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import gc
 from typing import cast
 from unittest import mock
 
@@ -29,6 +30,7 @@ import pandas as pd
 import pyqtgraph as pg
 
 from pymeasure.display.curves import ResultsCurve
+from pymeasure.display.Qt import QtCore, QtWidgets
 from pymeasure.display.widgets.plot_widget import PlotWidget
 from pymeasure.experiment import Procedure
 from pymeasure.experiment.procedure import ProcedureStatus
@@ -157,3 +159,50 @@ def test_preview_widget_returns_plot_widget(qtbot):
     assert preview.columns == wdg.columns
     assert preview.plot_frame.x_axis == wdg.plot_frame.x_axis
     assert preview.plot_frame.y_axis == wdg.plot_frame.y_axis
+
+
+def test_plot_widget_close_tears_down_frame(qtbot):
+    """Closing the widget forwards teardown to its plot frame."""
+    wdg = _make_widget(qtbot)
+    frame = wdg.plot_frame
+
+    wdg.close()
+
+    assert frame._torn_down is True
+    assert wdg.plot_frame.plot_widget is None
+
+
+def test_never_shown_frame_tears_down_when_window_deleted(qtbot, qapp):
+    """A frame whose tab was never shown is reached through its window filter."""
+    window = QtWidgets.QMainWindow()
+    wdg = PlotWidget("test", ["Time (s)", "Voltage (V)"])
+    window.setCentralWidget(wdg)
+    frame = wdg.plot_frame
+    qtbot.addWidget(window)
+
+    window.deleteLater()
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+    qapp.processEvents()
+
+    assert frame._torn_down is True
+
+
+def test_plot_widget_parent_window_deletion_tears_down_frame(qtbot, qapp):
+    """Deleting an ancestor window tears down the frame without an explicit close."""
+    window = QtWidgets.QMainWindow()
+    wdg = PlotWidget("test", ["Time (s)", "Voltage (V)"])
+    window.setCentralWidget(wdg)
+    frame = wdg.plot_frame
+    qtbot.addWidget(window)
+    window.show()
+    qtbot.wait(1)
+
+    window.close()
+    # The window close must reach the frame; after that the C++ object may be
+    # deleted, so the teardown state has to be inspected while it is still valid.
+    assert frame._torn_down is True
+
+    window.deleteLater()
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+    qapp.processEvents()
+    gc.collect()

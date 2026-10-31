@@ -30,7 +30,7 @@ from qtpy.QtWidgets import QGraphicsObject
 
 from ...experiment.results import Results
 from ..curves import ResultsImage
-from ..Qt import QtCore, QtWidgets
+from ..Qt import QtCore, QtGui, QtWidgets
 from .image_frame import ImageFrame
 from .tab_widget import DEFAULT_COLOR, TabWidget
 
@@ -120,9 +120,56 @@ class ImageWidget(TabWidget[ResultsImage], QtWidgets.QWidget):
         self.image_frame.change_z_axis(axis)
 
     def load(self, curve: ResultsImage) -> None:
+        plot = self.plot
+        if plot is None:
+            return
         curve.z = self.columns_z.currentText()
         curve.update_data()
-        self.plot.addItem(curve)
+        plot.addItem(curve)
 
     def remove(self, curve: QGraphicsObject) -> None:
-        self.plot.removeItem(curve)
+        plot = self.plot
+        if plot is None:
+            return
+        plot.removeItem(curve)
+
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        self._teardown_frame()
+        super().closeEvent(event)
+
+    def event(self, event: QtCore.QEvent) -> bool:
+        if event.type() == QtCore.QEvent.Type.DeferredDelete:
+            # Only the widget a deferred delete applies to receives it; the contained
+            # frame is torn down explicitly here.
+            self._teardown_frame()
+        elif event.type() == QtCore.QEvent.Type.ParentChange:
+            # Reparenting changes the ancestor window whose close has to reach the frame.
+            # Reinstalling the filter keeps never-shown frames covered as well.
+            self._reinstall_window_filter()
+        return super().event(event)
+
+    def _teardown_frame(self) -> None:
+        """Tear down the contained image frame, if it still exists."""
+        try:
+            frame = getattr(self, "image_frame", None)
+        except RuntimeError:  # the C/C++ object is gone already
+            frame = None
+        if frame is not None:
+            try:
+                frame._teardown()
+            except (RuntimeError, TypeError, AttributeError):
+                pass
+        # ``plot`` aliases the plot item of the frame, which is gone after teardown.
+        self.plot = None
+
+    def _reinstall_window_filter(self) -> None:
+        """Reinstall the frame's event filter on the window it now belongs to."""
+        try:
+            frame = getattr(self, "image_frame", None)
+        except RuntimeError:  # the C/C++ object is gone already
+            frame = None
+        if frame is not None:
+            try:
+                frame._install_window_filter()
+            except (RuntimeError, TypeError, AttributeError):
+                pass

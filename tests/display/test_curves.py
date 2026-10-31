@@ -352,3 +352,26 @@ class TestCrosshairs:
         # Without the strong reference in boundingRect, view_rect() collects the
         # fake ViewBox and pyqtgraph's next getViewBox() returns None.
         assert not line.boundingRect().isEmpty()
+
+    def test_teardown_disconnects_proxy_and_removes_lines(self, qtbot):
+        """Teardown releases the proxy and detaches the lines from the plot."""
+        _widget, plot, ch = self._make_crosshairs(qtbot)
+        vertical, horizontal = ch.vertical, ch.horizontal
+
+        ch.teardown()
+
+        assert ch.proxy.blockSignal is True
+        assert ch.proxy.slot is None
+        assert vertical not in plot.items
+        assert horizontal not in plot.items
+        assert ch.plot is None
+
+        ch.teardown()  # a second teardown is a no-op
+
+    def test_update_after_teardown_is_safe(self, qtbot):
+        """A stale update, e.g. from a queued proxy flush, must not raise."""
+        _widget, _plot, ch = self._make_crosshairs(qtbot)
+        ch.teardown()
+        ch.position = QtCore.QPointF(10.0, 20.0)
+
+        ch.update()
