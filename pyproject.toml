@@ -113,3 +113,13 @@ reportOptionalMemberAccess = "warning"
 reportIncompatibleMethodOverride = "warning"
 reportPrivateImportUsage = "none"
 defineConstant = { PYQT6 = true, PYSIDE2 = false, PYQT5 = false, PYSIDE6 = false }
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.400",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-qt>=2.4.0",
+    "pyvisa-sim>=0.7.1",
+    "ruff>=0.16.0",
+]

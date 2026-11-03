@@ -27,6 +27,7 @@ import time
 from collections.abc import Sequence
 from warnings import warn
 
+import pyvisa
 from typing_extensions import Self
 
 from ..adapters.adapter import Adapter
@@ -36,8 +37,7 @@ from .common_base import CommonBase
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-
-AdapterType = Adapter | str | int
+AdapterType = Adapter | str | int | pyvisa.ResourceManager
 
 
 class Instrument(CommonBase):
@@ -58,14 +58,23 @@ class Instrument(CommonBase):
     resource name.
     Keyword arguments can be used to further configure the connection.
 
+    When ``adapter`` is a :class:`pyvisa.ResourceManager`, ``name`` is interpreted as
+    the VISA resource string and the ``ResourceManager`` is reused (not closed on
+    :meth:`shutdown`).
+    This is the preferred pattern when multiple instruments share a single
+    ``ResourceManager`` opened with a specific VISA library.
+
     Otherwise, the passed :py:class:`~pymeasure.adapters.Adapter` object is used and any keyword
     arguments are discarded.
 
-    :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
-    :param string name: The name of the instrument. Often the model designation by default.
-
-    :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
-        to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
+    :param adapter: A string, integer, :class:`pyvisa.ResourceManager`, or
+        :py:class:`~pymeasure.adapters.Adapter` subclass object.
+    :param string name: The name of the instrument.
+        When ``adapter`` is a :class:`pyvisa.ResourceManager`, ``name`` is used as the
+        VISA resource string (e.g. ``"TCPIP0::192.168.1.10::INSTR"``).
+    :param \\**kwargs: In case ``adapter`` is a string, integer, or
+        :class:`pyvisa.ResourceManager`, additional arguments passed on to
+        :py:class:`~pymeasure.adapters.VISAAdapter`.
         Discarded otherwise.
     """
     adapter: Adapter
@@ -82,7 +91,15 @@ class Instrument(CommonBase):
                  "the `SCPIMixin` class instead if it supports SCPI.", FutureWarning)
             kwargs.pop("includeSCPI")
         # Setup communication before possible children require the adapter.
-        if isinstance(adapter, (int, str)):
+        if isinstance(adapter, pyvisa.ResourceManager):
+            # VISAAdapter sets _manager_owned=False so a caller-supplied RM is not closed.
+            try:
+                adapter = VISAAdapter(name, visa_library=adapter, **kwargs)
+            except ImportError:
+                raise TypeError(
+                    "Invalid Adapter provided for Instrument since PyVISA is not present"
+                )
+        elif isinstance(adapter, (int, str)):
             try:
                 adapter = VISAAdapter(adapter, **kwargs)
             except ImportError:
@@ -91,6 +108,7 @@ class Instrument(CommonBase):
                 )
         self.adapter = adapter
         self.isShutdown = False
+        self.resource_name = getattr(self.adapter, "resource_name", name)
         self.name = name
 
         super().__init__()
