@@ -29,6 +29,9 @@ Changed
   after :meth:`~.VISAAdapter.close` or a network dropout, without reinstantiating the instrument.
   Connection keyword arguments passed at construction are reapplied; settings changed directly
   on ``adapter.connection`` afterwards must be reapplied by the caller.
+- Add :meth:`~.SCPIMixin.get_device_info`, :meth:`~.SCPIMixin.check_is_dev_supported`,
+  :meth:`~.SCPIMixin.close`, and :meth:`~.SCPIMixin.open` to :class:`.SCPIMixin` for structured
+  ``*IDN?`` parsing, model validation, and connection lifecycle management (replaces #1433).
 - For property creators :code:`Instrument.control`... the conversion parameters (:code:`cast` etc.) are keyword only, now.
 - Refactored :class:`.Parameter` and :class:`.Metadata` to share a common descriptor base (``_InstanceValueDescriptor``).
   Values are now eagerly converted at assignment time via :meth:`~Parameter.convert` (identity for ``Metadata``).
