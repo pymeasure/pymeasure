@@ -82,7 +82,7 @@ class Agilent33622A(Agilent33500):
     """
 
     def __init__(self, adapter: AdapterType, name: str = "Agilent 33622A", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+        super().__init__(adapter, name, tcpip={"read_termination": "\n"}, **kwargs)
 
     ch_1 = Instrument.ChannelCreator(Agilent33622AChannel, 1)
     ch_2 = Instrument.ChannelCreator(Agilent33622AChannel, 2)
