@@ -31,8 +31,9 @@
 # Run them on an idle controller: they read parameters, change a few settings (PID,
 # rate limits, units) and restore them, and never start a program or heat.
 #
-# Verified on 2026-11-05 with an EPC3000 over Modbus TCP. test_ramp_units was changed to a
-# read check afterwards, as that register is read-only on this model.
+# Verified on 2026-11-05 with an EPC3000 (firmware V5.01) over Modbus TCP.
+# test_ramp_units was changed to a read check afterwards, as that register is read-only on
+# this model.
 
 import pytest
 from eurotherm_device_utils import (
@@ -154,3 +155,10 @@ def test_input_status(controller):
 
 def test_leak_current(controller):
     assert isinstance(controller.leak_current, float)
+
+
+def test_firmware_version(controller):
+    """Read the firmware version string from register 107."""
+    fw = controller.firmware_version
+    assert isinstance(fw, str)
+    assert len(fw) >= 4  # e.g. 'V5.01'

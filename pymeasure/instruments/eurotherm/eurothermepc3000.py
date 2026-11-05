@@ -56,6 +56,21 @@ class EurothermEPC3000(EurothermBase):
     def __init__(self, adapter: AdapterType, name: str = "Eurotherm EPC3000", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
+    @property
+    def firmware_version(self) -> str:
+        """Read the firmware version string from register 107.
+
+        The register stores the version as a 16-bit integer in the format 0xMMmm,
+        where MM is the major version and mm is the minor version (e.g., 0x0501 → "V5.01").
+
+        :return: The firmware version string, e.g. "V5.01".
+        """
+        self.write("I,107")
+        raw = int(self.read())
+        major = (raw >> 8) & 0xFF
+        minor = raw & 0xFF
+        return f"V{major}.{minor:02d}"
+
     setpoint_rate_limit = float_control(
         35,
         """Control the rising setpoint rate limit in units per :attr:`ramp_units`
