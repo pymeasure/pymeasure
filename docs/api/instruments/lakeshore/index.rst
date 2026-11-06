@@ -16,6 +16,7 @@ lakeshore3xx is a general class for Lake Shore temperature controllers of the se
    lakeshore3xx
    lakeshore421
    lakeshore425
+   lakeshore625
 
 .. _LakeShoreChannels:
 
