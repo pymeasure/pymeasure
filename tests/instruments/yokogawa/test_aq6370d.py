@@ -36,6 +36,12 @@ def test_init():
         pass  # Verify the expected communication.
 
 
+def test_init_tcpip():
+    instr = AQ6370D("TCPIP0::localhost::inst0::INSTR", visa_library="@sim")
+    assert instr.adapter.connection.read_termination == "\r\n"
+    instr.adapter.close()
+
+
 def test_automatic_sample_number_setter():
     with expected_protocol(
         AQ6370D,
