@@ -23,7 +23,12 @@
 #
 import pytest
 
-from pymeasure.instruments.purephotonics import ITLA, FatalStatus, ITLAError, ITLAExecutionError
+from pymeasure.instruments.purephotonics import (
+    ITLA,
+    FatalStatus,
+    ITLAError,
+    ITLAExecutionError,
+)
 from pymeasure.instruments.purephotonics.itla import checksum
 from pymeasure.test import expected_protocol
 
@@ -444,7 +449,7 @@ def test_serial_number_embedded_null():
     data = b"CRTNH1E00F\x00001\x00"
     pairs = [(read(0x04), reply(0x04, len(data), status=2))]
     pairs += [
-        (read(0x0B), reply(0x0B, int.from_bytes(data[i : i + 2], "big")))
+        (read(0x0B), reply(0x0B, int.from_bytes(data[i:i + 2], "big")))
         for i in range(0, len(data), 2)
     ]
     with expected_protocol(ITLA, pairs) as inst:

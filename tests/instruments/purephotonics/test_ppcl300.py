@@ -81,6 +81,12 @@ def test_sweep():
         inst.sweep_enabled = False
 
 
+@pytest.mark.parametrize("sweep_range", [-1e9, 76e9])
+def test_sweep_range_invalid(sweep_range):
+    with expected_protocol(PPCL300, []) as inst, pytest.raises(ValueError):
+        inst.sweep_range = sweep_range
+
+
 @pytest.mark.parametrize("data, offset", [("00 1F", 3.1e9), ("FF E1", -3.1e9)])
 def test_sweep_offset(data, offset):
     response = bytearray(p(f"04 E6 {data}"))
@@ -104,7 +110,7 @@ def test_firmware_version():
     data = b"PV 2.0.0:HW 1.0.1:FW 8.0.9:AS C1:OT 2.2.0\x00"
     pairs = [(read(0x06), reply(0x06, len(data), status=2))]
     pairs += [
-        (read(0x0B), reply(0x0B, int.from_bytes(data[i : i + 2].ljust(2, b"\x00"), "big")))
+        (read(0x0B), reply(0x0B, int.from_bytes(data[i:i + 2].ljust(2, b"\x00"), "big")))
         for i in range(0, len(data), 2)
     ]
     with expected_protocol(PPCL300, pairs) as inst:

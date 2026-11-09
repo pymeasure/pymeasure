@@ -33,6 +33,7 @@ The communication follows the OIF Integrable Tunable Laser Assembly Multi Source
 import logging
 import threading
 import time
+from collections.abc import Sequence
 from enum import IntEnum, IntFlag
 
 from pymeasure.instruments import AdapterType, Instrument
@@ -134,7 +135,7 @@ class WarningStatus(IntFlag):
     SRQ = 1 << 15  #: Service request asserted.
 
 
-def checksum(packet: bytes | list[int]) -> int:
+def checksum(packet: Sequence[int]) -> int:
     """Calculate the 4 bit BIP-4 checksum of a 4 byte ITLA packet.
 
     The checksum bits (upper nibble of the first byte) are ignored.
@@ -303,7 +304,7 @@ class ITLA(Instrument):
                     data = self._read_aea(value)
                     if function == "RA":
                         self._response = ",".join(
-                            str(int.from_bytes(data[i : i + 2], "big", signed=True))
+                            str(int.from_bytes(data[i:i + 2], "big", signed=True))
                             for i in range(0, len(data) - 1, 2)
                         )
                     else:
@@ -365,7 +366,7 @@ class ITLA(Instrument):
         """
         stop = time.monotonic() + timeout
         while self.pending:
-            if time.monotonic() > stop:
+            if time.monotonic() >= stop:
                 raise TimeoutError(f"{self.name}: operation still pending after {timeout} s.")
             time.sleep(interval)
 

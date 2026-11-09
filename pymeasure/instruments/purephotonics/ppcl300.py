@@ -102,12 +102,14 @@ class PPCL300(ITLA):
         """Get the firmware version, e.g. ``"8.0.9"`` (str).
 
         Taken from the ``FW`` field of :attr:`release` and cached after the first query."""
-        if self._firmware_version is None:
-            match = re.search(r"FW\s*([0-9A-Za-z]+\.[0-9A-Za-z]+\.[0-9A-Za-z]+)", self.release)
-            if match is None:
-                raise ValueError(f"No firmware version in release '{self.release}'.")
-            self._firmware_version = match.group(1)
-        return self._firmware_version
+        if self._firmware_version is not None:
+            return self._firmware_version
+        match = re.search(r"FW\s*([0-9A-Za-z]+\.[0-9A-Za-z]+\.[0-9A-Za-z]+)", self.release)
+        if match is None:
+            raise ValueError(f"No firmware version in release '{self.release}'.")
+        version = match.group(1)
+        self._firmware_version = version
+        return version
 
     @property
     def tec_current(self) -> float:
@@ -145,10 +147,9 @@ class PPCL300(ITLA):
     sweep_range = Instrument.control(
         "R,0xE4",
         "W,0xE4,%d",
-        """Control the clean sweep range in Hz (float, resolution 1 GHz).
-
-        The module accepts at most 75 GHz; larger values raise an :class:`.ITLAExecutionError`
-        (RVE).""",
+        """Control the clean sweep range in Hz (float strictly from 0 to 75e9 in steps of 1e9).""",
+        validator=strict_range,
+        values=(0, 75e9),
         get_process=lambda v: v * 1e9,
         set_process=lambda v: round(v / 1e9),
     )
