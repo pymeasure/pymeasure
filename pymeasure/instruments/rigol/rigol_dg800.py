@@ -34,7 +34,7 @@ from .rigol_generator import (
 class VoltageChannel(RigolGeneratorChannel):
     """Represents a voltage channel of the DG800 signal generator."""
 
-    #LEGACY! set load='INF' for high impedance
+    # LEGACY! Set load='INF' for high impedance.
     high_impedance = Channel.setting(
         ":OUTP{ch}:IMP %s",
         """Control the output impedance to be HighZ.
