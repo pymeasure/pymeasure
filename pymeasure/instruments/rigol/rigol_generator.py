@@ -25,7 +25,6 @@
 import time
 from enum import IntFlag
 
-#from dataclasses import dataclass
 from pymeasure.instruments import AdapterType, Channel, Instrument
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -36,7 +35,6 @@ from pymeasure.instruments.validators import (
     truncated_discrete_set,
 )
 
-ONOFF_TYPE ={True: "ON", False: "OFF"}
 
 class EventStatusByte(IntFlag):
     """Event Status Register (ESR) flags."""
@@ -49,6 +47,7 @@ class EventStatusByte(IntFlag):
     CME = 32           # Bit 5: Command Error
     B6 = 64            # Bit 6: unused
     PON = 128          # Bit 7: Power On
+
 
 class StatusByte(IntFlag):
     """Status Byte (STB) flags."""
@@ -78,7 +77,7 @@ class RigolGeneratorChannel(Channel):
         "inverted": "INVERTED"
     }
 
-    #adjust for newer models: is NORM and INV there
+    # adjust for newer models: is NORM and INV there
     SYNC_POLARITY = {
         "positive": "POS",
         "negative": "NEG"
@@ -101,7 +100,7 @@ class RigolGeneratorChannel(Channel):
         """Control the output impedance of a given channel.
          Returns 9.9e+37 for infinite impedance.""",
         validator=joined_validators(strict_discrete_set, strict_range),
-        values= [['INF'], [1, 10000]],
+        values=[['INF'], [1, 10000]],
     )
 
     polarity = Channel.control(
@@ -111,6 +110,7 @@ class RigolGeneratorChannel(Channel):
         validator=truncated_discrete_set,
         values=POLARITY,
         map_values=True,
+        cast=str,
     )
 
     sync_enabled = Channel.control(
@@ -131,6 +131,7 @@ class RigolGeneratorChannel(Channel):
         validator=truncated_discrete_set,
         values=SYNC_POLARITY,
         map_values=True,
+        cast=str,
     )
 
     frequency = Channel.control(
@@ -186,8 +187,7 @@ class RigolGeneratorChannel(Channel):
         """,
     )
 
-
-    #FIXME: model-dependent behavior: DG800 uses current ramp symmetry (default:50%, i.e. triangle)
+    # FIXME: model-dependent behavior: DG800 uses current ramp symmetry (default:50%, i.e. triangle)
     #       whereas e.g. DG6000 uses the max symmetry and overwrites the current symmetry setting
     #       with it (... and has a separate triangle command)
     ramp = Channel.setting(
@@ -205,7 +205,7 @@ class RigolGeneratorChannel(Channel):
         ":SOUR{ch}:APPL:PULS %f,%f,%f,%f",
         """
         Set the waveform generator to output a pulse wave of specified parameters
-        Note that the duty cycle is specified using the duty_cycle method.
+        Note that the duty cycle is specified using the pulse_duty_cycle method.
         :param int freq: The frequency of the wave in Hz
         :param float ampl: The peak to peak amplitude of the wave in V
         :param float offset: The DC offset of the wave in V
@@ -230,13 +230,13 @@ class RigolGeneratorChannel(Channel):
     )
 
 
-
 class RigolGenerator(SCPIMixin, Instrument):
     """Provide the SCPI core shared by supported Rigol generator families.
+
     :param adapter: Adapter object or resource identifier used for communication.
     :param name: Name of the instrument.
     :param kwargs: Additional arguments passed to :class:`~pymeasure.adapters.VISAAdapter` when
-        ``adapter`` is a string or integer; discarded when it is an Adapter object.
+    ``adapter`` is a string or integer; discarded when it is an Adapter object.
     """
 
     def __init__(self, adapter: AdapterType, name: str = "Rigol generator", **kwargs):
@@ -249,7 +249,7 @@ class RigolGenerator(SCPIMixin, Instrument):
     )
 
     def wait_for_opc(self, timeout: float = 10) -> None:
-        """Block until the oscilloscope reports operation complete.
+        """Block until the generator reports operation complete.
 
         :param timeout: Maximum time to wait in seconds.
         :raises TimeoutError: If the operation does not complete before ``timeout``.
@@ -261,4 +261,3 @@ class RigolGenerator(SCPIMixin, Instrument):
             if time.monotonic() > deadline:
                 raise TimeoutError(f"wait_for_opc timed out after {timeout} s")
             time.sleep(0.1)
-

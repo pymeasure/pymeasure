@@ -39,5 +39,5 @@ def test_idn_responds(dg800: DG800):
     print(f"Response: {response}")
 
 def test_frequency(dg800: DG800):
-    dg800.frequency = 678.3
-    assert dg800.frequency == 678.3
+    dg800.channel_1.frequency = 678.3
+    assert dg800.channel_1.frequency == pytest.approx(678.3)
