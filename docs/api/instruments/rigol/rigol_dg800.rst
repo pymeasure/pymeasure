@@ -9,7 +9,7 @@ It exposes voltage channels, and selected system and storage functions.
 Connection
 ==========
 
-Connect with any VISA resource supported by the oscilloscope.
+Connect with any VISA resource supported by the generator.
 For example:
 
 .. code-block:: python

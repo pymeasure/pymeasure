@@ -11,7 +11,7 @@ value sets through dynamic properties.
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.rigol.rigol_oscilloscope.RigolGeneratorChannel
+.. autoclass:: pymeasure.instruments.rigol.rigol_generator.RigolGeneratorChannel
     :members:
     :show-inheritance:
     
