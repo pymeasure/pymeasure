@@ -21,7 +21,7 @@ For example:
     try:
         print(fgen.id)
         print(fgen.channel_1.waveform)
-        print(fgen.load)
+        print(fgen.channel_1.load)
     finally:
         fgen.shutdown()
 
