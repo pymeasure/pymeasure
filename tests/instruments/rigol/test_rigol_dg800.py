@@ -44,26 +44,26 @@ def test_channel_1_dc_setter():
         inst.channel_1.dc = 1
 
 
-def test_channel_1_duty_cycle_setter():
+def test_channel_1_pulse_duty_cycle_setter():
     with expected_protocol(
             DG800,
-            [(b':SOUR1:PULS:DCYC 0.100000', None)],
+            [(b':SOUR1:FUNC:PULS:DCYC 0.100000', None)],
     ) as inst:
-        inst.channel_1.duty_cycle = 0.1
+        inst.channel_1.pulse_duty_cycle = 0.1
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
-    ([(b':SOUR1:PULS:DCYC?', b'1.000000E-01\n')],
+    ([(b':SOUR1:FUNC:PULS:DCYC?', b'1.000000E-01\n')],
      0.1),
-    ([(b':SOUR1:PULS:DCYC?', b'5.000000E-01\n')],
+    ([(b':SOUR1:FUNC:PULS:DCYC?', b'5.000000E-01\n')],
      0.5),
 ))
-def test_channel_1_duty_cycle_getter(comm_pairs, value):
+def test_channel_1_pulse_duty_cycle_getter(comm_pairs, value):
     with expected_protocol(
             DG800,
             comm_pairs,
     ) as inst:
-        assert inst.channel_1.duty_cycle == value
+        assert inst.channel_1.pulse_duty_cycle == value
 
 
 def test_channel_1_high_impedance_setter():
@@ -74,12 +74,14 @@ def test_channel_1_high_impedance_setter():
         inst.channel_1.high_impedance = True
 
 
-def test_channel_1_load_setter():
+def test_channel_1_load():
     with expected_protocol(
             DG800,
-            [(b':OUTP1:LOAD 50.000000', None)],
+            [(b':OUTP1:LOAD 44', None),
+             (b':OUTP1:LOAD?', "44.0")],
     ) as inst:
-        inst.channel_1.load = 50
+        inst.channel_1.load = 44
+        assert inst.channel_1.load == 44.0
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
@@ -137,15 +139,15 @@ def test_channel_1_pulse_setter():
 def test_channel_1_pulse_width_setter():
     with expected_protocol(
             DG800,
-            [(b':SOUR1:PULS:WIDT 0.000100', None)],
+            [(b':SOUR1:FUNC:PULS:WIDT 0.000100', None)],
     ) as inst:
         inst.channel_1.pulse_width = 0.0001
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
-    ([(b':SOUR1:PULS:WIDT?', b'2.000000E-05\n')],
+    ([(b':SOUR1:FUNC:PULS:WIDT?', b'2.000000E-05\n')],
      2e-05),
-    ([(b':SOUR1:PULS:WIDT?', b'1.000000E-04\n')],
+    ([(b':SOUR1:FUNC:PULS:WIDT?', b'1.000000E-04\n')],
      0.0001),
 ))
 def test_channel_1_pulse_width_getter(comm_pairs, value):
@@ -180,12 +182,12 @@ def test_channel_1_sync_enabled_setter():
         inst.channel_1.sync_enabled = True
 
 
-def test_channel_1_triangle_setter():
+def test_channel_1_ramp_setter():
     with expected_protocol(
             DG800,
             [(b':SOUR1:APPL:RAMP 500.000000,1.000000,0.000000,0.000000', None)],
     ) as inst:
-        inst.channel_1.triangle = (500, 1, 0, 0)
+        inst.channel_1.ramp = (500, 1, 0, 0)
 
 
 @pytest.mark.parametrize("comm_pairs, value", (

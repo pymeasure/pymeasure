@@ -10,6 +10,7 @@ in an instrument not included, please consider :doc:`adding the instrument </dev
 .. toctree::
    :maxdepth: 2
 
+   rigol_generator
    rigol_dg800
    rigol_dho_base
    rigol_ds1000z
