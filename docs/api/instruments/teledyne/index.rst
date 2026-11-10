@@ -12,6 +12,7 @@ If the instrument you are looking for is not here, also check :doc:`LeCroy<../le
    :maxdepth: 1
 
    teledyneT3AFG
+   teledyneT3DSO3024HD
 
 
 There are shared base classes for Teledyne oscilloscopes.
