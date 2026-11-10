@@ -76,6 +76,9 @@ class Adapter:
         if connection is not None:
             self.connection.close()
 
+    def open(self) -> None:
+        """Reopen the connection. No-op in the base class; override in subclasses."""
+
     # Directly called methods, which ensure proper logging of the communication
     # without the termination characters added by the particular adapters.
     # DO NOT OVERRIDE IN SUBCLASS!
