@@ -237,6 +237,7 @@ class RigolGenerator(SCPIMixin, Instrument):
     :param name: Name of the instrument.
     :param kwargs: Additional arguments passed to :class:`~pymeasure.adapters.VISAAdapter` when
     ``adapter`` is a string or integer; discarded when it is an Adapter object.
+    
     """
 
     def __init__(self, adapter: AdapterType, name: str = "Rigol generator", **kwargs):

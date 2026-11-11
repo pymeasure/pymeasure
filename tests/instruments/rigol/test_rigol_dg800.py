@@ -113,6 +113,7 @@ def test_channel_1_sync_polarity():
         inst.channel_1.sync_polarity = "positive"
         assert inst.channel_1.sync_polarity == "positive"
 
+
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b':OUTP1:LOAD?', b'5.000000E+01\n')],
      50.0),
