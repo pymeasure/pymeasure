@@ -83,14 +83,16 @@ def test_channel_1_load():
         inst.channel_1.load = 44
         assert inst.channel_1.load == 44.0
 
+
 def test_channel_1_polarity_n():
     with expected_protocol(
             DG800,
             [(b':OUTP1:POL NORMAL', None),
              (b':OUTP1:POL?', "NORMAL")],
     ) as inst:
-        inst.channel_1.polarity="normal"
+        inst.channel_1.polarity = "normal"
         assert inst.channel_1.polarity == "normal"
+
 
 def test_channel_1_polarity_i():
     with expected_protocol(
@@ -98,8 +100,9 @@ def test_channel_1_polarity_i():
             [(b':OUTP1:POL INVERTED', None),
              (b':OUTP1:POL?', "INVERTED")],
     ) as inst:
-        inst.channel_1.polarity="inverted"
+        inst.channel_1.polarity = "inverted"
         assert inst.channel_1.polarity == "inverted"
+
 
 def test_channel_1_sync_polarity():
     with expected_protocol(
@@ -107,7 +110,7 @@ def test_channel_1_sync_polarity():
             [(b':OUTP1:SYNC:POL POS', None),
              (b':OUTP1:SYNC:POL?', "POS")],
     ) as inst:
-        inst.channel_1.sync_polarity="positive"
+        inst.channel_1.sync_polarity = "positive"
         assert inst.channel_1.sync_polarity == "positive"
 
 @pytest.mark.parametrize("comm_pairs, value", (

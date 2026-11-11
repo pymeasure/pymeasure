@@ -28,9 +28,10 @@ from pymeasure.instruments.rigol import DG800
 
 
 @pytest.fixture(scope="module")
-def rigolDG800(connected_device_address):
+def rigoldg800(connected_device_address):
     instr = DG800(connected_device_address)
     return instr
+
 
 def test_idn_responds(rigoldg800: DG800):
     response = rigoldg800.id
@@ -38,9 +39,11 @@ def test_idn_responds(rigoldg800: DG800):
     assert response
     print(f"Response: {response}")
 
+
 def test_frequency(rigoldg800: DG800):
     rigoldg800.channel_1.frequency = 678.3
     assert rigoldg800.channel_1.frequency == pytest.approx(678.3)
+
 
 def test_wait_for_opc(rigoldg800: DG800):
     rigoldg800.wait_for_opc(5)
