@@ -41,3 +41,6 @@ def test_idn_responds(dg800: DG800):
 def test_frequency(dg800: DG800):
     dg800.channel_1.frequency = 678.3
     assert dg800.channel_1.frequency == pytest.approx(678.3)
+
+def test_wait_for_opc(dg800: DG800):
+    dg800.wait_for_opc(5)
