@@ -31,6 +31,7 @@ Tests which enable the optical output run only if the environment variable
 """
 
 import os
+import re
 
 import pytest
 
@@ -125,3 +126,9 @@ def test_emission_and_fine_tuning(disabled_laser):
         laser.wait_until_ready(120)
         laser.emission_enabled = False
         laser.wait_until_ready()
+
+
+def test_info(laser):
+    assert laser.device_type
+    assert re.fullmatch(r"\w+\.\w+\.\w+", laser.firmware_version)
+    assert isinstance(laser.module_ready, bool)

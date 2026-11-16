@@ -398,7 +398,7 @@ class ITLA(Instrument):
         A higher baud rate reduces the time per command. With FTDI USB-serial converters, the
         latency timer (default 16 ms) also limits the command rate. The baud rate can be changed
         while the output is enabled.
-        The setting is volatile: after a power cycle, a hardware reset or (by default) a pulse on
+        The setting is volatile: after a power cycle, a :meth:`reset` or (by default) a pulse on
         the MS line, the module communicates at 9600 Bd again. If the module is still set to
         another baud rate when connecting again, pass that value as ``baud_rate`` to the
         constructor.
@@ -501,10 +501,17 @@ class ITLA(Instrument):
     def reset(self, hard: bool = False) -> None:
         """Reset the module.
 
+        Afterwards, the module communicates at 9600 Bd and the serial port of the host follows.
+        Call :meth:`wait_until_ready` before further settings.
+
         :param hard: Do a hardware module reset instead of a soft reset of the communication
-            interface. A hard reset disables the optical output.
+            interface. A hard reset disables the optical output and restores the default
+            settings (e.g. channel and power setpoint).
         """
         self.write_register(0x32, 0x01 if hard else 0x02)
+        if self._host_baud_rate != 9600:
+            self._set_host_baud_rate(9600)
+            self.adapter.flush_read_buffer()
 
     channel = Instrument.control(
         "R,0x30",

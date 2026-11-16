@@ -432,6 +432,22 @@ class TestBaudRate:
             inst.set_baud_rate(115200)
             assert inst.adapter.connection.baud_rate == 115200
 
+    @pytest.mark.parametrize("hard, data", [(False, 2), (True, 1)])
+    def test_reset_restores_9600(self, hard, data):
+        """Soft and hard reset set a PPCL300 to 9600 Bd, the host port has to follow."""
+        with expected_protocol(
+            ITLA,
+            [
+                (read(0x0D), reply(0x0D, 0x1004)),
+                (write(0x0D, 0x1044), reply(0x0D, 0x1044)),
+                NOP,
+                (write(0x32, data), reply(0x32, data)),
+            ],
+        ) as inst:
+            inst.set_baud_rate(115200)
+            inst.reset(hard)
+            assert inst.adapter.connection.baud_rate == 9600
+
     def test_set_baud_rate_invalid(self):
         with expected_protocol(ITLA, []) as inst, pytest.raises(ValueError):
             inst.set_baud_rate(14400)
@@ -445,12 +461,12 @@ class TestBaudRate:
 
 
 def test_serial_number_embedded_null():
-    """A PPCL300 returns 'CRTNH1E00F\\x00001\\x00' as serial number."""
-    data = b"CRTNH1E00F\x00001\x00"
+    """A PPCL300 returns e.g. 'CRTN000001\\x00001\\x00' as serial number."""
+    data = b"CRTN000001\x00001\x00"
     pairs = [(read(0x04), reply(0x04, len(data), status=2))]
     pairs += [
         (read(0x0B), reply(0x0B, int.from_bytes(data[i:i + 2], "big")))
         for i in range(0, len(data), 2)
     ]
     with expected_protocol(ITLA, pairs) as inst:
-        assert inst.serial_number == "CRTNH1E00F"
+        assert inst.serial_number == "CRTN000001"
