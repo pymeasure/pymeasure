@@ -123,6 +123,7 @@ class PPCL300(ITLA):
         super().__init__(adapter, name, **kwargs)
         self._firmware_version: str | None = None
         self._clean_jump_map: dict[int, tuple[float, float]] = {}  # 100 MHz: (°C, A)
+        self._clean_jump_power: float | None = None  # dBm
 
     def _register_implemented(self, register: int) -> bool:
         """Read `register` once and return False, if the module answers RNI."""
@@ -296,6 +297,7 @@ class PPCL300(ITLA):
             )
             self.power_setpoint = power
         self._clean_jump_map = dict(sorted(points.items()))
+        self._clean_jump_power = power
 
     @property
     def clean_jump_targets(self) -> tuple[float, ...]:
@@ -327,7 +329,8 @@ class PPCL300(ITLA):
         frequency afterwards, the accuracy depends on the operating point. Without
         ``sled_temperature`` and ``diode_current``, they are taken from the map loaded with
         :meth:`load_clean_jump_map`, which contains only the channel frequencies (the operating
-        points cannot be interpolated between channels).
+        points cannot be interpolated between channels). A jump with values from the map raises
+        a :class:`ValueError`, if :attr:`power_setpoint` differs from the power of the map.
 
         Requires the clean jump firmware, enabled output and :attr:`OperationMode.NO_DITHER`. In
         :attr:`OperationMode.DITHER`, the laser acknowledges the commands but does not jump.
@@ -348,7 +351,9 @@ class PPCL300(ITLA):
             :attr:`OperationMode.DITHER` (raises :class:`ValueError`) and afterwards that
             :attr:`frequency` reports the target frequency (raises :class:`RuntimeError`).
         """
+        map_power = None
         if sled_temperature is None and diode_current is None:
+            map_power = self._clean_jump_power
             try:
                 sled_temperature, diode_current = self._clean_jump_map[round(frequency / 1e8)]
             except KeyError:
@@ -359,25 +364,30 @@ class PPCL300(ITLA):
             raise ValueError("Give both sled_temperature and diode_current, or none of them.")
         strict_range(sled_temperature, (0, 655.35))
         strict_range(diode_current, (0, 6.5535))
-        if not self.clean_jump_available:
-            raise ITLAExecutionError(0xE9, ITLAError.RNI)  # before any other command
-        strict_range(frequency, (self.frequency_min, self.frequency_max))
-        if check and self.operation_mode == OperationMode.DITHER:
-            raise ValueError("Clean jump requires a low noise operation mode (NO_DITHER).")
-        self.write_register(0xE9, round(diode_current * 1e4))  # 0.1 mA
-        self._set_frequency(0xEA, frequency)  # 0xEA THz, 0xEB 0.1 GHz
-        self.write_register(0xEC, round(sled_temperature * 100))  # 0.01 °C
-        # Four steps: store the operating point, calculate filter 1, calculate filter 2, jump.
-        for _ in range(4):
-            self.write_register(0xED, 1)
-        if check:
-            reported = self.frequency
-            # the module may report the target 100 MHz lower
-            if abs(reported - frequency) > 0.15e9:
-                raise RuntimeError(
-                    f"Clean jump not executed: laser reports {reported / 1e12:.4f} THz instead of "
-                    f"{frequency / 1e12:.4f} THz."
+        with self._lock:
+            if not self.clean_jump_available:
+                raise ITLAExecutionError(0xE9, ITLAError.RNI)  # before any other command
+            if map_power is not None and abs(self.power_setpoint - map_power) > 0.005:
+                raise ValueError(
+                    f"Power setpoint differs from the power {map_power:g} dBm of the map."
                 )
+            strict_range(frequency, (self.frequency_min, self.frequency_max))
+            if check and self.operation_mode == OperationMode.DITHER:
+                raise ValueError("Clean jump requires a low noise operation mode (NO_DITHER).")
+            self.write_register(0xE9, round(diode_current * 1e4))  # 0.1 mA
+            self._set_frequency(0xEA, frequency)  # 0xEA THz, 0xEB 0.1 GHz
+            self.write_register(0xEC, round(sled_temperature * 100))  # 0.01 °C
+            # Four steps: store the operating point, calculate filter 1, calculate filter 2, jump.
+            for _ in range(4):
+                self.write_register(0xED, 1)
+            if check:
+                reported = self.frequency
+                # the module may report the target 100 MHz lower
+                if abs(reported - frequency) > 0.15e9:
+                    raise RuntimeError(
+                        f"Clean jump not executed: laser reports {reported / 1e12:.4f} THz "
+                        f"instead of {frequency / 1e12:.4f} THz."
+                    )
 
     def stop_clean_jump(self) -> None:
         """Stop the clean jump mode; the laser stays at the last jump target.

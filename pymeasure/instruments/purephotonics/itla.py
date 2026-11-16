@@ -185,17 +185,12 @@ class ITLA(Instrument):
         timeout: int = 1000,
         **kwargs,
     ):
-        super().__init__(
-            adapter,
-            name,
-            asrl={"baud_rate": baud_rate, **kwargs.pop("asrl", {})},
-            timeout=timeout,
-            **kwargs,
-        )
+        asrl = {"baud_rate": baud_rate, **kwargs.pop("asrl", {})}
+        super().__init__(adapter, name, asrl=asrl, timeout=timeout, **kwargs)
         self._lock = threading.RLock()
         self._response = ""
         self._last_reply = b""
-        self._host_baud_rate = baud_rate
+        self._host_baud_rate: int = asrl["baud_rate"]
 
     # Communication
     @staticmethod

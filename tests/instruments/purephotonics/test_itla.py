@@ -432,6 +432,16 @@ class TestBaudRate:
             inst.set_baud_rate(115200)
             assert inst.adapter.connection.baud_rate == 115200
 
+    def test_reset_after_asrl_baud_rate(self):
+        with expected_protocol(
+            ITLA,
+            [(write(0x32, 2), reply(0x32, 2))],
+            connection_attributes={"baud_rate": 115200},
+            asrl={"baud_rate": 115200},
+        ) as inst:
+            inst.reset()
+            assert inst.adapter.connection.baud_rate == 9600
+
     @pytest.mark.parametrize("hard, data", [(False, 2), (True, 1)])
     def test_reset_restores_9600(self, hard, data):
         """Soft and hard reset set a PPCL300 to 9600 Bd, the host port has to follow."""

@@ -272,8 +272,11 @@ def loaded(more_pairs):
     return [(read(0x31), reply(0x31, 1000))] + more_pairs
 
 
+POWER_10_DBM = [(read(0x31), reply(0x31, 1000))]
+
+
 def test_clean_jump_from_map(map_file):
-    pairs = loaded(PROBE_JUMP + LIMITS + [(read(0x90), reply(0x90, 1))] + JUMP)
+    pairs = loaded(PROBE_JUMP + POWER_10_DBM + LIMITS + [(read(0x90), reply(0x90, 1))] + JUMP)
     pairs += [(read(0x40), reply(0x40, 192)), (read(0x41), reply(0x41, 500))]
     with expected_protocol(PPCL300, pairs) as inst:
         inst.load_clean_jump_map(map_file, check_serial=False)
@@ -282,10 +285,18 @@ def test_clean_jump_from_map(map_file):
 
 @pytest.mark.parametrize("index", [1, -1])
 def test_clean_jump_to_target(map_file, index):
-    pairs = loaded(PROBE_JUMP + LIMITS + JUMP)
+    pairs = loaded(PROBE_JUMP + POWER_10_DBM + LIMITS + JUMP)
     with expected_protocol(PPCL300, pairs) as inst:
         inst.load_clean_jump_map(map_file, check_serial=False)
         assert inst.clean_jump_to_target(index, check=False) == 192.05e12
+
+
+def test_clean_jump_power_changed(map_file):
+    pairs = loaded(PROBE_JUMP + [(read(0x31), reply(0x31, 1300))])
+    with expected_protocol(PPCL300, pairs) as inst:
+        inst.load_clean_jump_map(map_file, check_serial=False)
+        with pytest.raises(ValueError, match="10 dBm"):
+            inst.clean_jump(192.05e12)
 
 
 def test_clean_jump_to_target_out_of_range(map_file):
