@@ -24,7 +24,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from typing import Any, Generic, Literal, TypeVar, overload
 
 import numpy as np
@@ -486,7 +486,7 @@ class ListParameter(Parameter[T]):
     def __init__(
         self,
         name: str,
-        choices: Iterable[T] | None = None,
+        choices: list[T] | tuple[T, ...] | None = None,
         units: str | None = None,
         **kwargs,
     ):
