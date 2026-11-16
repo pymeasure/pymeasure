@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from typing import cast
+
 from pymeasure.units import ureg
 
 Q_ = ureg.Quantity
@@ -38,7 +40,7 @@ def set_type(response_raw: str, index: int, unit: str = 'Hz'):
     return Q_(response_raw[index:], unit)
 
 
-def convert_quantity_to_magnitude(val: "str | int | Q_", unit: str) -> int|float:
+def convert_quantity_to_magnitude(val: str | int | Q_, unit: str) -> int | float:
     """Convert a value to its magnitude in the specified unit.
 
      :param val: Value as string, int, or :class:`pint.Quantity`.
@@ -50,7 +52,7 @@ def convert_quantity_to_magnitude(val: "str | int | Q_", unit: str) -> int|float
         val = Q_(val)
 
     if isinstance(val, Q_):
-        value = val.to(unit).magnitude
+        value = cast(Q_, val).to(unit).magnitude
 
         if isinstance(value, float) and value.is_integer():
             return int(value)

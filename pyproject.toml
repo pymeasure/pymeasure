@@ -38,7 +38,7 @@ dependencies = [
 
 [project.optional-dependencies]
 gui = [
-    "pyqtgraph>=0.12",
+    "pyqtgraph>=0.13.3",
     "qtpy>=2.4",
 ]
 tcp = [
@@ -111,6 +111,5 @@ reportAttributeAccessIssue = "warning"
 reportOptionalSubscript = "warning"
 reportOptionalMemberAccess = "warning"
 reportIncompatibleMethodOverride = "warning"
-reportOperatorIssue = "warning"
 reportPrivateImportUsage = "none"
 defineConstant = { PYQT6 = true, PYSIDE2 = false, PYQT5 = false, PYSIDE6 = false }

@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.common_base import identity
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -80,9 +81,10 @@ class AgilentN8975AFrequency(Channel):
         "FREQ:LIST:DATA?",
         "FREQ:LIST:DATA %s",
         """Control the frequencies in Hz for the list frequency :attr:`mode` (list of float).""",
-        set_process=lambda v: ','.join(map(str, v)),
+        set_process=lambda v: ",".join(map(str, v)),
         preprocess_reply=lambda v: v.strip("\x00"),
-        )
+        get_process_list=identity,
+    )
 
     number_of_entries = Channel.measurement(
         "FREQ:LIST:COUN?",

@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import strict_range
 
 from .ah2500a import AH2500A
@@ -31,8 +32,13 @@ from .ah2500a import AH2500A
 class AH2700A(AH2500A):
     """ Andeen Hagerling 2700A Precision Capacitance Bridge implementation
     """
-    def __init__(self, adapter, name="Andeen Hagerling 2700A Precision Capacitance Bridge",
-                 timeout=5000, **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Andeen Hagerling 2700A Precision Capacitance Bridge",
+        timeout: int = 5000,
+        **kwargs,
+    ):
         super().__init__(
             adapter,
             name=name,
@@ -61,11 +67,11 @@ class AH2700A(AH2500A):
         cast=str,
     )
 
-    def reset(self):
+    def reset(self) -> None:
         """ Resets the instrument. """
         self.write("*RST")
 
-    def trigger(self):
+    def trigger(self) -> None:
         """
         Triggers a new measurement without blocking and waiting for the return
         value.

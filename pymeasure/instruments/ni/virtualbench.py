@@ -1345,7 +1345,7 @@ class VirtualBench:
 
             np_array = np.array(analog_data_out)
             np_array = np.split(np_array, analog_data_stride)
-            np_array = np.append(np.array(times), np_array, axis=0)
+            np_array = np.append(np.array(times), np_array, axis=0)  # pyright: ignore[reportArgumentType, reportCallIssue]
             np_array = np.transpose(np_array)
             return pd.DataFrame(data=np_array)
 

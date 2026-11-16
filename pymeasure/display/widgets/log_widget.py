@@ -79,7 +79,6 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
     tab_widget = None
     tab_index = None
 
-    _blink_qtimer = None
     _blink_color = None
     _blink_state = False
 
@@ -100,7 +99,7 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
         self._layout()
 
         # Setup blinking
-        if self._blink_qtimer is None:
+        if not hasattr(self, "_blink_qtimer"):
             self._blink_qtimer = QtCore.QTimer()
 
         self._blink_qtimer.timeout.connect(self._blink)

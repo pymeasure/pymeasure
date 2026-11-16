@@ -13,3 +13,4 @@ in an instrument not included, please consider :doc:`adding the instrument </dev
    rigol_dg800
    rigol_dho_base
    rigol_dg5000pro
+   rigol_ds1000z

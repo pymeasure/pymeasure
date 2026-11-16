@@ -97,6 +97,25 @@ def test_read_binary_values(response, options, result):
     assert list(a.read_binary_values(**options)) == pytest.approx(result)
 
 
+@pytest.mark.parametrize(
+    "termination_bytes, result",
+    (
+        (1, [1, 2, 3, 4]),
+        (-1, [1, 2, 3, 4]),
+        (0, [1, 2, 3, 4, 10]),
+        (None, [1, 2, 3, 4, 10]),
+    ),
+)
+def test_read_binary_values_termination_bytes(termination_bytes, result):
+    """Test the stripping of the termination at the message end, regardless of the sign."""
+    response = b"\x00\x00" + bytes([1, 2, 3, 4]) + b"\n"
+    a = ProtocolAdapter([(None, response)])
+    values = a.read_binary_values(
+        header_bytes=2, dtype=np.uint8, termination_bytes=termination_bytes
+    )
+    assert list(values) == result
+
+
 def test_write_binary_values():
     """Test write_binary_values in the ieee header format."""
     a = ProtocolAdapter([(b'CMD#212\x00\x00\x80?\x00\x00\x00@\x00\x00@@\n', None)])
@@ -143,3 +162,34 @@ class TestLoggingForTestGenerator:
         record = caplog.records[0]
         assert record.msg == "READ:%s"
         assert record.args == (read,)
+
+
+def test_flush_read_buffer_not_implemented(adapter):
+    with pytest.raises(NotImplementedError):
+        adapter.flush_read_buffer()
+
+
+@pytest.mark.parametrize("values, datatype, is_big_endian, header_fmt, expected", [
+    # hp header: one digit for the byte count + payload bytes
+    ([1, 2], "h", False, "hp", b"#A\x04\x00\x01\x00\x02\x00"),
+    # empty header: raw payload bytes only
+    ([1, 2], "h", False, "empty", b"\x01\x00\x02\x00"),
+])
+def test_format_binary_values_header_fmt(values, datatype, is_big_endian, header_fmt, expected):
+    assert Adapter()._format_binary_values(
+        values, datatype, is_big_endian, header_fmt) == expected
+
+
+def test_format_binary_values_invalid_header_raises(adapter):
+    with pytest.raises(ValueError):
+        adapter._format_binary_values([1, 2], header_fmt="bad")
+
+
+def test_fake_adapter_repr(fake):
+    assert repr(fake) == "<FakeAdapter>"
+
+
+def test_fake_adapter_read_bytes_truncates(fake):
+    fake._buffer = "abcdef"
+    assert fake._read_bytes(3, False) == b"abc"
+    assert fake._buffer == ""

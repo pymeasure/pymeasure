@@ -28,6 +28,7 @@ from time import sleep
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     truncated_discrete_set,
@@ -58,8 +59,17 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
 
     """
 
+    def __init__(
+        self, adapter: AdapterType, name: str = "Yokogawa 7651 Programmable DC Source", **kwargs
+    ):
+        super().__init__(
+            adapter, name, **kwargs
+        )
+
+        self.write("H0;E")  # Set no header in output data
+
     @staticmethod
-    def _find(v, key):
+    def _find(v: str, key: str) -> str:
         """ Returns a value by parsing a current panel setting output
         string array, which is returned with a call to "OS;E". This
         is used for Instrument.control methods, and should not be
@@ -116,48 +126,43 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
         """Control the compliance voltage in Volts, which can take values between 1 and 30 V.""",
         validator=truncated_range,
         values=[1, 30],
+        cast=str,
         get_process=lambda v: int(Yokogawa7651._find(v, 'LV'))
     )
     compliance_current = Instrument.control(
         "OS;E", "LA%g;E",
-        """Control the compliance current  in Amps,which can take values from 5 to 120 mA.""",
+        """Control the compliance current in Amps, which can take values from 5 to 120 mA.""",
         validator=truncated_range,
         values=[5e-3, 120e-3],
+        cast=str,
         get_process=lambda v: float(Yokogawa7651._find(v, 'LA')) * 1e-3,  # converts A to mA
         set_process=lambda v: v * 1e3,  # converts mA to A
     )
 
-    def __init__(self, adapter, name="Yokogawa 7651 Programmable DC Source", **kwargs):
-        super().__init__(
-            adapter, name, **kwargs
-        )
-
-        self.write("H0;E")  # Set no header in output data
-
     @property
-    def id(self):
+    def id(self) -> str:
         """ Get the identification of the instrument """
         return self.ask("OS;E").split('\r\n\n')[0]
 
     @property
-    def source_enabled(self):
+    def source_enabled(self) -> bool:
         """ Get a boolean value that is True if the source is enabled,
         determined by checking if the 5th bit of the OC flag is a binary 1.
         """
         oc = int(self.ask("OC;E")[5:])
-        return oc & 0b10000
+        return bool(oc & 0b10000)
 
-    def enable_source(self):
+    def enable_source(self) -> None:
         """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("O1;E")
 
-    def disable_source(self):
+    def disable_source(self) -> None:
         """ Disables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("O0;E")
 
-    def apply_current(self, max_current=1e-3, compliance_voltage=1):
+    def apply_current(self, max_current: float = 1e-3, compliance_voltage: int = 1) -> None:
         """ Configures the instrument to apply a source current, which can
         take optional parameters that defer to the :attr:`~.Yokogawa7651.source_current_range`
         and :attr:`~.Yokogawa7651.compliance_voltage` properties. """
@@ -165,7 +170,7 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
         self.source_current_range = max_current
         self.compliance_voltage = compliance_voltage
 
-    def apply_voltage(self, max_voltage=1, compliance_current=10e-3):
+    def apply_voltage(self, max_voltage: float = 1, compliance_current: float = 10e-3) -> None:
         """ Configures the instrument to apply a source voltage, which can
         take optional parameters that defer to the :attr:`~.Yokogawa7651.source_voltage_range`
         and :attr:`~.Yokogawa7651.compliance_current` properties. """
@@ -173,7 +178,7 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
         self.source_voltage_range = max_voltage
         self.compliance_current = compliance_current
 
-    def ramp_to_current(self, current, steps=25, duration=0.5):
+    def ramp_to_current(self, current: float, steps: int = 25, duration: float = 0.5) -> None:
         """ Ramps the current to a value in Amps by traversing a linear spacing
         of current steps over a duration, defined in seconds.
 
@@ -188,7 +193,7 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
                 self.source_current = current_value
                 sleep(pause)
 
-    def ramp_to_voltage(self, voltage, steps=25, duration=0.5):
+    def ramp_to_voltage(self, voltage: float, steps: int = 25, duration: float = 0.5) -> None:
         """ Ramps the voltage to a value in Volts by traversing a linear spacing
         of voltage steps over a duration, defined in seconds.
 
@@ -203,7 +208,7 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
                 self.source_voltage = voltage_value
                 sleep(pause)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """ Shuts down the instrument, and ramps the current or voltage to zero
         before disabling the source. """
 

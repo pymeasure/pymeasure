@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from .dc205 import DC205
 from .ldc500series import LDC500Series
 from .sg380 import SG380
 from .sr510 import SR510

@@ -22,11 +22,12 @@
 # THE SOFTWARE.
 #
 import importlib.util
+from unittest import mock
 
 import pytest
 import pyvisa
 
-from pymeasure.adapters import VISAAdapter
+from pymeasure.adapters import ProtocolAdapter, VISAAdapter
 from pymeasure.test import expected_protocol
 
 # This uses a pyvisa-sim default instrument, we could also define our own.
@@ -55,6 +56,22 @@ def adapter():
             raise
     # Close the connection
     adapter.close()
+
+
+@pytest.fixture
+def make_visa_adapter():
+    """Return a factory creating VISAAdapter instances against the pyvisa-sim
+    resource; any adapter created during the test is closed again on teardown."""
+    created = []
+
+    def _make(**kwargs):
+        adapter = VISAAdapter(SIM_RESOURCE, visa_library='@sim', **kwargs)
+        created.append(adapter)
+        return adapter
+
+    yield _make
+    for adapter in created:
+        adapter.close()
 
 
 def test_nested_adapter():
@@ -150,3 +167,103 @@ class TestReadBytes:
         adapter.write("*IDN?")
         # `break_on_termchar=False` is default value
         assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\nSCPI,MOCK,VERSION_1.0\n"
+
+
+def test_init_with_protocol_adapter():
+    """VISAAdapter wraps a ProtocolAdapter, reusing its connection and aliasing methods."""
+    proto = ProtocolAdapter()
+    adapter = VISAAdapter(proto)
+    assert adapter.connection is proto
+    # write_raw aliased to write_bytes on the connection
+    assert adapter.connection.write_raw == adapter.connection.write_bytes
+    # read_bytes aliased to the protocol adapter's read_bytes
+    assert adapter.read_bytes == proto.read_bytes
+
+
+@pytest.mark.parametrize(
+    "interface_kwargs, matching, expected",
+    [
+        # asrl kwargs match the ASRL interface of SIM_RESOURCE: dict applied
+        ({"asrl": {"read_termination": "\rx\n"}}, True, "\rx\n"),
+        # usb kwargs do not match (interface is asrl): dict not applied, default kept
+        ({"usb": {"read_termination": "\rx\n"}}, False, None),
+    ],
+)
+def test_init_interface_specific_kwargs(interface_kwargs, matching, expected, make_visa_adapter):
+    """Interface-specific kwargs are only applied when matching the interface type."""
+    adapter = make_visa_adapter(**interface_kwargs)
+    assert adapter.connection.read_termination == expected
+
+
+def test_close_closes_manager_on_pyvisa_sim():
+    """close() also closes the manager when using the pyvisa-sim library."""
+    adapter = VISAAdapter(SIM_RESOURCE, visa_library='@sim')
+    assert adapter.manager.visalib.library_path == "unset"
+    assert adapter.manager.session is not None
+    adapter.close()
+    with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
+        _ = adapter.manager.session
+
+
+def test_read_bytes_negative_no_break_on_termchar(make_visa_adapter):
+    """read_bytes(-1) without break_on_termchar uses the byte-by-byte loop."""
+    adapter = make_visa_adapter(read_termination="\n", timeout=50)
+    adapter.write("*IDN?")
+    # With a short timeout, the byte-by-byte loop returns what was buffered
+    # before a timeout occurs.
+    result = adapter.read_bytes(-1)
+    assert result == b"SCPI,MOCK,VERSION_1.0\n"
+
+
+def test_read_bytes_negative_break_on_termchar(make_visa_adapter):
+    """read_bytes(-1, break_on_termchar=True) delegates to read_raw(None)."""
+    adapter = make_visa_adapter(read_termination="\n")
+    adapter.write("*IDN?")
+    with mock.patch.object(
+        adapter.connection, "read_raw", wraps=adapter.connection.read_raw
+    ) as spy:
+        result = adapter.read_bytes(-1, break_on_termchar=True)
+    assert result == b"SCPI,MOCK,VERSION_1.0\n"
+    spy.assert_called_once_with(None)
+
+
+def test_wait_for_srq(make_visa_adapter):
+    """wait_for_srq passes the timeout (in ms) to the connection."""
+    adapter = make_visa_adapter()
+    with mock.patch.object(adapter.connection, "wait_for_srq", create=True) as spy:
+        adapter.wait_for_srq(timeout=3)
+    spy.assert_called_once_with(3000)
+
+
+def test_flush_read_buffer_normal(make_visa_adapter):
+    """flush_read_buffer calls flush with discard_read_buffer and discard_receive_buffer."""
+    adapter = make_visa_adapter()
+    with mock.patch.object(adapter.connection, "flush") as spy:
+        adapter.flush_read_buffer()
+    called_args = [call.args[0] for call in spy.call_args_list]
+    assert pyvisa.constants.BufferOperation.discard_read_buffer in called_args
+    assert pyvisa.constants.BufferOperation.discard_receive_buffer in called_args
+
+
+def test_flush_read_buffer_not_implemented_fallback(make_visa_adapter):
+    """flush_read_buffer falls back to read_bytes(-1) with timeout=0 on NotImplementedError."""
+    adapter = make_visa_adapter(read_termination="\n")
+
+    def raising_flush(operation):
+        raise NotImplementedError
+
+    adapter.connection.flush = raising_flush
+    original_timeout = adapter.connection.timeout
+    with mock.patch.object(adapter, "read_bytes", wraps=adapter.read_bytes) as spy:
+        adapter.flush_read_buffer()
+    # read_bytes was called with -1 to drain the buffer
+    assert any(call.args[0] == -1 for call in spy.call_args_list)
+    # timeout was restored
+    assert adapter.connection.timeout == original_timeout
+
+
+def test_repr(make_visa_adapter):
+    """repr of the adapter contains the resource name."""
+    adapter = make_visa_adapter()
+    assert SIM_RESOURCE in repr(adapter)
+    assert "VISAAdapter" in repr(adapter)
