@@ -24,7 +24,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import Any, Generic, Literal, TypeVar, overload
 
 import numpy as np
@@ -472,7 +472,7 @@ class VectorParameter(Parameter[list[float]]):
                 f"units={self.units},length={self._length})>")
 
 
-class ListParameter(Parameter[object]):
+class ListParameter(Parameter[T]):
     """:class:`.Parameter` sub-class that stores the value as a list.
     String representation of choices must be unique.
 
@@ -486,7 +486,7 @@ class ListParameter(Parameter[object]):
     def __init__(
         self,
         name: str,
-        choices: list[object] | tuple[object, ...] | None = None,
+        choices: Iterable[T] | None = None,
         units: str | None = None,
         **kwargs,
     ):
@@ -497,13 +497,13 @@ class ListParameter(Parameter[object]):
             if not len(keys) == len(set(keys)):
                 raise ValueError(
                     "String representation of choices is not unique!")
-            self._choices: dict[str, object] | None = {k: c for k, c in zip(keys, choices)}
+            self._choices: dict[str, T] | None = {k: c for k, c in zip(keys, choices)}
         else:
             self._choices = None
         super().__init__(name, **kwargs)
         self._help_fields.append(('choices are', 'choices'))
 
-    def convert(self, value: object) -> object:
+    def convert(self, value: object) -> T:
         if self._choices is None:
             raise ValueError("ListParameter cannot be set since "
                              "allowed choices are set to None.")
@@ -521,7 +521,7 @@ class ListParameter(Parameter[object]):
         return value
 
     @property
-    def choices(self) -> tuple[object, ...] | None:
+    def choices(self) -> tuple[T, ...] | None:
         """ Returns an immutable iterable of choices, or None if not set. """
         if self._choices is None:
             return None
