@@ -289,15 +289,16 @@ class PPCL300(ITLA):
             raise ValueError(
                 f"Map file '{path.name}' contains several powers {sorted(set(powers))} dBm."
             )
-        previous = self.power_setpoint
-        if abs(previous - power) > 0.005:
-            warnings.warn(
-                f"Power setpoint changed from {previous:g} dBm to {power:g} dBm of the map.",
-                stacklevel=2,
-            )
-            self.power_setpoint = power
-        self._clean_jump_map = dict(sorted(points.items()))
-        self._clean_jump_power = power
+        with self._lock:
+            previous = self.power_setpoint
+            if abs(previous - power) > 0.005:
+                warnings.warn(
+                    f"Power setpoint changed from {previous:g} dBm to {power:g} dBm of the map.",
+                    stacklevel=2,
+                )
+                self.power_setpoint = power
+            self._clean_jump_map = dict(sorted(points.items()))
+            self._clean_jump_power = power
 
     @property
     def clean_jump_targets(self) -> tuple[float, ...]:
@@ -351,20 +352,20 @@ class PPCL300(ITLA):
             :attr:`OperationMode.DITHER` (raises :class:`ValueError`) and afterwards that
             :attr:`frequency` reports the target frequency (raises :class:`RuntimeError`).
         """
-        map_power = None
-        if sled_temperature is None and diode_current is None:
-            map_power = self._clean_jump_power
-            try:
-                sled_temperature, diode_current = self._clean_jump_map[round(frequency / 1e8)]
-            except KeyError:
-                if not self._clean_jump_map:
-                    raise ValueError("No clean jump map loaded.") from None
-                raise ValueError(f"{frequency / 1e12} THz is not in the clean jump map.") from None
-        elif sled_temperature is None or diode_current is None:
-            raise ValueError("Give both sled_temperature and diode_current, or none of them.")
-        strict_range(sled_temperature, (0, 655.35))
-        strict_range(diode_current, (0, 6.5535))
         with self._lock:
+            map_power = None
+            if sled_temperature is None and diode_current is None:
+                map_power = self._clean_jump_power
+                try:
+                    sled_temperature, diode_current = self._clean_jump_map[round(frequency / 1e8)]
+                except KeyError:
+                    if not self._clean_jump_map:
+                        raise ValueError("No clean jump map loaded.") from None
+                    raise ValueError(f"{frequency / 1e12} THz is not in the map.") from None
+            elif sled_temperature is None or diode_current is None:
+                raise ValueError("Give both sled_temperature and diode_current, or none of them.")
+            strict_range(sled_temperature, (0, 655.35))
+            strict_range(diode_current, (0, 6.5535))
             if not self.clean_jump_available:
                 raise ITLAExecutionError(0xE9, ITLAError.RNI)  # before any other command
             if map_power is not None and abs(self.power_setpoint - map_power) > 0.005:

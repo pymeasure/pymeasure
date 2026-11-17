@@ -317,7 +317,7 @@ def test_clean_jump_targets_read_only(map_file):
 def test_clean_jump_not_in_map(map_file):
     with expected_protocol(PPCL300, loaded([])) as inst:
         inst.load_clean_jump_map(map_file, check_serial=False)
-        with pytest.raises(ValueError, match="not in the clean jump map"):
+        with pytest.raises(ValueError, match="not in the map"):
             inst.clean_jump(192.1e12)
 
 
