@@ -24,7 +24,9 @@ The instructions below assume that you have set up Anaconda, as described in the
 
 .. _their documentation: https://help.github.com/desktop/
 
-Clone your fork of PyMeasure :code:`your-github-username/pymeasure`. In the following terminal commands replace your desired path and GitHub username.
+After forking, check that :code:`pymeasure` appears in your GitHub account. To clone your fork,
+replace :code:`your-github-username` below with your own GitHub username and
+:code:`/path/for/code` with the folder where you want to keep the clone.
 
 .. code-block:: bash
 
