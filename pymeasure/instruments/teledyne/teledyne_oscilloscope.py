@@ -1064,7 +1064,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
             self._trigger_select_set_command = self._trigger_select_normal_command
         elif num_expected_pars == 5:
             self._trigger_select_set_command = self._trigger_select_extended_command
-        self._trigger_select = value
+        self._trigger_select = list(value)
 
     def trigger_setup(
         self,
