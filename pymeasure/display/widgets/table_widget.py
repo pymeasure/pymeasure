@@ -27,7 +27,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 from functools import partial
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -136,7 +136,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
     """
 
     float_digits = 6
-    concat_axis = 0
+    concat_axis: Literal[0, 1] = 0
 
     def __init__(
         self, column_index: str | None = None, results_list: list | None = None, parent=None
@@ -315,15 +315,16 @@ class PandasModelBase(QtCore.QAbstractTableModel):
     def vertical_header_decoration(self, section: int) -> QtGui.QPixmap | None:
         return None
 
-    def export_df(self) -> pd.DataFrame | pd.Series | None:
+    def export_df(self) -> pd.DataFrame | None:
         df_list = [results.data for results in self.results_list]
         if not df_list:  # Empty list
-            df = None
-        else:
-            # Concatenate pandas data frames
-            df = pd.concat(df_list, axis=self.concat_axis, sort=False)  # pyright: ignore[reportArgumentType, reportCallIssue]
-            df = df.replace(to_replace=np.nan, value="")
-        return df
+            return None
+        # Concatenate pandas data frames
+        df = pd.concat(df_list, axis=self.concat_axis, sort=False)
+        # pandas' concat overloads advertise Series/None even for DataFrame sequences,
+        # but axis 0 or 1 concatenation of a non-empty list of DataFrames is always a DataFrame.
+        assert isinstance(df, pd.DataFrame)
+        return df.replace(to_replace=np.nan, value="")
 
     def set_index(self, index: str | None) -> None:
         self.column_index = index
@@ -345,7 +346,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
 
 class PandasModelByRow(PandasModelBase):
-    concat_axis = 0
+    concat_axis: Literal[0, 1] = 0
 
     def pandas_row_count(self) -> int:
         rows = 0
@@ -408,7 +409,7 @@ class PandasModelByRow(PandasModelBase):
 
 
 class PandasModelByColumn(PandasModelBase):
-    concat_axis = 1
+    concat_axis: Literal[0, 1] = 1
 
     def pandas_row_count(self) -> int:
         if self.column_index is None:

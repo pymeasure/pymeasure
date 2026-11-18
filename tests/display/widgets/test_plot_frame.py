@@ -39,6 +39,7 @@ def test_plot_frame_construction(qtbot):
     """
     frame = PlotFrame("Time (s)", "Voltage (V)")
     qtbot.addWidget(frame)
+    assert frame.plot_widget is not None
     assert frame.plot is frame.plot_widget.getPlotItem()
 
 
@@ -56,6 +57,7 @@ def test_setup_ui_creates_plot_and_coordinates(qtbot):
     assert frame.plot is frame.plot_widget.getPlotItem()
     assert frame.coordinates is not None
     assert frame.crosshairs is not None
+    assert frame.timer is not None
     assert frame.timer.isActive()
 
 
@@ -64,6 +66,7 @@ def test_update_coordinates_updates_label(qtbot):
     qtbot.addWidget(frame)
     frame.update_coordinates(1.5, 2.5)
     # LabelItem stores the text on an internal QGraphicsTextItem
+    assert frame.coordinates is not None
     assert frame.coordinates.item.toPlainText() == "(1.5, 2.5)"
 
 
@@ -111,12 +114,14 @@ def test_close_tears_down_plot_frame(qtbot):
     qtbot.addWidget(frame)
     timer = frame.timer
     crosshairs = frame.crosshairs
+    assert timer is not None
     assert timer.isActive()
 
     frame.close()
 
     assert frame._torn_down is True
     assert not timer.isActive()
+    assert crosshairs is not None
     assert crosshairs.proxy.blockSignal is True
     assert crosshairs.proxy.slot is None
     assert frame.timer is None

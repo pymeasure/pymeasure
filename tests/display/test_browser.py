@@ -318,8 +318,10 @@ class TestBrowser:
 
         # Assert (production calls sortItems(1, AscendingOrder) for this option)
         assert browser.sortColumn() == 1
-        assert browser.header().sortIndicatorSection() == 1
-        assert browser.header().sortIndicatorOrder() == QtCore.Qt.SortOrder.AscendingOrder
+        header = browser.header()
+        assert header is not None
+        assert header.sortIndicatorSection() == 1
+        assert header.sortIndicatorOrder() == QtCore.Qt.SortOrder.AscendingOrder
 
     def test_measured_quantities_validation(self, qtbot, mock_procedure_class):
         """Test that measured_quantities are stored as a set."""
@@ -418,6 +420,7 @@ class TestBrowserEdgeCases:
 
         added_item = browser.add(mock_experiment)
 
+        assert added_item is not None
         assert added_item.checkState(0) == QtCore.Qt.CheckState.Checked
 
     def test_browser_no_display_parameters(self, mock_procedure_class, qtbot):
@@ -429,7 +432,9 @@ class TestBrowserEdgeCases:
         )
         qtbot.addWidget(browser)
         assert browser.columnCount() == 4
-        labels = [browser.headerItem().text(i) for i in range(4)]
+        header_item = browser.headerItem()
+        assert header_item is not None
+        labels = [header_item.text(i) for i in range(4)]
         assert labels == ["Graph", "Filename", "Progress", "Status"]
 
     def test_browser_sort_by_filename_false(self, mock_procedure_class, qtbot):
@@ -444,4 +449,6 @@ class TestBrowserEdgeCases:
         )
         qtbot.addWidget(browser)
         assert browser.sortColumn() != 1
-        assert browser.header().sortIndicatorSection() != 1
+        header = browser.header()
+        assert header is not None
+        assert header.sortIndicatorSection() != 1

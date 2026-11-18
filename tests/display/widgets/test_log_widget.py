@@ -181,8 +181,10 @@ def test_log_widget_setup_ui_handler_fmt(qtbot):
     """The handler's formatter uses the widget's fmt and datefmt."""
     wdg = LogWidget("log", fmt="%(message)s", datefmt="%H:%M:%S")
     qtbot.addWidget(wdg)
-    assert wdg.handler.formatter._fmt == "%(message)s"
-    assert wdg.handler.formatter.datefmt == "%H:%M:%S"
+    formatter = wdg.handler.formatter
+    assert formatter is not None
+    assert formatter._fmt == "%(message)s"
+    assert formatter.datefmt == "%H:%M:%S"
 
 
 # --- _layout ---
@@ -196,6 +198,7 @@ def test_log_widget_layout_contains_view(qtbot):
     assert layout is not None
     assert layout.count() == 1
     item = layout.itemAt(0)
+    assert item is not None
     assert item.widget() is wdg.view
 
 

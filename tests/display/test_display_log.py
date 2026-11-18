@@ -89,6 +89,7 @@ def test_emit_uses_formatter():
         msg="hello", args=None, exc_info=None,
     )
     handler.emit(record)
+    assert handler.formatter is not None
     assert received == [handler.formatter.format(record)]
     assert received == ["INFO:test:hello"]
 

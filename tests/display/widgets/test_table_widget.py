@@ -271,8 +271,22 @@ def test_pandas_model_base_export_df_concat(qtbot):
     model.add_results(ResultsTable(cast(Results, FakeResults(df1)), RED))
     model.add_results(ResultsTable(cast(Results, FakeResults(df2)), BLUE))
     df = model.export_df()
+    assert df is not None, "export_df() must return a DataFrame for non-empty input"
     assert df.shape == (4, 1)
     assert df["A"].tolist() == [1.0, 2.0, 3.0, 4.0]
+
+
+def test_pandas_model_base_export_df_concat_by_column(qtbot):
+    model = PandasModelByColumn(results_list=[])
+    df1 = pd.DataFrame({"A": [1.0, 2.0]})
+    df2 = pd.DataFrame({"B": [3.0, 4.0]})
+    model.add_results(ResultsTable(cast(Results, FakeResults(df1)), RED))
+    model.add_results(ResultsTable(cast(Results, FakeResults(df2)), BLUE))
+    df = model.export_df()
+    assert df is not None, "export_df() must return a DataFrame for non-empty input"
+    assert df.shape == (2, 2)
+    assert df["A"].tolist() == [1.0, 2.0]
+    assert df["B"].tolist() == [3.0, 4.0]
 
 
 def test_pandas_model_base_copy_model(qtbot):
@@ -519,8 +533,10 @@ def test_table_set_model_wraps_in_proxy(qtbot):
     table = _make_table(qtbot, refresh_time=None)
     # The view's model is a QSortFilterProxyModel, source_model is the real one
     from pymeasure.display.Qt import QtCore
-    assert isinstance(table.model(), QtCore.QSortFilterProxyModel)
-    assert table.source_model() is table.model().sourceModel()
+
+    model = table.model()
+    assert isinstance(model, QtCore.QSortFilterProxyModel)
+    assert table.source_model() is model.sourceModel()
 
 
 def test_table_add_remove_table(qtbot):
