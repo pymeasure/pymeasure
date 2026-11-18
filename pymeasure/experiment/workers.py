@@ -23,6 +23,7 @@
 #
 
 import logging
+import threading
 import time
 import traceback
 from queue import Queue
@@ -190,6 +191,31 @@ class Worker(StoppableThread):
 
 
 
+# Guards a routine's analysis status and its rerun_pending flag. The GUI
+# thread queues analyses (request_analysis) while the analyzer thread decides,
+# in Analyzer.shutdown, whether the routine goes back on the queue; without
+# the lock a request landing between that read and the status update is lost.
+_routine_status_lock = threading.Lock()
+
+
+def request_analysis(routine):
+    """ Record that a new analysis of ``routine`` has been queued.
+
+    Every analysis queued for one experiment shares that experiment's routine,
+    and the queue runs whichever row's routine is QUEUED. A request that
+    arrives while the routine is RUNNING therefore has to be remembered, or
+    the run in flight finishes as FINISHED (the procedure having ended or
+    been aborted meanwhile) and the new row is never picked up. A request
+    after a finished pass puts the routine back on the queue. FAILED and
+    ABORTED are left alone: those wait for the user's Restart.
+    """
+    with _routine_status_lock:
+        if routine.status == Procedure.RUNNING:
+            routine.rerun_pending = True
+        elif routine.status == Procedure.FINISHED:
+            routine.status = Procedure.QUEUED
+
+
 class Analyzer(StoppableThread):
     """ Analyzer runs the analysis on a specified procedure set and emits information about
     its progress and its status over a ZMQ TCP port.
@@ -280,16 +306,22 @@ class Analyzer(StoppableThread):
         log.info('Attempting to shutdown analyzer')
         self.routine.shutdown()
 
-        if self.should_stop() and self.routine.status == Procedure.RUNNING:
-            self.update_status(Procedure.ABORTED)
-        elif self.routine.status == Procedure.RUNNING:
-            if self.routine.procedure.status == Procedure.RUNNING:
-                self.emit('progress', 100.)
-                self.update_status(Procedure.FINISHED)
-                self.update_status(Procedure.QUEUED)
-                sleep(0.01)
-            else:
-                self.update_status(Procedure.FINISHED)
+        with _routine_status_lock:
+            # An analysis queued while this one ran (see request_analysis)
+            # still has to run, even if the procedure has since finished or
+            # been aborted: it was queued to see the data this run missed.
+            rerun = getattr(self.routine, 'rerun_pending', False)
+            self.routine.rerun_pending = False
+            if self.should_stop() and self.routine.status == Procedure.RUNNING:
+                self.update_status(Procedure.ABORTED)
+            elif self.routine.status == Procedure.RUNNING:
+                if rerun or self.routine.procedure.status == Procedure.RUNNING:
+                    self.emit('progress', 100.)
+                    self.update_status(Procedure.FINISHED)
+                    self.update_status(Procedure.QUEUED)
+                else:
+                    self.update_status(Procedure.FINISHED)
+        sleep(0.01)
 
 
         self.monitor_queue.put(None)

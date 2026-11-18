@@ -145,7 +145,10 @@ class AnalysisBrowserItem(BrowserItem):
     def __init__(self, results, color, parent=None):
         super().__init__(results, color, parent)
 
-        self.setStatus(results.routine.status)
+        # Not results.routine.status: every analysis of an experiment shares
+        # that routine, so a row added while another analysis of it runs
+        # would read 'Running' until its own turn, and forever if none came.
+        self.setStatus(Procedure.QUEUED)
 
 
 

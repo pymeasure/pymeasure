@@ -30,7 +30,7 @@ from os import remove as rmfile
 from .Qt import QtCore
 from .listeners import Monitor
 from ..experiment import Procedure
-from ..experiment.workers import Worker, Analyzer
+from ..experiment.workers import Worker, Analyzer, request_analysis
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -454,13 +454,20 @@ class AnalyzerManager(QtCore.QObject):
         else:
             raise Exception("There is no Experiment running")
 
+    def _from_current_monitor(self):
+        # _finish starts the next analysis before the old monitor's last
+        # queued signals (e.g. the QUEUED that follows FINISHED) reach the GUI
+        # thread; applied then, they would land on the new analysis's row.
+        return self.is_running() and self.sender() is self._monitor
+
     def _update_progress(self, progress):
-        if self.is_running():
+        if self._from_current_monitor():
             self._running_analysis.browser_item.setProgress(progress)
 
     def _update_status(self, status):
-        if self.is_running():
-            self._running_analysis.procedure.status = status
+        # Only the row: the procedure's status belongs to the measurement
+        # worker, and Analyzer.shutdown reads it to decide whether to re-queue.
+        if self._from_current_monitor():
             self._running_analysis.browser_item.setStatus(status)
 
     def _update_log(self, record):
@@ -479,6 +486,7 @@ class AnalyzerManager(QtCore.QObject):
         log.info(f'Calling analysis queue, running_analysis is {self._running_analysis}')
         log.info(f'start on add is {self._start_on_add}')
         log.info(f'analysis queue is {self.analyses.queue}')
+        request_analysis(analysis.analysis)
         self.load(analysis)
         self.queued_am.emit(analysis)
         if self._start_on_add and not self.is_running():
@@ -561,8 +569,27 @@ class AnalyzerManager(QtCore.QObject):
         self._clean_up()
         experiment.browser_item.setProgress(100.)
         self.finished_am.emit(experiment)
+        self._drop_covered(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()
+
+    def _drop_covered(self, finished):
+        """ Remove rows the finished analysis made redundant.
+
+        A routine ending FINISHED (not re-queued) means no analysis of it was
+        queued while that pass ran and its procedure is over, so any other
+        row still waiting on the same routine was queued before the pass
+        started and the pass already covered its data. Those rows would
+        otherwise sit in the queue forever, since the queue only runs rows
+        whose routine is QUEUED.
+        """
+        routine = finished.analysis
+        if routine.status != Procedure.FINISHED:
+            return
+        for analysis in list(self.analyses.queue):
+            if analysis is not finished and analysis.analysis is routine:
+                log.debug("Dropping analysis already covered by a finished pass")
+                self.remove(analysis)
 
     def resume(self):
         """ Resume processing of the queue.
