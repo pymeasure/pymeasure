@@ -10,3 +10,4 @@ This section contains specific documentation on the Eurotherm instruments that a
    :maxdepth: 2
 
    eurotherm_base
+   eurothermepc3000
