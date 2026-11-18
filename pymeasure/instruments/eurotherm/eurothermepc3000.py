@@ -51,10 +51,19 @@ class EurothermEPC3000(EurothermBase):
 
     The controller accepts only a few simultaneous Modbus TCP connections:
     call ``controller.adapter.close()`` to release the connection when you are done.
+
+    :param baud_rate: The serial baud rate, as configured on the controller (default
+        19200, the EPC3000 communications default). Unused over Modbus TCP.
     """
 
-    def __init__(self, adapter: AdapterType, name: str = "Eurotherm EPC3000", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Eurotherm EPC3000",
+        baud_rate: int = 19200,
+        **kwargs,
+    ):
+        super().__init__(adapter, name, baud_rate=baud_rate, **kwargs)
 
     firmware_version = Instrument.measurement(
         "I,107",
