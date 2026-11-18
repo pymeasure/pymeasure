@@ -78,13 +78,56 @@ def test_modbus_exception():
         _ = inst.ramp_done
 
 
-def test_unexpected_transaction():
+REQUEST = b"\x00\x01\x00\x00\x00\x06\x01\x03\x06\x89\x00\x01"
+WRITE_ANSWER = b"\x00\x01\x00\x00\x00\x06\x01\x10\x06\x89\x00\x01"
+BAD_HEADER = b"\x00\x01\x00\x00"
+STALE = b"\x00\x05\x00\x00\x00\x05\x01\x03\x02\x00\x01"
+GOOD = b"\x00\x01\x00\x00\x00\x05\x01\x03\x02\x00\x01"
+
+
+def test_stale_transaction_is_discarded():
     with expected_protocol(
         EurothermEPC3000,
-        [(b"\x00\x01\x00\x00\x00\x06\x01\x03\x06\x89\x00\x01",
-          b"\x00\x05\x00\x00\x00\x05\x01")],
+        [(REQUEST, STALE + GOOD)],
         tcp=True,
-    ) as inst, pytest.raises(ConnectionError, match="transaction"):
+    ) as inst:
+        assert inst.ramp_done == 1
+
+
+def test_only_stale_transactions():
+    with expected_protocol(
+        EurothermEPC3000,
+        [(REQUEST, STALE * 4)],
+        tcp=True,
+    ) as inst, pytest.raises(ConnectionError, match="current transaction"):
+        _ = inst.ramp_done
+
+
+@pytest.mark.parametrize("length", [b"\x00\x01", b"\x01\x00"])
+def test_invalid_frame_length(length):
+    with expected_protocol(
+        EurothermEPC3000,
+        [(REQUEST, BAD_HEADER + length + b"\x01")],
+        tcp=True,
+    ) as inst, pytest.raises(ConnectionError, match="frame length"):
+        _ = inst.ramp_done
+
+
+def test_function_mismatch():
+    with expected_protocol(
+        EurothermEPC3000,
+        [(REQUEST, WRITE_ANSWER)],
+        tcp=True,
+    ) as inst, pytest.raises(ConnectionError, match="does not match the request"):
+        _ = inst.ramp_done
+
+
+def test_short_byte_count():
+    with expected_protocol(
+        EurothermEPC3000,
+        [(REQUEST, b"\x00\x01\x00\x00\x00\x04\x01\x03\x01\x00")],
+        tcp=True,
+    ) as inst, pytest.raises(ConnectionError, match="expected 2"):
         _ = inst.ramp_done
 
 

@@ -110,6 +110,21 @@ def test_wrong_address():
         _ = inst.active_setpoint
 
 
+def test_write_echo_mismatch():
+    with expected_protocol(
+        EurothermBase,
+        [(b"\x01\x10\x00\x0f\x00\x01\x02\x00\x01go", b"\x01\x10\x00\x0e\x00\x01\x00\x00")],
+    ) as inst, pytest.raises(ConnectionError):
+        inst.active_setpoint = 2
+
+
+@pytest.mark.parametrize("address", [0, 255, -1])
+def test_invalid_address(address):
+    with pytest.raises(ValueError, match="Invalid Modbus address"), \
+            expected_protocol(EurothermBase, [], address=address):
+        pass
+
+
 def test_proportional_band_setter():
     with expected_protocol(
         EurothermBase,

@@ -147,6 +147,9 @@ class EurothermBase(Instrument):
     :param \\**kwargs: Keyword arguments passed to the adapter.
     """
 
+    #: Number of responses of other transactions discarded before giving up.
+    _MAX_STALE_FRAMES = 3
+
     def __init__(
         self,
         adapter: AdapterType,
@@ -157,6 +160,10 @@ class EurothermBase(Instrument):
         tcp: bool | None = None,
         **kwargs,
     ):
+        if not 1 <= address <= 254:
+            raise ValueError(
+                f"Invalid Modbus address {address}, it must be between 1 and 254 "
+                "(0 is the broadcast address, which never answers).")
         super().__init__(
             adapter,
             name,
@@ -170,6 +177,7 @@ class EurothermBase(Instrument):
         self.tcp = tcp
         self._kind = "I"
         self._transaction = 0
+        self._request = (READ_REGISTERS, 0, 1)  # function code, address, register count
 
     def write(self, command: str, **kwargs) -> None:
         """Send a Modbus request for a parameter.
@@ -187,7 +195,9 @@ class EurothermBase(Instrument):
             address = IEEE_REGION + 2 * address
             count = 2
         self._kind = kind
-        pdu = bytearray([WRITE_REGISTERS if value else READ_REGISTERS])
+        function = WRITE_REGISTERS if value else READ_REGISTERS
+        self._request = (function, address, count)
+        pdu = bytearray([function])
         pdu += address.to_bytes(2, "big")
         pdu += count.to_bytes(2, "big")
         if value:
@@ -206,6 +216,9 @@ class EurothermBase(Instrument):
         else:
             frame = bytes([self.address]) + pdu
             frame += crc16(frame)
+        # Drop any stale reply (e.g. of a timed out request) so it cannot be mistaken
+        # for the answer to this request.
+        self.adapter.flush_read_buffer()
         self.write_bytes(bytes(frame), **kwargs)
 
     def read(self, **kwargs) -> str:
@@ -219,12 +232,19 @@ class EurothermBase(Instrument):
             function, data = self._read_tcp(**kwargs)
         else:
             function, data = self._read_rtu(**kwargs)
+        request, address, count = self._request
+        if function & 0x7F != request:
+            raise ConnectionError(
+                f"Response function code {function} does not match the request {request}.")
         if function & 0x80:
             raise ValueError(MODBUS_ERRORS.get(data[0], f"Modbus exception {data[0]}."))
         if function == WRITE_REGISTERS:
+            if data != address.to_bytes(2, "big") + count.to_bytes(2, "big"):
+                raise ConnectionError("Write response does not echo the request.")
             return ""
-        if function != READ_REGISTERS:
-            raise ConnectionError(f"Unexpected Modbus function code {function}.")
+        if len(data) != 2 * count:
+            raise ConnectionError(
+                f"Response holds {len(data)} bytes, expected {2 * count}.")
         if self._kind == "F":
             return str(struct.unpack(">f", data)[0])
         elif self._kind == "T":
@@ -252,12 +272,19 @@ class EurothermBase(Instrument):
 
     def _read_tcp(self, **kwargs) -> tuple[int, bytes]:
         """Read a Modbus TCP response, return its function code and data."""
-        header = self.read_bytes(7, **kwargs)
-        if int.from_bytes(header[:2], "big") != self._transaction:
-            raise ConnectionError("Response to an unexpected transaction.")
+        for _ in range(self._MAX_STALE_FRAMES + 1):
+            header = self.read_bytes(7, **kwargs)
+            length = int.from_bytes(header[4:6], "big")
+            if not 2 <= length <= 254:
+                raise ConnectionError(f"Invalid Modbus TCP frame length {length}.")
+            pdu = self.read_bytes(length - 1, **kwargs)  # always consume the whole frame
+            if int.from_bytes(header[:2], "big") == self._transaction:
+                break
+            log.debug("Discarding a Modbus TCP response of another transaction.")
+        else:
+            raise ConnectionError("No response to the current transaction.")
         if header[6] != self.address:
             raise ConnectionError(f"Response from unexpected address {header[6]}.")
-        pdu = self.read_bytes(int.from_bytes(header[4:6], "big") - 1, **kwargs)
         if pdu[0] == READ_REGISTERS:
             return pdu[0], pdu[2:]
         return pdu[0], pdu[1:]
