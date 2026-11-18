@@ -203,15 +203,25 @@ def request_analysis(routine):
 
     Every analysis queued for one experiment shares that experiment's routine,
     and the queue runs whichever row's routine is QUEUED. A request that
-    arrives while the routine is RUNNING therefore has to be remembered, or
-    the run in flight finishes as FINISHED (the procedure having ended or
-    been aborted meanwhile) and the new row is never picked up. A request
-    after a finished pass puts the routine back on the queue. FAILED and
-    ABORTED are left alone: those wait for the user's Restart.
+    arrives while the routine is RUNNING and its procedure is over (the
+    finished/aborted/failed analysis, queued while the last progress analysis
+    is still going) has to be remembered, or the pass in flight ends FINISHED
+    and the new row is never picked up.
+
+    Requests made while the procedure is still RUNNING are not flagged: the
+    pass in flight re-queues itself for those, and if the procedure ends
+    mid-pass, its end signal queues a request of its own. Flagging them would
+    start a pass the moment the procedure turns FINISHED, which the Worker
+    does before its recorder has finished writing the data file.
+
+    A request after a finished pass puts the routine back on the queue.
+    FAILED and ABORTED are left alone: those wait for the user's Restart.
     """
     with _routine_status_lock:
         if routine.status == Procedure.RUNNING:
-            routine.rerun_pending = True
+            procedure = getattr(routine, 'procedure', None)
+            if getattr(procedure, 'status', None) != Procedure.RUNNING:
+                routine.rerun_pending = True
         elif routine.status == Procedure.FINISHED:
             routine.status = Procedure.QUEUED
 
@@ -307,9 +317,9 @@ class Analyzer(StoppableThread):
         self.routine.shutdown()
 
         with _routine_status_lock:
-            # An analysis queued while this one ran (see request_analysis)
-            # still has to run, even if the procedure has since finished or
-            # been aborted: it was queued to see the data this run missed.
+            # An analysis queued after the procedure ended, while this one
+            # ran (see request_analysis), still has to run: it was queued to
+            # see the final data this pass may have missed.
             rerun = getattr(self.routine, 'rerun_pending', False)
             self.routine.rerun_pending = False
             if self.should_stop() and self.routine.status == Procedure.RUNNING:

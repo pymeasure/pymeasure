@@ -57,16 +57,30 @@ def _shutdown(routine, stop=False):
 
 @pytest.mark.parametrize('ended', [Procedure.ABORTED, Procedure.FINISHED,
                                    Procedure.FAILED])
-def test_request_during_run_requeues_after_procedure_ends(ended):
-    # The abort/finish analysis is queued while the last progress analysis
-    # still runs; by its shutdown the procedure is over.
-    routine = _routine(Procedure.RUNNING)
+def test_request_after_procedure_ends_requeues(ended):
+    # The abort/finish analysis is queued (after the worker is done) while
+    # the last progress analysis still runs.
+    routine = _routine(ended)
     request_analysis(routine)
-    routine.procedure.status = ended
 
     assert _shutdown(routine) == [Procedure.FINISHED, Procedure.QUEUED]
     assert routine.status == Procedure.QUEUED
     assert not routine.rerun_pending
+
+
+@pytest.mark.parametrize('ended', [Procedure.ABORTED, Procedure.FINISHED,
+                                   Procedure.FAILED])
+def test_progress_request_does_not_rerun_once_procedure_ends(ended):
+    # A progress update queued mid-pass, then the procedure ends before the
+    # pass does. The Worker marks it ended before its recorder has finished
+    # writing, so re-running now would read a half-written file; the end
+    # signal's own request covers the final data instead.
+    routine = _routine(Procedure.RUNNING)
+    request_analysis(routine)
+    routine.procedure.status = ended
+
+    assert _shutdown(routine) == [Procedure.FINISHED]
+    assert routine.status == Procedure.FINISHED
 
 
 def test_no_request_after_procedure_ends_finishes():
@@ -81,7 +95,7 @@ def test_procedure_still_running_requeues_as_before():
 
 
 def test_user_abort_wins_over_pending_rerun():
-    routine = _routine(Procedure.RUNNING)
+    routine = _routine(Procedure.ABORTED)
     request_analysis(routine)
     assert _shutdown(routine, stop=True) == [Procedure.ABORTED]
     assert not routine.rerun_pending
@@ -175,6 +189,7 @@ def test_requeued_pass_keeps_rows(manager):
 def test_queue_while_running_marks_rerun(manager):
     routine = Routine()
     routine.status = Procedure.RUNNING
+    routine.procedure = SimpleNamespace(status=Procedure.ABORTED)
     manager.queue(_analysis(routine))
     assert routine.rerun_pending
 
