@@ -28,7 +28,7 @@ PyMeasure is tested with continuous-integration on Linux, macOS, and Windows for
    :target: https://github.com/pymeasure/pymeasure/actions/workflows/pymeasure_CI.yml
    :alt: Continuous integration status
 
-.. |docs| image:: https://app.readthedocs.org/projects/pymeasure/badge/?version=latest
+.. |docs| image:: https://img.shields.io/readthedocs/pymeasure
    :target: https://pymeasure.readthedocs.io/en/latest/
    :alt: Documentation status
 
