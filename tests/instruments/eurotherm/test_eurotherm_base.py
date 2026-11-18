@@ -115,6 +115,7 @@ def test_adapter_without_flush():
     """An adapter that does not implement flush_read_buffer still completes queries."""
     class NoFlushAdapter(FakeAdapter):
         answer = bytearray(b"\x01\x03\x02\x00\x01y\x84")
+        sent = []
 
         def _read_bytes(self, count, break_on_termchar=False, **kwargs):
             data = bytes(self.answer[:count])
@@ -122,9 +123,12 @@ def test_adapter_without_flush():
             return data
 
         def _write_bytes(self, content, **kwargs):
-            pass
+            self.sent.append(bytes(content))
 
-    assert EurothermBase(NoFlushAdapter()).active_setpoint == 2
+    adapter = NoFlushAdapter()
+    assert EurothermBase(adapter).active_setpoint == 2
+    # exactly one FC03 request for register 15
+    assert adapter.sent == [b"\x01\x03\x00\x0f\x00\x01\xb4\t"]
 
 
 def test_flush_error_propagates():
