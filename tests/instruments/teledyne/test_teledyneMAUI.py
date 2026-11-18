@@ -30,7 +30,7 @@ from pymeasure.test import expected_protocol
 
 INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", "CHANNEL"]
 VALID_CHANNELS = [('C1', 'C1'), ('CHANNEL2', 'C2'), ('ch 3', 'C3'), ('chan 4', 'C4'),
-                  ('\tC3\t', 'C3'), (' math ', 'MATH')]
+                  ('\tC3\t', 'C3'), (' math ', 'MATH'), (' line ', 'LINE')]
 
 
 def test_init():

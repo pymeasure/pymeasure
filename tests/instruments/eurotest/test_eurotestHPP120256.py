@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import pytest
+
 from pymeasure.instruments.eurotest.eurotestHPP120256 import EurotestHPP120256
 from pymeasure.test import expected_protocol
 
@@ -75,3 +77,8 @@ def test_current():
             [("STATUS,MI", "IM, RANGE=5000mA, VALUE=1739mA")],
     ) as inst:
         assert inst.current == 1739.0
+
+
+def test_parse_float_rejects_reply_without_number():
+    with pytest.raises(ValueError, match="could not be parsed"):
+        EurotestHPP120256._parse_float("STATUS, RANGE=unknown")

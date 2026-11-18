@@ -27,10 +27,13 @@ import os
 from collections import ChainMap
 from functools import partial
 from inspect import signature
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from ...experiment.sequencer import SequenceEvaluationError, SequenceHandler
 from ..Qt import QtCore, QtGui, QtWidgets
+
+if TYPE_CHECKING:
+    from ..windows.managed_window import ManagedWindow
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -284,10 +287,16 @@ class SequencerTreeView(QtWidgets.QTreeView):
 
     def __init__(self, parent: QtWidgets.QWidget | None = None):
         super().__init__(parent=parent)
-        self.viewport_width = self.viewport().size().width()
+        viewport = self.viewport()
+        if viewport is None:
+            raise RuntimeError("The sequencer tree has no viewport.")
+        self.viewport_width = viewport.size().width()
 
     def save(self, filename=None) -> None:
-        self.model().save(filename)
+        model = self.model()
+        if model is None:
+            raise RuntimeError("The sequencer has no model.")
+        model.save(filename)
 
     def selectRow(self, index: QtCore.QModelIndex) -> None:
         selection_model = self.selectionModel()
@@ -347,6 +356,10 @@ class SequenceDialog(QtWidgets.QFileDialog):
         vbox_widget = QtWidgets.QWidget()
         param_vbox_widget = QtWidgets.QWidget()
 
+        layout = self.layout()
+        if layout is None:
+            raise RuntimeError("The sequence dialog has no layout.")
+
         self.preview_param = SequencerTreeView(parent=self)
         triggers = QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
         self.preview_param.setEditTriggers(triggers)
@@ -357,13 +370,13 @@ class SequenceDialog(QtWidgets.QFileDialog):
         if not self.save:
             self.append_checkbox = QtWidgets.QCheckBox("Append to existing sequence")
             self.append_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
-            self.layout().addWidget(self.append_checkbox)
+            layout.addWidget(self.append_checkbox)
             self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFile)
         else:
             self.setAcceptMode(QtWidgets.QFileDialog.AcceptMode.AcceptSave)
             self.setFileMode(QtWidgets.QFileDialog.FileMode.AnyFile)
-        self.layout().addWidget(preview_tab, 0, 5, 4, 1)  # type: ignore
-        self.layout().setColumnStretch(5, 1)
+        layout.addWidget(preview_tab, 0, 5, 4, 1)  # type: ignore
+        layout.setColumnStretch(5, 1)
         self.setMinimumSize(900, 500)
         self.resize(900, 500)
         self.currentChanged.connect(self.update_preview)
@@ -389,13 +402,18 @@ class SequencerWidget(QtWidgets.QWidget):
     "procedure" argument.
 
     :param inputs: List of strings representing the parameters name
+    :param parent: The parent window. Required: it provides the procedure and queue interfaces
+        used by this widget.
     """
 
     def __init__(
         self, inputs=None, sequence_file: str | None = None, parent: QtWidgets.QWidget | None = None
     ):
         super().__init__(parent)
-        self._parent = parent
+        if parent is None:
+            raise TypeError("The SequencerWidget requires a parent window.")
+        # The parent window provides the procedure and queue interfaces used below.
+        self._parent = cast("ManagedWindow", parent)
 
         self._check_queue_signature()
 
@@ -505,7 +523,10 @@ class SequencerWidget(QtWidgets.QWidget):
         :param parameter: If given, the parameter field is pre-filled
         """
 
-        selected = self.tree.selectionModel().selection().indexes()
+        selection_model = self.tree.selectionModel()
+        selected = (
+            selection_model.selection().indexes() if selection_model is not None else []
+        )
 
         if len(selected) >= 1 and level != 0:
             parent = selected[0]
@@ -531,12 +552,18 @@ class SequencerWidget(QtWidgets.QWidget):
         Remove the selected item (and any child items) from the sequence tree.
         """
 
-        selected = self.tree.selectionModel().selection().indexes()
+        selection_model = self.tree.selectionModel()
+        if selection_model is None:
+            return
+        selected = selection_model.selection().indexes()
 
         if len(selected) == 0:
             return
 
-        node_index = self.tree.model().remove_node(selected[0])
+        model = self.tree.model()
+        if model is None:
+            raise RuntimeError("The sequencer has no model.")
+        node_index = model.remove_node(selected[0])
 
         if node_index.isValid():
             self.tree.selectRow(node_index)
@@ -598,5 +625,8 @@ class SequencerWidget(QtWidgets.QWidget):
                 return
 
         with open(filename) as file_object:
-            self.tree.model().load(file_object, append=append_flag)
+            model = self.tree.model()
+            if model is None:
+                raise RuntimeError("The sequencer has no model.")
+            model.load(file_object, append=append_flag)
         self.tree.expandAll()

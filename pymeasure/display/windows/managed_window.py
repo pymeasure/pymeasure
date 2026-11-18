@@ -386,7 +386,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 action_use.triggered.connect(
                     lambda: self.set_parameters(experiment.procedure.parameter_objects()))
             menu.addAction(action_use)
-            menu.exec(self.browser.viewport().mapToGlobal(position))
+            viewport = self.browser.viewport()
+            if viewport is not None:
+                menu.exec(viewport.mapToGlobal(position))
 
     def remove_experiment(self, experiment: list[Experiment] | Experiment) -> None:
         experiments = experiment if isinstance(experiment, list) else [experiment]
@@ -426,12 +428,16 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     def show_experiments(self) -> None:
         root = self.browser.invisibleRootItem()
+        if root is None:
+            return
         for i in range(root.childCount()):
             item = root.child(i)
             item.setCheckState(0, QtCore.Qt.CheckState.Checked)
 
     def hide_experiments(self) -> None:
         root = self.browser.invisibleRootItem()
+        if root is None:
+            return
         for i in range(root.childCount()):
             item = root.child(i)
             item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)

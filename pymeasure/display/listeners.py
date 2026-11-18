@@ -56,8 +56,9 @@ class QListener(StoppableQThread):
         :param topic: Topic to listen on
         :param timeout: Timeout in seconds to recheck stop flag
         """
-        if zmq is None:
-            raise ModuleNotFoundError("QListener needs ZMQ installed for TCP communication.")
+        if zmq is None or cloudpickle is None:
+            raise ModuleNotFoundError(
+                "QListener needs ZMQ and cloudpickle installed for TCP communication.")
         super().__init__()
 
         self.port = port
@@ -75,8 +76,12 @@ class QListener(StoppableQThread):
         self.timeout = round(timeout * 1000)
 
     def receive(self, flags: int = 0) -> tuple[str, Any]:
+        cloudpickle_module = cloudpickle
+        if cloudpickle_module is None:
+            raise ModuleNotFoundError(
+                "QListener needs cloudpickle installed for TCP communication.")
         topic, record = self.subscriber.recv_serialized(
-            deserialize=lambda msg: (msg[0].decode(), cloudpickle.loads(msg[1])),
+            deserialize=lambda msg: (msg[0].decode(), cloudpickle_module.loads(msg[1])),
             flags=flags
         )
         return topic, record

@@ -59,6 +59,18 @@ def test_frequency():
         assert inst.frequency == pytest.approx(121.98)
 
 
+def test_buffer_count_invalid_reply():
+    """A malformed multi-line SPTS? reply raises ValueError."""
+    with (
+        expected_protocol(
+            SR830,
+            [("SPTS?", "1\n2\n3")],  # several newlines, but no trailing "<digits>\n"
+        ) as inst,
+        pytest.raises(ValueError, match="SPTS"),
+    ):
+        _ = inst.buffer_count
+
+
 def test_snap():
     """Verify the communication of the measurement values."""
     with expected_protocol(

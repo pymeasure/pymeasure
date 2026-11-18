@@ -514,13 +514,15 @@ class Table(QtWidgets.QTableView):
         self.float_digits = float_digits
         model = layout_class(column_index=column_index)
         self.setModel(model)
-        self.horizontalHeader().setStyleSheet("font: bold;")
+        header = self.horizontalHeader()
+        if header is not None:
+            header.setStyleSheet("font: bold;")
+            header.setSectionsMovable(True)
+            header.setSectionResizeMode(
+                QtWidgets.QHeaderView.ResizeMode.ResizeToContents
+            )
         self.sortByColumn(-1, QtCore.Qt.SortOrder.AscendingOrder)
         self.setSortingEnabled(True)
-        self.horizontalHeader().setSectionsMovable(True)
-        self.horizontalHeader().setSectionResizeMode(
-            QtWidgets.QHeaderView.ResizeMode.ResizeToContents
-        )
 
         self.setup_context_menu()
 

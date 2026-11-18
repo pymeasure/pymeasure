@@ -177,4 +177,6 @@ class DockWidget(TabWidget[list], QtWidgets.QWidget):
 
     def clear(self) -> None:
         for i in range(self.num_plots):
-            self.plot_frames[i].plot.clear()
+            plot = self.plot_frames[i].plot
+            if plot is not None:
+                plot.clear()

@@ -25,10 +25,14 @@
 import logging
 from datetime import datetime, timedelta
 from inspect import signature
+from typing import TYPE_CHECKING, cast
 
 from ..Qt import QtCore, QtWidgets
 from ..thread import StoppableQThread
 from .sequencer_widget import SequenceEvaluationError
+
+if TYPE_CHECKING:
+    from ..windows.managed_window import ManagedWindow
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -70,6 +74,8 @@ class EstimatorWidget(QtWidgets.QWidget):
     asking for two keyword arguments in the Implementation of the `get_estimates` function:
     `sequence` and `sequence_length`, respectively.
 
+    :param parent: The parent window. Required: it provides the procedure and sequencer
+        interfaces used by this widget.
     """
     provide_sequence = False
     provide_sequence_length = False
@@ -78,7 +84,10 @@ class EstimatorWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._parent = parent
+        if parent is None:
+            raise TypeError("The EstimatorWidget requires a parent window.")
+        # The parent window provides the procedure and sequencer interfaces used below.
+        self._parent = cast("ManagedWindow", parent)
 
         self.check_get_estimates_signature()
 
@@ -173,12 +182,14 @@ class EstimatorWidget(QtWidgets.QWidget):
         sequence = None
         sequence_length = None
         if hasattr(self._parent, "sequencer"):
-            try:
-                sequence = self._parent.sequencer.get_sequence()
-            except SequenceEvaluationError:
-                sequence_length = 0
-            else:
-                sequence_length = len(sequence)
+            sequencer = self._parent.sequencer
+            if sequencer is not None:
+                try:
+                    sequence = sequencer.get_sequence()
+                except SequenceEvaluationError:
+                    sequence_length = 0
+                else:
+                    sequence_length = len(sequence)
 
         if self.provide_sequence:
             kwargs["sequence"] = sequence

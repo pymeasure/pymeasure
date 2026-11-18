@@ -60,14 +60,13 @@ def sanitize_source(source: str) -> str:
     match = re.match(r"^\s*(C|CH|CHAN|CHANNEL)\s*(?P<number>\d)\s*$|"
                      r"^\s*(?P<name_only>MATH|LINE)\s*$", source, re.IGNORECASE)
     if match:
-        if match.group("number") is not None:
-            source = "C" + match.group("number")
-        else:
-            source = match.group("name_only")
-        source = source.upper()
-    else:
-        raise ValueError(f"source {source} not recognized")
-    return source
+        number = match.group("number")
+        if number is not None:
+            return ("C" + number).upper()
+        name_only = match.group("name_only")
+        if name_only is not None:
+            return name_only.upper()
+    raise ValueError(f"source {source} not recognized")
 
 
 def _trigger_select_num_pars(value: Sequence) -> Literal[3, 4, 5, 0]:

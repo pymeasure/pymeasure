@@ -31,12 +31,33 @@ import pytest
 from data.procedure_for_testing import RandomProcedure
 
 from pymeasure.experiment import Listener, Procedure
+from pymeasure.experiment import workers as workers_module
 from pymeasure.experiment.procedure import ProcedureStatus
 from pymeasure.experiment.results import Results
 from pymeasure.experiment.workers import Worker
 
 tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
                           and importlib.util.find_spec('zmq'))
+
+
+def test_worker_without_tcp_libraries_runs_without_publisher(monkeypatch):
+    """A port alone must not require ZMQ/cloudpickle; publishing simply degrades."""
+    procedure = RandomProcedure()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
+    results = Results(procedure, file)
+
+    monkeypatch.setattr(workers_module, "zmq", None)
+    monkeypatch.setattr(workers_module, "cloudpickle", None)
+
+    worker = Worker(results, port=5889)
+    assert worker.context is None
+    assert worker.publisher is None
+
+    # Emitting still updates the monitor queue and never tries to publish.
+    worker.emit('progress', 42.0)
+    assert worker.monitor_queue.get(timeout=1) == ('progress', 42.0)
 
 
 def test_worker_stop():

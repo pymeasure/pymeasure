@@ -115,6 +115,14 @@ class EurotestHPP120256(Instrument):
         self.query_delay = query_delay
         self.last_write_timestamp = 0.0
 
+    @classmethod
+    def _parse_float(cls, string: str) -> float:
+        """Parse the first numeric value of a ``STATUS`` reply field."""
+        match = cls.regex.search(string.strip())
+        if match is None:
+            raise ValueError(f'Returned string "{string}" could not be parsed')
+        return float(match.groups()[0])
+
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
     # ####################################
@@ -126,8 +134,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=VOLTAGE_RANGE,
         cast=str,
-        get_process_list=lambda r:
-        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
+        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
     )
 
     current_limit = Instrument.control(
@@ -139,8 +146,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=CURRENT_RANGE,
         cast=str,
-        get_process_list=lambda r:
-        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
+        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
     )
 
     voltage_ramp = Instrument.control(
@@ -152,8 +158,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
         cast=str,
-        get_process_list=lambda r:
-        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
+        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
     )
 
     voltage = Instrument.measurement(
@@ -163,8 +168,7 @@ class EurotestHPP120256(Instrument):
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage will return 2458.0,
         # hence the convenience of the get_process.
         cast=str,
-        get_process_list=lambda r:
-        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
+        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
     )
 
     voltage_range = Instrument.measurement(
@@ -174,8 +178,7 @@ class EurotestHPP120256(Instrument):
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
         # hence the convenience of the get_process.
         cast=str,
-        get_process_list=lambda r:
-        float(EurotestHPP120256.regex.search(r[1].strip()).groups()[0])
+        get_process_list=lambda r: EurotestHPP120256._parse_float(r[1])
     )
 
     current = Instrument.measurement(
@@ -185,8 +188,7 @@ class EurotestHPP120256(Instrument):
         # "I, RANGE=5000mA, VALUE=1739mA", then current will return a 1739.0,
         # hence the convenience of the get_process."""
         cast=str,
-        get_process_list=lambda r:
-        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
+        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
     )
 
     current_range = Instrument.measurement(
@@ -196,8 +198,7 @@ class EurotestHPP120256(Instrument):
         # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
         # hence the convenience of the get_process.
         cast=str,
-        get_process_list=lambda r:
-        float(EurotestHPP120256.regex.search(r[1].strip()).groups()[0])
+        get_process_list=lambda r: EurotestHPP120256._parse_float(r[1])
     )
 
     kill_enabled = Instrument.control(

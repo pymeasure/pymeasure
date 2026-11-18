@@ -322,8 +322,13 @@ class Results:
         """Return a text header to accompany a datafile so that the procedure can be reconstructed.
         """
         h = []
-        procedure = re.search("'(?P<name>[^']+)'",
-                              repr(self.procedure_class)).group("name")
+        match = re.search("'(?P<name>[^']+)'", repr(self.procedure_class))
+        if match is None:
+            raise ValueError(
+                "Could not determine the procedure name from "
+                f"{self.procedure_class!r}."
+            )
+        procedure = match.group("name")
         h.append(f"Procedure: <{procedure}>")
         h.append("Parameters:")
         for parameter in self.parameters.values():
