@@ -82,6 +82,36 @@ def test_nested_adapter():
     assert a.manager == a0.manager
 
 
+def test_timeout_roundtrip(make_visa_adapter):
+    """The timeout property reads and writes the PyVISA timeout in milliseconds."""
+    adapter = make_visa_adapter(timeout=1000)
+    adapter.timeout = 1500
+    assert adapter.timeout == 1500
+    assert isinstance(adapter.connection, pyvisa.resources.MessageBasedResource)
+    assert adapter.connection.timeout == 1500
+
+
+def test_timeout_truncates_to_milliseconds(make_visa_adapter):
+    """PyVISA only accepts integer milliseconds, so fractional values are truncated."""
+    adapter = make_visa_adapter()
+    adapter.timeout = 1500.7
+    assert adapter.timeout == 1500
+
+
+def test_timeout_rejects_none(make_visa_adapter):
+    """PyVISA uses ``float("inf")`` for no timeout, so ``None`` is rejected."""
+    adapter = make_visa_adapter()
+    with pytest.raises(ValueError):
+        adapter.timeout = None
+
+
+def test_timeout_accepts_infinite(make_visa_adapter):
+    """PyVISA's infinite timeout is a valid value and is passed through unchanged."""
+    adapter = make_visa_adapter()
+    adapter.timeout = float("inf")
+    assert adapter.timeout == float("inf")
+
+
 def test_ProtocolAdapter():
     with expected_protocol(
             VISAAdapter,  # type: ignore
@@ -253,13 +283,13 @@ def test_flush_read_buffer_not_implemented_fallback(make_visa_adapter):
         raise NotImplementedError
 
     adapter.connection.flush = raising_flush
-    original_timeout = adapter.connection.timeout
+    original_timeout = adapter.timeout
     with mock.patch.object(adapter, "read_bytes", wraps=adapter.read_bytes) as spy:
         adapter.flush_read_buffer()
     # read_bytes was called with -1 to drain the buffer
     assert any(call.args[0] == -1 for call in spy.call_args_list)
     # timeout was restored
-    assert adapter.connection.timeout == original_timeout
+    assert adapter.timeout == original_timeout
 
 
 def test_repr(make_visa_adapter):

@@ -123,5 +123,17 @@ class SerialAdapter(Adapter):
         """Flush and discard the input buffer."""
         self.connection.reset_input_buffer()
 
+    @property
+    def timeout(self) -> float | None:
+        """Control the read timeout in seconds, ``None`` waits indefinitely.
+
+        The value is passed to pyserial unchanged.
+        """
+        return self.connection.timeout
+
+    @timeout.setter
+    def timeout(self, value: float | None) -> None:
+        self.connection.timeout = value
+
     def __repr__(self) -> str:
         return f"<SerialAdapter(port='{self.connection.port}')>"

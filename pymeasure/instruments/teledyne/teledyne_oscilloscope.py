@@ -516,7 +516,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     def __init__(self, adapter: AdapterType, name: str = "Teledyne Oscilloscope", **kwargs):
         super().__init__(adapter, name=name, **kwargs)
         if self.adapter.connection is not None:
-            self.adapter.connection.timeout = 3000
+            self.adapter.timeout = 3000
         self._grid_number = 14  # Number of grids in the horizontal direction
         self._seconds_since_last_write = 0  # Timestamp of the last command
         self._header_size = 16  # bytes

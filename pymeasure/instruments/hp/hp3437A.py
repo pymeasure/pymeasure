@@ -225,14 +225,14 @@ class HP3437A(HPLegacyInstrument):
         """
         # Adjusting the timeout to match the number of counts and the delay
 
-        current_timeout = self.adapter.connection.timeout
+        current_timeout = self.adapter.timeout
         time_needed = self.number_readings * self.delay
         new_timeout = min(1e6, time_needed * 3 * 1000)  # safety factor 3
-        if new_timeout > current_timeout:
+        if current_timeout is not None and new_timeout > current_timeout:
             if new_timeout >= 1e6:
                 # Disables timeout if measurement would take more then 1000 sec
                 log.info("HP3437A: timeout deactivated")
-            self.adapter.connection.timeout = new_timeout
+            self.adapter.timeout = new_timeout
             log.info("HP3437A: timeout changed to %g", new_timeout)
         read_data = self.read_bytes(-1)
         # check if data is in packed format format
@@ -244,7 +244,7 @@ class HP3437A(HPLegacyInstrument):
             for i in range(0, len(read_data), 2):
                 processed_data.append(self._unpack_data(read_data[i : i + 2]))  # noqa: E203
             return_value = np.array(processed_data)
-        self.adapter.connection.timeout = current_timeout
+        self.adapter.timeout = current_timeout
         return return_value
 
     # commands/properties for instrument control

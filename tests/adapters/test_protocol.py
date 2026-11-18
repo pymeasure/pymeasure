@@ -70,6 +70,13 @@ def test_connection_call(mockAdapter):
 
 def test_connection_attribute(mockAdapter):
     assert mockAdapter.connection.timeout == 100
+    assert mockAdapter.timeout == 100
+
+
+def test_timeout_set_delegates(mockAdapter):
+    """Setting the adapter timeout stores it on the mocked connection."""
+    mockAdapter.timeout = 250
+    assert mockAdapter.connection.timeout == 250
 
 
 def test_connection_method(mockAdapter):

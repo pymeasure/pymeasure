@@ -195,3 +195,12 @@ class ProtocolAdapter(Adapter):
         encountering an END indicator (which causes loss of data).
         """
         self.connection.flush("pyvisa.constants.BufferOperation.discard_read_buffer")
+
+    @property
+    def timeout(self) -> float | None:
+        """Control the timeout, stored on the mocked connection for assertions."""
+        return self.connection.timeout
+
+    @timeout.setter
+    def timeout(self, value: float | None) -> None:
+        self.connection.timeout = value

@@ -117,6 +117,16 @@ def test_flush_read_buffer(adapter):
     assert adapter.connection.in_waiting == 0
 
 
+def test_timeout_roundtrip(adapter):
+    """The timeout property passes pyserial's timeout in seconds through."""
+    adapter.timeout = 0.2
+    assert adapter.timeout == 0.2
+    assert adapter.connection.timeout == 0.2
+    adapter.timeout = None
+    assert adapter.timeout is None
+    assert adapter.connection.timeout is None
+
+
 def test_repr(adapter):
     """Verify the `repr` of a SerialAdapter includes `port=`."""
     assert repr(adapter) == "<SerialAdapter(port='loop://')>"

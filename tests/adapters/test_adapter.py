@@ -86,6 +86,32 @@ def test_not_implemented_methods(adapter, method, args):
         getattr(adapter, method)(*args)
 
 
+def test_timeout_not_implemented(adapter):
+    """The base adapter has no timeout, neither readable nor writable."""
+    with pytest.raises(NotImplementedError):
+        _ = adapter.timeout
+    with pytest.raises(NotImplementedError):
+        adapter.timeout = 0.5
+
+
+def test_fake_adapter_timeout_initial(fake):
+    assert fake.timeout is None
+
+
+def test_fake_adapter_timeout_roundtrip(fake):
+    fake.timeout = 0.5
+    assert fake.timeout == 0.5
+    fake.timeout = None
+    assert fake.timeout is None
+
+
+def test_fake_adapter_timeout_does_not_touch_connection(fake):
+    """The fake adapter stores the timeout locally, as it has no connection."""
+    assert not hasattr(fake, "connection")
+    fake.timeout = 0.5
+    assert not hasattr(fake, "connection")
+
+
 @pytest.mark.parametrize("response, options, result", (
     ("1,2", {"dtype": int, "sep": ","}, [1, 2]),
     (b"\x01\x02", {"dtype": np.uint8}, [1, 2]),

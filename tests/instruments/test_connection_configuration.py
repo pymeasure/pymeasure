@@ -164,9 +164,9 @@ def test_improper_arg_is_flagged():
 
 def test_common_kwargs_are_retained():
     instr1 = MultiprotocolInstrument(adapter='ASRL1::INSTR', visa_library='@sim')
-    assert instr1.adapter.connection.timeout == 1500
+    assert instr1.adapter.timeout == 1500
     instr2 = MultiprotocolInstrument(adapter='GPIB::8::INSTR', visa_library='@sim')
-    assert instr2.adapter.connection.timeout == 1500
+    assert instr2.adapter.timeout == 1500
 
 
 def test_distinct_interface_specific_defaults():
@@ -181,9 +181,9 @@ def test_distinct_interface_specific_defaults():
 
 def test_modified_non_signature_kwargs_are_retained():
     instr1 = MultiprotocolInstrument(adapter='ASRL1::INSTR', timeout=3000, visa_library='@sim')
-    assert instr1.adapter.connection.timeout == 3000
+    assert instr1.adapter.timeout == 3000
     instr2 = MultiprotocolInstrument(adapter='GPIB::8::INSTR', timeout=3000, visa_library='@sim')
-    assert instr2.adapter.connection.timeout == 3000
+    assert instr2.adapter.timeout == 3000
 
 
 def test_override_interface_specific_defaults():

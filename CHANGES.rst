@@ -31,6 +31,9 @@ Changed
   ``UnknownProcedure`` now returns empty ``parameter_objects``/``metadata_objects`` dicts so loading an unimportable procedure no longer raises.
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
 - Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
+- Added the :code:`timeout` property to :class:`.Adapter` and migrated all adapters, drivers, and tests from :code:`adapter.connection.timeout` to it.
+  The value is passed through unchanged to the connection, so VISA adapters use milliseconds while serial adapters use seconds.
+  Custom :class:`.Adapter` subclasses have to implement :code:`timeout` if a driver calls it.
 
 Instruments
 -----------

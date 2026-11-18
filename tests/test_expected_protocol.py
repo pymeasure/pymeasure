@@ -163,7 +163,7 @@ class TestConnectionCalls:
                 [],
                 connection_attributes={'timeout': 100}
         ) as inst:
-            assert inst.adapter.connection.timeout == 100  # type: ignore
+            assert inst.adapter.timeout == 100
 
 
 def test_limited_control_raises_validator_exception():

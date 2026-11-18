@@ -34,6 +34,19 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def visa_resource(adapter: Adapter) -> pyvisa.resources.MessageBasedResource:
+    """Return the connection of a VISA-backed adapter typed as a PyVISA resource.
+
+    This is a typing-only cast and performs no runtime check: a
+    :class:`~pymeasure.adapters.protocol.ProtocolAdapter` connection is passed through unchanged.
+    Use it where a driver relies on PyVISA-specific connection members.
+
+    :param adapter: The adapter whose connection is accessed.
+    :returns: The adapter's connection, typed as a PyVISA resource.
+    """
+    return cast(pyvisa.resources.MessageBasedResource, adapter.connection)
+
+
 # noinspection PyPep8Naming,PyUnresolvedReferences
 class VISAAdapter(Adapter):
     """ Adapter class for the VISA library, using PyVISA to communicate with instruments.
@@ -143,6 +156,25 @@ class VISAAdapter(Adapter):
         """
         self.connection.write(command, **kwargs)
 
+    @property
+    def timeout(self) -> float | None:
+        """Control the connection timeout in milliseconds.
+
+        The value is passed to PyVISA unchanged, which truncates fractional milliseconds to an
+        integer. Use ``float("inf")`` for no timeout. ``None`` is rejected with a
+        :class:`ValueError`.
+        """
+        return visa_resource(self).timeout
+
+    @timeout.setter
+    def timeout(self, value: float | None) -> None:
+        if value is None:
+            raise ValueError(
+                "A VISA timeout cannot be None, use a numeric timeout in milliseconds "
+                'or float("inf") for no timeout.'
+            )
+        visa_resource(self).timeout = value
+
     def _write_bytes(self, content: bytes, **kwargs) -> None:
         """Write the bytes `content` to the instrument.
 
@@ -208,14 +240,14 @@ class VISAAdapter(Adapter):
             # in conjunction with pyvisa-py.
             # Upstream issue: https://github.com/pyvisa/pyvisa-py/issues/348
             # fake discarding the read buffer by reading all available messages.
-            timeout = self.connection.timeout
-            self.connection.timeout = 0
+            timeout = self.timeout
+            self.timeout = 0
             try:
                 self.read_bytes(-1)
             except pyvisa.errors.VisaIOError:
                 pass
             finally:
-                self.connection.timeout = timeout
+                self.timeout = timeout
 
     def __repr__(self) -> str:
         return f"<VISAAdapter(resource='{self.connection.resource_name}')>"
