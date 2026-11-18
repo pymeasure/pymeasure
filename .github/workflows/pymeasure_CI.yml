@@ -44,7 +44,10 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           pip install -e .[tests,gui,tcp,dev]
-          pip install PyQt6
+          # TODO: drop the exclusion once PyQt6 publishes a version whose
+          # QtCore.pyi declares `arguments` as optional again. 6.12.1's stub
+          # makes it a required parameter, which breaks every pyqtSignal call.
+          pip install "PyQt6!=6.12.1"
       - name: Add venv to PATH for pyright
         run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
       - name: Lint with ruff
@@ -244,13 +247,19 @@ jobs:
           python-version: "${{ env.LATEST_PYTHON }}"
           cache: 'pip'
       - name: Install pymeasure with latest dependencies
-        run: pip install ".[gui,tcp,tests]" PyQt6
+        run: pip install ".[gui,tcp,tests,dev]" PyQt6
       - name: Dependency versions
         run: pip list
       - name: Run pytest with xvfb
         run: |
           echo "::add-matcher::.github/pytest.json"
           xvfb-run -a pytest
+      - name: Type check with pyright
+        # Canary for upstream type changes.
+        # TODO: drop `continue-on-error` once a fixed PyQt6 is available and the
+        # exclusion in `lint_typecheck` is removed.
+        continue-on-error: true
+        run: pyright
 
   ci_status:
     name: CI Status
