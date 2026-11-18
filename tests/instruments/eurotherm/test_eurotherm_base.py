@@ -26,6 +26,7 @@
 
 import pytest
 
+from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments.eurotherm import EurothermBase
 from pymeasure.instruments.eurotherm.eurotherm_base import crc16
 from pymeasure.test import expected_protocol
@@ -108,6 +109,31 @@ def test_wrong_address():
         [(b"\x01\x03\x00\x0f\x00\x01\xb4\t", b"\x02\x03")],
     ) as inst, pytest.raises(ConnectionError, match="unexpected address"):
         _ = inst.active_setpoint
+
+
+def test_adapter_without_flush():
+    """An adapter that does not implement flush_read_buffer still completes queries."""
+    class NoFlushAdapter(FakeAdapter):
+        answer = bytearray(b"\x01\x03\x02\x00\x01y\x84")
+
+        def _read_bytes(self, count, break_on_termchar=False, **kwargs):
+            data = bytes(self.answer[:count])
+            del self.answer[:count]
+            return data
+
+        def _write_bytes(self, content, **kwargs):
+            pass
+
+    assert EurothermBase(NoFlushAdapter()).active_setpoint == 2
+
+
+def test_flush_error_propagates():
+    class FlushingAdapter(FakeAdapter):
+        def flush_read_buffer(self):
+            raise OSError("flush failed")
+
+    with pytest.raises(OSError, match="flush failed"):
+        _ = EurothermBase(FlushingAdapter()).active_setpoint
 
 
 def test_write_echo_mismatch():

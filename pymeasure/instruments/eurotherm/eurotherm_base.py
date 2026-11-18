@@ -26,6 +26,7 @@ import logging
 import struct
 from typing import cast
 
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import AdapterType, Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
@@ -217,8 +218,10 @@ class EurothermBase(Instrument):
             frame = bytes([self.address]) + pdu
             frame += crc16(frame)
         # Drop any stale reply (e.g. of a timed out request) so it cannot be mistaken
-        # for the answer to this request.
-        self.adapter.flush_read_buffer()
+        # for the answer to this request. Adapters without flush support are skipped,
+        # errors of an implemented flush still propagate.
+        if type(self.adapter).flush_read_buffer is not Adapter.flush_read_buffer:
+            self.adapter.flush_read_buffer()
         self.write_bytes(bytes(frame), **kwargs)
 
     def read(self, **kwargs) -> str:
