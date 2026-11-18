@@ -31,6 +31,7 @@ from time import sleep, time
 
 import numpy as np
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.common_base import identity
 from pymeasure.instruments.validators import (
@@ -620,7 +621,7 @@ class DSPBase(Instrument):
             q_data = []
 
             while True:
-                stb = format(self.adapter.connection.read_stb(), '08b')[::-1]
+                stb = format(visa_resource(self.adapter).read_stb(), '08b')[::-1]
 
                 if bool(int(stb[2])):
                     raise ValueError("Status byte reports command parameter error.")

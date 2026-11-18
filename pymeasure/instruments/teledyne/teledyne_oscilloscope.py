@@ -33,6 +33,7 @@ from typing import Any, Literal, cast
 import numpy as np
 
 from pymeasure.adapters.adapter import Adapter
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import (
     AdapterType,
     Channel,
@@ -209,17 +210,18 @@ class _ChunkResizer:
 
     def __enter__(self):
         """Only resize the chunk size if the adapter support this feature."""
+        connection = visa_resource(self.adapter)
         if (
-            self.adapter.connection is not None
-            and hasattr(self.adapter.connection, "chunk_size")
-            and self.new_chunk_size > self.adapter.connection.chunk_size
+            connection is not None
+            and hasattr(connection, "chunk_size")
+            and self.new_chunk_size > connection.chunk_size
         ):
-            self.old_chunk_size = self.adapter.connection.chunk_size
-            self.adapter.connection.chunk_size = self.new_chunk_size  # type: ignore
+            self.old_chunk_size = connection.chunk_size
+            connection.chunk_size = self.new_chunk_size
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.old_chunk_size is not None:
-            self.adapter.connection.chunk_size = self.old_chunk_size
+            visa_resource(self.adapter).chunk_size = self.old_chunk_size
 
 
 class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):

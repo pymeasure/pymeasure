@@ -26,6 +26,7 @@ import time
 from collections.abc import Iterable
 from typing import Literal
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)   # https://docs.python.org/3/howto/logging.html#library-config
@@ -348,7 +349,7 @@ class Racal1992(Instrument):
             if progressDots:
                 log.info(".")
 
-            stb = self.adapter.connection.read_stb()
+            stb = visa_resource(self.adapter).read_stb()
             if stb & 0x10:
                 break
 

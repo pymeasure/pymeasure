@@ -29,6 +29,7 @@ import re
 from pyvisa import constants as vconst
 from pyvisa.errors import VisaIOError
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.instrument import AdapterType
 
@@ -185,4 +186,4 @@ class OxfordInstrumentsBase(Instrument):
         return bool(match)
 
     def __repr__(self) -> str:
-        return f"<OxfordInstrumentsAdapter(adapter='{self.adapter.connection.resource_name}')>"
+        return f"<OxfordInstrumentsAdapter(adapter='{visa_resource(self.adapter).resource_name}')>"

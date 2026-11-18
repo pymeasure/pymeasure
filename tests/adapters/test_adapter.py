@@ -51,9 +51,10 @@ def test_init_log():
 
 
 def test_del(adapter):
-    adapter.connection = mock.MagicMock()
+    connection = mock.MagicMock()
+    adapter.connection = connection
     adapter.__del__()
-    assert adapter.connection.method_calls == [mock.call.close()]
+    assert connection.method_calls == [mock.call.close()]
 
 
 def test_write(fake):

@@ -23,6 +23,7 @@
 #
 
 import pytest
+import pyvisa
 import serial
 
 from pymeasure.adapters import SerialAdapter, VISAAdapter
@@ -71,12 +72,14 @@ class MultiprotocolInstrument(Instrument):
 def test_serial_default_settings():
     """As a user, I want to simply connect to an instrument using default settings"""
     instr = MultiprotocolInstrument(adapter='ASRL1::INSTR', visa_library='@sim')
+    assert isinstance(instr.adapter.connection, pyvisa.resources.SerialInstrument)
     assert instr.adapter.connection.baud_rate == 2400
 
 
 def test_serial_custom_baud_rate_is_set():
     """As a user, I want to easily override default settings to fit my needs"""
     instr = MultiprotocolInstrument(adapter='ASRL1::INSTR', baud_rate=115200, visa_library='@sim')
+    assert isinstance(instr.adapter.connection, pyvisa.resources.SerialInstrument)
     assert instr.adapter.connection.baud_rate == 115200
 
 
@@ -97,6 +100,7 @@ def test_connections_use_gpib():
     # here, baud_rate is invalid for pyvisa, but is a default kwarg anyway
     instr = MultiprotocolInstrument(adapter='GPIB::8::INSTR', visa_library='@sim')
     # attribute specific to pyvisa GPIBInstrument
+    assert isinstance(instr.adapter.connection, pyvisa.resources.GPIBInstrument)
     assert instr.adapter.connection.enable_repeat_addressing is False
 
 
@@ -108,6 +112,7 @@ def test_use_separate_SerialAdapter():
     ser = SerialAdapter(serial.serial_for_url("loop://", baudrate=4800))
     instr = MultiprotocolInstrument(ser)
     # don't need visa_library here as this does not go to pyvisa, kwargs are ignored if provided
+    assert isinstance(instr.adapter, SerialAdapter)
     assert instr.adapter.connection.baudrate == 4800
 
 
@@ -117,6 +122,7 @@ def test_separate_adapter_discards_additional_args():
     """
     ser = SerialAdapter(serial.serial_for_url("loop://"))
     instr = MultiprotocolInstrument(ser, baud_rate=1234, wrong_kwarg='fizzbuzz')
+    assert isinstance(instr.adapter, SerialAdapter)
     assert instr.adapter.connection.baudrate == 9600  # default of serial
 
 
@@ -127,6 +133,7 @@ def test_use_separate_VISAAdapter():
     ser = VISAAdapter('ASRL1::INSTR', baud_rate=1200, visa_library='@sim')
     instr = MultiprotocolInstrument(ser)
     # don't need visa_library here as this does not go to pyvisa, kwargs are ignored if provided
+    assert isinstance(instr.adapter.connection, pyvisa.resources.SerialInstrument)
     assert instr.adapter.connection.baud_rate == 1200
 
 
@@ -174,8 +181,10 @@ def test_distinct_interface_specific_defaults():
     that are different between interfaces.
     """
     instr1 = MultiprotocolInstrument(adapter='ASRL1::INSTR', visa_library='@sim')
+    assert isinstance(instr1.adapter.connection, pyvisa.resources.MessageBasedResource)
     assert instr1.adapter.connection.read_termination == '\r\n'
     instr2 = MultiprotocolInstrument(adapter='GPIB::8::INSTR', visa_library='@sim')
+    assert isinstance(instr2.adapter.connection, pyvisa.resources.MessageBasedResource)
     assert instr2.adapter.connection.read_termination == '\r'
 
 
@@ -191,7 +200,9 @@ def test_override_interface_specific_defaults():
     """
     instr1 = MultiprotocolInstrument(adapter='ASRL1::INSTR', read_termination='\r',
                                      visa_library='@sim')
+    assert isinstance(instr1.adapter.connection, pyvisa.resources.MessageBasedResource)
     assert instr1.adapter.connection.read_termination == '\r'
     instr2 = MultiprotocolInstrument(adapter='GPIB::8::INSTR', enable_repeat_addressing=True,
                                      visa_library='@sim')
+    assert isinstance(instr2.adapter.connection, pyvisa.resources.GPIBInstrument)
     assert instr2.adapter.connection.enable_repeat_addressing is True

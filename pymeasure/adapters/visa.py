@@ -181,7 +181,7 @@ class VISAAdapter(Adapter):
         :param bytes content: The bytes to write to the instrument.
         :param \\**kwargs: Keyword arguments for the connection itself.
         """
-        self.connection.write_raw(content, **kwargs)
+        visa_resource(self).write_raw(content, **kwargs)
 
     def _read(self, **kwargs) -> str:
         """Read up to (excluding) `read_termination` or the whole read buffer.
@@ -203,7 +203,7 @@ class VISAAdapter(Adapter):
         if count >= 0:
             return self.connection.read_bytes(count, break_on_termchar=break_on_termchar, **kwargs)
         elif break_on_termchar:
-            return self.connection.read_raw(None, **kwargs)
+            return visa_resource(self).read_raw(None, **kwargs)
         else:
             # pyvisa's `read_raw` reads until newline, if no termination_character defined
             # and if not configured to stop at a termination lane etc.
@@ -223,7 +223,8 @@ class VISAAdapter(Adapter):
         :param timeout: Timeout duration in seconds
         :param delay: Time delay between checking SRQ in seconds
         """
-        self.connection.wait_for_srq(int(timeout * 1000))
+        # PyVISA declares `wait_for_srq` only on GPIB resources.
+        cast(pyvisa.resources.GPIBInstrument, self.connection).wait_for_srq(int(timeout * 1000))
 
     def flush_read_buffer(self) -> None:
         """ Flush and discard the input buffer
@@ -232,9 +233,10 @@ class VISAAdapter(Adapter):
         and if data was present in the read buffer and no END-indicator was present,
         read from the device until encountering an END indicator (which causes loss of data).
         """
+        connection = visa_resource(self)
         try:
-            self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
-            self.connection.flush(pyvisa.constants.BufferOperation.discard_receive_buffer)
+            connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
+            connection.flush(pyvisa.constants.BufferOperation.discard_receive_buffer)
         except NotImplementedError:
             # NotImplementedError is raised when using resource types other than `asrl`
             # in conjunction with pyvisa-py.
@@ -250,4 +252,4 @@ class VISAAdapter(Adapter):
                 self.timeout = timeout
 
     def __repr__(self) -> str:
-        return f"<VISAAdapter(resource='{self.connection.resource_name}')>"
+        return f"<VISAAdapter(resource='{visa_resource(self).resource_name}')>"

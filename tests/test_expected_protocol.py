@@ -24,6 +24,7 @@
 
 from pytest import raises
 
+from pymeasure.adapters import ProtocolAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
 from pymeasure.test import expected_protocol
@@ -155,7 +156,8 @@ class TestConnectionCalls:
                 [],
                 connection_methods={'stb': 17}
         ) as inst:
-            assert inst.adapter.connection.stb() == 17  # type: ignore
+            assert isinstance(inst.adapter, ProtocolAdapter)
+            assert inst.adapter.connection.stb() == 17
 
     def test_connection_attribute(self):
         with expected_protocol(

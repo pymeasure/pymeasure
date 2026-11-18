@@ -22,12 +22,14 @@
 # THE SOFTWARE.
 #
 import importlib.util
+from typing import Any, cast
 from unittest import mock
 
 import pytest
 import pyvisa
 
 from pymeasure.adapters import ProtocolAdapter, VISAAdapter
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.test import expected_protocol
 
 # This uses a pyvisa-sim default instrument, we could also define our own.
@@ -36,6 +38,13 @@ SIM_RESOURCE = 'ASRL2::INSTR'
 is_pyvisa_sim_installed = bool(importlib.util.find_spec('pyvisa_sim'))
 if not is_pyvisa_sim_installed:
     pytest.skip('PyVISA tests require the pyvisa-sim library', allow_module_level=True)
+
+
+def _resource(adapter: VISAAdapter) -> pyvisa.resources.MessageBasedResource:
+    """Return the adapter's connection narrowed to a PyVISA resource."""
+    connection = adapter.connection
+    assert isinstance(connection, pyvisa.resources.MessageBasedResource)
+    return connection
 
 
 @pytest.fixture
@@ -125,7 +134,7 @@ def test_correct_visa_asrl_kwarg():
     """Confirm that the asrl kwargs gets passed through to the VISA connection."""
     a = VISAAdapter(SIM_RESOURCE, visa_library='@sim',
                     asrl={'read_termination': "\rx\n"})
-    assert a.connection.read_termination == "\rx\n"
+    assert _resource(a).read_termination == "\rx\n"
 
 
 def test_open_gpib():
@@ -140,10 +149,10 @@ class TestClose:
 
     def test_connection_session_closed(self, adapterC):
         # Verify first, that it works before closing
-        assert adapterC.connection.session is not None
+        assert _resource(adapterC).session is not None
         adapterC.close()
         with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
-            _ = adapterC.connection.session
+            _ = _resource(adapterC).session
 
     def test_manager_session_closed(self, adapterC):
         # Verify first, that it works before closing
@@ -183,11 +192,11 @@ class TestReadBytes:
     @pytest.mark.parametrize("count", (-1, 7))
     def test_read_break_on_termchar(self, adapterR, count):
         """Test read_bytes breaks on termchar."""
-        adapterR.connection.read_termination = ","
+        _resource(adapterR).read_termination = ","
         assert adapterR.read_bytes(count, break_on_termchar=True) == b"SCPI,"
 
     def test_read_no_break_on_termchar(self, adapterR):
-        adapterR.connection.read_termination = ","
+        _resource(adapterR).read_termination = ","
         # `break_on_termchar=False` is default value
         assert adapterR.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
 
@@ -203,11 +212,20 @@ def test_init_with_protocol_adapter():
     """VISAAdapter wraps a ProtocolAdapter, reusing its connection and aliasing methods."""
     proto = ProtocolAdapter()
     adapter = VISAAdapter(proto)
-    assert adapter.connection is proto
-    # write_raw aliased to write_bytes on the connection
-    assert adapter.connection.write_raw == adapter.connection.write_bytes
+    connection = adapter.connection
+    assert isinstance(connection, ProtocolAdapter)
+    assert connection is proto
+    # VISAAdapter aliases write_raw to write_bytes on the connection dynamically
+    assert cast(Any, connection).write_raw == connection.write_bytes
     # read_bytes aliased to the protocol adapter's read_bytes
     assert adapter.read_bytes == proto.read_bytes
+
+
+def test_visa_resource_passes_protocol_adapter_through():
+    """visa_resource is a typing-only cast and must not reject a ProtocolAdapter connection."""
+    proto = ProtocolAdapter()
+    adapter = VISAAdapter(proto)
+    assert visa_resource(adapter) is proto
 
 
 @pytest.mark.parametrize(
@@ -222,7 +240,7 @@ def test_init_with_protocol_adapter():
 def test_init_interface_specific_kwargs(interface_kwargs, matching, expected, make_visa_adapter):
     """Interface-specific kwargs are only applied when matching the interface type."""
     adapter = make_visa_adapter(**interface_kwargs)
-    assert adapter.connection.read_termination == expected
+    assert _resource(adapter).read_termination == expected
 
 
 def test_close_closes_manager_on_pyvisa_sim():
@@ -249,9 +267,8 @@ def test_read_bytes_negative_break_on_termchar(make_visa_adapter):
     """read_bytes(-1, break_on_termchar=True) delegates to read_raw(None)."""
     adapter = make_visa_adapter(read_termination="\n")
     adapter.write("*IDN?")
-    with mock.patch.object(
-        adapter.connection, "read_raw", wraps=adapter.connection.read_raw
-    ) as spy:
+    connection = _resource(adapter)
+    with mock.patch.object(connection, "read_raw", wraps=connection.read_raw) as spy:
         result = adapter.read_bytes(-1, break_on_termchar=True)
     assert result == b"SCPI,MOCK,VERSION_1.0\n"
     spy.assert_called_once_with(None)
@@ -268,7 +285,7 @@ def test_wait_for_srq(make_visa_adapter):
 def test_flush_read_buffer_normal(make_visa_adapter):
     """flush_read_buffer calls flush with discard_read_buffer and discard_receive_buffer."""
     adapter = make_visa_adapter()
-    with mock.patch.object(adapter.connection, "flush") as spy:
+    with mock.patch.object(_resource(adapter), "flush") as spy:
         adapter.flush_read_buffer()
     called_args = [call.args[0] for call in spy.call_args_list]
     assert pyvisa.constants.BufferOperation.discard_read_buffer in called_args
@@ -279,12 +296,10 @@ def test_flush_read_buffer_not_implemented_fallback(make_visa_adapter):
     """flush_read_buffer falls back to read_bytes(-1) with timeout=0 on NotImplementedError."""
     adapter = make_visa_adapter(read_termination="\n")
 
-    def raising_flush(operation):
-        raise NotImplementedError
-
-    adapter.connection.flush = raising_flush
     original_timeout = adapter.timeout
-    with mock.patch.object(adapter, "read_bytes", wraps=adapter.read_bytes) as spy:
+    with mock.patch.object(
+        _resource(adapter), "flush", side_effect=NotImplementedError
+    ), mock.patch.object(adapter, "read_bytes", wraps=adapter.read_bytes) as spy:
         adapter.flush_read_buffer()
     # read_bytes was called with -1 to drain the buffer
     assert any(call.args[0] == -1 for call in spy.call_args_list)
