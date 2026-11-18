@@ -197,9 +197,7 @@ class ListInput(Input[ListParameter], QtWidgets.QComboBox):
 
         choices = parameter.choices
         self._stringChoices = (
-            tuple((str(choice) + suffix) for choice in choices)
-            if choices is not None
-            else ()
+            tuple((str(choice) + suffix) for choice in choices) if choices is not None else ()
         )
         self.clear()
         self.addItems(self._stringChoices)
@@ -209,12 +207,11 @@ class ListInput(Input[ListParameter], QtWidgets.QComboBox):
     def setValue(self, value: Any) -> None:
         choices = self._parameter.choices if self._parameter is not None else None
         if choices is None:
-            raise ValueError(f"Invalid choice for parameter. Must be one of {choices!s}")
+            raise ValueError("Cannot set the value: the parameter has no choices.")
         try:
             index = choices.index(value)
         except ValueError as e:  # choice invalid
-            raise ValueError("Invalid choice for parameter. "
-                             f"Must be one of {choices!s}") from e
+            raise ValueError(f"Invalid choice for parameter. Must be one of {choices!s}") from e
         self.setCurrentIndex(index)
 
     def setSuffix(self, value) -> None:

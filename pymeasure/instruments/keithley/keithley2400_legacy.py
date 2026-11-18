@@ -713,7 +713,8 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         else:
             currents = np.linspace(startI, stopI, num)
             self.write(":SOUR:SWE:DIR UP")
-        # 30 s for VISA adapters (milliseconds); the read sweep below takes several seconds.
+        # Adapter-native timeout: 30000 ms (30 s) for a VISA adapter, but 30000 s on a serial
+        # adapter. The read sweep below takes several seconds.
         self.adapter.timeout = 30000
         self.enable_source()
         data = self.values(":READ?")

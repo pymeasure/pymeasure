@@ -220,11 +220,15 @@ class VISAAdapter(Adapter):
     def wait_for_srq(self, timeout: float = 25, delay: float = 0.1) -> None:
         """ Block until a SRQ, and leave the bit high
 
+        SRQ waiting requires a GPIB resource: PyVISA only declares ``wait_for_srq`` on GPIB
+        resources.
+
         :param timeout: Timeout duration in seconds
         :param delay: Time delay between checking SRQ in seconds
         """
-        # PyVISA declares `wait_for_srq` only on GPIB resources.
-        cast(pyvisa.resources.GPIBInstrument, self.connection).wait_for_srq(int(timeout * 1000))
+        # The cast is typing-only: other resource types (such as `SerialInstrument`) are passed
+        # through unchanged, so no runtime check is performed.
+        cast(pyvisa.resources.GPIBInstrument, visa_resource(self)).wait_for_srq(int(timeout * 1000))
 
     def flush_read_buffer(self) -> None:
         """ Flush and discard the input buffer

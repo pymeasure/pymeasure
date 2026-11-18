@@ -168,7 +168,7 @@ class TestListInput:
         return list_input
 
     def test_set_value_without_choices_should_raise(self, no_choices_input):
-        with pytest.raises(ValueError, match="Invalid choice for parameter"):
+        with pytest.raises(ValueError, match="no choices"):
             no_choices_input.setValue(123)
 
     def test_value_without_choices_should_raise(self, no_choices_input):
