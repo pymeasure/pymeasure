@@ -106,3 +106,13 @@ def test_ramp_units():
         tcp=True,
     ) as inst:
         assert inst.ramp_units == "mins"
+
+
+def test_firmware_version():
+    with expected_protocol(
+        EurothermEPC3000,
+        [(b"\x00\x01\x00\x00\x00\x06\x01\x03\x00\x6b\x00\x01",
+          b"\x00\x01\x00\x00\x00\x05\x01\x03\x02\x05\x01")],
+        tcp=True,
+    ) as inst:
+        assert inst.firmware_version == "V5.01"
