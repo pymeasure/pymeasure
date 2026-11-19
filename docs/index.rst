@@ -16,27 +16,38 @@ Installing Python and PyMeasure are demonstrated in the :doc:`Quick Start guide 
 
 PyMeasure is currently under active development, so please report any issues you experience on our `Issues page`_.
 
-.. image:: https://img.shields.io/pypi/pyversions/pymeasure
-   :alt: PyPI - Python Version
+.. |pypi_version| image:: https://img.shields.io/pypi/v/pymeasure
+   :target: https://pypi.org/project/pymeasure/
+   :alt: PyPI version
 
-.. image:: https://github.com/pymeasure/pymeasure/actions/workflows/pymeasure_CI.yml/badge.svg
-    :target: https://github.com/pymeasure/pymeasure/actions/workflows/pymeasure_CI.yml
+.. |python_versions| image:: https://img.shields.io/pypi/pyversions/pymeasure
+   :alt: Supported Python versions
 
-.. image:: http://readthedocs.org/projects/pymeasure/badge/?version=latest
-    :target: http://pymeasure.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+.. |ci| image:: https://github.com/pymeasure/pymeasure/actions/workflows/pymeasure_CI.yml/badge.svg
+   :target: https://github.com/pymeasure/pymeasure/actions/workflows/pymeasure_CI.yml
+   :alt: Continuous integration status
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3732545.svg
-   :target: https://doi.org/10.5281/zenodo.3732545
+.. |docs| image:: https://img.shields.io/readthedocs/pymeasure
+   :target: https://pymeasure.readthedocs.io/en/latest/
+   :alt: Documentation status
 
-.. image:: https://anaconda.org/conda-forge/pymeasure/badges/version.svg
-   :target: https://anaconda.org/conda-forge/pymeasure
-
-.. image:: https://anaconda.org/conda-forge/pymeasure/badges/downloads.svg
-   :target: https://anaconda.org/conda-forge/pymeasure
-
-.. image:: https://codecov.io/gh/pymeasure/pymeasure/graph/badge.svg
+.. |coverage| image:: https://codecov.io/gh/pymeasure/pymeasure/graph/badge.svg
    :target: https://codecov.io/gh/pymeasure/pymeasure
+   :alt: Code coverage
+
+.. |conda_version| image:: https://anaconda.org/conda-forge/pymeasure/badges/version.svg
+   :target: https://anaconda.org/conda-forge/pymeasure
+   :alt: conda-forge version
+
+.. |conda_downloads| image:: https://anaconda.org/conda-forge/pymeasure/badges/downloads.svg
+   :target: https://anaconda.org/conda-forge/pymeasure
+   :alt: conda-forge downloads
+
+.. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.595633.svg
+   :target: https://doi.org/10.5281/zenodo.595633
+   :alt: Zenodo DOI
+
+|pypi_version| |python_versions| |ci| |docs| |coverage| |conda_version| |conda_downloads| |doi|
 
 .. _Issues page: https://github.com/pymeasure/pymeasure/issues
 
