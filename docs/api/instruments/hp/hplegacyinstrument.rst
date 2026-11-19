@@ -1,5 +1,5 @@
 ######################################
- Support class for HP legacy devices 
+ Support class for HP legacy devices
 ######################################
 
 Currently this implementation is used for the following instruments which do not support SCPI:

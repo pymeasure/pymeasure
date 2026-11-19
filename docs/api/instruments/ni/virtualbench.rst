@@ -6,7 +6,7 @@ NI Virtual Bench
 General Information
 *******************
 
-The `armstrap/pyvirtualbench <https://github.com/armstrap/armstrap-pyvirtualbench>`_ 
+The `armstrap/pyvirtualbench <https://github.com/armstrap/armstrap-pyvirtualbench>`_
 Python wrapper for the VirtualBench C-API is required.
 This Instrument driver only interfaces the pyvirtualbench Python wrapper.
 
@@ -20,7 +20,7 @@ Simple Example to switch digital lines of the DIO module.
 .. code-block:: python
 
     from pymeasure.instruments.ni import VirtualBench
-    
+
     vb = VirtualBench(device_name='VB8012-3057E1C')
     line = 'dig/2'  # may be list of lines
     # initialize DIO module -> available via vb.dio

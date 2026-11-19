@@ -3,9 +3,9 @@ Advantest R6245/R6246 DC Voltage/Current Sources/Monitors
 #########################################################
 .. currentmodule:: pymeasure.instruments.advantest.advantestR624X
 
-**********************************************
+************
 Main Classes
-**********************************************
+************
 
 .. autoclass:: AdvantestR6245
     :members:
@@ -32,9 +32,9 @@ Main Classes
 
 .. contents::
 
-**********************************************
+*******************
 General Information
-**********************************************
+*******************
 
 The R6245/6246 Series are DC voltage/current sources and monitors having
 source measurement units (SMUs) with 2 isolated channels. The series covers
@@ -51,12 +51,12 @@ There is a total of 99 commands, the majority of commands have been implemented.
 documentation is in Japanese, and the device options are enormous. The implementation is
 based on 6245S-GPIB-B-FHJ-8335160E01.pdf, which can be downloaded from the ADCMT website.
 
-**********************************************
+********
 Examples
-**********************************************
+********
 
 Initialization of the Instrument
-====================================
+================================
 
 .. code-block:: python
 
@@ -67,7 +67,7 @@ Initialization of the Instrument
 
 
 Simple dual channel synchronous measurement example
-====================================================
+===================================================
 
 Measurement characteristics:
   Channel A (MASTER): DC voltage source + current measurement
@@ -124,7 +124,7 @@ Measurement characteristics:
     smu.standby()                                             # Put channel A & B in standby
 
 Program example for DC measurement
-=====================================
+==================================
 
 Measurement characteristics:
   Function: VSIM - Source voltage and measure current
@@ -216,7 +216,7 @@ Reads the fixed end bit, captures the measurement data, and prints out the measu
     smu.ch_A.standby()                                               # Put channel A in standby mode
 
 Program example for pulse measurement
-=================================================
+=====================================
 
 Measurement characteristics:
   Function: ISVM - Source current and measure voltage
@@ -263,7 +263,7 @@ After the operation, repeat the measurement 10 times with the trigger command an
     smu.ch_A.standby()                                                  # Put channel A in standby mode
 
 Fixed Level Sweep Program Example
-=================================================
+=================================
 
 Measurement characteristics:
   function: VSVM - Voltage source and voltage measurement

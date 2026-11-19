@@ -8,4 +8,4 @@ The Experiment class is intended for use in the Jupyter notebook environment.
     :members:
     :undoc-members:
     :inherited-members:
-    :show-inheritance: 
+    :show-inheritance:

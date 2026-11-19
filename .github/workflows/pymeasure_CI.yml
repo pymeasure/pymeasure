@@ -89,6 +89,8 @@ jobs:
         run: |
           python --version
           micromamba info
+      - name: Lint docs
+        run: sphinx-lint docs README.rst CHANGES.rst -i docs/_build
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Generate docs
         working-directory: ./docs
