@@ -61,6 +61,7 @@ class TC038D(Instrument):
     For the variables are two or four-byte modes available. We use the
     four-byte mode addresses. In that case element count has to be
     double the variables read.
+    (modbus communication)
     """
 
     byteMode = 4
