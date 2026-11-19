@@ -70,7 +70,6 @@ class IEEE4882Mixin(CommonBase):
         maxsplit=0,
     )
 
-    # IEEE 488.2 default method
     def clear(self) -> None:
         """Clear the instrument status byte."""
         self.write("*CLS")
@@ -108,6 +107,51 @@ class SCPIMixin(IEEE4882Mixin):
             else:
                 break
         return errors
+
+    def close(self) -> None:
+        """Close the adapter connection."""
+        self.adapter.close()
+
+    def open(self) -> None:
+        """Reopen the adapter connection after a close or network dropout."""
+        self.adapter.open()
+
+    def get_device_info(self) -> None:
+        """Query ``*IDN?`` and populate identification attributes on this instance.
+
+        Sets the following attributes from the parsed ``*IDN?`` response:
+
+        * ``self.name`` — model designation (e.g. ``"NGP804"``)
+        * ``self.vendor`` — manufacturer string
+        * ``self.serial_number`` — serial number string
+        * ``self.firmware_ref`` — firmware / software version string
+        """
+        resp_str = self.id
+        parts = [p.strip() for p in (resp_str.split(",") + ["", "", "", ""])[:4]]
+        vendor, name, serial_number, firmware_ref = parts
+        self.vendor = vendor
+        self.name = name
+        self.serial_number = serial_number
+        self.firmware_ref = firmware_ref
+        self._device_info_loaded = True
+
+    def check_is_dev_supported(self, instr_list: list[str], err_msg: str = "") -> None:
+        """Check that ``self.name`` (the model from ``*IDN?``) is in *instr_list*.
+
+        Call :meth:`get_device_info` first to populate ``self.name``.
+        Closes the connection and raises :class:`AssertionError` if the model
+        is not in *instr_list*.
+
+        :param instr_list: List of supported model name strings.
+        :param err_msg: Message suffix appended to the model name in the error.
+        :raises AssertionError: If ``self.name`` is ``None`` or not found in *instr_list*.
+        """
+        if self.name is None or not getattr(self, "_device_info_loaded", False):
+            raise AssertionError("Instrument connection not opened!")
+
+        if instr_list is not None and self.name not in instr_list:
+            self.close()
+            raise AssertionError(self.name + err_msg)
 
 
 class SCPIUnknownMixin(SCPIMixin):

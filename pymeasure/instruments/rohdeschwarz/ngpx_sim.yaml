@@ -1,0 +1,99 @@
+spec: "1.0"
+devices:
+  ngp804:
+    eom:
+      TCPIP INSTR:
+        q: "\n"
+        r: "\n"
+      TCPIP SOCKET:
+        q: "\n"
+        r: "\n"
+      USB INSTR:
+        q: "\n"
+        r: "\n"
+      ASRL INSTR:
+        q: "\r\n"
+        r: "\n"
+    dialogues:
+      - q: "*IDN?"
+        r: "Rohde&Schwarz,NGP804,123456/001,1.00"
+      - q: "*CLS;*RST;*OPC?"
+        r: "1"
+      - q: "*CLS;*RST;"
+      - q: "SYST:REM"
+      - q: "SYST:LOC"
+      # --- Channel 1 ---
+      - q: "VOLT 5.000,(@1)"
+      - q: "VOLT? (@1)"
+        r: "5.000000E+00"
+      - q: "CURR 1.000,(@1)"
+      - q: "CURR? (@1)"
+        r: "1.000000E+00"
+      - q: "MEAS:VOLT? (@1)"
+        r: "4.999100E+00"
+      - q: "MEAS:CURR? (@1)"
+        r: "9.998000E-01"
+      # --- Channel 2 ---
+      - q: "VOLT 0.000,(@2)"
+      - q: "VOLT? (@2)"
+        r: "0.000000E+00"
+      - q: "CURR 0.001,(@2)"
+      - q: "CURR? (@2)"
+        r: "0.000000E+00"
+      - q: "MEAS:VOLT? (@2)"
+        r: "0.000000E+00"
+      - q: "MEAS:CURR? (@2)"
+        r: "0.000000E+00"
+      - q: "OUTP 0,(@2)"
+      - q: "OUTP? (@2)"
+        r: "0"
+      # --- Channel 3 ---
+      - q: "VOLT 0.000,(@3)"
+      - q: "VOLT? (@3)"
+        r: "0.000000E+00"
+      - q: "CURR 0.001,(@3)"
+      - q: "CURR? (@3)"
+        r: "0.000000E+00"
+      - q: "MEAS:VOLT? (@3)"
+        r: "0.000000E+00"
+      - q: "MEAS:CURR? (@3)"
+        r: "0.000000E+00"
+      - q: "OUTP 0,(@3)"
+      - q: "OUTP? (@3)"
+        r: "0"
+      # --- Channel 4 ---
+      - q: "VOLT 0.000,(@4)"
+      - q: "VOLT? (@4)"
+        r: "0.000000E+00"
+      - q: "CURR 0.001,(@4)"
+      - q: "CURR? (@4)"
+        r: "0.000000E+00"
+      - q: "MEAS:VOLT? (@4)"
+        r: "0.000000E+00"
+      - q: "MEAS:CURR? (@4)"
+        r: "0.000000E+00"
+      - q: "OUTP 0,(@4)"
+      - q: "OUTP? (@4)"
+        r: "0"
+      # --- Global output ---
+      - q: "OUTP:GEN 1"
+      - q: "OUTP:GEN?"
+        r: "1"
+      - q: "OUTP:GEN 0"
+    properties:
+      output_ch1:
+        default: 0
+        getter:
+          q: "OUTP? (@1)"
+          r: "{:d}"
+        setter:
+          q: "OUTP {:d},(@1)"
+        specs:
+          valid: [0, 1]
+          type: int
+
+resources:
+  TCPIP::localhost::9000::SOCKET:
+    device: ngp804
+  USB::0x0AAD::0x01FF::123456::INSTR:
+    device: ngp804
