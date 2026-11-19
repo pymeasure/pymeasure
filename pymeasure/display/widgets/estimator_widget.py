@@ -23,16 +23,17 @@
 #
 
 import logging
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from inspect import signature
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from ..Qt import QtCore, QtWidgets
 from ..thread import StoppableQThread
 from .sequencer_widget import SequenceEvaluationError
 
 if TYPE_CHECKING:
-    from ..windows.managed_window import ManagedWindow
+    from ..windows.managed_window import ManagedWindowBase
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -41,17 +42,17 @@ log.addHandler(logging.NullHandler())
 class EstimatorThread(StoppableQThread):
     new_estimates = QtCore.Signal(list)
 
-    def __init__(self, get_estimates_callable):
+    def __init__(self, get_estimates_callable: Callable[[], list[tuple[str, str]]]) -> None:
         StoppableQThread.__init__(self)
 
         self._get_estimates = get_estimates_callable
 
-        self.delay = 2
+        self.delay: float = 2
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.wait()
 
-    def run(self):
+    def run(self) -> None:
         self._should_stop.clear()
 
         while not self._should_stop.wait(self.delay):
@@ -82,12 +83,11 @@ class EstimatorWidget(QtWidgets.QWidget):
     number_of_estimates = 0
     sequencer = None
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: ManagedWindowBase | None = None) -> None:
         super().__init__(parent)
         if parent is None:
             raise TypeError("The EstimatorWidget requires a parent window.")
-        # The parent window provides the procedure and sequencer interfaces used below.
-        self._parent = cast("ManagedWindow", parent)
+        self._parent = parent
 
         self.check_get_estimates_signature()
 
@@ -101,7 +101,7 @@ class EstimatorWidget(QtWidgets.QWidget):
 
         self.update_box.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
 
-    def check_get_estimates_signature(self):
+    def check_get_estimates_signature(self) -> None:
         """ Method that checks the signature of the get_estimates function.
         It checks which input arguments are allowed and, if the output is
         correct for the EstimatorWidget, stores the number of estimates.
@@ -140,7 +140,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         # Store the number of estimates
         self.number_of_estimates = len(estimates)
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.line_edits = []
         for idx in range(self.number_of_estimates):
             qlb = QtWidgets.QLabel(self)
@@ -160,7 +160,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         self.update_button = QtWidgets.QPushButton("Update", self)
         self.update_button.clicked.connect(self.update_estimates)
 
-    def _layout(self):
+    def _layout(self) -> None:
         f_layout = QtWidgets.QFormLayout(self)
         for row in self.line_edits:
             f_layout.addRow(*row)
@@ -170,7 +170,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         update_hbox.addWidget(self.update_button)
         f_layout.addRow("Update continuously", update_hbox)
 
-    def get_estimates(self):
+    def get_estimates(self) -> list[tuple[str, str]]:
         """ Method that makes a procedure with the currently entered
         parameters and returns the estimates for these parameters.
         """
@@ -204,14 +204,14 @@ class EstimatorWidget(QtWidgets.QWidget):
 
         return estimates
 
-    def update_estimates(self):
+    def update_estimates(self) -> None:
         """ Method that gets and displays the estimates.
         Implemented for connecting to the 'update'-button.
         """
         estimates = self.get_estimates()
         self.display_estimates(estimates)
 
-    def display_estimates(self, estimates):
+    def display_estimates(self, estimates: list[tuple[str, str]]) -> None:
         """ Method that updates the shown estimates for the given set of
         estimates.
 
@@ -228,25 +228,27 @@ class EstimatorWidget(QtWidgets.QWidget):
             self.line_edits[idx][0].setText(estimate[0])
             self.line_edits[idx][1].setText(estimate[1])
 
-    def _estimates_from_duration(self, duration, sequence_length):
+    def _estimates_from_duration(
+        self, duration: float, sequence_length: int | None
+    ) -> list[tuple[str, str]]:
         estimates = []
 
         estimates.append(("Duration", f"{int(duration)} s"))
 
-        if hasattr(self._parent, "sequencer"):
+        if hasattr(self._parent, "sequencer") and sequence_length is not None:
             estimates.append(("Sequence length", str(sequence_length)))
             estimates.append(("Sequence duration", f"{int(sequence_length * duration)} s"))
 
         estimates.append(('Measurement finished at', str(datetime.now() + timedelta(
             seconds=duration))[:-7]))
 
-        if hasattr(self._parent, "sequencer"):
+        if hasattr(self._parent, "sequencer") and sequence_length is not None:
             estimates.append(('Sequence finished at', str(datetime.now() + timedelta(
                 seconds=duration * sequence_length))[:-7]))
 
         return estimates
 
-    def _set_continuous_updating(self):
+    def _set_continuous_updating(self) -> None:
         state = self.update_box.checkState()
 
         self.update_thread.stop()
