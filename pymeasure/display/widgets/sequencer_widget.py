@@ -27,13 +27,11 @@ import os
 from collections import ChainMap
 from functools import partial
 from inspect import signature
-from typing import TYPE_CHECKING, cast
+from typing import Protocol, cast, runtime_checkable
 
+from ...experiment.procedure import Procedure
 from ...experiment.sequencer import SequenceEvaluationError, SequenceHandler
 from ..Qt import QtCore, QtGui, QtWidgets
-
-if TYPE_CHECKING:
-    from ..windows.managed_window import ManagedWindow
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -390,6 +388,22 @@ class SequenceDialog(QtWidgets.QFileDialog):
             self.preview_param.expandAll()
 
 
+@runtime_checkable
+class SequencerParent(Protocol):
+    """Interface SequencerWidget requires from its parent window.
+
+    The parent must also be a :class:`QWidget`. Any widget declaring these members qualifies,
+    for example
+    :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`.
+    """
+
+    procedure_class: type[Procedure]
+    displays: list[str]
+
+    def make_procedure(self) -> Procedure: ...
+    def queue(self, procedure: Procedure | None = None) -> None: ...
+
+
 class SequencerWidget(QtWidgets.QWidget):
     """
     Widget that allows to generate a sequence of measurements
@@ -402,18 +416,30 @@ class SequencerWidget(QtWidgets.QWidget):
     "procedure" argument.
 
     :param inputs: List of strings representing the parameters name
-    :param parent: The parent window. Required: it provides the procedure and queue interfaces
-        used by this widget.
+    :param parent: The parent window. Required: it must be a :class:`QWidget` that also
+        implements :class:`SequencerParent` (providing the procedure and queue interfaces used
+        by this widget), such as
+        :class:`ManagedWindow<pymeasure.display.windows.managed_window.ManagedWindow>`.
     """
 
     def __init__(
-        self, inputs=None, sequence_file: str | None = None, parent: QtWidgets.QWidget | None = None
+        self,
+        inputs=None,
+        sequence_file: str | None = None,
+        parent: SequencerParent | None = None,
     ):
-        super().__init__(parent)
         if parent is None:
             raise TypeError("The SequencerWidget requires a parent window.")
+        if not isinstance(parent, QtWidgets.QWidget):
+            raise TypeError("The parent must be a QWidget.")
+        if not isinstance(parent, SequencerParent):
+            raise TypeError(
+                "The parent must implement the required interface: "
+                "'make_procedure', 'queue', 'displays' and 'procedure_class'."
+            )
+        super().__init__(parent=parent)
         # The parent window provides the procedure and queue interfaces used below.
-        self._parent = cast("ManagedWindow", parent)
+        self._parent = parent
 
         self._check_queue_signature()
 

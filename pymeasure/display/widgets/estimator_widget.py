@@ -26,17 +26,27 @@ import logging
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from inspect import signature
-from typing import TYPE_CHECKING
+from typing import Protocol, runtime_checkable
 
+from ...experiment.procedure import Procedure
 from ..Qt import QtCore, QtWidgets
 from ..thread import StoppableQThread
 from .sequencer_widget import SequenceEvaluationError
 
-if TYPE_CHECKING:
-    from ..windows.managed_window import ManagedWindowBase
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+@runtime_checkable
+class EstimatorParent(Protocol):
+    """Interface EstimatorWidget requires from its parent window.
+
+    The parent must also be a :class:`QWidget`. Any widget with a :meth:`make_procedure`
+    method qualifies, for example
+    :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`.
+    """
+
+    def make_procedure(self) -> Procedure: ...
 
 
 class EstimatorThread(StoppableQThread):
@@ -75,19 +85,25 @@ class EstimatorWidget(QtWidgets.QWidget):
     asking for two keyword arguments in the Implementation of the `get_estimates` function:
     `sequence` and `sequence_length`, respectively.
 
-    :param parent: The parent window. Required: it provides the procedure and sequencer
-        interfaces used by this widget.
+    :param parent: The parent window. Required: it must be a :class:`QWidget` that also
+        implements :class:`EstimatorParent` (providing the procedure and sequencer interfaces
+        used by this widget), such as
+        :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`.
     """
     provide_sequence = False
     provide_sequence_length = False
     number_of_estimates = 0
     sequencer = None
 
-    def __init__(self, parent: ManagedWindowBase | None = None) -> None:
-        super().__init__(parent)
+    def __init__(self, parent: EstimatorParent | None = None) -> None:
         if parent is None:
             raise TypeError("The EstimatorWidget requires a parent window.")
-        self._parent = parent
+        if not isinstance(parent, QtWidgets.QWidget):
+            raise TypeError("The parent must be a QWidget.")
+        if not isinstance(parent, EstimatorParent):
+            raise TypeError("The parent must implement make_procedure().")
+        super().__init__(parent)
+        self._parent: EstimatorParent = parent
 
         self.check_get_estimates_signature()
 
@@ -182,7 +198,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         sequence = None
         sequence_length = None
         if hasattr(self._parent, "sequencer"):
-            sequencer = self._parent.sequencer
+            sequencer = getattr(self._parent, "sequencer", None)
             if sequencer is not None:
                 try:
                     sequence = sequencer.get_sequence()

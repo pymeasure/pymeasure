@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from typing import Any
+
 import pytest
 
 from pymeasure.display.Qt import QtCore, QtWidgets
@@ -154,6 +156,31 @@ def _reset_seq_calls():
     _SeqEstimatesProcedure.calls = []
     yield
     _SeqEstimatesProcedure.calls = []
+
+
+# --- parent validation -----------------------------------------------------
+
+
+def test_plain_qwidget_parent_rejected(qtbot):
+    """A plain QWidget does not implement EstimatorParent and is rejected at runtime."""
+    # Annotated as Any so this exercises the runtime guard without a static type error;
+    # the static rejection of a plain QWidget is covered by pyright.
+    plain_parent: Any = QtWidgets.QWidget()
+    qtbot.addWidget(plain_parent)
+
+    with pytest.raises(TypeError, match="make_procedure"):
+        EstimatorWidget(parent=plain_parent)
+
+
+def test_non_qwidget_parent_rejected():
+    """An object implementing the protocol but not a QWidget is rejected at runtime."""
+
+    class _ProtocolOnlyParent:
+        def make_procedure(self) -> Procedure:
+            return _ListEstimatesProcedure()
+
+    with pytest.raises(TypeError, match="must be a QWidget"):
+        EstimatorWidget(parent=_ProtocolOnlyParent())
 
 
 # --- EstimatorThread tests -------------------------------------------------
