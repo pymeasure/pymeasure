@@ -5,22 +5,22 @@ Agilent B1500 Semiconductor Parameter Analyzer
 
 .. contents::
 
-**********************************************
+*******************
 General Information
-**********************************************
-This instrument driver does not support all configuration options 
+*******************
+This instrument driver does not support all configuration options
 of the B1500 mainframe yet.
-So far, it is possible to interface multiple SMU modules and source/measure 
+So far, it is possible to interface multiple SMU modules and source/measure
 currents and voltages, perform sampling and staircase sweep measurements.
-The implementation of further measurement functionalities 
+The implementation of further measurement functionalities
 is highly encouraged.
-Meanwhile the model is managed by Keysight, 
+Meanwhile the model is managed by Keysight,
 see the corresponding "Programming Guide"
 for details on the control methods and their parameters
 
 Command Translation
 ===================
-Alphabetical list of implemented B1500 commands and their corresponding 
+Alphabetical list of implemented B1500 commands and their corresponding
 method/attribute names in this instrument driver.
 
 .. |br| raw:: html
@@ -77,12 +77,12 @@ Command         Property/Method
 ``XE``          :meth:`~AgilentB1500.send_trigger`
 ===========     =============================================
 
-**********************************************
+********
 Examples
-**********************************************
+********
 
 Initialization of the Instrument
-====================================
+================================
 
 .. code-block:: python
 
@@ -97,13 +97,13 @@ Initialization of the Instrument
 
 
 IV measurement with 4 SMUs
-=================================================
+==========================
 
 .. code-block:: python
 
     # choose measurement mode
     b1500.meas_mode('STAIRCASE_SWEEP', *b1500.smu_references) #order in smu_references determines order of measurement
-    
+
     # settings for individual SMUs
     for smu in b1500.smu_references:
         smu.enable() #enable SMU
@@ -128,7 +128,7 @@ IV measurement with 4 SMUs
     # Constant Output (could also be done using synchronous sweep source with start=stop, but then the output is not ramped up)
     b1500.smu3.ramp_source('VOLTAGE','Auto Ranging',-1,stepsize=0.1,pause=20e-3) #output starts immediately! (compared to sweeps)
     b1500.smu4.ramp_source('VOLTAGE','Auto Ranging',0,stepsize=0.1,pause=20e-3)
-    
+
     #Start Measurement
     b1500.check_errors()
     b1500.clear_buffer()
@@ -149,11 +149,11 @@ IV measurement with 4 SMUs
 
     #sweep constant sources back to 0V
     b1500.smu3.ramp_source('VOLTAGE','Auto Ranging',0,stepsize=0.1,pause=20e-3)
-    b1500.smu4.ramp_source('VOLTAGE','Auto Ranging',0,stepsize=0.1,pause=20e-3) 
+    b1500.smu4.ramp_source('VOLTAGE','Auto Ranging',0,stepsize=0.1,pause=20e-3)
 
 
 Sampling measurement with 4 SMUs
-=====================================
+================================
 
 .. code-block:: python
 
@@ -201,9 +201,9 @@ Sampling measurement with 4 SMUs
     b1500.smu3.ramp_source('VOLTAGE','Auto Ranging',0,stepsize=0.1,pause=20e-3)
     b1500.smu4.ramp_source('VOLTAGE','Auto Ranging',0,stepsize=0.1,pause=20e-3)
 
-**********************************************
+************
 Main Classes
-**********************************************
+************
 
 Classes to communicate with the instrument:
 
@@ -237,16 +237,16 @@ All `query` commands return a human readable dict of settings. These are intende
     :member-order: bysource
 
 
-**********************************************
+******************
 Supporting Classes
-**********************************************
+******************
 
 Classes that provide additional functionalities:
 
 * :class:`QueryLearn`: Process read out of instrument settings
 
-* :class:`SMUCurrentRanging`, :class:`SMUVoltageRanging`: Allowed 
-  ranges for different SMU types and transformation of 
+* :class:`SMUCurrentRanging`, :class:`SMUVoltageRanging`: Allowed
+  ranges for different SMU types and transformation of
   range names to indices (base: :class:`Ranging`)
 
 .. autoclass:: QueryLearn
@@ -264,22 +264,22 @@ Classes that provide additional functionalities:
 
 
 Enumerations
-=========================
-Enumerations are used for easy selection of the available 
-parameters (where it is applicable). 
-Methods accept member name or number as input, 
-but name is recommended for readability reasons. 
-The member number is passed to the instrument. 
-Converting an enumeration member into a string gives a title case, 
+============
+Enumerations are used for easy selection of the available
+parameters (where it is applicable).
+Methods accept member name or number as input,
+but name is recommended for readability reasons.
+The member number is passed to the instrument.
+Converting an enumeration member into a string gives a title case,
 whitespace separated string (:meth:`~.CustomIntEnum.__str__`)
-which cannot be used to select an enumeration member again. 
+which cannot be used to select an enumeration member again.
 It's purpose is only logging or documentation.
 
 .. call automodule with full module path only once to avoid duplicate index warnings
 .. autodoc other classes via currentmodule:: and autoclass::
 
 .. automodule:: pymeasure.instruments.agilent.agilentB1500
-    :members: 
+    :members:
     :exclude-members: AgilentB1500, SMU, SPGU, SPGUChannel, CMU, QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
     :show-inheritance:
     :member-order: bysource

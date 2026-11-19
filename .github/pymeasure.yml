@@ -21,6 +21,7 @@ dependencies:
   - sphinx=7.4.7
   - sphinx_rtd_theme=3.1.0
   - sphinx-autodoc-typehints=2.3.0
+  - sphinx-lint=1.0.2
 #  pip is currently not needed, but the recommended tool when packages that are unavailable on conda are required
   # - pip  # don't pin, to gain newest conda compatibility fixes
   # - pip:

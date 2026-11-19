@@ -6,7 +6,7 @@ Connecting to an R&S FSL via network
 ------------------------------------
 Once connected to the network, the instrument's IP address can be found by
 clicking the "Setup" button and navigating to "General Settings" -> "Network
-Address".  
+Address".
 
 It can then be connected like this:
 
@@ -20,7 +20,7 @@ Getting and setting parameters
 
 Most parameters are implemented as properties, which means they can be read and
 written (getting and setting) in a consistent and simple way. If numerical
-values are provided, base units are used (s, Hz, dB, ...). 
+values are provided, base units are used (s, Hz, dB, ...).
 Alternatively, the values can also be provided with a unit, e.g. ``"1.5 GHz"``
 or ``"1.5GHz"``. Return values are always numerical.
 
@@ -33,7 +33,7 @@ or ``"1.5GHz"``. Return values are always numerical.
 
 .. code:: python
 
-    # Changing it to 10 MHz by providing the numerical value 
+    # Changing it to 10 MHz by providing the numerical value
     fsl.freq_center = 10e6
 
 .. code:: python
@@ -145,4 +145,3 @@ Here is an example of a simple script for recording the peak of a signal.
 .. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.FSW
     :members:
     :show-inheritance:
-
