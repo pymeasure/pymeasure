@@ -26,6 +26,7 @@ import logging
 import os
 from collections import ChainMap
 from collections.abc import Generator, Iterable, Iterator, Sequence
+from collections.abc import Generator, Iterable, Iterator
 from functools import partial
 from inspect import signature
 from typing import Any, Protocol, cast, runtime_checkable
@@ -57,8 +58,10 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         self.header = header
         self.root = data
 
-    def add_node(self, parameter, parent=None):
-        """ Add a row in the sequencer """
+    def add_node(
+        self, parameter: str, parent: QtCore.QModelIndex | None = None
+    ) -> QtCore.QModelIndex:
+        """Add a row in the sequencer"""
         if parent is None:
             parent = self.createIndex(-1, -1)
 
@@ -138,7 +141,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             return QtCore.QModelIndex()
         return self.createIndex(row, column, child)
 
-    def parent(self, index: QtCore.QModelIndex | None = None):
+    def parent(self, index: QtCore.QModelIndex | None = None) -> QtCore.QModelIndex:
         """ Return the index of the parent of a given index. If index is not supplied,
         return an invalid QModelIndex.
 
