@@ -197,10 +197,10 @@ class ProtocolAdapter(Adapter):
         self.connection.flush("pyvisa.constants.BufferOperation.discard_read_buffer")
 
     @property
-    def timeout(self) -> float | None:
-        """Control the timeout, stored on the mocked connection for assertions."""
+    def timeout(self) -> int | None:
+        """Control the timeout in integer milliseconds, stored on the mocked connection."""
         return self.connection.timeout
 
     @timeout.setter
-    def timeout(self, value: float | None) -> None:
+    def timeout(self, value: int | None) -> None:
         self.connection.timeout = value

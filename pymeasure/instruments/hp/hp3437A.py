@@ -227,13 +227,13 @@ class HP3437A(HPLegacyInstrument):
 
         current_timeout = self.adapter.timeout
         time_needed = self.number_readings * self.delay
-        new_timeout = min(1e6, time_needed * 3 * 1000)  # safety factor 3
+        new_timeout = int(min(1_000_000, time_needed * 3 * 1000))  # safety factor 3
         if current_timeout is not None and new_timeout > current_timeout:
-            if new_timeout >= 1e6:
+            if new_timeout >= 1_000_000:
                 # Disables timeout if measurement would take more then 1000 sec
                 log.info("HP3437A: timeout deactivated")
             self.adapter.timeout = new_timeout
-            log.info("HP3437A: timeout changed to %g", new_timeout)
+            log.info("HP3437A: timeout changed to %d", new_timeout)
         read_data = self.read_bytes(-1)
         # check if data is in packed format format
         if self.talk_ascii:

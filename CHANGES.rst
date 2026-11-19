@@ -32,7 +32,9 @@ Changed
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
 - Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
 - Added the :code:`timeout` property to :class:`.Adapter` and migrated all adapters, drivers, and tests from :code:`adapter.connection.timeout` to it.
-  The value is passed through unchanged to the connection, so VISA adapters use milliseconds while serial adapters use seconds.
+  The value is in integer milliseconds for every adapter and :code:`None` means no timeout.
+  VISA adapters translate :code:`None` to pyvisa's :code:`float("inf")` and report :code:`inf` back as :code:`None`, while the serial adapter converts to pyserial seconds and rounds to whole milliseconds on read.
+  The serial adapter's property consequently changed its unit from seconds to milliseconds; the :code:`timeout` keyword of its constructor is still forwarded to pyserial in seconds.
   Custom :class:`.Adapter` subclasses have to implement :code:`timeout` if a driver calls it.
 
 Instruments

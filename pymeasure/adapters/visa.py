@@ -157,23 +157,27 @@ class VISAAdapter(Adapter):
         self.connection.write(command, **kwargs)
 
     @property
-    def timeout(self) -> float | None:
-        """Control the connection timeout in milliseconds.
+    def timeout(self) -> int | None:
+        """Control the connection timeout in integer milliseconds.
 
-        The value is passed to PyVISA unchanged, which truncates fractional milliseconds to an
-        integer. Use ``float("inf")`` for no timeout. ``None`` is rejected with a
-        :class:`ValueError`.
+        ``None`` means no timeout and is translated to PyVISA's ``float("inf")``.
+        PyVISA's infinite timeout is reported as ``None`` and finite values are truncated to
+        whole milliseconds. A :class:`~pymeasure.adapters.ProtocolAdapter` connection is passed
+        through unchanged in both directions.
         """
-        return visa_resource(self).timeout
+        if isinstance(self.connection, ProtocolAdapter):
+            return self.connection.timeout
+        value = visa_resource(self).timeout
+        if value == float("inf"):
+            return None
+        return int(value)
 
     @timeout.setter
-    def timeout(self, value: float | None) -> None:
-        if value is None:
-            raise ValueError(
-                "A VISA timeout cannot be None, use a numeric timeout in milliseconds "
-                'or float("inf") for no timeout.'
-            )
-        visa_resource(self).timeout = value
+    def timeout(self, value: int | None) -> None:
+        if isinstance(self.connection, ProtocolAdapter):
+            self.connection.timeout = value
+            return
+        visa_resource(self).timeout = float("inf") if value is None else int(value)
 
     def _write_bytes(self, content: bytes, **kwargs) -> None:
         """Write the bytes `content` to the instrument.

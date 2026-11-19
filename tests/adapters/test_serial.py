@@ -117,14 +117,39 @@ def test_flush_read_buffer(adapter):
     assert adapter.connection.in_waiting == 0
 
 
-def test_timeout_roundtrip(adapter):
-    """The timeout property passes pyserial's timeout in seconds through."""
-    adapter.timeout = 0.2
-    assert adapter.timeout == 0.2
-    assert adapter.connection.timeout == 0.2
+def test_timeout_in_milliseconds(adapter):
+    """The timeout property is in integer milliseconds and pyserial stores seconds."""
+    adapter.timeout = 250
+    assert adapter.timeout == 250
+    assert isinstance(adapter.timeout, int)
+    assert adapter.connection.timeout == 0.25
+
+
+def test_timeout_initial_value_is_milliseconds(adapter):
+    """The constructor timeout of 0.2 s is reported as 200 ms."""
+    assert adapter.timeout == 200
+    assert isinstance(adapter.timeout, int)
+
+
+def test_timeout_none_is_passed_through(adapter):
+    """``None`` means no timeout and is pyserial's native sentinel."""
     adapter.timeout = None
     assert adapter.timeout is None
     assert adapter.connection.timeout is None
+
+
+def test_timeout_rounds_seconds_to_milliseconds(adapter):
+    """A fractional pyserial timeout is reported as rounded integer milliseconds."""
+    adapter.connection.timeout = 0.1234567
+    assert adapter.timeout == 123
+    assert isinstance(adapter.timeout, int)
+
+
+def test_timeout_zero_is_passed_through(adapter):
+    """A zero timeout keeps pyserial's non-blocking semantics."""
+    adapter.timeout = 0
+    assert adapter.timeout == 0
+    assert adapter.connection.timeout == 0
 
 
 def test_repr(adapter):

@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 import importlib.util
+from types import SimpleNamespace
 from typing import Any, cast
 from unittest import mock
 
@@ -92,33 +93,52 @@ def test_nested_adapter():
 
 
 def test_timeout_roundtrip(make_visa_adapter):
-    """The timeout property reads and writes the PyVISA timeout in milliseconds."""
+    """The timeout property reads and writes the PyVISA timeout in integer milliseconds."""
     adapter = make_visa_adapter(timeout=1000)
     adapter.timeout = 1500
     assert adapter.timeout == 1500
+    assert isinstance(adapter.timeout, int)
     assert isinstance(adapter.connection, pyvisa.resources.MessageBasedResource)
     assert adapter.connection.timeout == 1500
 
 
-def test_timeout_truncates_to_milliseconds(make_visa_adapter):
-    """PyVISA only accepts integer milliseconds, so fractional values are truncated."""
+def test_timeout_fractional_resource_value_is_reported_as_int(make_visa_adapter):
+    """A fractional value stored by PyVISA is reported as integer milliseconds."""
     adapter = make_visa_adapter()
-    adapter.timeout = 1500.7
-    assert adapter.timeout == 1500
+    with mock.patch(
+        "pymeasure.adapters.visa.visa_resource",
+        return_value=SimpleNamespace(timeout=1500.7),
+    ):
+        assert adapter.timeout == 1500
+        assert isinstance(adapter.timeout, int)
 
 
-def test_timeout_rejects_none(make_visa_adapter):
-    """PyVISA uses ``float("inf")`` for no timeout, so ``None`` is rejected."""
+def test_timeout_none_maps_to_infinite(make_visa_adapter):
+    """``None`` means no timeout and is translated to PyVISA's ``float("inf")``."""
     adapter = make_visa_adapter()
-    with pytest.raises(ValueError):
-        adapter.timeout = None
+    adapter.timeout = None
+    assert adapter.timeout is None
+    assert _resource(adapter).timeout == float("inf")
 
 
-def test_timeout_accepts_infinite(make_visa_adapter):
-    """PyVISA's infinite timeout is a valid value and is passed through unchanged."""
+def test_timeout_infinite_maps_to_none(make_visa_adapter):
+    """PyVISA's infinite timeout is reported as ``None``."""
     adapter = make_visa_adapter()
-    adapter.timeout = float("inf")
-    assert adapter.timeout == float("inf")
+    _resource(adapter).timeout = float("inf")
+    assert adapter.timeout is None
+
+
+def test_timeout_with_protocol_adapter_roundtrip():
+    """Values pass through unchanged on a ProtocolAdapter connection, without inf translation."""
+    protocol = ProtocolAdapter(connection_attributes={"timeout": 250})
+    adapter = VISAAdapter(protocol)
+    assert adapter.timeout == 250
+    adapter.timeout = None
+    assert adapter.timeout is None
+    assert protocol.connection.timeout is None
+    adapter.timeout = 500
+    assert adapter.timeout == 500
+    assert protocol.connection.timeout == 500
 
 
 def test_ProtocolAdapter():

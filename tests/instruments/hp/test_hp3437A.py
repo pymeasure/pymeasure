@@ -22,83 +22,80 @@
 # THE SOFTWARE.
 #
 
+from contextlib import contextmanager
+
 import numpy as np
-import pytest
 
-from pymeasure.adapters import FakeAdapter
+from pymeasure.adapters import ProtocolAdapter
 from pymeasure.instruments.hp import HP3437A
+from pymeasure.test import expected_protocol
 
 
-class RecordingFakeAdapter(FakeAdapter):
-    """Fake adapter that serves one reply and records every timeout assignment."""
+@contextmanager
+def hp_with_timeout(monkeypatch, timeout, number_readings=1000, delay=0.01):
+    """Yield a HP3437A on a ProtocolAdapter plus the timeouts seen during reads.
 
-    def __init__(self, timeout, reply=""):
-        super().__init__()
-        self._timeout = timeout
-        self._buffer = reply
-        self.timeout_writes = []
+    ``talk_ascii``, ``number_readings``, and ``delay`` are stubbed at class level so that no
+    status reads are needed and the sweep time is deterministic.
+    """
+    monkeypatch.setattr(HP3437A, "talk_ascii", property(lambda self: True))
+    monkeypatch.setattr(HP3437A, "number_readings", property(lambda self: number_readings))
+    monkeypatch.setattr(HP3437A, "delay", property(lambda self: delay))
+    recorded = []
+    with expected_protocol(
+        HP3437A,
+        [(None, "1.0,2.0\r\n")],
+        connection_attributes={"timeout": timeout},
+    ) as instrument:
+        assert isinstance(instrument.adapter, ProtocolAdapter)
+        original_read_bytes = instrument.adapter._read_bytes
 
-    @property
-    def timeout(self):
-        return self._timeout
+        def recording_read_bytes(*args, **kwargs):
+            recorded.append(instrument.adapter.timeout)
+            return original_read_bytes(*args, **kwargs)
 
-    @timeout.setter
-    def timeout(self, value):
-        self.timeout_writes.append(value)
-        self._timeout = value
-
-
-@pytest.fixture
-def make_instrument(monkeypatch):
-    """Return a HP3437A factory with a stubbed status (ASCII mode, known readings)."""
-
-    def factory(timeout, number_readings=1000, delay=0.01):
-        adapter = RecordingFakeAdapter(timeout=timeout, reply="1.0,2.0\r\n")
-        instrument = HP3437A(adapter)
-        monkeypatch.setattr(HP3437A, "talk_ascii", property(lambda self: True))
-        monkeypatch.setattr(HP3437A, "number_readings", property(lambda self: number_readings))
-        monkeypatch.setattr(HP3437A, "delay", property(lambda self: delay))
-        return instrument
-
-    return factory
+        instrument.adapter._read_bytes = recording_read_bytes
+        yield instrument, recorded
 
 
-def test_read_data_restores_timeout(make_instrument):
-    """A long sweep raises the timeout for the read and restores it afterwards."""
-    instrument = make_instrument(timeout=100)
-
-    data = instrument.read_data()
+def test_read_data_raises_timeout_for_read_and_restores(monkeypatch):
+    """A long sweep raises the timeout during the read and restores it afterwards."""
+    with hp_with_timeout(monkeypatch, timeout=100) as (instrument, recorded):
+        data = instrument.read_data()
 
     np.testing.assert_array_equal(data, [1.0, 2.0])
-    assert instrument.adapter.timeout_writes == [pytest.approx(30000), 100]
+    assert recorded == [30000]
+    assert isinstance(recorded[0], int)
     assert instrument.adapter.timeout == 100
 
 
-def test_read_data_keeps_larger_timeout(make_instrument):
-    """A timeout already large enough is left untouched apart from the restore."""
-    instrument = make_instrument(timeout=1e6)
+def test_read_data_keeps_larger_timeout(monkeypatch):
+    """A timeout already large enough is in force during the read and restored afterwards."""
+    with hp_with_timeout(monkeypatch, timeout=1_000_000) as (instrument, recorded):
+        instrument.read_data()
 
-    instrument.read_data()
+    assert recorded == [1_000_000]
+    assert isinstance(recorded[0], int)
+    assert instrument.adapter.timeout == 1_000_000
 
-    assert instrument.adapter.timeout == 1e6
-    assert instrument.adapter.timeout_writes == [1e6]
 
+def test_read_data_keeps_none_timeout(monkeypatch):
+    """A ``None`` timeout (no timeout) is in force during the read and restored afterwards."""
+    with hp_with_timeout(monkeypatch, timeout=None) as (instrument, recorded):
+        instrument.read_data()
 
-def test_read_data_keeps_none_timeout(make_instrument):
-    """A ``None`` timeout (no timeout) is restored unchanged."""
-    instrument = make_instrument(timeout=None)
-
-    instrument.read_data()
-
+    assert recorded == [None]
     assert instrument.adapter.timeout is None
-    assert instrument.adapter.timeout_writes == [None]
 
 
-def test_read_data_keeps_infinite_timeout(make_instrument):
-    """An infinite timeout is not replaced by a finite sweep timeout."""
-    instrument = make_instrument(timeout=float("inf"))
+def test_read_data_caps_timeout_at_one_million(monkeypatch):
+    """A very long sweep caps the temporary timeout at one million milliseconds."""
+    with hp_with_timeout(monkeypatch, timeout=100, number_readings=9999, delay=0.9999999) as (
+        instrument,
+        recorded,
+    ):
+        instrument.read_data()
 
-    instrument.read_data()
-
-    assert instrument.adapter.timeout == float("inf")
-    assert instrument.adapter.timeout_writes == [float("inf")]
+    assert recorded == [1_000_000]
+    assert isinstance(recorded[0], int)
+    assert instrument.adapter.timeout == 100

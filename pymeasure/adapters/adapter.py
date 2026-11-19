@@ -155,17 +155,15 @@ class Adapter:
         raise NotImplementedError("Adapter class has not implemented input flush.")
 
     @property
-    def timeout(self) -> float | None:
-        """Control the connection timeout in the unit native to the adapter.
+    def timeout(self) -> int | None:
+        """Control the connection timeout in integer milliseconds.
 
-        The value is passed to the connection unchanged, so VISA adapters use milliseconds and
-        serial adapters use seconds. ``None`` means no timeout and is only supported by adapters
-        whose connection can express it. Implement in subclass.
+        ``None`` means no timeout. Implement in subclass.
         """
         raise NotImplementedError("Adapter class has not implemented a timeout.")
 
     @timeout.setter
-    def timeout(self, value: float | None) -> None:
+    def timeout(self, value: int | None) -> None:
         raise NotImplementedError("Adapter class has not implemented a timeout.")
 
     # Binary format methods
@@ -257,15 +255,15 @@ class FakeAdapter(Adapter):
 
     _buffer: str = ""
 
-    _timeout: float | None = None
+    _timeout: int | None = None
 
     @property
-    def timeout(self) -> float | None:
-        """Control the stored timeout, which has no effect on communication."""
+    def timeout(self) -> int | None:
+        """Control the stored timeout in milliseconds, which has no effect on communication."""
         return self._timeout
 
     @timeout.setter
-    def timeout(self, value: float | None) -> None:
+    def timeout(self, value: int | None) -> None:
         self._timeout = value
 
     def _read(self, **kwargs) -> str:

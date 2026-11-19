@@ -92,7 +92,7 @@ def test_timeout_not_implemented(adapter):
     with pytest.raises(NotImplementedError):
         _ = adapter.timeout
     with pytest.raises(NotImplementedError):
-        adapter.timeout = 0.5
+        adapter.timeout = 500
 
 
 def test_fake_adapter_timeout_initial(fake):
@@ -100,8 +100,9 @@ def test_fake_adapter_timeout_initial(fake):
 
 
 def test_fake_adapter_timeout_roundtrip(fake):
-    fake.timeout = 0.5
-    assert fake.timeout == 0.5
+    fake.timeout = 500
+    assert fake.timeout == 500
+    assert isinstance(fake.timeout, int)
     fake.timeout = None
     assert fake.timeout is None
 
@@ -109,7 +110,7 @@ def test_fake_adapter_timeout_roundtrip(fake):
 def test_fake_adapter_timeout_does_not_touch_connection(fake):
     """The fake adapter stores the timeout locally, as it has no connection."""
     assert not hasattr(fake, "connection")
-    fake.timeout = 0.5
+    fake.timeout = 500
     assert not hasattr(fake, "connection")
 
 
