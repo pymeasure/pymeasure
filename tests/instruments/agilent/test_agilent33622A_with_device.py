@@ -123,6 +123,14 @@ def test_pulse_minimum_timing(generator, channel):
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
+def test_pulse_transition_maximum(generator, channel):
+    ch = generator.channels[channel]
+    ch.shape = "PULS"
+    ch.pulse_transition = 10e-6
+    assert ch.pulse_transition == pytest.approx(10e-6)
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
 def test_burst_ncycles_maximum(generator, channel):
     ch = generator.channels[channel]
     ch.frequency = 1e6

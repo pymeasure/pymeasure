@@ -40,7 +40,7 @@ LIMITS = [
     ("square_dutycycle", "FUNC:SQU:DCYC", "%f", (0.01, 99.98), (0.009, 99.981)),
     ("pulse_period", "FUNC:PULS:PER", "%e", (10e-9, 1e6), (9.9e-9, 1.001e6)),
     ("pulse_width", "FUNC:PULS:WIDT", "%e", (5e-9, 1e6), (4.9e-9, 1.001e6)),
-    ("pulse_transition", "FUNC:PULS:TRAN:BOTH", "%e", (2.9e-9, 1e-6), (2.8e-9, 1.001e-6)),
+    ("pulse_transition", "FUNC:PULS:TRAN:BOTH", "%e", (2.9e-9, 10e-6), (2.8e-9, 10.01e-6)),
     ("burst_ncycles", "BURS:NCYC", "%d", (1, 100_000_000), (0, 100_000_001)),
     ("arb_srate", "FUNC:ARB:SRAT", "%f", (1e-6, 1e9), (0.9e-6, 1.001e9)),
 ]
