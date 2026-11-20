@@ -27,3 +27,4 @@ from .lakeshore224 import LakeShore224
 from .lakeshore331 import LakeShore331
 from .lakeshore421 import LakeShore421
 from .lakeshore425 import LakeShore425
+from .lakeshore625 import LakeShore625
