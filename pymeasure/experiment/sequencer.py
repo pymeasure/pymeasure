@@ -26,8 +26,10 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Container
+from dataclasses import dataclass
 from itertools import product
-from typing import Any
+from typing import Any, ClassVar, TextIO
 
 import numpy as np
 
@@ -39,40 +41,33 @@ class SequenceEvaluationError(Exception):
     """Raised when the evaluation of a sequence string goes wrong."""
 
 
+@dataclass(eq=False)
 class SequenceItem:
-    """ Class representing a sequence row """
-    column_map = {
+    """Class representing a sequence row."""
+
+    level: int
+    parameter: str
+    expression: str
+    parent: SequenceItem | None
+
+    column_map: ClassVar[dict[int, str]] = {
         0: "level",
         1: "parameter",
         2: "expression",
     }
 
-    def __init__(
-        self, level: int, parameter: str, expression: str, parent: SequenceItem | None
-    ) -> None:
-        self.level = level
-        self.parameter = parameter
-        self.expression = expression
-        self.parent = parent
+    def __getitem__(self, idx: int) -> Any:
+        return getattr(self, self.column_map[idx])
 
-    def __getitem__(self, idx: int | Any):
-        if idx in self.column_map:
-            return getattr(self, self.column_map[idx])
-        else:
-            return super().__getitem__(idx)
-
-    def __setitem__(self, idx: int | Any, value) -> None:
-        if idx in self.column_map:
-            setattr(self, self.column_map[idx], value)
-        else:
-            super().__setitem__(idx, value)
+    def __setitem__(self, idx: int, value: Any) -> None:
+        setattr(self, self.column_map[idx], value)
 
     def __str__(self) -> str:
-        return "{} \"{}\", \"{}\"".format("-" * (self.level + 1), self.parameter, self.expression)
+        return '{} "{}", "{}"'.format("-" * (self.level + 1), self.parameter, self.expression)
 
 
 class SequenceHandler:
-    """ It represents a sequence, that is a tree of parameter sweep.
+    """It represents a sequence, that is a tree of parameter sweep.
 
     A sequence can be loaded from a file or created programmatically with :meth:`~.add_node`
     and :meth:`~.remove_node`
@@ -99,45 +94,45 @@ class SequenceHandler:
     item matches a row of the sequence file.
 
     Data can also be saved back to the file object provided.
- """
+    """
 
     MAXDEPTH = 10
-    SAFE_FUNCTIONS = {
-        'range': range,
-        'sorted': sorted,
-        'list': list,
-        'arange': np.arange,
-        'linspace': np.linspace,
-        'arccos': np.arccos,
-        'arcsin': np.arcsin,
-        'arctan': np.arctan,
-        'arctan2': np.arctan2,
-        'ceil': np.ceil,
-        'cos': np.cos,
-        'cosh': np.cosh,
-        'degrees': np.degrees,
-        'e': np.e,
-        'exp': np.exp,
-        'fabs': np.fabs,
-        'floor': np.floor,
-        'fmod': np.fmod,
-        'frexp': np.frexp,
-        'hypot': np.hypot,
-        'ldexp': np.ldexp,
-        'log': np.log,
-        'log10': np.log10,
-        'modf': np.modf,
-        'pi': np.pi,
-        'power': np.power,
-        'radians': np.radians,
-        'sin': np.sin,
-        'sinh': np.sinh,
-        'sqrt': np.sqrt,
-        'tan': np.tan,
-        'tanh': np.tanh,
+    SAFE_FUNCTIONS: ClassVar[dict[str, Any]] = {
+        "range": range,
+        "sorted": sorted,
+        "list": list,
+        "arange": np.arange,
+        "linspace": np.linspace,
+        "arccos": np.arccos,
+        "arcsin": np.arcsin,
+        "arctan": np.arctan,
+        "arctan2": np.arctan2,
+        "ceil": np.ceil,
+        "cos": np.cos,
+        "cosh": np.cosh,
+        "degrees": np.degrees,
+        "e": np.e,
+        "exp": np.exp,
+        "fabs": np.fabs,
+        "floor": np.floor,
+        "fmod": np.fmod,
+        "frexp": np.frexp,
+        "hypot": np.hypot,
+        "ldexp": np.ldexp,
+        "log": np.log,
+        "log10": np.log10,
+        "modf": np.modf,
+        "pi": np.pi,
+        "power": np.power,
+        "radians": np.radians,
+        "sin": np.sin,
+        "sinh": np.sinh,
+        "sqrt": np.sqrt,
+        "tan": np.tan,
+        "tanh": np.tanh,
     }
 
-    def __init__(self, valid_inputs=(), file_obj=None) -> None:
+    def __init__(self, valid_inputs: Container[str] = (), file_obj: TextIO | None = None) -> None:
         self._sequences: list[SequenceItem] = []
         self.valid_inputs = valid_inputs
         if file_obj:
@@ -146,7 +141,7 @@ class SequenceHandler:
     @staticmethod
     def eval_string(
         string: str, name: str | None = None, depth: int | None = None, log_enabled: bool = True
-    ):
+    ) -> np.ndarray:
         """
         Evaluate the given string. The string is evaluated using a list of
         pre-defined functions that are deemed safe to use, to prevent the
@@ -169,52 +164,55 @@ class SequenceHandler:
                 )
             except TypeError:
                 if log_enabled:
-                    log.error("TypeError, likely a typo in one of the " +
-                              f"functions for parameter '{name}', depth {depth}")
+                    log.error(
+                        "TypeError, likely a typo in one of the "
+                        + f"functions for parameter '{name}', depth {depth}"
+                    )
                 raise SequenceEvaluationError("TypeError, likely a typo")
             except SyntaxError:
                 if log_enabled:
-                    log.error("SyntaxError, likely unbalanced brackets " +
-                              f"for parameter '{name}', depth {depth}")
+                    log.error(
+                        "SyntaxError, likely unbalanced brackets "
+                        + f"for parameter '{name}', depth {depth}"
+                    )
                 raise SequenceEvaluationError("SyntaxError, likely unbalanced brackets")
             except ValueError:
                 if log_enabled:
-                    log.error("ValueError, likely wrong function argument " +
-                              f"for parameter '{name}', depth {depth}")
+                    log.error(
+                        "ValueError, likely wrong function argument "
+                        + f"for parameter '{name}', depth {depth}"
+                    )
                 raise SequenceEvaluationError("ValueError, likely wrong function argument")
             except Exception as e:
                 raise SequenceEvaluationError(e) from e
         else:
             if log_enabled:
-                log.error("No sequence entered for " +
-                          f"for parameter '{name}', depth {depth}")
+                log.error("No sequence entered for " + f"for parameter '{name}', depth {depth}")
             raise SequenceEvaluationError("No sequence entered")
 
         evaluated_string = np.array(evaluated_string)
         return evaluated_string
 
-    def _get_idx(self, seq_item):
-        """ Return the index and level of the list whose value correspond to sequence """
-        try:
-            idx = self._sequences.index(seq_item)
-        except ValueError:
-            idx = -1  # Sequence not found, assuming idenx does not exist
+    def _get_idx(self, seq_item: SequenceItem | None) -> tuple[int, int]:
+        """Return the index and level of the list whose value correspond to sequence"""
+        idx = -1
+        if seq_item is not None:
+            try:
+                idx = self._sequences.index(seq_item)
+            except ValueError:
+                idx = -1  # Sequence not found, assuming index does not exist
 
-        if idx < 0:
-            level = -1
-        else:
-            level = self._sequences[idx].level
+        level = -1 if idx < 0 else self._sequences[idx].level
 
         return idx, level
 
-    def add_node(self, name: str, parent_seq_item=None) -> tuple[SequenceItem, int]:
+    def add_node(
+        self, name: str, parent_seq_item: SequenceItem | None = None
+    ) -> tuple[SequenceItem, int]:
         """Add a node under the parent identified by parent_seq_item"""
         parent_idx, level = self._get_idx(parent_seq_item)
 
-        seq_item = SequenceItem(level + 1,
-                                name,
-                                "",
-                                parent_seq_item)
+        seq_item = SequenceItem(level + 1, name, "", parent_seq_item)
         # Find position where to insert new row
         idx = parent_idx + 1
         while idx < len(self._sequences):
@@ -225,8 +223,8 @@ class SequenceHandler:
         self._sequences.insert(idx, seq_item)
         return seq_item, self.get_children_order(seq_item)
 
-    def remove_node(self, seq_item):
-        """ Remove node identified by seq_item """
+    def remove_node(self, seq_item: SequenceItem) -> tuple[SequenceItem | None, int]:
+        """Remove node identified by seq_item"""
         # if node identified by idx has children, we need to remove them first
         for child_seq_item in self.children(seq_item):
             self.remove_node(child_seq_item)
@@ -235,10 +233,10 @@ class SequenceHandler:
 
         return seq_item.parent, self.get_children_order(seq_item.parent)
 
-    def children(self, seq_item):
-        """ return a list of children of node identified by seq_item """
+    def children(self, seq_item: SequenceItem | None) -> list[SequenceItem]:
+        """return a list of children of node identified by seq_item"""
         idx, current_level = self._get_idx(seq_item)
-        child_list = []
+        child_list: list[SequenceItem] = []
         idx += 1
         while idx < len(self._sequences):
             if self._sequences[idx].level == (current_level + 1):
@@ -248,8 +246,8 @@ class SequenceHandler:
             idx += 1
         return child_list
 
-    def get_children(self, seq_item, index):
-        """ Return the children of order index of the node seq_item """
+    def get_children(self, seq_item: SequenceItem | None, index: int) -> SequenceItem | None:
+        """Return the children of order index of the node seq_item"""
 
         child_list = self.children(seq_item)
 
@@ -259,8 +257,8 @@ class SequenceHandler:
             child = child_list[index]
         return child
 
-    def get_children_order(self, seq_item):
-        """ Return the children order of the node identified by seq_item
+    def get_children_order(self, seq_item: SequenceItem | None) -> int:
+        """Return the children order of the node identified by seq_item
 
         The children order is the index related to the parent's children list.
 
@@ -275,13 +273,13 @@ class SequenceHandler:
 
         return children_list.index(seq_item)
 
-    def get_parent(self, seq_item):
-        """ Return parent of node identified by seq_item """
+    def get_parent(self, seq_item: SequenceItem) -> tuple[SequenceItem | None, int]:
+        """Return parent of node identified by seq_item"""
 
         return seq_item.parent, self.get_children_order(seq_item.parent)
 
-    def set_data(self, seq_item, row: int, column: int, value) -> bool:
-        """ Set data for node identified by seq_item """
+    def set_data(self, seq_item: SequenceItem | None, row: int, column: int, value: Any) -> bool:
+        """Set data for node identified by seq_item"""
 
         idx, _ = self._get_idx(seq_item)
 
@@ -291,7 +289,7 @@ class SequenceHandler:
         self._sequences[idx][column] = value
         return True
 
-    def load(self, file_obj, append: bool = False) -> None:
+    def load(self, file_obj: TextIO, append: bool = False) -> None:
         """
         Read and parse a sequence stored in a file.
 
@@ -300,12 +298,12 @@ class SequenceHandler:
 
         """
 
-        _sequences = []
+        _sequences: list[SequenceItem] = []
         if append:
             _sequences += self._sequences
-        current_parent = None
+        current_parent: SequenceItem | None = None
 
-        pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
+        pattern = re.compile('([-]+) "(.*?)", "(.*?)"')
         file_obj.seek(0)
         for line in file_obj:
             line = line.strip()
@@ -324,7 +322,7 @@ class SequenceHandler:
             parent_level = -1 if current_parent is None else current_parent.level
             if level == (parent_level + 1):
                 pass
-            elif (level <= parent_level):
+            elif level <= parent_level:
                 # Find parent
                 current_parent = None if current_parent is None else current_parent.parent
                 while current_parent is not None:
@@ -335,45 +333,48 @@ class SequenceHandler:
                 raise SequenceEvaluationError("Invalid file format: level missing ?")
 
             if self.valid_inputs and parameter not in self.valid_inputs:
-                error_message = f'Unexpected parameter name "{parameter:s}", ' + \
-                    f'valid parameters name are {self.valid_inputs}'
+                error_message = (
+                    f'Unexpected parameter name "{parameter:s}", '
+                    + f"valid parameters name are {self.valid_inputs}"
+                )
                 raise SequenceEvaluationError(error_message)
 
-            data = SequenceItem(level,
-                                parameter,
-                                sequence,
-                                current_parent)
+            data = SequenceItem(level, parameter, sequence, current_parent)
             current_parent = data
             _sequences.append(data)
         # No errors, update internal data
         self._sequences = _sequences
 
-    def save(self, file_obj) -> None:
-        """ Save modified sequence to file stream
+    def save(self, file_obj: TextIO) -> None:
+        """Save modified sequence to file stream
 
         :param file_obj: file object
         """
 
         file_obj.write("\n".join(str(item) for item in self._sequences))
 
-    def parameters_sequence(self, names_map: dict[str, str] | None = None) -> list[dict]:
+    def parameters_sequence(
+        self, names_map: dict[str, str] | None = None
+    ) -> list[tuple[dict[str, Any], ...]]:
         """
         Generate a list of parameters from the sequence tree.
 
         :param names_map: an optional dict to map parameter name
-        :return: A list of dictionaries. Each dictionary represents a parameters setting
+        :return: A list of tuples of dictionaries, one tuple per parameter setting
         for running an experiment.
         """
 
-        sequences = []
-        current_sequence = [[] for i in range(self.MAXDEPTH)]
-        temp_sequence = [[] for i in range(self.MAXDEPTH)]
+        sequences: list[Any] = []
+        current_sequence: list[list[Any]] = [[] for i in range(self.MAXDEPTH)]
+        temp_sequence: list[list[Any]] = [[] for i in range(self.MAXDEPTH)]
 
         idx = 0
-        while (idx < len(self._sequences)):
-            depth, parameter, seq = self._sequences[idx].level, \
-                self._sequences[idx].parameter, \
-                self._sequences[idx].expression
+        while idx < len(self._sequences):
+            depth, parameter, seq = (
+                self._sequences[idx].level,
+                self._sequences[idx].parameter,
+                self._sequences[idx].expression,
+            )
             values = self.eval_string(seq, parameter, depth)
             if names_map is not None:
                 parameter = names_map[parameter]
@@ -381,9 +382,7 @@ class SequenceHandler:
             try:
                 sequence_entry = [{parameter: value} for value in values]
             except TypeError:
-                log.error(
-                    "TypeError, likely no sequence for one of the parameters"
-                )
+                log.error("TypeError, likely no sequence for one of the parameters")
             else:
                 current_sequence[depth].extend(sequence_entry)
 
@@ -394,22 +393,18 @@ class SequenceHandler:
                 temp_sequence[depth_idx].extend(current_sequence[depth_idx])
 
                 if depth_idx != 0:
-                    sequence_products = list(product(
-                        current_sequence[depth_idx - 1],
-                        temp_sequence[depth_idx]
-                    ))
+                    sequence_products = list(
+                        product(current_sequence[depth_idx - 1], temp_sequence[depth_idx])
+                    )
 
                     for i in range(len(sequence_products)):
                         try:
                             element = sequence_products[i][1]
                         except IndexError:
-                            log.error(
-                                "IndexError, likely empty nested parameter"
-                            )
+                            log.error("IndexError, likely empty nested parameter")
                         else:
                             if isinstance(element, tuple):
-                                sequence_products[i] = (
-                                    sequence_products[i][0], *element)
+                                sequence_products[i] = (sequence_products[i][0], *element)
 
                     temp_sequence[depth_idx - 1].extend(sequence_products)
                     temp_sequence[depth_idx] = []

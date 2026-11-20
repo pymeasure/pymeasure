@@ -56,21 +56,14 @@ seq_file_text_3 = """
 """
 
 
-@pytest.mark.parametrize("seq_file_text",
-                         [
-                             (seq_file_text_1,
-                              (0, 1),
-                              (1, 0),
-                              ("P1", "P2")),
-                             (seq_file_text_2,
-                              (0, 1, 0),
-                              (1, 0, 0),
-                              ("P1", "P2", "P1")),
-                             (seq_file_text_3,
-                              (0, 1, 2),
-                              (1, 1, 0),
-                              ("P1", "P2", "P3")),
-                         ])
+@pytest.mark.parametrize(
+    "seq_file_text",
+    [
+        (seq_file_text_1, (0, 1), (1, 0), ("P1", "P2")),
+        (seq_file_text_2, (0, 1, 0), (1, 0, 0), ("P1", "P2", "P1")),
+        (seq_file_text_3, (0, 1, 2), (1, 1, 0), ("P1", "P2", "P3")),
+    ],
+)
 def test_sequencer(seq_file_text):
 
     file_text, levels, children, params = seq_file_text
@@ -106,16 +99,14 @@ seq_file_text_err3 = """
 """
 
 
-@pytest.mark.parametrize("seq_file_text_err",
-                         [(seq_file_text_err1,
-                           SequenceEvaluationError,
-                           "SyntaxError, likely unbalanced brackets"),
-                          (seq_file_text_err2,
-                           SequenceEvaluationError,
-                           'Invalid file format: level missing ?'),
-                          (seq_file_text_err3,
-                           SequenceEvaluationError,
-                           "No sequence entered")])
+@pytest.mark.parametrize(
+    "seq_file_text_err",
+    [
+        (seq_file_text_err1, SequenceEvaluationError, "SyntaxError, likely unbalanced brackets"),
+        (seq_file_text_err2, SequenceEvaluationError, "Invalid file format: level missing ?"),
+        (seq_file_text_err3, SequenceEvaluationError, "No sequence entered"),
+    ],
+)
 def test_sequencer_errors(seq_file_text_err):
 
     file_text, exception, exc_text = seq_file_text_err
@@ -125,3 +116,28 @@ def test_sequencer_errors(seq_file_text_err):
     with pytest.raises(exception, match=exc_text):
         seq = SequenceHandler(file_obj=fd)
         seq.parameters_sequence()
+
+
+def test_sequence_item_identity_equality():
+    s = SequenceHandler()
+    first, _ = s.add_node("P1")
+    second, _ = s.add_node("P1")
+
+    assert first != second
+    assert len({first, second}) == 2
+    assert s._sequences.index(second) == 1
+    assert s.children(None) == [first, second]
+
+
+def test_remove_node_keeps_unrelated_branches():
+    s = SequenceHandler()
+    root_a, _ = s.add_node("A")
+    child_a, _ = s.add_node("A1", root_a)
+    root_b, _ = s.add_node("B")
+    child_b, _ = s.add_node("B1", root_b)
+
+    s.remove_node(root_b)
+
+    assert s._sequences == [root_a, child_a]
+    assert root_b not in s._sequences
+    assert child_b not in s._sequences
