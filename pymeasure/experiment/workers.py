@@ -88,11 +88,15 @@ class Worker(StoppableThread):
 
         self.context = None
         self.publisher = None
-        if self.port is not None and zmq is not None:
+        zmq_module = zmq
+        cloudpickle_module = cloudpickle
+        if self.port is not None and zmq_module is not None and cloudpickle_module is not None:
+            # Publishing is optional: without ZMQ/cloudpickle the Worker still runs the
+            # procedure and records the data, it just does not broadcast over TCP.
             try:
-                self.context = zmq.Context()
+                self.context = zmq_module.Context()
                 log.debug(f"Worker ZMQ Context: {self.context!r}")
-                self.publisher = self.context.socket(zmq.PUB)
+                self.publisher = self.context.socket(zmq_module.PUB)
                 self.publisher.bind(f'tcp://*:{self.port}')
                 log.info(f"Worker connected to tcp://*:{self.port}")
                 # wait so that the socket will be ready before starting to emit messages
@@ -114,14 +118,15 @@ class Worker(StoppableThread):
         """ Emits data of some topic over TCP """
         log.debug("Emitting message: %s %s", topic, record)
 
-        try:
-            if self.publisher is not None:
+        cloudpickle_module = cloudpickle
+        if self.publisher is not None and cloudpickle_module is not None:
+            try:
                 self.publisher.send_serialized(
                     record,
-                    serialize=lambda rec: (topic.encode(), cloudpickle.dumps(rec)),
+                    serialize=lambda rec: (topic.encode(), cloudpickle_module.dumps(rec)),
                 )
-        except (NameError, AttributeError):
-            pass  # No dumps defined
+            except (NameError, AttributeError):
+                pass  # No dumps defined
         if topic == 'results':
             self.handle_record(record)
         elif topic == 'batch results':

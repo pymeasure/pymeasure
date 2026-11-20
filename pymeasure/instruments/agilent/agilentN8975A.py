@@ -110,7 +110,7 @@ class AgilentN8975A(SCPIMixin, Instrument):
     .. code-block:: python
 
         nfa = AgilentN8975A("GPIB0::16::INSTR")
-        nfa.adapter.connection.timeout = 30000  # set a new timeout to 30 sec
+        nfa.adapter.timeout = 30000  # set a new timeout to 30 sec
         nfa.abort()  # abort all running measurements
         nfa.single()  # perform a single sweep measurement
         nfa.complete

@@ -190,37 +190,38 @@ class ListInput(Input[ListParameter], QtWidgets.QComboBox):
 
     def set_parameter(self, parameter: ListParameter) -> None:
         # Override from :class:`Input`
-        try:
-            if hasattr(parameter, 'units') and parameter.units:
-                suffix = f" {parameter.units}"
-            else:
-                suffix = ""
+        if hasattr(parameter, 'units') and parameter.units:
+            suffix = f" {parameter.units}"
+        else:
+            suffix = ""
 
-            self._stringChoices = (
-                tuple((str(choice) + suffix) for choice in parameter.choices)
-                if parameter.choices is not None
-                else ()
-            )
-        except TypeError:  # choices is None
-            self._stringChoices = ()
+        choices = parameter.choices
+        self._stringChoices = (
+            tuple((str(choice) + suffix) for choice in choices) if choices is not None else ()
+        )
         self.clear()
         self.addItems(self._stringChoices)
 
         super().set_parameter(parameter)
 
     def setValue(self, value: Any) -> None:
+        choices = self._parameter.choices if self._parameter is not None else None
+        if choices is None:
+            raise ValueError("Cannot set the value: the parameter has no choices.")
         try:
-            index = self._parameter.choices.index(value)
-            self.setCurrentIndex(index)
-        except (TypeError, ValueError) as e:  # no choices or choice invalid
-            raise ValueError("Invalid choice for parameter. "
-                             f"Must be one of {self._parameter.choices!s}") from e
+            index = choices.index(value)
+        except ValueError as e:  # choice invalid
+            raise ValueError(f"Invalid choice for parameter. Must be one of {choices!s}") from e
+        self.setCurrentIndex(index)
 
     def setSuffix(self, value) -> None:
         pass
 
     def value(self) -> Any:
-        return self._parameter.choices[self.currentIndex()]
+        choices = self._parameter.choices if self._parameter is not None else None
+        if choices is None:
+            raise ValueError("Cannot determine the value: the parameter has no choices.")
+        return choices[self.currentIndex()]
 
 
 class ScientificInput(Input[FloatParameter], QtWidgets.QDoubleSpinBox):
@@ -269,7 +270,10 @@ class ScientificInput(Input[FloatParameter], QtWidgets.QDoubleSpinBox):
             return self.validator.validate(input, pos)
 
     def fixCase(self, text: str) -> None:
-        self.lineEdit().setText(text.lower())
+        line_edit = self.lineEdit()
+        if line_edit is None:
+            return
+        line_edit.setText(text.lower())
 
     def toDouble(self, string: str) -> float:
         value, success = self.validator.locale().toDouble(string)

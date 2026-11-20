@@ -50,7 +50,7 @@ STATUS = ["RES", "MEAS", "HOLD", "INT", "INTHLD", "ZERO",
 @pytest.fixture(scope="module")
 def unidos(connected_device_address):
     instr = ptwUNIDOS(connected_device_address)
-    instr.write_enabled = 1
+    instr.write_enabled = True
     return instr
 
 

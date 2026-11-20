@@ -33,6 +33,7 @@ from typing import Any, Literal, cast
 import numpy as np
 
 from pymeasure.adapters.adapter import Adapter
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import (
     AdapterType,
     Channel,
@@ -59,14 +60,13 @@ def sanitize_source(source: str) -> str:
     match = re.match(r"^\s*(C|CH|CHAN|CHANNEL)\s*(?P<number>\d)\s*$|"
                      r"^\s*(?P<name_only>MATH|LINE)\s*$", source, re.IGNORECASE)
     if match:
-        if match.group("number") is not None:
-            source = "C" + match.group("number")
-        else:
-            source = match.group("name_only")
-        source = source.upper()
-    else:
-        raise ValueError(f"source {source} not recognized")
-    return source
+        number = match.group("number")
+        if number is not None:
+            return ("C" + number).upper()
+        name_only = match.group("name_only")
+        if name_only is not None:
+            return name_only.upper()
+    raise ValueError(f"source {source} not recognized")
 
 
 def _trigger_select_num_pars(value: Sequence) -> Literal[3, 4, 5, 0]:
@@ -209,17 +209,18 @@ class _ChunkResizer:
 
     def __enter__(self):
         """Only resize the chunk size if the adapter support this feature."""
+        connection = visa_resource(self.adapter)
         if (
-            self.adapter.connection is not None
-            and hasattr(self.adapter.connection, "chunk_size")
-            and self.new_chunk_size > self.adapter.connection.chunk_size
+            connection is not None
+            and hasattr(connection, "chunk_size")
+            and self.new_chunk_size > connection.chunk_size
         ):
-            self.old_chunk_size = self.adapter.connection.chunk_size
-            self.adapter.connection.chunk_size = self.new_chunk_size  # type: ignore
+            self.old_chunk_size = connection.chunk_size
+            connection.chunk_size = self.new_chunk_size
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.old_chunk_size is not None:
-            self.adapter.connection.chunk_size = self.old_chunk_size
+            visa_resource(self.adapter).chunk_size = self.old_chunk_size
 
 
 class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
@@ -516,7 +517,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     def __init__(self, adapter: AdapterType, name: str = "Teledyne Oscilloscope", **kwargs):
         super().__init__(adapter, name=name, **kwargs)
         if self.adapter.connection is not None:
-            self.adapter.connection.timeout = 3000
+            self.adapter.timeout = 3000
         self._grid_number = 14  # Number of grids in the horizontal direction
         self._seconds_since_last_write = 0  # Timestamp of the last command
         self._header_size = 16  # bytes
@@ -1064,7 +1065,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
             self._trigger_select_set_command = self._trigger_select_normal_command
         elif num_expected_pars == 5:
             self._trigger_select_set_command = self._trigger_select_extended_command
-        self._trigger_select = value
+        self._trigger_select = list(value)
 
     def trigger_setup(
         self,

@@ -69,7 +69,23 @@ def test_connection_call(mockAdapter):
 
 
 def test_connection_attribute(mockAdapter):
+    """The connection timeout attribute is in milliseconds."""
     assert mockAdapter.connection.timeout == 100
+    assert mockAdapter.timeout == 100
+
+
+@mark.parametrize("value", (250, None))
+def test_timeout_set_delegates(mockAdapter, value):
+    """Setting the adapter timeout stores the millisecond value on the mocked connection."""
+    mockAdapter.timeout = value
+    assert mockAdapter.connection.timeout == value
+    assert isinstance(mockAdapter.timeout, (int, type(None)))
+
+
+def test_timeout_defaults_to_none(adapter):
+    """The connection timeout is None by default, not an auto-created MagicMock."""
+    assert adapter.connection.timeout is None
+    assert adapter.timeout is None
 
 
 def test_connection_method(mockAdapter):

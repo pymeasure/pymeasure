@@ -29,6 +29,7 @@ from typing import Any
 
 import numpy as np
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import AdapterType, Instrument, cast_or_str
 from pymeasure.instruments.validators import (
     strict_discrete_set,
@@ -500,7 +501,7 @@ class HP8116A(Instrument):
     @property
     def status(self) -> Status:
         """Get the status byte of the 8116A as a :class:`Status` IntFlag-type enum."""
-        return Status(self.adapter.connection.read_stb())
+        return Status(visa_resource(self.adapter).read_stb())
 
     @property
     def complete(self) -> bool:
@@ -544,16 +545,16 @@ class HP8116A(Instrument):
 
     def GPIB_trigger(self) -> None:
         """ Initiate trigger via low-level GPIB-command (aka GET - group execute trigger). """
-        self.adapter.connection.assert_trigger()
+        visa_resource(self.adapter).assert_trigger()
 
     def reset(self) -> None:
         """ Initatiate a reset (like a power-on reset) of the 8116A. """
-        self.adapter.connection.clear()
+        visa_resource(self.adapter).clear()
         self._wait_for_commands_processed()
 
     def shutdown(self) -> None:
         """ Gracefully close the connection to the 8116A. """
-        self.adapter.connection.clear()
+        visa_resource(self.adapter).clear()
         self.adapter.close()
         super().shutdown()
 

@@ -46,12 +46,14 @@ class TestBufferCurve:
     def test_prepare_creates_buffer(self):
         curve = BufferCurve()
         curve.prepare(size=10)
+        assert curve._buffer is not None
         assert curve._buffer.shape == (10, 2)
         assert curve._ptr == 0
 
     def test_prepare_dtype(self):
         curve = BufferCurve()
         curve.prepare(5, dtype=np.float64)
+        assert curve._buffer is not None
         assert curve._buffer.dtype == np.float64
 
     def test_append_without_prepare_raises(self):
@@ -77,6 +79,7 @@ class TestBufferCurve:
         x, y = curve.getData()
         np.testing.assert_allclose(x, [1.0])  # pyright: ignore[reportArgumentType, reportCallIssue]
         np.testing.assert_allclose(y, [2.0])  # pyright: ignore[reportArgumentType, reportCallIssue]
+        assert curve._buffer is not None
         assert curve._buffer[0, 0] == 1.0
         assert curve._buffer[0, 1] == 2.0
 
@@ -143,6 +146,7 @@ class TestResultsCurve:
         curve = _make_results_curve()
         new_color = QtGui.QColor('blue')
         curve.set_color(new_color)
+        assert curve.pen is not None
         assert curve.pen.color() == new_color
         assert curve.color == new_color
 
@@ -319,7 +323,9 @@ class TestCrosshairs:
             # internals, but is needed for a deterministic reproduction of the teardown
             # crash (verified against pyqtgraph 0.13.7 and 0.14.0).
             with mock.patch.object(line, "getViewBox", return_value=None):
-                assert line.boundingRect().isEmpty()
+                bounding_rect = line.boundingRect()
+                assert bounding_rect is not None
+                assert bounding_rect.isEmpty()
 
     def test_bounding_rect_keeps_viewbox_alive(self, qtbot, monkeypatch):
         """The guard must keep the ViewBox alive until pyqtgraph has used it."""
@@ -351,7 +357,9 @@ class TestCrosshairs:
 
         # Without the strong reference in boundingRect, view_rect() collects the
         # fake ViewBox and pyqtgraph's next getViewBox() returns None.
-        assert not line.boundingRect().isEmpty()
+        bounding_rect = line.boundingRect()
+        assert bounding_rect is not None
+        assert not bounding_rect.isEmpty()
 
     def test_teardown_disconnects_proxy_and_removes_lines(self, qtbot):
         """Teardown releases the proxy and detaches the lines from the plot."""

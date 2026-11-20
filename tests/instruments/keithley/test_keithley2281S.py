@@ -121,7 +121,9 @@ def test_ps_buffer():
         + no_reading_comm,
     ) as inst:
         inst.function_mode = "POWER"
-        assert inst.buffer_data.equals(pd.DataFrame({"current": [], "voltage": [], "time": []}))
+        buffer_data = inst.buffer_data
+        assert buffer_data is not None
+        assert buffer_data.equals(pd.DataFrame({"current": [], "voltage": [], "time": []}))
 
 
 def test_bt_buffer():
@@ -135,7 +137,9 @@ def test_bt_buffer():
         + no_reading_comm,
     ) as inst:
         inst.function_mode = "TEST"
-        assert inst.buffer_data.equals(
+        buffer_data = inst.buffer_data
+        assert buffer_data is not None
+        assert buffer_data.equals(
             pd.DataFrame(
                 {"current": [], "voltage": [], "capacity": [], "resistance": [], "time": []}
             )
@@ -153,6 +157,8 @@ def test_bs_buffer():
         + no_reading_comm,
     ) as inst:
         inst.function_mode = "SIMULATOR"
-        assert inst.buffer_data.equals(
+        buffer_data = inst.buffer_data
+        assert buffer_data is not None
+        assert buffer_data.equals(
             pd.DataFrame({"current": [], "voltage": [], "soc": [], "resistance": [], "time": []})
         )

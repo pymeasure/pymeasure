@@ -320,6 +320,8 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         elif source == "MATH":
             math_define = self.math_define[1]
             match = re.match(r"'(\w+)[+\-/*](\w+)'", math_define)
+            if match is None:
+                raise ValueError(f"Invalid math definition: {math_define!r}")
             return min(self.acquisition_sample_size(match.group(1)),
                        self.acquisition_sample_size(match.group(2)))
         else:

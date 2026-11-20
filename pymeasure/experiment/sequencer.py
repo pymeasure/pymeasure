@@ -47,7 +47,9 @@ class SequenceItem:
         2: "expression",
     }
 
-    def __init__(self, level: int, parameter: str, expression: str, parent: SequenceItem | None):
+    def __init__(
+        self, level: int, parameter: str, expression: str, parent: SequenceItem | None
+    ) -> None:
         self.level = level
         self.parameter = parameter
         self.expression = expression
@@ -135,7 +137,7 @@ class SequenceHandler:
         'tanh': np.tanh,
     }
 
-    def __init__(self, valid_inputs=(), file_obj=None):
+    def __init__(self, valid_inputs=(), file_obj=None) -> None:
         self._sequences: list[SequenceItem] = []
         self.valid_inputs = valid_inputs
         if file_obj:
@@ -205,8 +207,8 @@ class SequenceHandler:
 
         return idx, level
 
-    def add_node(self, name, parent_seq_item=None):
-        """ Add a node under the parent identified by parent_seq_item """
+    def add_node(self, name: str, parent_seq_item=None) -> tuple[SequenceItem, int]:
+        """Add a node under the parent identified by parent_seq_item"""
         parent_idx, level = self._get_idx(parent_seq_item)
 
         seq_item = SequenceItem(level + 1,
@@ -278,7 +280,7 @@ class SequenceHandler:
 
         return seq_item.parent, self.get_children_order(seq_item.parent)
 
-    def set_data(self, seq_item, row, column, value):
+    def set_data(self, seq_item, row: int, column: int, value) -> bool:
         """ Set data for node identified by seq_item """
 
         idx, _ = self._get_idx(seq_item)

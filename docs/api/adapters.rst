@@ -10,6 +10,11 @@ In the vast majority of cases, it will be sufficient to pass a connection string
 Adapter base class
 ==================
 
+All adapters expose a :attr:`~pymeasure.adapters.Adapter.timeout` property.
+For every adapter its value is in integer milliseconds; :code:`None` means no timeout.
+VISA adapters translate :code:`None` to pyvisa's :code:`float("inf")` and report :code:`inf` back as :code:`None`; the serial adapter converts to pyserial seconds and rounds to whole milliseconds on read.
+The :code:`timeout` keyword of the :class:`~pymeasure.adapters.SerialAdapter` constructor is still forwarded to pyserial in seconds.
+
 .. autoclass:: pymeasure.adapters.Adapter
     :members:
     :undoc-members:
@@ -23,6 +28,12 @@ VISA adapter
     :undoc-members:
     :inherited-members:
     :show-inheritance:
+
+Driver code that uses PyVISA-specific connection members types the connection with the
+:func:`~pymeasure.adapters.visa.visa_resource` helper.
+It is a typing-only cast and performs no runtime check.
+
+.. autofunction:: pymeasure.adapters.visa.visa_resource
 
 ==============
 Serial adapter

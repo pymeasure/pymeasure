@@ -36,8 +36,9 @@ class ConnectionProtocol(Protocol):
     """Protocol defining the minimal interface for an Adapter's connection object.
 
     All connection objects used by :class:`Adapter` subclasses must at least
-    implement a :meth:`close` method. Specific adapter subclasses may require
-    additional methods from their connection objects.
+    implement a :meth:`close` method. Adapter-specific connection members are not part of this
+    protocol: they are accessed through :func:`~pymeasure.adapters.visa.visa_resource` or an
+    explicit cast in the adapter that requires them.
     """
 
     def close(self) -> None:
@@ -153,6 +154,18 @@ class Adapter:
         """Flush and discard the input buffer. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented input flush.")
 
+    @property
+    def timeout(self) -> int | None:
+        """Control the connection timeout in integer milliseconds.
+
+        ``None`` means no timeout. Implement in subclass.
+        """
+        raise NotImplementedError("Adapter class has not implemented a timeout.")
+
+    @timeout.setter
+    def timeout(self, value: int | None) -> None:
+        raise NotImplementedError("Adapter class has not implemented a timeout.")
+
     # Binary format methods
     def read_binary_values(
         self,
@@ -241,6 +254,17 @@ class FakeAdapter(Adapter):
     """
 
     _buffer: str = ""
+
+    _timeout: int | None = None
+
+    @property
+    def timeout(self) -> int | None:
+        """Control the stored timeout in milliseconds, which has no effect on communication."""
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, value: int | None) -> None:
+        self._timeout = value
 
     def _read(self, **kwargs) -> str:
         """Return the last commands given after the last read call."""

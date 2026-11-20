@@ -162,6 +162,21 @@ class TestResults:
         pd.read_csv(filename, comment="#")  # assert no error
         assert (result.parameters['par'].value == np.linspace(1, 100, 17)).all()
 
+    def test_header_raises_value_error_for_malformed_procedure_repr(self, tmpdir):
+        """A procedure class whose repr lacks the quoted name raises ValueError."""
+        class UnquotedMeta(type):
+            def __repr__(cls):
+                return "<UnquotedProcedure>"
+
+        class UnquotedProcedure(Procedure, metaclass=UnquotedMeta):
+            DATA_COLUMNS = ["Foo"]
+
+        procedure = RandomProcedure()
+        results = Results(procedure, os.path.join(str(tmpdir), 'malformed_header.csv'))
+        results.procedure_class = UnquotedProcedure
+        with pytest.raises(ValueError, match="Could not determine the procedure name"):
+            results.header()
+
     def test_file_descriptor_writes_header_and_skips_reload(self):
         """A reserved `mkstemp` descriptor is consumed to write the header,
         skipping the `os.path.exists` reload branch."""

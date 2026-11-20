@@ -271,8 +271,55 @@ def test_pandas_model_base_export_df_concat(qtbot):
     model.add_results(ResultsTable(cast(Results, FakeResults(df1)), RED))
     model.add_results(ResultsTable(cast(Results, FakeResults(df2)), BLUE))
     df = model.export_df()
+    assert df is not None, "export_df() must return a DataFrame for non-empty input"
     assert df.shape == (4, 1)
     assert df["A"].tolist() == [1.0, 2.0, 3.0, 4.0]
+
+
+def test_pandas_model_base_export_df_concat_by_column(qtbot):
+    model = PandasModelByColumn(results_list=[])
+    df1 = pd.DataFrame({"A": [1.0, 2.0]})
+    df2 = pd.DataFrame({"B": [3.0, 4.0]})
+    model.add_results(ResultsTable(cast(Results, FakeResults(df1)), RED))
+    model.add_results(ResultsTable(cast(Results, FakeResults(df2)), BLUE))
+    df = model.export_df()
+    assert df is not None, "export_df() must return a DataFrame for non-empty input"
+    assert df.shape == (2, 2)
+    assert df["A"].tolist() == [1.0, 2.0]
+    assert df["B"].tolist() == [3.0, 4.0]
+
+
+@pytest.mark.parametrize(
+    "model_class, expected_a, expected_b",
+    [
+        pytest.param(
+            PandasModelByRow,
+            [1.0, 2.0, ""],
+            ["", "", 3.0],
+            id="axis-0-mismatched-columns",
+        ),
+        pytest.param(
+            PandasModelByColumn,
+            [1.0, 2.0],
+            [3.0, ""],
+            id="axis-1-mismatched-rows",
+        ),
+    ],
+)
+def test_pandas_model_base_export_df_replaces_nan_with_empty_string(
+    qtbot, model_class, expected_a, expected_b
+):
+    """Cells missing from one frame are exported as "" instead of NaN on both axes."""
+    model = model_class(results_list=[])
+    df1 = pd.DataFrame({"A": [1.0, 2.0]})
+    df2 = pd.DataFrame({"B": [3.0]})
+    model.add_results(ResultsTable(cast(Results, FakeResults(df1)), RED))
+    model.add_results(ResultsTable(cast(Results, FakeResults(df2)), BLUE))
+    df = model.export_df()
+    assert df is not None, "export_df() must return a DataFrame for non-empty input"
+    assert not df.isna().any().any(), "export_df() must not leak NaN values"
+    assert df["A"].tolist() == expected_a
+    assert df["B"].tolist() == expected_b
 
 
 def test_pandas_model_base_copy_model(qtbot):
@@ -519,8 +566,10 @@ def test_table_set_model_wraps_in_proxy(qtbot):
     table = _make_table(qtbot, refresh_time=None)
     # The view's model is a QSortFilterProxyModel, source_model is the real one
     from pymeasure.display.Qt import QtCore
-    assert isinstance(table.model(), QtCore.QSortFilterProxyModel)
-    assert table.source_model() is table.model().sourceModel()
+
+    model = table.model()
+    assert isinstance(model, QtCore.QSortFilterProxyModel)
+    assert table.source_model() is model.sourceModel()
 
 
 def test_table_add_remove_table(qtbot):

@@ -35,7 +35,7 @@ log.addHandler(logging.NullHandler())
 @pytest.fixture(scope="module")
 def daq6510(connected_device_address):
     instr = KeithleyDAQ6510(connected_device_address)
-    instr.adapter.connection.timeout = 10000
+    instr.adapter.timeout = 10000
     return instr
 
 

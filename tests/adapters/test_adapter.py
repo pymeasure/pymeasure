@@ -51,9 +51,10 @@ def test_init_log():
 
 
 def test_del(adapter):
-    adapter.connection = mock.MagicMock()
+    connection = mock.MagicMock()
+    adapter.connection = connection
     adapter.__del__()
-    assert adapter.connection.method_calls == [mock.call.close()]
+    assert connection.method_calls == [mock.call.close()]
 
 
 def test_write(fake):
@@ -84,6 +85,33 @@ def test_read_bytes(fake):
 def test_not_implemented_methods(adapter, method, args):
     with pytest.raises(NotImplementedError):
         getattr(adapter, method)(*args)
+
+
+def test_timeout_not_implemented(adapter):
+    """The base adapter has no timeout, neither readable nor writable."""
+    with pytest.raises(NotImplementedError):
+        _ = adapter.timeout
+    with pytest.raises(NotImplementedError):
+        adapter.timeout = 500
+
+
+def test_fake_adapter_timeout_initial(fake):
+    assert fake.timeout is None
+
+
+def test_fake_adapter_timeout_roundtrip(fake):
+    fake.timeout = 500
+    assert fake.timeout == 500
+    assert isinstance(fake.timeout, int)
+    fake.timeout = None
+    assert fake.timeout is None
+
+
+def test_fake_adapter_timeout_does_not_touch_connection(fake):
+    """The fake adapter stores the timeout locally, as it has no connection."""
+    assert not hasattr(fake, "connection")
+    fake.timeout = 500
+    assert not hasattr(fake, "connection")
 
 
 @pytest.mark.parametrize("response, options, result", (

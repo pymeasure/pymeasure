@@ -22,9 +22,11 @@
 # THE SOFTWARE.
 #
 
+from typing import Any, cast
+
 import pytest
 
-from pymeasure.adapters import PrologixAdapter
+from pymeasure.adapters import PrologixAdapter, ProtocolAdapter
 from pymeasure.test import expected_protocol
 
 init_comm = [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None)]
@@ -179,7 +181,8 @@ def test_read_bytes_requests_data_when_unavailable():
             PrologixAdapter,  # type: ignore
             init_comm + [("++read eoi", b"data")],
     ) as adapter:
-        adapter.connection.get_visa_attribute = lambda attr: 0
+        assert isinstance(adapter.connection, ProtocolAdapter)
+        cast(Any, adapter.connection).get_visa_attribute = lambda attr: 0
         assert adapter._read_bytes(4) == b"data"
 
 
@@ -188,7 +191,8 @@ def test_read_bytes_reads_buffered_data():
             PrologixAdapter,  # type: ignore
             init_comm + [(None, b"data")],
     ) as adapter:
-        adapter.connection.get_visa_attribute = lambda attr: 4
+        assert isinstance(adapter.connection, ProtocolAdapter)
+        cast(Any, adapter.connection).get_visa_attribute = lambda attr: 4
         assert adapter._read_bytes(4) == b"data"
 
 
@@ -218,7 +222,8 @@ def test_repr_with_address():
             init_comm,
             address=5,
     ) as adapter:
-        adapter.connection.resource_name = "ASRL5::INSTR"
+        assert isinstance(adapter.connection, ProtocolAdapter)
+        cast(Any, adapter.connection).resource_name = "ASRL5::INSTR"
         assert repr(adapter) == ("<PrologixAdapter(resource_name='ASRL5::INSTR', "
                                  "address=5)>")
 
@@ -228,5 +233,6 @@ def test_repr_without_address():
             PrologixAdapter,  # type: ignore
             init_comm,
     ) as adapter:
-        adapter.connection.resource_name = "ASRL5::INSTR"
+        assert isinstance(adapter.connection, ProtocolAdapter)
+        cast(Any, adapter.connection).resource_name = "ASRL5::INSTR"
         assert repr(adapter) == "<PrologixAdapter(resource_name='ASRL5::INSTR')>"
