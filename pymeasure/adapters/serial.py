@@ -138,7 +138,7 @@ class SerialAdapter(Adapter):
         return round(self.connection.timeout * 1000)
 
     @timeout.setter
-    def timeout(self, value: int | None) -> None:
+    def timeout(self, value: float | None) -> None:
         if value is None or value == float("inf"):
             self.connection.timeout = None
         else:

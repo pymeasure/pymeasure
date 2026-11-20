@@ -201,13 +201,23 @@ def test_qlistener_initialization(qtbot, mocked_zmq):
         listener.deleteLater()
 
 
-def test_qlistener_initialization_without_cloudpickle(qtbot, missing_cloudpickle, mocked_zmq):
+def test_qlistener_initialization_with_missing_cloudpickle_uses_mock(
+    qtbot, missing_cloudpickle, mocked_zmq
+):
     listener = QListener(port=12345, topic="mytopic")
     try:
         assert listener.port == 12345
         assert listener.topic == "mytopic"
+        assert listeners.cloudpickle is not None
     finally:
         listener.deleteLater()
+
+
+def test_qlistener_missing_cloudpickle_raises(monkeypatch, mocked_zmq):
+    """QListener requires cloudpickle; force it absent after mocked_zmq has run."""
+    monkeypatch.setattr(listeners, "cloudpickle", None)
+    with pytest.raises(ImportError):
+        QListener(port=12345, topic="mytopic")
 
 
 def test_qlistener_repr(qtbot, mocked_zmq):
