@@ -284,7 +284,7 @@ Instruments mechanics
 - Add :code:`next_error` property to SCPI instruments (@BenediktBurger, #1024)
 - Make :code:`query_delay=None` the default for :code:`wait_for` (@BenediktBurger, #1077)
 - Fix :code:`expected_protocol` using empty dictionary as default value (@BenediktBurger, #1087)
-- Remove auto-importing all instruments in :code:`pymeasure/instruments/__init__.py`` (@mcdo0486, #919)
+- Remove auto-importing all instruments in :code:`pymeasure/instruments/__init__.py` (@mcdo0486, #919)
 - Add :code:`find_serial_port` to find a serial port by providing USB information (@BenediktBurger, #982)
 
 Instruments
