@@ -123,6 +123,20 @@ class EurotestHPP120256(Instrument):
             raise ValueError(f'Returned string "{string}" could not be parsed')
         return float(match.groups()[0])
 
+    @classmethod
+    def _parse_field(cls, reply: list[str], index: int, field: str) -> float:
+        """Parse `field` from the `index`-th entry of a split ``STATUS`` reply.
+
+        :raises ValueError: if the reply has no entry at `index`
+            or the entry names a different field.
+        """
+        if len(reply) <= index:
+            raise ValueError(f'Reply {reply!r} does not contain field "{field}" at index {index}.')
+        name, _, value = reply[index].partition("=")
+        if name.strip().upper() != field.upper():
+            raise ValueError(f'Reply {reply!r} does not contain field "{field}" at index {index}.')
+        return cls._parse_float(value)
+
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
     # ####################################
@@ -134,7 +148,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=VOLTAGE_RANGE,
         cast=str,
-        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
+        get_process_list=lambda r: EurotestHPP120256._parse_field(r, 2, "VALUE"),
     )
 
     current_limit = Instrument.control(
@@ -146,7 +160,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=CURRENT_RANGE,
         cast=str,
-        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
+        get_process_list=lambda r: EurotestHPP120256._parse_field(r, 2, "VALUE"),
     )
 
     voltage_ramp = Instrument.control(
@@ -158,17 +172,17 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
         cast=str,
-        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
+        get_process_list=lambda r: EurotestHPP120256._parse_field(r, 2, "VALUE"),
     )
 
     voltage = Instrument.measurement(
         "STATUS,MU",
         """Measure the actual output voltage in kVolts (float).""",
         # This property is a get so, the instrument will return a string like this:
-        # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage will return 2458.0,
+        # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage will return 2.458,
         # hence the convenience of the get_process.
         cast=str,
-        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
+        get_process_list=lambda r: EurotestHPP120256._parse_field(r, 2, "VALUE"),
     )
 
     voltage_range = Instrument.measurement(
@@ -178,7 +192,7 @@ class EurotestHPP120256(Instrument):
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
         # hence the convenience of the get_process.
         cast=str,
-        get_process_list=lambda r: EurotestHPP120256._parse_float(r[1])
+        get_process_list=lambda r: EurotestHPP120256._parse_field(r, 1, "RANGE"),
     )
 
     current = Instrument.measurement(
@@ -188,17 +202,17 @@ class EurotestHPP120256(Instrument):
         # "I, RANGE=5000mA, VALUE=1739mA", then current will return a 1739.0,
         # hence the convenience of the get_process."""
         cast=str,
-        get_process_list=lambda r: EurotestHPP120256._parse_float(r[2])
+        get_process_list=lambda r: EurotestHPP120256._parse_field(r, 2, "VALUE"),
     )
 
     current_range = Instrument.measurement(
         "STATUS,MI",
         """Measure the actual output current range in mAmps (float).""",
         # This property is a get so, the instrument will return a string like this:
-        # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
+        # "I, RANGE=5000mA, VALUE=1739mA", then current_range will return a 5000.0,
         # hence the convenience of the get_process.
         cast=str,
-        get_process_list=lambda r: EurotestHPP120256._parse_float(r[1])
+        get_process_list=lambda r: EurotestHPP120256._parse_field(r, 1, "RANGE"),
     )
 
     kill_enabled = Instrument.control(
