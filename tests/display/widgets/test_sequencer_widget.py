@@ -26,8 +26,8 @@ from typing import Any
 
 import pytest
 
-from pymeasure.display.Qt import QtWidgets
-from pymeasure.display.widgets.sequencer_widget import SequencerWidget
+from pymeasure.display.Qt import QtCore, QtGui, QtWidgets
+from pymeasure.display.widgets.sequencer_widget import ComboBoxDelegate, SequencerWidget
 from pymeasure.experiment import Procedure
 
 
@@ -85,3 +85,46 @@ def test_non_qwidget_parent_rejected():
 
     with pytest.raises(TypeError, match="must be a QWidget"):
         SequencerWidget(parent=_ProtocolOnlyParent())
+
+
+def test_combobox_delegate_materializes_choices(qtbot):
+    """An iterable of choices is materialized, so its values survive iteration."""
+    parent = QtWidgets.QWidget()
+    qtbot.addWidget(parent)
+    choices = (choice for choice in ["a", "b"])
+
+    delegate = ComboBoxDelegate(parent, choices)
+
+    assert delegate.items == ["a", "b"]
+
+
+def test_combobox_delegate_reuses_choices_across_editors(qtbot):
+    """Every editor receives all choices, even from a single-pass iterable."""
+    parent = QtWidgets.QWidget()
+    qtbot.addWidget(parent)
+    choices = (choice for choice in ["a", "b"])
+    delegate = ComboBoxDelegate(parent, choices)
+    index = QtCore.QModelIndex()
+    option = QtWidgets.QStyleOptionViewItem()
+
+    first_editor = delegate.createEditor(parent, option, index)
+    second_editor = delegate.createEditor(parent, option, index)
+
+    for editor in (first_editor, second_editor):
+        assert [editor.itemText(i) for i in range(editor.count())] == ["a", "b"]
+
+
+def test_combobox_delegate_set_editor_data_uses_materialized_items(qtbot):
+    """The current cell value is selected after the choices have been consumed."""
+    parent = QtWidgets.QWidget()
+    qtbot.addWidget(parent)
+    choices = (choice for choice in ["a", "b"])
+    delegate = ComboBoxDelegate(parent, choices)
+    model = QtGui.QStandardItemModel(1, 1)
+    model.setData(model.index(0, 0), "b")
+    index = model.index(0, 0)
+
+    editor = delegate.createEditor(parent, QtWidgets.QStyleOptionViewItem(), index)
+    delegate.setEditorData(editor, index)
+
+    assert editor.currentText() == "b"

@@ -249,7 +249,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
 class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, owner: QtCore.QObject | None, choices: Iterable[str | None]) -> None:
         super().__init__(parent=owner)
-        self.items = choices
+        self.items = list(choices)
 
     def createEditor(
         self,
