@@ -82,6 +82,12 @@ def test_timeout_set_delegates(mockAdapter, value):
     assert isinstance(mockAdapter.timeout, (int, type(None)))
 
 
+def test_timeout_defaults_to_none(adapter):
+    """The connection timeout is None by default, not an auto-created MagicMock."""
+    assert adapter.connection.timeout is None
+    assert adapter.timeout is None
+
+
 def test_connection_method(mockAdapter):
     assert mockAdapter.connection.stb() == 17
 
