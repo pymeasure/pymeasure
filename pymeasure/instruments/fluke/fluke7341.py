@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -30,7 +31,7 @@ class Fluke7341(Instrument):
     """ Represents the compact constant temperature bath from Fluke.
     """
 
-    def __init__(self, adapter, name="Fluke 7341", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Fluke 7341", **kwargs):
         kwargs.setdefault('timeout', 2000)
         kwargs.setdefault('write_termination', '\r\n')
         super().__init__(
@@ -40,7 +41,7 @@ class Fluke7341(Instrument):
             **kwargs
         )
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
         Extract the value from the response string.
@@ -48,7 +49,7 @@ class Fluke7341(Instrument):
         Responses are in the format "`type`: `value` `optional information`".
         Optional information is for example the unit (degree centigrade or Fahrenheit).
         """
-        return super().read().split(":")[-1]
+        return super().read(**kwargs).split(":")[-1]
 
     set_point = Instrument.control("s", "s=%g",
                                    """Control the temperature setpoint (float from -40 to 150 °C)

@@ -27,11 +27,11 @@ import time
 from collections.abc import Callable
 from enum import IntFlag
 from threading import Event
-from typing import Literal
+from typing import Literal, cast
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import IEEE4882Mixin, Instrument
 from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.validators import (
     strict_discrete_set,
@@ -67,7 +67,22 @@ class ERRStatus(IntFlag):
     MATH_ERR = 128
 
 
-class SR830(Instrument):
+PARAMETERS = Literal[
+    "X",
+    "Y",
+    "R",
+    "Theta",
+    "Aux In 1",
+    "Aux In 2",
+    "Aux In 3",
+    "Aux In 4",
+    "Frequency",
+    "CH1",
+    "CH2",
+]
+
+
+class SR830(IEEE4882Mixin, Instrument):
     SAMPLE_FREQUENCIES: list[float] = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
         32, 64, 128, 256, 512
@@ -97,41 +112,6 @@ class SR830(Instrument):
                         "frequency": 9, "ch1": 10, "ch2": 11}
     REFERENCE_SOURCE_TRIGGER = ['SINE', 'POS EDGE', 'NEG EDGE']
     INPUT_FILTER = ['Off', 'On']
-
-    PARAMETERS = Literal[
-        "X",
-        "Y",
-        "R",
-        "Theta",
-        "Aux In 1",
-        "Aux In 2",
-        "Aux In 3",
-        "Aux In 4",
-        "Frequency",
-        "CH1",
-        "CH2",
-    ]
-
-    status = Instrument.measurement(
-        "*STB?",
-        """Get the status byte and Master Summary Status bit.""",
-        cast=str,
-    )
-
-    id = Instrument.measurement(
-        "*IDN?",
-        """Get the identification of the instrument.""",
-        cast=str,
-        maxsplit=0,
-    )
-
-    def clear(self):
-        """Clear the instrument status byte."""
-        self.write("*CLS")
-
-    def reset(self):
-        """Reset the instrument."""
-        self.write("*RST")
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -653,7 +633,7 @@ class SR830(Instrument):
             vals = vals[0]
 
         # make a list of all vals
-        val_list = [val1, val2] + list(vals)
+        val_list = [val1, val2] + list(cast(tuple[PARAMETERS], vals))
 
         vals_idx = [str(self.SNAP_ENUMERATION[val.lower()]) for val in val_list]
 

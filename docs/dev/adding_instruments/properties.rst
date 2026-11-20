@@ -90,7 +90,13 @@ In the examples below we assume you have imported the validators.
 .. testcode::
     :hide:
 
-    from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range, truncated_discrete_set
+    from pymeasure.instruments.validators import (
+        strict_discrete_case_insensitive_set,
+        strict_discrete_set,
+        strict_range,
+        truncated_discrete_set,
+        truncated_range,
+    )
 
 In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device.
 The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` functions also provide means to achieve this.
@@ -183,6 +189,20 @@ Now we can set the voltage range, which will automatically truncate to an approp
     >>> extreme.voltage = 0.08
     >>> extreme.voltage
     0.1
+
+Some instruments accept such discrete string values case-insensitively.
+For those, the :func:`strict_discrete_case_insensitive_set <pymeasure.instruments.validators.strict_discrete_case_insensitive_set>` function lets the user write any spelling, while the device always receives the spelling from ``values``.
+
+.. code-block:: python
+
+    Extreme5000.coupling = Instrument.control(
+        ":COUP?", ":COUP %s",
+        """Control the input coupling (str strictly in 'DC', 'AC', 'GND').""",
+        validator=strict_discrete_case_insensitive_set,
+        values=["DC", "AC", "GND"]
+    )
+
+With this validator, ``extreme.coupling = "ac"`` and ``extreme.coupling = "AC"`` are both accepted, and both send ``"AC"`` to the device.
 
 
 Mapping values

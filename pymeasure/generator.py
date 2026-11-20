@@ -223,8 +223,10 @@ def parse_stream(stream: io.BytesIO) -> COMM_PAIRS:
         else:
             # newline due to "\n" character in communication
             if mode == "W":
+                assert write is not None
                 write += b"\n" + line[:-1]
             elif mode == "R":
+                assert read is not None
                 read += b"\n" + line[:-1]
             else:
                 raise ValueError("Very first line does not contain 'WRITE' or 'READ'!")
@@ -244,7 +246,7 @@ class ByteFormatter(logging.Formatter):
             return value.encode()
         raise ValueError(f"value '{value}' is neither str nor bytes.")
 
-    def format(self, record: logging.LogRecord) -> bytes:
+    def format(self, record: logging.LogRecord) -> bytes:  # pyright: ignore[reportIncompatibleMethodOverride]
         return b"".join((record.msg.replace(r"%s", "").encode(),
                          *[self.make_bytes(arg) for arg in record.args]))  # type: ignore
 
@@ -252,7 +254,7 @@ class ByteFormatter(logging.Formatter):
 class ByteStreamHandler(logging.StreamHandler):
     """Logging handler using bytes streams."""
 
-    terminator = b"\n"  # type: ignore
+    terminator: bytes = b"\n"  # type: ignore[override]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

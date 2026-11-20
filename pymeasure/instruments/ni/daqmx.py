@@ -37,11 +37,11 @@ log.addHandler(logging.NullHandler())
 try:
     if platform == "win32":
         nidaq = ctypes.windll.nicaiu
-except OSError as err:
+except (OSError, AttributeError) as err:
     log.info('Failed loading the NI-DAQmx library. '
              + 'Check the NI-DAQmx documentation on how to '
              + 'install this external dependency. '
-             + f'OSError: {err}')
+             + f'{type(err).__name__}: {err}')
     raise
 
 # Data Types
@@ -166,7 +166,6 @@ class DAQmx:
             nidaq.DAQmxGetErrorString(err, ctypes.byref(buf), buf_size)
             raise RuntimeError(f'nidaq generated warning {err}: {buf.value!r}')
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.stop()
         self.terminated = True
-        super().shutdown()

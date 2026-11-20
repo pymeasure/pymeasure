@@ -5,7 +5,7 @@ Making a measurement
 .. role:: python(code)
     :language: python
 
-This tutorial will walk you through using PyMeasure to acquire a current-voltage (IV) characteristic using a Keithley 2400. Even if you don't have access to this instrument, this tutorial will explain the method for making measurements with PyMeasure. First we describe using a simple script to make the measurement. From there, we show how :mod:`Procedure <pymeasure.experiment.procedure>` objects greatly simplify the workflow, which leads to making the measurement with a graphical interface. 
+This tutorial will walk you through using PyMeasure to acquire a current-voltage (IV) characteristic using a Keithley 2400. Even if you don't have access to this instrument, this tutorial will explain the method for making measurements with PyMeasure. First we describe using a simple script to make the measurement. From there, we show how :mod:`Procedure <pymeasure.experiment.procedure>` objects greatly simplify the workflow, which leads to making the measurement with a graphical interface.
 
 Using scripts
 =============
@@ -170,7 +170,7 @@ Running Procedures
 A Procedure is run by a Worker object. The Worker executes the Procedure in a separate Python thread, which allows other code to execute in parallel to the procedure (e.g. a graphical user interface). In addition to performing the measurement, the Worker spawns a Recorder object, which listens for the :python:`'results'` topic in data emitted by the Procedure, and writes those lines to a data file. The Results object provides a convenient abstraction to keep track of where the data should be stored, the data in an accessible form, and the Procedure that pertains to those results.
 
 We first construct a Results object for our Procedure. ::
-    
+
     from pymeasure.experiment import Results
 
     data_filename = 'example.csv'

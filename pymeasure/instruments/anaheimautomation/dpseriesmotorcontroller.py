@@ -25,8 +25,10 @@
 import logging
 from enum import IntFlag
 from time import sleep
+from typing import Literal
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 log = logging.getLogger(__name__)
@@ -183,16 +185,22 @@ class DPSeriesMotorController(Instrument):
             log.error(f"DP-Series motor controller error detected: {current_errors}")
         return current_errors
 
-    def __init__(self, adapter, name="Anaheim Automation Stepper Motor Controller",
-                 address=0, encoder_enabled=False, **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Anaheim Automation Stepper Motor Controller",
+        address: int = 0,
+        encoder_enabled: bool = False,
+        **kwargs,
+    ):
         """
         Initialize communication with the motor controller with the address given by `address`.
 
         In addition to the keyword arguments that can be set for the Instrument base class, this
         class has the following kwargs:
 
-        :param address: (int) Address that the motor controller uses for serial communication.
-        :param encoder_enabled: (bool) Flag to indicate if the driver should use an encoder input
+        :param address: Address that the motor controller uses for serial communication.
+        :param encoder_enabled: Flag to indicate if the driver should use an encoder input
             to set its position property.
         """
         self._address = address
@@ -209,18 +217,18 @@ class DPSeriesMotorController(Instrument):
         )
 
     @property
-    def encoder_enabled(self):
+    def encoder_enabled(self) -> bool:
         """ A boolean property to represent whether an external encoder is connected and should be
         used to set the :attr:`step_position` property.
         """
         return self._encoder_enabled
 
     @encoder_enabled.setter
-    def encoder_enabled(self, en):
+    def encoder_enabled(self, en: bool) -> None:
         self._encoder_enabled = bool(en)
 
     @property
-    def step_position(self):
+    def step_position(self) -> int:
         """ Integer property representing the value of the motor position measured in steps counted
         by the motor controller or, if :attr:`encoder_enabled` is set, the steps counted by an
         externally connected encoder. Note that in the DP series motor controller instrument
@@ -235,13 +243,13 @@ class DPSeriesMotorController(Instrument):
         return int(pos)
 
     @step_position.setter
-    def step_position(self, pos):
+    def step_position(self, pos: int) -> None:
         strict_range(pos, (-8388607, 8388607))
         self.write(f"P{pos}")
         self.write("G")
 
     @property
-    def absolute_position(self):
+    def absolute_position(self) -> float:
         """ Float property representing the value of the motor position measured in absolute units.
         Note that in DP series motor controller instrument manuals, 'absolute position' refers to
         the :attr:`step_position` property rather than this property. Also note that use of this
@@ -255,11 +263,11 @@ class DPSeriesMotorController(Instrument):
         return self.steps_to_absolute(step_pos)
 
     @absolute_position.setter
-    def absolute_position(self, abs_pos):
+    def absolute_position(self, abs_pos: float) -> None:
         steps_pos = self.absolute_to_steps(abs_pos)
         self.step_position = steps_pos
 
-    def absolute_to_steps(self, pos):
+    def absolute_to_steps(self, pos: float) -> int:
         """ Convert an absolute position to a number of steps to move. This must be implemented in
         subclasses.
 
@@ -268,14 +276,14 @@ class DPSeriesMotorController(Instrument):
         """
         raise NotImplementedError("absolute_to_steps() must be implemented in subclasses!")
 
-    def steps_to_absolute(self, steps):
+    def steps_to_absolute(self, steps: int) -> float:
         """ Convert a position measured in steps to an absolute position.
 
         :param steps: Position in steps to be converted to an absolute position.
         """
         raise NotImplementedError("steps_to_absolute() must be implemented in subclasses!")
 
-    def reset_position(self):
+    def reset_position(self) -> None:
         """
         Reset position as counted by the motor controller and an externally connected encoder to 0.
         """
@@ -284,11 +292,11 @@ class DPSeriesMotorController(Instrument):
         # reset motor recorded position #
         self.write("Z0")
 
-    def stop(self):
+    def stop(self) -> None:
         """Method that stops all motion on the motor controller."""
         self.write(".")
 
-    def move(self, direction):
+    def move(self, direction: Literal["CW", "CCW"]) -> None:
         """ Move the stepper motor continuously in the given direction until a stop command is sent
         or a limit switch is reached. This method corresponds to the 'slew' command in the DP
         series instrument manuals.
@@ -298,7 +306,7 @@ class DPSeriesMotorController(Instrument):
         self.direction = direction
         self.write("S")
 
-    def home(self, home_mode):
+    def home(self, home_mode: Literal[0, 1]) -> None:
         """ Send command to the motor controller to 'home' the motor.
 
         :param home_mode: ``0`` or ``1`` specifying which homing mode to run.
@@ -316,7 +324,7 @@ class DPSeriesMotorController(Instrument):
         else:
             raise ValueError(f"Invalid home mode {hm} specified!")
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Override the instrument base write method to add the motor controller's address to the
         command string.
 
@@ -329,13 +337,12 @@ class DPSeriesMotorController(Instrument):
             cmd_str = f"@{command}"
         else:
             cmd_str = f"@{self._address}{command}"
-        super().write(cmd_str)
+        super().write(cmd_str, **kwargs)
 
-    def wait_for_completion(self, interval=0.5):
+    def wait_for_completion(self, interval: float = 0.5) -> None:
         """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)
 
-        :param interval: (float) seconds between queries to the "busy" flag.
-        :return: None
+        :param interval: seconds between queries to the "busy" flag.
         """  # noqa: E501
         while self.busy:
             sleep(interval)

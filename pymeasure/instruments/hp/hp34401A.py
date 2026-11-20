@@ -361,14 +361,14 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         otherwise the command will fail.""",
     )
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Write a command to the instrument."""
         if "{function_prefix_for_range}" in command:
             command = command.replace("{function_prefix_for_range}",
                                       self._get_function_prefix_for_range())
         elif "{function}" in command:
             command = command.replace("{function}", HP34401A.FUNCTIONS[self.function_])
-        super().write(command)
+        super().write(command, **kwargs)
 
     def _get_function_prefix_for_range(self):
         function_prefix = HP34401A.FUNCTIONS_WITH_RANGE[self.function_]

@@ -133,7 +133,7 @@ class SmartlineV1(Instrument):
         """Get the pressure measurement in mbar.""",
         cast=str,
         preprocess_reply=lambda s: s[4:],
-        get_process=lambda s: float(s[:4])/1000*10**(int(s[4:])-20),
+        get_process=lambda s: float(s[:4]) / 1000 * 10. ** (int(s[4:]) - 20),
     )
 
     display_unit = Instrument.control(

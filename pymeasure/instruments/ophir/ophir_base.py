@@ -153,12 +153,23 @@ class OphirCommunication(Instrument):
         self,
         command: str,
         separator: str | None = ",",
-        cast: Callable[[str], T] = float,  # type: ignore[assignment]
+        cast: type[T] | Callable[[str], T] = float,
+        preprocess_reply: Callable[[str], str] | None = None,
+        maxsplit: int = -1,
         **kwargs,
-    ) -> list[T | str]:
+    ) -> list[T]:
         """Write a command to the instrument and return a list of formatted values from the result.
+
+        Ignore the `separator` parameter and use the device default `None`.
         """
-        return super().values(command, separator=None, cast=cast, **kwargs)
+        return super().values(
+            command,
+            separator=None,
+            cast=cast,
+            preprocess_reply=preprocess_reply,
+            maxsplit=maxsplit,
+            **kwargs,
+        )
 
     def check_errors(self) -> list[Any]:
         """Check for errors after setting a value."""

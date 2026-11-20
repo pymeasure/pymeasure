@@ -432,7 +432,7 @@ class BatterySimulationChannel(Channel):
         )
 
 
-class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
+class Keithley2281S(SCPIMixin, KeithleyBuffer, Instrument):
     """
     Represents the Keithley 2281S-20-6 power supply and battery simulator / characterizer.
     Common commands beside `function_mode` and power supply commands should also work for
