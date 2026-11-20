@@ -200,6 +200,16 @@ def test_sample_size():
         assert instr.acquisition_sample_size_c4 == 3.5e6
 
 
+def test_acquisition_sample_size_invalid_math_definition():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"DEF?", b"EQN,'C2'"),
+             ]
+    ) as instr, pytest.raises(ValueError, match="Invalid math definition"):
+        instr.acquisition_sample_size("MATH")
+
+
 def test_waveform_preamble():
     with expected_protocol(
             LeCroyT3DSO1204,

@@ -31,7 +31,8 @@ import re
 
 # ctypes only required for VirtualBench_Direct class
 from ctypes import byref, c_int, cdll
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from typing import NoReturn
 
 import numpy as np
 import pandas as pd
@@ -176,7 +177,7 @@ class VirtualBench:
         (seconds_since_1970,
          fractional_seconds) = self.convert_timestamp_to_values(timestamp)
         fractional_seconds = timedelta(seconds=fractional_seconds)
-        return (datetime.fromtimestamp(seconds_since_1970, timezone.utc) +
+        return (datetime.fromtimestamp(seconds_since_1970, UTC) +
                 fractional_seconds)
 
     def collapse_channel_string(self, names_in):
@@ -368,7 +369,7 @@ class VirtualBench:
             :rtype: str, optional (str, list)
             """
 
-            def error(lines=lines):
+            def error(lines=lines) -> NoReturn:
                 raise ValueError(
                     f"Line specification {lines} is not valid!")
 
@@ -383,9 +384,10 @@ class VirtualBench:
                 else:
                     # split off line number by last '/'
                     try:
-                        (device, line) = re.match(
-                            r'(.*)(?:/)(.+)',
-                            line).groups()
+                        match = re.match(r'(.*)(?:/)(.+)', line)
+                        if match is None:
+                            error()
+                        (device, line) = match.groups()
                     except IndexError:
                         error()
                 if (line == 'trig') and (device == self._device_name):
@@ -399,9 +401,12 @@ class VirtualBench:
                         pass
                     else:
                         try:
-                            device = re.match(
+                            match = re.match(
                                 r'(VB[0-9]{4}-[0-9a-zA-Z]{7})(?:/dig)',
-                                device).groups()[0]
+                                device)
+                            if match is None:
+                                error()
+                            device = match.groups()[0]
                         except (IndexError, KeyError):
                             error()
                         # device_name has to match
@@ -929,7 +934,7 @@ class VirtualBench:
             :return: Channel string
             :rtype: str
             """
-            def error(channel=channel):
+            def error(channel=channel) -> NoReturn:
                 raise ValueError(
                     f"Channel specification {channel} is not valid!")
             channels = self._vb_handle.expand_channel_string(channel)[0]
@@ -938,8 +943,10 @@ class VirtualBench:
             for channel_element in channels:
                 # split off lines by last '/'
                 try:
-                    (device, channel_element) = re.match(
-                        r'(.*)(?:/)(.+)', channel_element).groups()
+                    match = re.match(r'(.*)(?:/)(.+)', channel_element)
+                    if match is None:
+                        error()
+                    (device, channel_element) = match.groups()
                 except Exception:
                     error()
                 # validate numbers in range 1-2
@@ -950,9 +957,12 @@ class VirtualBench:
                     pass
                 else:
                     try:
-                        device = re.match(
+                        match = re.match(
                             r'(VB[0-9]{4}-[0-9a-zA-Z]{7})(?:/)(.+)',
-                            device).groups()[0]
+                            device)
+                        if match is None:
+                            error()
+                        device = match.groups()[0]
                     except Exception:
                         error()
                     # device_name has to match

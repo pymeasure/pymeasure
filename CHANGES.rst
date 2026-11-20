@@ -19,6 +19,7 @@ Deprecated
 - Deprecate :code:`Procedure.refresh_parameters` as it is a no-op now.
 - Deprecate unused :code:`console.py` module with :code:`ProgressBar` and :code:`display`.
 - Deprecate Thorlabs PRO8000 flat properties (:code:`slot`, :code:`LDCCurrent`, :code:`LDCStatus`, ...), use the per-slot channels instead.
+- Deprecate pymeasure defined :code:`StrEnum` as pymeasure now supports Python 3.11 which has proper :code:`enum.StrEnum`.
 
 Changed
 -------
@@ -31,6 +32,11 @@ Changed
   ``UnknownProcedure`` now returns empty ``parameter_objects``/``metadata_objects`` dicts so loading an unimportable procedure no longer raises.
 - Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
 - Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
+- Added the :code:`timeout` property to :class:`.Adapter` and migrated all adapters, drivers, and tests from :code:`adapter.connection.timeout` to it.
+  The value is in integer milliseconds for every adapter and :code:`None` means no timeout.
+  VISA adapters translate :code:`None` to pyvisa's :code:`float("inf")` and report :code:`inf` back as :code:`None`, while the serial adapter converts to pyserial seconds and rounds to whole milliseconds on read.
+  The serial adapter's property consequently changed its unit from seconds to milliseconds; the :code:`timeout` keyword of its constructor is still forwarded to pyserial in seconds.
+  Custom :class:`.Adapter` subclasses have to implement :code:`timeout` if a driver calls it.
 
 Instruments
 -----------
@@ -284,7 +290,7 @@ Instruments mechanics
 - Add :code:`next_error` property to SCPI instruments (@BenediktBurger, #1024)
 - Make :code:`query_delay=None` the default for :code:`wait_for` (@BenediktBurger, #1077)
 - Fix :code:`expected_protocol` using empty dictionary as default value (@BenediktBurger, #1087)
-- Remove auto-importing all instruments in :code:`pymeasure/instruments/__init__.py`` (@mcdo0486, #919)
+- Remove auto-importing all instruments in :code:`pymeasure/instruments/__init__.py` (@mcdo0486, #919)
 - Add :code:`find_serial_port` to find a serial port by providing USB information (@BenediktBurger, #982)
 
 Instruments

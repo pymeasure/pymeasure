@@ -123,8 +123,11 @@ class Browser(QtWidgets.QTreeWidget):
         if sort_by_filename:
             self.sortItems(1, QtCore.Qt.SortOrder.AscendingOrder)
 
+        header = self.header()
+        if header is None:
+            return
         for i, width in enumerate([80, 140]):
-            self.header().resizeSection(i, width)
+            header.resizeSection(i, width)
 
     def add(self, experiment: Experiment) -> BaseBrowserItem | None:
         """Add a :class:`Experiment<pymeasure.display.manager.Experiment>` object

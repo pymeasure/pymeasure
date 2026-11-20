@@ -48,6 +48,7 @@ def test_change_z_axis_updates_title_and_emits(qtbot):
     assert frame.z_axis == "w (m)"
     assert received == ["w (m)"]
     # title reflects the label and units parsed from the axis string
+    assert frame.plot is not None
     assert "w" in frame.plot.titleLabel.text
     assert "m" in frame.plot.titleLabel.text
 
@@ -57,6 +58,7 @@ def test_change_z_axis_without_units(qtbot):
     qtbot.addWidget(frame)
     assert frame.z_axis == "z"
     # No units present in axis string, title is just the label
+    assert frame.plot is not None
     assert "z" in frame.plot.titleLabel.text
 
 
@@ -64,6 +66,7 @@ def test_close_tears_down_image_frame_with_title(qtbot):
     """Closing an image frame tears it down, including the title path."""
     frame = ImageFrame("x (V)", "y (A)", z_axis="z (T)")
     qtbot.addWidget(frame)
+    assert frame.plot is not None
     assert "z" in frame.plot.titleLabel.text
 
     frame.close()

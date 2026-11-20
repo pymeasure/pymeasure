@@ -26,6 +26,7 @@
 import logging
 from time import sleep, time
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
@@ -132,7 +133,7 @@ class IPS120_10(OxfordInstrumentsBase):
 
         # Clear the buffer in order to prevent communication problems
         if clear_buffer:
-            self.adapter.connection.clear()
+            visa_resource(self.adapter).clear()
 
     version = Instrument.measurement(
         "V",

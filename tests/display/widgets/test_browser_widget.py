@@ -72,10 +72,9 @@ class TestBrowserWidgetInit:
 
         assert isinstance(widget.browser, Browser)
         assert widget.browser.columnCount() == 6
-        header_labels = [
-            widget.browser.headerItem().text(i)
-            for i in range(widget.browser.columnCount())
-        ]
+        header_item = widget.browser.headerItem()
+        assert header_item is not None
+        header_labels = [header_item.text(i) for i in range(widget.browser.columnCount())]
         assert header_labels == [
             "Graph", "Filename", "Progress", "Status", "Voltage", "Current",
         ]

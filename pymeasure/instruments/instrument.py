@@ -25,9 +25,8 @@
 import logging
 import time
 from collections.abc import Sequence
+from typing import Self
 from warnings import warn
-
-from typing_extensions import Self
 
 from ..adapters.adapter import Adapter
 from ..adapters.visa import VISAAdapter

@@ -27,6 +27,7 @@ from typing import Any
 
 from pyvisa.constants import InterfaceType
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import AdapterType, Channel, Instrument, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -256,7 +257,7 @@ class SpellmanXRV(Instrument):
         self.query_delay = query_delay
 
         # disable checksum for LAN interface
-        interface_type = self.adapter.connection.interface_type
+        interface_type = visa_resource(self.adapter).interface_type
         if interface_type is InterfaceType.tcpip:
             self.checksum_enabled = False
 

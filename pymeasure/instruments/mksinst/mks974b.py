@@ -22,8 +22,9 @@
 # THE SOFTWARE.
 #
 
+from enum import StrEnum
+
 from pymeasure.instruments import Channel, Instrument
-from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.validators import strict_discrete_set
 
 from .mksinst import MKSInstrument, RelayChannel

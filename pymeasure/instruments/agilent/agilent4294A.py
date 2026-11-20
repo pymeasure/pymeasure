@@ -23,10 +23,12 @@
 #
 
 import os
+from typing import cast
 
 import numpy as np
 import pandas as pd
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -150,8 +152,9 @@ class Agilent4294A(SCPIMixin, Instrument):
 
         with open(path, 'wb') as file:
             for _ in range(iBufCnt):
-                data = self.adapter.connection.query_binary_values("READ?", datatype='B',
-                                                                   container=bytes)
+                # PyVISA returns the raw bytes when `container=bytes`.
+                data = cast(bytes, visa_resource(self.adapter).query_binary_values(
+                    "READ?", datatype='B', container=bytes))
                 file.write(data)
         self.write(f'PURG "{REMOTE_FILE}"')
 

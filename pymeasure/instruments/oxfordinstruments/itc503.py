@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import (
@@ -104,7 +105,7 @@ class ITC503(OxfordInstrumentsBase):
 
         # Clear the buffer in order to prevent communication problems
         if clear_buffer:
-            self.adapter.connection.clear()
+            visa_resource(self.adapter).clear()
 
         self.temperature_setpoint_values = [min_temperature, max_temperature]
 

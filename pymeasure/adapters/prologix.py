@@ -27,6 +27,7 @@ from pyvisa.constants import ResourceAttribute
 
 from pymeasure.adapters import VISAAdapter
 from pymeasure.adapters.protocol import ProtocolAdapter
+from pymeasure.adapters.visa import visa_resource
 
 
 class PrologixAdapter(VISAAdapter):
@@ -288,7 +289,7 @@ class PrologixAdapter(VISAAdapter):
         :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        avail = self.connection.get_visa_attribute(ResourceAttribute.asrl_avalaible_number)
+        avail = visa_resource(self).get_visa_attribute(ResourceAttribute.asrl_avalaible_number)
         if avail == 0:
             # nothing buffered, need to request data from Prologix
             self.write("++read eoi")
@@ -324,8 +325,9 @@ class PrologixAdapter(VISAAdapter):
             time.sleep(delay)
 
     def __repr__(self) -> str:
+        resource_name = visa_resource(self).resource_name
         if self.address is not None:
-            return (f"<PrologixAdapter(resource_name='{self.connection.resource_name}', "
+            return (f"<PrologixAdapter(resource_name='{resource_name}', "
                     f"address={self.address:d})>")
         else:
-            return f"<PrologixAdapter(resource_name='{self.connection.resource_name}')>"
+            return f"<PrologixAdapter(resource_name='{resource_name}')>"

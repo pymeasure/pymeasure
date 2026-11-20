@@ -24,6 +24,7 @@
 import ctypes
 import logging
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)
@@ -146,20 +147,20 @@ class HPLegacyInstrument(Instrument):
         Initiate trigger via low-level GPIB-command (aka GET - group execute trigger)
 
         """
-        self.adapter.connection.assert_trigger()
+        visa_resource(self.adapter).assert_trigger()
 
     def reset(self) -> None:
         """
         Initatiates a reset (like a power-on reset) of the HP3478A
 
         """
-        self.adapter.connection.clear()
+        visa_resource(self.adapter).clear()
 
     def shutdown(self) -> None:
         """
         provides a way to gracefully close the connection to the HP3478A
 
         """
-        self.adapter.connection.clear()
+        visa_resource(self.adapter).clear()
         self.adapter.close()
         super().shutdown()
