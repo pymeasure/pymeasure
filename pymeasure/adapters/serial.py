@@ -128,6 +128,8 @@ class SerialAdapter(Adapter):
     def timeout(self) -> int | None:
         """Control the read timeout in integer milliseconds, ``None`` waits indefinitely.
 
+        A value of ``float("inf")`` is treated like ``None``, as both mean "no timeout".
+
         pyserial stores the timeout in seconds, so the setter converts to seconds and the getter
         converts back and rounds to whole milliseconds.
         """
@@ -137,7 +139,7 @@ class SerialAdapter(Adapter):
 
     @timeout.setter
     def timeout(self, value: int | None) -> None:
-        if value is None:
+        if value is None or value == float("inf"):
             self.connection.timeout = None
         else:
             self.connection.timeout = value / 1000

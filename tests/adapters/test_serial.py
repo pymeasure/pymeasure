@@ -138,6 +138,13 @@ def test_timeout_none_is_passed_through(adapter):
     assert adapter.connection.timeout is None
 
 
+def test_timeout_infinity_is_passed_as_none(adapter):
+    """``float("inf")`` is pyserial's infinite timeout and is reported as ``None``."""
+    adapter.timeout = float("inf")
+    assert adapter.connection.timeout is None
+    assert adapter.timeout is None
+
+
 def test_timeout_rounds_seconds_to_milliseconds(adapter):
     """A fractional pyserial timeout is reported as rounded integer milliseconds."""
     adapter.connection.timeout = 0.1234567
