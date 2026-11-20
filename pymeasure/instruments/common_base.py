@@ -25,7 +25,7 @@
 import logging
 from collections.abc import Callable, Sequence
 from inspect import getmembers
-from typing import Any, Generic, Literal, Protocol, TypeVar, cast, overload
+from typing import Any, Generic, Literal, Protocol, Self, TypeVar, cast, overload
 from warnings import warn
 
 log = logging.getLogger(__name__)
@@ -90,12 +90,12 @@ class InstrumentProperty(property, Generic[T]):
     """A typed property base class for instrument properties."""
 
     @overload
-    def __get__(self, obj: None, objtype: type) -> "InstrumentProperty[T]": ...
+    def __get__(self, obj: None, objtype: type) -> Self: ...
 
     @overload
     def __get__(self, obj: object, objtype: type | None = None) -> T: ...
 
-    def __get__(self, obj, objtype=None):
+    def __get__(self, obj, objtype=None) -> Self | Any:
         if obj is None:
             return self
         if self.fget is None:
@@ -147,12 +147,12 @@ class DynamicProperty(InstrumentProperty[T]):
         self.prefix = prefix
 
     @overload
-    def __get__(self, obj: None, objtype: type) -> "DynamicProperty[T]": ...
+    def __get__(self, obj: None, objtype: type) -> Self: ...
 
     @overload
     def __get__(self, obj: object, objtype: type | None = None) -> T: ...
 
-    def __get__(self, obj, objtype=None):
+    def __get__(self, obj, objtype=None) -> Self | Any:
         if obj is None:
             # Property return itself when invoked from a class
             return self
@@ -291,12 +291,12 @@ class CommonBase:
                 raise ValueError(f"Invalid definition of class '{cls}' and id '{id}'.")
 
         @overload
-        def __get__(self, obj: None, objtype: Any) -> "CommonBase.ChannelCreator[C]": ...
+        def __get__(self, obj: None, objtype: Any) -> Self: ...
 
         @overload
         def __get__(self, obj: Any, objtype: Any) -> C: ...
 
-        def __get__(self, obj, objtype=None):
+        def __get__(self, obj, objtype=None) -> Self | Any:
             if obj is None:
                 return self
             if self._attr_name in obj.__dict__:
@@ -349,12 +349,12 @@ class CommonBase:
             self.kwargs.setdefault("prefix", prefix)
 
         @overload
-        def __get__(self, obj: None, objtype: Any) -> "CommonBase.MultiChannelCreator[C]": ...
+        def __get__(self, obj: None, objtype: Any) -> Self: ...
 
         @overload
         def __get__(self, obj: Any, objtype: Any) -> dict[int | str, C]: ...
 
-        def __get__(self, obj, objtype=None):
+        def __get__(self, obj, objtype=None) -> Self | Any:
             if obj is None:
                 return self
             if self._attr_name in obj.__dict__:

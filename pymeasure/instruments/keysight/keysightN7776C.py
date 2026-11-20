@@ -26,6 +26,7 @@ import logging
 
 import numpy as np
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.common_base import identity
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -255,7 +256,7 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
         Function returning the wavelength data logged in the internal memory of the laser
         """
         # Using pyvisa's method bypassing the normal read.
-        return np.array(self.adapter.connection.query_binary_values('sour0:read:data? llog',
+        return np.array(visa_resource(self.adapter).query_binary_values('sour0:read:data? llog',
                         datatype='d'))
 
     def close(self):

@@ -515,7 +515,10 @@ class SR830(IEEE4882Mixin, Instrument):
     def buffer_count(self) -> int:
         query = self.ask("SPTS?")
         if query.count("\n") > 1:
-            return int(re.match(r"\d+\n$", query, re.MULTILINE).group(0))
+            match = re.match(r"\d+\n$", query, re.MULTILINE)
+            if match is None:
+                raise ValueError(f"Invalid response to 'SPTS?': {query!r}")
+            return int(match.group(0))
         else:
             return int(query)
 

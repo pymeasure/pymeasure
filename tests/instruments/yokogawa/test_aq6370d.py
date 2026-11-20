@@ -23,6 +23,7 @@
 #
 
 import pytest
+import pyvisa
 
 from pymeasure.instruments.yokogawa.aq6370series import AQ6370D
 from pymeasure.test import expected_protocol
@@ -38,6 +39,7 @@ def test_init():
 
 def test_init_tcpip():
     instr = AQ6370D("TCPIP0::localhost::inst0::INSTR", visa_library="@sim")
+    assert isinstance(instr.adapter.connection, pyvisa.resources.MessageBasedResource)
     assert instr.adapter.connection.read_termination == "\r\n"
     instr.adapter.close()
 

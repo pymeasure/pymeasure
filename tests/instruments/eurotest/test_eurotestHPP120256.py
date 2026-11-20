@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import pytest
+
 from pymeasure.instruments.eurotest.eurotestHPP120256 import EurotestHPP120256
 from pymeasure.test import expected_protocol
 
@@ -75,3 +77,85 @@ def test_current():
             [("STATUS,MI", "IM, RANGE=5000mA, VALUE=1739mA")],
     ) as inst:
         assert inst.current == 1739.0
+
+
+def test_voltage_range():
+    """Verify the voltage range getter reads the RANGE field."""
+    with expected_protocol(
+        EurotestHPP120256,
+        [("STATUS,MU", "UM, RANGE=3000V, VALUE=2.458kV")],
+    ) as inst:
+        assert inst.voltage_range == 3000.0
+
+
+def test_current_range():
+    """Verify the current range getter reads the RANGE field."""
+    with expected_protocol(
+        EurotestHPP120256,
+        [("STATUS,MI", "IM, RANGE=5000mA, VALUE=1739mA")],
+    ) as inst:
+        assert inst.current_range == 5000.0
+
+
+@pytest.mark.parametrize(
+    ("property_name", "query", "reply"),
+    [
+        ("voltage_setpoint", "STATUS,U", "U, RANGE=3.000kV"),
+        ("current_limit", "STATUS,I", "I, RANGE=5000mA"),
+        ("voltage_ramp", "STATUS,RAMP", "RAMP, RANGE=3000V/s"),
+        ("voltage", "STATUS,MU", "UM, RANGE=3000V"),
+        ("current", "STATUS,MI", "IM, RANGE=5000mA"),
+        ("voltage_range", "STATUS,MU", "UM, VALUE=2.458kV"),
+        ("current_range", "STATUS,MI", "IM, VALUE=1739mA"),
+    ],
+)
+def test_incomplete_reply_raises_value_error(property_name, query, reply):
+    """Verify a reply missing the requested field raises ValueError."""
+    with (
+        expected_protocol(EurotestHPP120256, [(query, reply)]) as inst,
+        pytest.raises(ValueError),
+    ):
+        getattr(inst, property_name)
+
+
+def test_reordered_reply_raises_value_error():
+    """Verify a reply whose fields are reordered raises ValueError."""
+    with (
+        expected_protocol(
+            EurotestHPP120256,
+            [("STATUS,U", "U, VALUE=2.458kV, RANGE=3.000kV")],
+        ) as inst,
+        pytest.raises(ValueError),
+    ):
+        _ = inst.voltage_setpoint
+
+
+@pytest.mark.parametrize(
+    ("reply", "index", "field"),
+    [
+        (["U", " RANGE=3.000kV"], 2, "VALUE"),
+        (["U", " RANGE=3.000kV"], 1, "VALUE"),
+    ],
+)
+def test_parse_field_rejects_missing_or_mismatched_field(reply, index, field):
+    """Verify _parse_field rejects a missing entry or a different field name."""
+    with pytest.raises(ValueError, match="does not contain field"):
+        EurotestHPP120256._parse_field(reply, index, field)
+
+
+def test_parse_field_accepts_padded_label_and_ignores_case():
+    """Verify _parse_field tolerates padding and case in the field name."""
+    reply = ["U", " range =3.000kV", " VALUE=2.458kV"]
+    assert EurotestHPP120256._parse_field(reply, 1, "RANGE") == 3.000
+    assert EurotestHPP120256._parse_field(reply, 2, "value") == 2.458
+
+
+def test_parse_field_preserves_parse_float_value_error():
+    """Verify _parse_field raises ValueError for a field without a number."""
+    with pytest.raises(ValueError, match="could not be parsed"):
+        EurotestHPP120256._parse_field(["U", " RANGE=3000V", " VALUE=unknown"], 2, "VALUE")
+
+
+def test_parse_float_rejects_reply_without_number():
+    with pytest.raises(ValueError, match="could not be parsed"):
+        EurotestHPP120256._parse_float("STATUS, RANGE=unknown")

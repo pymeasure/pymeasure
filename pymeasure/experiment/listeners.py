@@ -61,27 +61,32 @@ class Listener(StoppableThread):
         :param topic: Topic to listen on
         :param timeout: Timeout in seconds to recheck stop flag
         """
+        zmq_module = zmq
+        cloudpickle_module = cloudpickle
+        if zmq_module is None or cloudpickle_module is None:
+            raise ImportError("ZMQ and cloudpickle are required for TCP communication.")
         super().__init__()
 
         self.port = port
         self.topic = topic
-        if zmq is None:
-            raise ImportError("ZMQ required for Listener.")
-        self.context = zmq.Context()
+        self.context = zmq_module.Context()
         log.debug(f"{self.__class__.__name__} has ZMQ Context: {self.context!r}")
-        self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
+        self.subscriber = self.context.socket(zmq_module.SUB)
+        self.subscriber.setsockopt(zmq_module.SUBSCRIBE, topic.encode())
         self.subscriber.connect(f'tcp://localhost:{port}')
         log.info(
             f"{self.__class__.__name__} connected to '{topic}' topic on tcp://localhost:{port}")
 
-        self.poller = zmq.Poller()
-        self.poller.register(self.subscriber, zmq.POLLIN)
+        self.poller = zmq_module.Poller()
+        self.poller.register(self.subscriber, zmq_module.POLLIN)
         self.timeout = timeout
 
     def receive(self, flags=0):
+        cloudpickle_module = cloudpickle
+        if cloudpickle_module is None:
+            raise ImportError("cloudpickle is required for TCP communication.")
         topic, record = self.subscriber.recv_serialized(
-            deserialize=lambda msg: (msg[0].decode(), cloudpickle.loads(msg[1])),
+            deserialize=lambda msg: (msg[0].decode(), cloudpickle_module.loads(msg[1])),
             flags=flags
         )
         return topic, record

@@ -76,8 +76,8 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
     fmt = '%(asctime)s : %(message)s (%(levelname)s)'
     datefmt = '%m/%d/%Y %I:%M:%S %p'
 
-    tab_widget = None
-    tab_index = None
+    tab_widget: QtWidgets.QTabWidget | None = None
+    tab_index: int | None = None
 
     _blink_color = None
     _blink_state = False
@@ -122,9 +122,22 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
         vbox.addWidget(self.view)
         self.setLayout(vbox)
 
+    def _tab_target(self) -> tuple[QtWidgets.QTabWidget, int] | None:
+        """Return the containing tab widget and this widget's tab index, if set up."""
+        if self.tab_widget is None or self.tab_index is None:
+            return None
+        return self.tab_widget, self.tab_index
+
     def _blink(self) -> None:
-        self.tab_widget.tabBar().setTabTextColor(
-            self.tab_index,
+        target = self._tab_target()
+        if target is None:
+            return
+        tab_widget, tab_index = target
+        tab_bar = tab_widget.tabBar()
+        if tab_bar is None:
+            return
+        tab_bar.setTabTextColor(
+            tab_index,
             QtGui.QColor("black" if self._blink_state else self._blink_color)
         )
 
@@ -137,15 +150,24 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
             self._blink()
 
             self._blink_color = None
-            self.tab_widget.setTabIcon(self.tab_index, QtGui.QIcon())
+            target = self._tab_target()
+            if target is not None:
+                tab_widget, tab_index = target
+                tab_widget.setTabIcon(tab_index, QtGui.QIcon())
 
     def _blinking_start(self, message: str) -> None:
         # Delayed setup, since only now the widget is added to the TabWidget
         if self.tab_widget is None:
-            self.tab_widget = self.parent().parent()
-            self.tab_index = self.tab_widget.indexOf(self)
-            self.tab_widget.tabBar().setIconSize(QtCore.QSize(12, 12))
-            self.tab_widget.tabBar().currentChanged.connect(self._blinking_stop)
+            parent = self.parent()
+            tab_widget = parent.parent() if parent is not None else None
+            if not isinstance(tab_widget, QtWidgets.QTabWidget):
+                return
+            self.tab_widget = tab_widget
+            self.tab_index = tab_widget.indexOf(self)
+            tab_bar = tab_widget.tabBar()
+            if tab_bar is not None:
+                tab_bar.setIconSize(QtCore.QSize(12, 12))
+                tab_bar.currentChanged.connect(self._blinking_stop)
 
         if message.startswith(("<!--ERROR-->", "<!--CRITICAL-->")):
             error = True
@@ -167,8 +189,13 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
             pixmapi = QtWidgets.QStyle.StandardPixmap.SP_MessageBoxCritical if \
                 error else QtWidgets.QStyle.StandardPixmap.SP_MessageBoxWarning
 
-            icon = self.style().standardIcon(pixmapi)
-            self.tab_widget.setTabIcon(self.tab_index, icon)
+            style = self.style()
+            if style is not None:
+                icon = style.standardIcon(pixmapi)
+                target = self._tab_target()
+                if target is not None:
+                    tab_widget, tab_index = target
+                    tab_widget.setTabIcon(tab_index, icon)
 
         # Start timer
         self._blink_qtimer.start(500)

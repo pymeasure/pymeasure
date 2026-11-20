@@ -25,6 +25,7 @@
 import logging
 from enum import IntEnum
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -70,7 +71,7 @@ class HP8657B(Instrument):
         Reset the instrument to power-on default settings
 
         """
-        self.adapter.connection.clear()
+        visa_resource(self.adapter).clear()
 
     id = "HP,8657B,N/A,N/A"  #: Manual ID entry
 
@@ -215,10 +216,10 @@ class HP8657B(Instrument):
        )
 
     def reset(self):
-        self.adapter.connection.clear()
+        visa_resource(self.adapter).clear()
 
     def shutdown(self):
-        self.adapter.connection.clear()
+        visa_resource(self.adapter).clear()
         self.output_enabled = False
         self.adapter.connection.close()
         super().shutdown()

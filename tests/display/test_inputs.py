@@ -161,6 +161,20 @@ class TestListInput:
         with pytest.raises(ValueError):
             list_input.setValue(789)
 
+    @pytest.fixture
+    def no_choices_input(self, qtbot):
+        list_input = ListInput(ListParameter('potato', choices=None))
+        qtbot.addWidget(list_input)
+        return list_input
+
+    def test_set_value_without_choices_should_raise(self, no_choices_input):
+        with pytest.raises(ValueError, match="no choices"):
+            no_choices_input.setValue(123)
+
+    def test_value_without_choices_should_raise(self, no_choices_input):
+        with pytest.raises(ValueError, match="no choices"):
+            no_choices_input.value()
+
 
 class TestScientificInput:
     @pytest.mark.parametrize("min_,max_,default_value", [

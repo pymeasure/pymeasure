@@ -314,10 +314,12 @@ class Crosshairs(QtCore.QObject):
         the x and y values correspond to those on the display.
         """
         # A queued proxy flush may still arrive after teardown.
-        if self._torn_down or self.plot is None:
+        plot = self.plot
+        if self._torn_down or plot is None:
             return
-        if self.position is not None:
-            mouse_point = self.plot.vb.mapSceneToView(self.position)
+        view_box = plot.vb
+        if view_box is not None and self.position is not None:
+            mouse_point = view_box.mapSceneToView(self.position)
             self.coordinates.emit(mouse_point.x(), mouse_point.y())
             self.vertical.setPos(mouse_point.x())
             self.horizontal.setPos(mouse_point.y())

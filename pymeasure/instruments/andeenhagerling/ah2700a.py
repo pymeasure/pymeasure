@@ -63,7 +63,7 @@ class AH2700A(AH2500A):
         validator=strict_range,
         values=[50, 20000],
         # typical reply: "FREQUENCY      1200.0 Hz"
-        get_process=lambda v: float(AH2500A._renumeric.search(v).group(0)),
+        get_process=AH2500A._parse_numeric,
         cast=str,
     )
 

@@ -115,6 +115,7 @@ def test_load_adds_curve_to_plot(qtbot):
     results = cast(Results, FakeResults())
     curve = wdg.new_curve(results)
     wdg.load(curve)
+    assert wdg.plot is not None
     assert curve in wdg.plot.items
     assert curve.x == wdg.columns_x.currentText()
     assert curve.y == wdg.columns_y.currentText()
@@ -125,6 +126,7 @@ def test_remove_removes_curve_from_plot(qtbot):
     results = cast(Results, FakeResults())
     curve = wdg.new_curve(results)
     wdg.load(curve)
+    assert wdg.plot is not None
     assert curve in wdg.plot.items
     wdg.remove(curve)
     assert curve not in wdg.plot.items
@@ -145,6 +147,7 @@ def test_clear_widget_removes_items(qtbot):
     results = cast(Results, FakeResults())
     curve = wdg.new_curve(results)
     wdg.load(curve)
+    assert wdg.plot is not None
     assert curve in wdg.plot.items
     wdg.clear_widget()
     assert curve not in wdg.plot.items

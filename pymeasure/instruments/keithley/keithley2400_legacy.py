@@ -713,7 +713,9 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         else:
             currents = np.linspace(startI, stopI, num)
             self.write(":SOUR:SWE:DIR UP")
-        self.connection.timeout = 30.0
+        # Set a timeout of 30000 ms (30 s) for every adapter; the read sweep below takes
+        # several seconds.
+        self.adapter.timeout = 30000
         self.enable_source()
         data = self.values(":READ?")
 

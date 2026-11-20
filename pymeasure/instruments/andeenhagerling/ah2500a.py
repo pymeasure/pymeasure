@@ -84,7 +84,8 @@ class AH2500A(Instrument):
         values=[0, 15],
         # typical replies: "VOLTAGE    HIGHEST= 15.0    V" or
         # "VOLTAGE HIGHEST 1.00    V"
-        get_process=lambda v: float(AH2500A._renumeric.search(v).group(0)),
+        # A lambda is needed here since AH2500A is otherwise undefined in the class body.
+        get_process=lambda v: AH2500A._parse_numeric(v),
         cast=str,
     )
 
@@ -110,6 +111,14 @@ class AH2500A(Instrument):
             return (math.nan, math.nan, math.nan)
         else:  # some unknown return string (e.g. misconfigured units)
             raise ValueError(f'Returned string "{string}" could not be parsed')
+
+    @classmethod
+    def _parse_numeric(cls, string: str) -> float:
+        """Parse the first numeric value of an instrument reply string."""
+        match = cls._renumeric.search(string)
+        if match is None:
+            raise ValueError(f'Returned string "{string}" could not be parsed')
+        return float(match.group(0))
 
     def trigger(self) -> None:
         """

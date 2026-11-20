@@ -80,7 +80,10 @@ class PlotterWindow(QtWidgets.QMainWindow):
 
         self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time,
                                       check_status=False, linewidth=linewidth)
-        self.plot = self.plot_widget.plot
+        plot = self.plot_widget.plot
+        if plot is None:
+            raise RuntimeError("The plot widget has no plot.")
+        self.plot = plot
 
         vbox.addWidget(self.plot_widget)
 
@@ -92,7 +95,7 @@ class PlotterWindow(QtWidgets.QMainWindow):
         self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
                                   pen=pg.mkPen(color=pg.intColor(0), width=linewidth),
                                   antialias=False)
-        self.plot.addItem(self.curve)
+        plot.addItem(self.curve)
 
         self.plot_widget.updated.connect(self.check_stop)
 
