@@ -48,6 +48,22 @@ def _resource(adapter: VISAAdapter) -> pyvisa.resources.MessageBasedResource:
     return connection
 
 
+def _drain_read_buffer(adapter: VISAAdapter, timeout: int = 50) -> None:
+    """Empty the read buffer of the process-wide pyvisa-sim backend.
+
+    The simulated backend is cached per process, so all adapters sharing a simulated
+    resource share one device buffer. A zero timeout does not consume any bytes, because
+    pyvisa-sim's read loop never runs in that case; a short nonzero timeout drains them.
+    """
+    previous_timeout = adapter.timeout
+    adapter.timeout = timeout
+    try:
+        # The byte-by-byte loop of `read_bytes(-1)` swallows the terminal timeout.
+        adapter.read_bytes(-1)
+    finally:
+        adapter.timeout = previous_timeout
+
+
 @pytest.fixture
 def adapter():
     adapter = VISAAdapter(SIM_RESOURCE, visa_library='@sim',
@@ -55,33 +71,40 @@ def adapter():
                           # Large timeout allows very slow GitHub action runners to complete.
                           timeout=60,
                           )
+    # Start from an empty shared simulator buffer, independent of earlier tests.
+    _drain_read_buffer(adapter)
     yield adapter
-    # Empty the read buffer, as something might remain there after a test.
-    # `clear` is not implemented in pyvisa-sim and `flush_read_buffer` seems to do nothing.
-    adapter.timeout = 0
+    # Leave the process-wide simulator buffer empty for the next test and always close.
     try:
-        adapter.read_bytes(-1)
-    except pyvisa.errors.VisaIOError as exc:
-        if not exc.args[0].startswith("VI_ERROR_TMO"):
-            raise
-    # Close the connection
-    adapter.close()
+        _drain_read_buffer(adapter)
+    finally:
+        adapter.close()
 
 
 @pytest.fixture
 def make_visa_adapter():
     """Return a factory creating VISAAdapter instances against the pyvisa-sim
-    resource; any adapter created during the test is closed again on teardown."""
+    resource; any adapter created during the test is closed again on teardown.
+
+    Every factory adapter starts with an empty shared simulator buffer, so tests
+    do not depend on the order in which they run."""
     created = []
 
     def _make(**kwargs):
         adapter = VISAAdapter(SIM_RESOURCE, visa_library='@sim', **kwargs)
         created.append(adapter)
+        _drain_read_buffer(adapter)
         return adapter
 
     yield _make
     for adapter in created:
-        adapter.close()
+        try:
+            _drain_read_buffer(adapter)
+        except pyvisa.errors.InvalidSession:
+            # The test may have closed this adapter itself; still close it below.
+            pass
+        finally:
+            adapter.close()
 
 
 def test_nested_adapter():
@@ -292,6 +315,41 @@ def test_read_bytes_negative_break_on_termchar(make_visa_adapter):
         result = adapter.read_bytes(-1, break_on_termchar=True)
     assert result == b"SCPI,MOCK,VERSION_1.0\n"
     spy.assert_called_once_with(None)
+
+
+def test_read_break_on_termchar_after_partial_read(make_visa_adapter):
+    """A partial termchar read must not leak its remaining bytes into a fresh adapter."""
+    first = make_visa_adapter(read_termination="\n")
+    _drain_read_buffer(first)
+    first.write("*IDN?")
+    _resource(first).read_termination = ","
+    assert first.read_bytes(-1, break_on_termchar=True) == b"SCPI,"
+
+    second = make_visa_adapter()
+    second.write("*IDN?")
+    _resource(second).read_termination = ","
+    assert second.read_bytes(7, break_on_termchar=True) == b"SCPI,"
+
+
+def test_read_all_bytes_after_partial_read(make_visa_adapter):
+    """read_bytes(-1) on a fresh adapter must return only its own buffered response."""
+    first = make_visa_adapter(read_termination="\n")
+    _drain_read_buffer(first)
+    first.write("*IDN?")
+    _resource(first).read_termination = ","
+    assert first.read_bytes(-1, break_on_termchar=True) == b"SCPI,"
+
+    second = make_visa_adapter()
+    second.write("*IDN?")
+    assert second.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
+
+
+def test_make_visa_adapter_teardown_tolerates_closed_adapter(make_visa_adapter):
+    """Teardown drains every factory adapter even if the test has closed it already."""
+    adapter = make_visa_adapter()
+    adapter.close()
+    with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
+        _ = _resource(adapter).session
 
 
 def test_wait_for_srq(make_visa_adapter):
