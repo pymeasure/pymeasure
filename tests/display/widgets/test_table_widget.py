@@ -289,6 +289,39 @@ def test_pandas_model_base_export_df_concat_by_column(qtbot):
     assert df["B"].tolist() == [3.0, 4.0]
 
 
+@pytest.mark.parametrize(
+    "model_class, expected_a, expected_b",
+    [
+        pytest.param(
+            PandasModelByRow,
+            [1.0, 2.0, ""],
+            ["", "", 3.0],
+            id="axis-0-mismatched-columns",
+        ),
+        pytest.param(
+            PandasModelByColumn,
+            [1.0, 2.0],
+            [3.0, ""],
+            id="axis-1-mismatched-rows",
+        ),
+    ],
+)
+def test_pandas_model_base_export_df_replaces_nan_with_empty_string(
+    qtbot, model_class, expected_a, expected_b
+):
+    """Cells missing from one frame are exported as "" instead of NaN on both axes."""
+    model = model_class(results_list=[])
+    df1 = pd.DataFrame({"A": [1.0, 2.0]})
+    df2 = pd.DataFrame({"B": [3.0]})
+    model.add_results(ResultsTable(cast(Results, FakeResults(df1)), RED))
+    model.add_results(ResultsTable(cast(Results, FakeResults(df2)), BLUE))
+    df = model.export_df()
+    assert df is not None, "export_df() must return a DataFrame for non-empty input"
+    assert not df.isna().any().any(), "export_df() must not leak NaN values"
+    assert df["A"].tolist() == expected_a
+    assert df["B"].tolist() == expected_b
+
+
 def test_pandas_model_base_copy_model(qtbot):
     model = PandasModelByRow(results_list=[])
     df = _make_df(3)

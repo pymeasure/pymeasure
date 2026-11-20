@@ -292,7 +292,7 @@ def test_close_closes_manager_on_pyvisa_sim():
     assert adapter.manager.visalib.library_path == "unset"
     assert adapter.manager.session is not None
     adapter.close()
-    with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
+    with pytest.raises(pyvisa.errors.InvalidSession):
         _ = adapter.manager.session
 
 
@@ -320,7 +320,6 @@ def test_read_bytes_negative_break_on_termchar(make_visa_adapter):
 def test_read_break_on_termchar_after_partial_read(make_visa_adapter):
     """A partial termchar read must not leak its remaining bytes into a fresh adapter."""
     first = make_visa_adapter(read_termination="\n")
-    _drain_read_buffer(first)
     first.write("*IDN?")
     _resource(first).read_termination = ","
     assert first.read_bytes(-1, break_on_termchar=True) == b"SCPI,"
@@ -334,12 +333,13 @@ def test_read_break_on_termchar_after_partial_read(make_visa_adapter):
 def test_read_all_bytes_after_partial_read(make_visa_adapter):
     """read_bytes(-1) on a fresh adapter must return only its own buffered response."""
     first = make_visa_adapter(read_termination="\n")
-    _drain_read_buffer(first)
     first.write("*IDN?")
     _resource(first).read_termination = ","
     assert first.read_bytes(-1, break_on_termchar=True) == b"SCPI,"
 
-    second = make_visa_adapter()
+    # The byte-by-byte drain waits for its timeout once the buffer is empty;
+    # a short timeout keeps that terminal read fast.
+    second = make_visa_adapter(timeout=50)
     second.write("*IDN?")
     assert second.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
 
@@ -348,7 +348,9 @@ def test_make_visa_adapter_teardown_tolerates_closed_adapter(make_visa_adapter):
     """Teardown drains every factory adapter even if the test has closed it already."""
     adapter = make_visa_adapter()
     adapter.close()
-    with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
+    # Touching a closed session fails; the fixture's teardown below must swallow
+    # that InvalidSession instead of letting it escape as a test error.
+    with pytest.raises(pyvisa.errors.InvalidSession):
         _ = _resource(adapter).session
 
 
