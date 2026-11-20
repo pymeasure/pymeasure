@@ -24,10 +24,11 @@
 
 import logging
 import warnings
-import numpy as np
 from time import sleep, time
 
-from pymeasure.instruments import Instrument, Channel
+import numpy as np
+
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -87,10 +88,10 @@ class LakeShoreTemperatureChannel(Channel):
             target_reached = np.allclose(reading, target, atol=abs_tolerance)
             sleep(interval)
             if (time() - t) > timeout:
-                raise Exception(
-                                    f"Timeout occurred after waiting {timeout:g} seconds for "
-                                    f"the LakeShore 331 temperature to reach {target:g} {unit}."
-                                )
+                raise TimeoutError(
+                    f"Timeout occurred after waiting {timeout:g} seconds for "
+                    f"the LakeShore 331 temperature to reach {target:g} {unit}."
+                )
             if should_stop():
                 return
 

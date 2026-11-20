@@ -28,10 +28,10 @@
 # The RF stimulus is turned on with the default power level of 0 dBm. The test
 # port connection can be anything that is safe for that power level.
 
-import pytest
-from pymeasure.instruments.agilent.agilentE5062A import AgilentE5062A
-
 import numpy as np
+import pytest
+
+from pymeasure.instruments.agilent.agilentE5062A import AgilentE5062A
 
 DISPLAY_LAYOUT_OPTIONS = [
         "D1",

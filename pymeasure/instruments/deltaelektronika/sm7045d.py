@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import strict_range
-
 from time import sleep
 
 import numpy as np
+
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import strict_range
 
 
 class SM7045D(SCPIUnknownMixin, Instrument):

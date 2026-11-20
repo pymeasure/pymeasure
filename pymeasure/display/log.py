@@ -23,7 +23,6 @@
 #
 
 import logging
-
 from logging import Handler
 
 from .Qt import QtCore

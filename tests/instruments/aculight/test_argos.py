@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.aculight.argos import Argos, State
+from pymeasure.test import expected_protocol
 
 
 def test_init():
@@ -61,8 +61,8 @@ def test_state():
     with expected_protocol(
             Argos,
             [("state",
-              " Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
-              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900")]
+              (" Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
+              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900"))]
     ) as inst:
         assert inst.state == State(crystal_temperature_setpoint=55, crystal_temperature=54.9,
                                    etalon_angle=-0.02, seed_voltage=0)
@@ -72,8 +72,8 @@ def test_temperature_setpoint_getter():
     with expected_protocol(
             Argos,
             [("state",
-              " Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
-              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900")]
+              (" Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
+              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900"))]
     ) as inst:
         assert inst.temperature_setpoint == 55.
 
@@ -82,8 +82,8 @@ def test_etalon_getter():
     with expected_protocol(
             Argos,
             [("state",
-              " Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
-              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900")]
+              (" Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
+              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900"))]
     ) as inst:
         assert inst.etalon == -0.02
 
@@ -92,8 +92,8 @@ def test_seed_getter():
     with expected_protocol(
             Argos,
             [("state",
-              " Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
-              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900")]
+              (" Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
+              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900"))]
     ) as inst:
         assert inst.seed_voltage == 0
 
@@ -102,8 +102,8 @@ def test_temperature():
     with expected_protocol(
             Argos,
             [("state",
-              " Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
-              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900")]
+              (" Crystal Temp Set = 55.000\n\r Etalon Angle Set = -0.020\n\r"
+              " Seed Source Set  = 0.000\n\r Crystal Temp = 54.900"))]
     ) as inst:
         assert inst.temperature == 54.9
 

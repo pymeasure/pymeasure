@@ -24,10 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
-
 from pymeasure.instruments.toptica import IBeamSmart
+from pymeasure.test import expected_protocol
 
 # Note: This communication does not contain the first two device responses, as they are
 # ignored due to `adapter.flush_read_buffer()`.
@@ -70,9 +68,8 @@ def test_setting_failed():
     with expected_protocol(
             IBeamSmart,
             init_comm + [("la off", ""), (None, "abc"), (None, "[OK]")],
-    ) as inst:
-        with pytest.raises(ValueError):
-            inst.emission = False
+    ) as inst, pytest.raises(ValueError):
+        inst.emission = False
 
 
 def test_enable_channel():

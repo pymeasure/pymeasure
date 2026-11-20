@@ -22,13 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.thorlabs.thorlabsmbxseries import (
-    ThorlabsMBXSeries,
     MzmMode,
-    VoaMode,
     RgbPowerMode,
+    ThorlabsMBXSeries,
+    VoaMode,
 )
+from pymeasure.test import expected_protocol
 
 
 def test_calibrate_mzm():

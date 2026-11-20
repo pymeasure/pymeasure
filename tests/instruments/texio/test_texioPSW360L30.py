@@ -23,8 +23,8 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.texio.texioPSW360L30 import TexioPSW360L30
+from pymeasure.test import expected_protocol
 
 
 def test_name():

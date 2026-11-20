@@ -22,13 +22,13 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
 from datetime import datetime
 
-from pymeasure.experiment.results import replace_placeholders
+import pytest
+
+from pymeasure.experiment import BooleanParameter, FloatParameter, Parameter
 from pymeasure.experiment.procedure import Procedure
-from pymeasure.experiment import Parameter, BooleanParameter, FloatParameter
+from pymeasure.experiment.results import replace_placeholders
 
 
 def test_replace_placeholders():

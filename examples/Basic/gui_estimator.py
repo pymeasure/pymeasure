@@ -33,17 +33,16 @@ python gui.py
 
 """
 
-import sys
+import logging
 import random
+import sys
+from datetime import datetime, timedelta
 from time import sleep
 
-from datetime import datetime, timedelta
-
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
+from pymeasure.experiment import FloatParameter, IntegerParameter, Parameter, Procedure
 
-import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
@@ -104,7 +103,7 @@ class TestProcedure(Procedure):
         """
         # return duration
 
-        estimates = list()
+        estimates = []
 
         estimates.append(("Duration", f"{int(duration)} s"))
         estimates.append(("Number of lines", f"{int(self.iterations)}"))
@@ -114,7 +113,7 @@ class TestProcedure(Procedure):
         estimates.append(('Measurement finished at', str(datetime.now() + timedelta(
             seconds=duration))[:-7]))
         estimates.append(('Sequence finished at', str(datetime.now() + timedelta(
-            seconds=duration * sequence_length))[:-7]))
+            seconds=duration * sequence_length))[:-7]))  # pyright: ignore[reportOperatorIssue]
 
         return estimates
 

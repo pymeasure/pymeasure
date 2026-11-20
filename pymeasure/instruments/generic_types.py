@@ -25,19 +25,21 @@
 import logging
 from warnings import warn
 
-from .common_base import cast_or_str, CommonBase, identity
+from .common_base import CommonBase, cast_or_str, identity
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class SCPIMixin(CommonBase):
-    """Mixin class for SCPI instruments with the default implementation of base SCPI commands."""
+class IEEE4882Mixin(CommonBase):
+    """Mixin class for IEEE 488.2 protocol instruments with
+    the default implementation of base commands.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    # SCPI default properties
+    # IEEE 488.2 default properties
     complete = CommonBase.measurement(
         "*OPC?",
         """Get the synchronization bit.
@@ -68,6 +70,20 @@ class SCPIMixin(CommonBase):
         maxsplit=0,
     )
 
+    # IEEE 488.2 default method
+    def clear(self) -> None:
+        """Clear the instrument status byte."""
+        self.write("*CLS")
+
+    def reset(self) -> None:
+        """Reset the instrument."""
+        self.write("*RST")
+
+
+class SCPIMixin(IEEE4882Mixin):
+    """Mixin class for SCPI instruments with the default implementation of base SCPI commands."""
+
+    # SCPI default properties
     next_error = CommonBase.measurement(
         "SYST:ERR?",
         """Get the next error in the queue.
@@ -78,14 +94,6 @@ class SCPIMixin(CommonBase):
     )
 
     # SCPI default methods
-    def clear(self) -> None:
-        """Clear the instrument status byte."""
-        self.write("*CLS")
-
-    def reset(self) -> None:
-        """Reset the instrument."""
-        self.write("*RST")
-
     def check_errors(self) -> list[list[float | str]]:
         """Read all errors from the instrument.
 
@@ -103,8 +111,15 @@ class SCPIMixin(CommonBase):
 
 
 class SCPIUnknownMixin(SCPIMixin):
-    """Mixin which adds SCPI commands to an instrument from which it is not known whether it
-    supports SCPI commands or not.
+    """Preserve assumed SCPI support for existing instruments with unverified command sets.
+
+    This mixin is a transitional compatibility aid for drivers written when instruments
+    included SCPI commands by default. It does not detect or verify SCPI support.
+
+    Do not use this mixin in new instrument drivers. Use :class:`SCPIMixin` when the
+    instrument supports its commands, or :class:`IEEE4882Mixin` when only its IEEE 488.2
+    commands are supported. Otherwise, inherit from :class:`~pymeasure.instruments.Instrument`
+    without either mixin and implement the commands the instrument supports.
     """
 
     def __init__(self, *args, **kwargs):

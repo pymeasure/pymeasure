@@ -25,7 +25,7 @@
 import logging
 
 from ..curves import ResultsImage
-from ..Qt import QtCore
+from ..Qt import QtCore, QtWidgets
 from .plot_frame import PlotFrame
 
 log = logging.getLogger(__name__)
@@ -39,20 +39,30 @@ class ImageFrame(PlotFrame):
     ResultsClass = ResultsImage
     z_axis_changed = QtCore.Signal(str)
 
-    def __init__(self, x_axis, y_axis, z_axis=None,
-                 refresh_time=0.2, check_status=True, parent=None):
+    def __init__(
+        self,
+        x_axis: str,
+        y_axis: str,
+        z_axis: str,
+        refresh_time: float = 0.2,
+        check_status: bool = True,
+        parent: QtWidgets.QWidget | None = None,
+    ):
         super().__init__(x_axis, y_axis, refresh_time, check_status, parent)
         self.change_z_axis(z_axis)
 
-    def change_z_axis(self, axis):
-        for item in self.plot.items:
+    def change_z_axis(self, axis: str) -> None:
+        plot = self.plot
+        if plot is None:
+            return
+        for item in plot.items:
             if isinstance(item, self.ResultsClass):
                 item.z = axis
                 item.update_data()
         label, units = self.parse_axis(axis)
         if units is not None:
-            self.plot.setTitle(label + f' ({units})')
+            plot.setTitle(label + f' ({units})')
         else:
-            self.plot.setTitle(label)
+            plot.setTitle(label)
         self.z_axis = axis
         self.z_axis_changed.emit(axis)

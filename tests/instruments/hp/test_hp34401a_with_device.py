@@ -22,9 +22,11 @@
 # THE SOFTWARE.
 #
 
-import pytest
-import time
 import logging
+import time
+
+import pytest
+
 from pymeasure.instruments.hp.hp34401A import HP34401A
 
 log = logging.getLogger(__name__)
@@ -148,7 +150,7 @@ def test_nplc(resetted_hp34401a, function_, nplc):
 
 
 @pytest.mark.parametrize("function_", ["FREQ", "PERIOD"])
-@pytest.mark.parametrize("gate_time", [0.01, 0.01, 1])
+@pytest.mark.parametrize("gate_time", [0.01, 1])
 def test_gate_time(resetted_hp34401a, function_, gate_time):
     resetted_hp34401a.function_ = function_
     resetted_hp34401a.gate_time = gate_time
@@ -231,13 +233,12 @@ def test_trigger_count(resetted_hp34401a):
     assert resetted_hp34401a.trigger_count == 10
 
 
-def test_read_stored_reading_multiple_readings(resetted_hp34401a):
-    resetted_hp34401a: HP34401A = resetted_hp34401a
+def test_read_stored_reading_multiple_readings(resetted_hp34401a: HP34401A):
     resetted_hp34401a.sample_count = 10
     resetted_hp34401a.trigger_source = "IMM"
     resetted_hp34401a.nplc = 0.02
     resetted_hp34401a.init_trigger()
-    resetted_hp34401a.complete
+    _ = resetted_hp34401a.complete
     readings = resetted_hp34401a.stored_reading
     print(readings)
     assert len(resetted_hp34401a.check_errors()) == 0

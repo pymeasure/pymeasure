@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.philips.PM6669 import PM6669, Functions
+from pymeasure.test import expected_protocol
 
 
 def test_init():

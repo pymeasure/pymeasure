@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.agilent.agilent33500 import Agilent33500
+from pymeasure.test import expected_protocol
 
 
 @pytest.mark.parametrize(

@@ -23,14 +23,13 @@
 #
 
 from __future__ import annotations
-from contextlib import contextmanager
 
-from typing import Any, TypeVar
 from collections.abc import Generator, Sequence
+from contextlib import contextmanager
+from typing import Any, TypeVar
 
-from pymeasure.adapters.protocol import ProtocolAdapter, BYTABLE
+from pymeasure.adapters.protocol import BYTABLE, ProtocolAdapter
 from pymeasure.instruments import Instrument
-
 
 Inst = TypeVar("Inst", bound=Instrument)
 

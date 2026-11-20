@@ -29,12 +29,13 @@
 # Disconnect all loads from E5270B SMUs before test.
 
 import pytest
-from pymeasure.instruments.agilent.agilentE5270B import AgilentE5270B
 
+from pymeasure.instruments.agilent.agilentE5270B import AgilentE5270B
 
 ############
 # FIXTURES #
 ############
+
 
 @pytest.fixture(scope="module")
 def e5270b(connected_device_address,

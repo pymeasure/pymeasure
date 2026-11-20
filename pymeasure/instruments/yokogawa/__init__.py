@@ -22,6 +22,6 @@
 # THE SOFTWARE.
 #
 
-from .aq6370series import AQ6370Series, AQ6370C, AQ6370D, AQ6370E, AQ6373, AQ6373B, AQ6375, AQ6375B
+from .aq6370series import AQ6370C, AQ6370D, AQ6370E, AQ6373, AQ6373B, AQ6375, AQ6375B, AQ6370Series
 from .yokogawa7651 import Yokogawa7651
 from .yokogawags200 import YokogawaGS200

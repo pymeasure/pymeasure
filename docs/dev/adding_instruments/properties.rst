@@ -30,7 +30,7 @@ For example, if our "Extreme 5000" has the :code:`:TEMP?` command, we can write 
 
      Extreme5000.cell_temp = Instrument.measurement(
         ":TEMP?",
-        """Measure the temperature of the reaction cell.""",
+        """Measure the temperature of the reaction cell in Kelvin (float).""",
      )
 
 .. testcode::
@@ -90,7 +90,13 @@ In the examples below we assume you have imported the validators.
 .. testcode::
     :hide:
 
-    from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range, truncated_discrete_set
+    from pymeasure.instruments.validators import (
+        strict_discrete_case_insensitive_set,
+        strict_discrete_set,
+        strict_range,
+        truncated_discrete_set,
+        truncated_range,
+    )
 
 In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device.
 The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` functions also provide means to achieve this.
@@ -98,7 +104,7 @@ The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.cont
 In a restricted range
 ---------------------
 
-If you have a property with a restricted range, you can use the :func:`strict_range <pymeasure.instruments.validators.strict_range>` and :func:`truncated_range <pymeasure.instruments.validators.strict_range>` functions.
+If you have a property with a restricted range, you can use the :func:`strict_range <pymeasure.instruments.validators.strict_range>` and :func:`truncated_range <pymeasure.instruments.validators.truncated_range>` functions.
 
 For example, if our "Extreme 5000" can only support voltages from -1 V to 1 V, we can modify our previous example to use a strict validator over this range.
 
@@ -121,15 +127,18 @@ Now our voltage will raise a ValueError if the value is out of the range.
     ...
     ValueError: Value of 100 is not in range [-1,1]
 
-This is useful if you want to alert the programmer that they are using an invalid value. However, sometimes it can be nicer to truncate the value to be within the range.
+This is useful if you want to alert the programmer that they are using an invalid value.
+However, sometimes it can be nicer to truncate the value to be within the range.
 
 .. testcode::
 
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """Control the voltage in Volts (float from -1 to 1).
+        """Control the voltage in Volts (float truncated from -1 to 1).
 
-        Invalid voltages are truncated.
+        Invalid voltages are silently truncated to the closest bound without
+        raising an error or otherwise informing the user; the value actually
+        sent to the device may differ from the value set.
         """,
         validator=truncated_range,
         values=[-1, 1]
@@ -144,6 +153,18 @@ Now our voltage will not raise an error, and will truncate the value to the rang
     >>> extreme.voltage
     1.0
 
+.. note::
+
+    Truncated validators silently change invalid values to some other
+    valid value without raising an error or otherwise informing the user.
+    A user setting ``voltage = 20`` when the limit is ``1`` will see no error,
+    yet only ``1`` is actually sent to the device.
+    Prefer the strict validators (:func:`strict_range<pymeasure.instruments.validators.strict_range>`,
+    :func:`strict_discrete_set<pymeasure.instruments.validators.strict_discrete_set>`) by default,
+    which raise a :class:`ValueError` for invalid values.
+    Only use a truncated validator when silent clipping is genuinely the desired behavior, and
+    document that fact in the property docstring.
+
 In a discrete set
 -----------------
 
@@ -155,7 +176,7 @@ For example, if our "Extreme 5000" has a :code:`:RANG <float>` command that sets
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %g",
-        """Control the voltage range in Volts (float in 10e-3, 100e-3, 1).""",
+        """Control the voltage range in Volts (float truncated in 10e-3, 100e-3, 1).""",
         validator=truncated_discrete_set,
         values=[10e-3, 100e-3, 1]
     )
@@ -169,6 +190,20 @@ Now we can set the voltage range, which will automatically truncate to an approp
     >>> extreme.voltage
     0.1
 
+Some instruments accept such discrete string values case-insensitively.
+For those, the :func:`strict_discrete_case_insensitive_set <pymeasure.instruments.validators.strict_discrete_case_insensitive_set>` function lets the user write any spelling, while the device always receives the spelling from ``values``.
+
+.. code-block:: python
+
+    Extreme5000.coupling = Instrument.control(
+        ":COUP?", ":COUP %s",
+        """Control the input coupling (str strictly in 'DC', 'AC', 'GND').""",
+        validator=strict_discrete_case_insensitive_set,
+        values=["DC", "AC", "GND"]
+    )
+
+With this validator, ``extreme.coupling = "ac"`` and ``extreme.coupling = "AC"`` are both accepted, and both send ``"AC"`` to the device.
+
 
 Mapping values
 **************
@@ -181,7 +216,7 @@ If your set of values is a list, then the command will use the index of the list
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
-        """Control the voltage range in Volts (float in 10 mV, 100 mV and 1 V).
+        """Control the voltage range in Volts (float truncated in 10 mV, 100 mV and 1 V).
         """,
         validator=truncated_discrete_set,
         values=[10e-3, 100e-3, 1],
@@ -206,10 +241,10 @@ Dictionaries provide a more flexible method for mapping between real-values and 
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
-        """Control the voltage range in Volts (float in 10 mV, 100 mV and 1 V).
+        """Control the voltage range in Volts (float truncated in 10 mV, 100 mV and 1 V).
         """,
         validator=truncated_discrete_set,
-        values={10e-3:1, 100e-3:2, 1:3},
+        values={10e-3: 1, 100e-3: 2, 1: 3},
         map_values=True
     )
 
@@ -231,7 +266,7 @@ The dictionary now maps the keys to specific values. The values and keys can be 
         ":CHAN?", ":CHAN %d",
         """Control the measurement channel (string strictly in 'X', 'Y', 'Z').""",
         validator=strict_discrete_set,
-        values={'X':1, 'Y':2, 'Z':3},
+        values={'X': 1, 'Y': 2, 'Z': 3},
         map_values=True
     )
 
@@ -259,7 +294,7 @@ The idea of using maps can be leveraged to implement properties where the user-f
 
     Extreme5000.output_enabled = Instrument.control(
         "OUTP?", "OUTP %d",
-        """Control the instrument output is enabled (boolean).""",
+        """Control whether the instrument output is enabled (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},  # the dict values could also be "on" and "off", etc. depending on the device
@@ -399,12 +434,12 @@ The code below shows how this can be accomplished with dynamic properties.
 
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """Control the voltage in Volts (float).""",
+        """Control the voltage in Volts (float strictly).""",
         validator=strict_range,
         values=[-1, 1],
         dynamic = True,
     )
-    def set_bipolar_mode(self, enabled = True):
+    def set_bipolar_mode(self, enabled: bool = True) -> None:
         """Safely switch between bipolar/unipolar mode."""
 
         # some code to switch off the output first
@@ -490,7 +525,7 @@ This means type checkers and IDEs will not know the expected type of the propert
 
     sensitivity: InstrumentProperty[str] = Instrument.control(
         ":SENS?", ":SENS %s",
-        """Control the sweep sensitivity (str in 'LOW', 'MID', 'HIGH').""",
+        """Control the sweep sensitivity (str strictly in 'LOW', 'MID', 'HIGH').""",
         validator=strict_discrete_set,
         map_values=True,
         values={"LOW": 0, "MID": 1, "HIGH": 2},
@@ -568,7 +603,7 @@ In this case you would update the specific class parameter range without rewriti
     class FictionalInstrumentFamily(Instrument):
         frequency = Instrument.setting(
             "FREQ %g",
-            """Set the frequency (float).""",
+            """Set the frequency (float strictly).""",
             validator=strict_range,
             values=[0, 1e9],
             dynamic=True,

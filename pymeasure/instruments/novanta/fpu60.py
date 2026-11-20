@@ -24,11 +24,18 @@
 
 import logging
 import re
+from typing import TypedDict
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import AdapterType, Instrument, InstrumentProperty
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+class OperationTimes(TypedDict):
+    psu: int
+    laser: int
+    laser_above_1A: int
 
 
 class Fpu60(Instrument):
@@ -38,15 +45,22 @@ class Fpu60(Instrument):
     The instrument responds to every command sent.
     """
 
-    def __init__(self, adapter, name="Laserquantum fpu60 power supply unit", **kwargs):
-        super().__init__(adapter,
-                         name=name,
-                         asrl={'baud_rate': 19200},
-                         write_termination="\r",
-                         read_termination="\r\n",
-                         **kwargs)
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Laserquantum fpu60 power supply unit",
+        **kwargs,
+    ):
+        super().__init__(
+            adapter,
+            name=name,
+            asrl={"baud_rate": 19200},
+            write_termination="\r",
+            read_termination="\r\n",
+            **kwargs,
+        )
 
-    interlock_enabled = Instrument.measurement(
+    interlock_enabled: InstrumentProperty[bool] = Instrument.measurement(
         "INTERLOCK?",
         """Get the interlock enabled status (bool).""",
         values={True: "ENABLED", False: "DISABLED"},
@@ -54,7 +68,7 @@ class Fpu60(Instrument):
         cast=str,
     )
 
-    emission_enabled = Instrument.measurement(
+    emission_enabled: InstrumentProperty[bool] = Instrument.measurement(
         "STATUS?",
         """Measure the emission status (bool).""",
         values={True: "ENABLED", False: "DISABLED"},
@@ -77,7 +91,7 @@ class Fpu60(Instrument):
         check_set_errors=True,
     )
 
-    shutter_open = Instrument.control(
+    shutter_open: InstrumentProperty[bool] = Instrument.control(
         "SHUTTER?", "SHUTTER %s",
         """Control whether the shutter is open (bool).""",
         # set values: OPEN, CLOSE
@@ -115,17 +129,32 @@ class Fpu60(Instrument):
     software_version = Instrument.measurement("SOFTVER?", """Get the software version (str).""",
                                               cast=str)
 
-    def get_operation_times(self):
+    def get_operation_times(self) -> OperationTimes:
         """Get the operation times in minutes as a dictionary."""
         self.write("TIMERS?")
-        timers = {}
-        timers['psu'] = int(re.search(r"\d+", self.read()).group())
-        timers['laser'] = int(re.search(r"\d+", self.read()).group())
-        timers['laser_above_1A'] = int(re.search(r"\d+", self.read()).group())
+
+        psu_line = self.read()
+        laser_line = self.read()
+        laser_1a_line = self.read()
+
+        psu_match = re.search(r"\d+", psu_line)
+        laser_match = re.search(r"\d+", laser_line)
+        laser_1a_match = re.search(r"\d+", laser_1a_line)
+        if psu_match is None or laser_match is None or laser_1a_match is None:
+            raise ValueError(
+                "Failed to parse timer response lines: "
+                f"{psu_line!r}, {laser_line!r}, {laser_1a_line!r}"
+            )
+
+        timers: OperationTimes = {
+            "psu": int(psu_match.group()),
+            "laser": int(laser_match.group()),
+            "laser_above_1A": int(laser_1a_match.group()),
+        }
         self.read()  # an empty line is at the end.
         return timers
 
-    def disable_emission(self):
+    def disable_emission(self) -> None:
         """Disable emission and unlock the button afterwards.
 
         You have to press the physical button to enable emission again.
@@ -133,7 +162,7 @@ class Fpu60(Instrument):
         self.ask("LASER=OFF")
         self.ask("LASER=ON")  # unlocks emission button, does NOT start emission!
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list[str]:
         """Check for errors after having set a property and log them.
 
         Called if :code:`check_set_errors=True` is set for that property.

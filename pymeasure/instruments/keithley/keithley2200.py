@@ -23,7 +23,8 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
+
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -122,5 +123,6 @@ class Keithley2200(SCPIUnknownMixin, Instrument):
         ":DISP:TEXT:DATA?",
         ":DISP:TEXT:DATA '%s'",
         """Control text to be displayed(32 characters).""",
+        cast=str,
         get_process=lambda v: v.replace('"', ""),
     )

@@ -5,9 +5,21 @@ on:
       - master
       - develop
   pull_request:
+  schedule:
+    # Weekly on Monday 03:45 UTC
+    - cron: '45 3 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+env:
+  # Most recent Python version supported by PyMeasure
+  # (see `requires-python` in pyproject.toml and the `test` job matrix below).
+  LATEST_PYTHON: "3.14"
+  # Oldest Python version supported by PyMeasure
+  # (see `requires-python` in pyproject.toml).
+  OLDEST_PYTHON: "3.10"
 
 jobs:
   lint_typecheck:
@@ -25,14 +37,17 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.10"
+          python-version: "${{ env.OLDEST_PYTHON }}"
           cache: 'pip'
       - name: Install pymeasure
         run: |
           python -m venv .venv
           source .venv/bin/activate
           pip install -e .[tests,gui,tcp,dev]
-          pip install PyQt6
+          # TODO: drop the exclusion once PyQt6 publishes a version whose
+          # QtCore.pyi declares `arguments` as optional again. 6.12.1's stub
+          # makes it a required parameter, which breaks every pyqtSignal call.
+          pip install "PyQt6!=6.12.1"
       - name: Add venv to PATH for pyright
         run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
       - name: Lint with ruff
@@ -52,7 +67,6 @@ jobs:
         with:
           version: PATH
           annotate: all
-        continue-on-error: true
 
   docs:
     name: Docs
@@ -69,12 +83,14 @@ jobs:
         uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: .github/pymeasure.yml
-          cache-environment-key: pylatest-ubuntu-latest-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-environment-key: pylatest-ubuntu-latest-mamba-${{ hashFiles('.github/pymeasure.yml') }}
           cache-downloads: false
       - name: Python and Mamba version
         run: |
           python --version
           micromamba info
+      - name: Lint docs
+        run: sphinx-lint docs README.rst CHANGES.rst -i docs/_build
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Generate docs
         working-directory: ./docs
@@ -102,8 +118,8 @@ jobs:
         uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: .github/pymeasure.yml
-          create-args: python=${{ matrix.python-version }}
-          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          create-args: python=${{ env.LATEST_PYTHON }}
+          cache-environment-key: py${{ env.LATEST_PYTHON }}-ubuntu-latest-mamba-${{ hashFiles('.github/pymeasure.yml') }}
           cache-downloads: false
       - name: Python version
         run: python --version
@@ -147,7 +163,7 @@ jobs:
           micromamba-version: '2.6.0-0'
           environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
-          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ hashFiles('.github/pymeasure.yml') }}
           cache-downloads: false
       - name: Python version
         run: python --version
@@ -177,7 +193,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -190,7 +206,7 @@ jobs:
           micromamba-version: '2.6.0-0'
           environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
-          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ hashFiles('.github/pymeasure.yml') }}
           cache-downloads: false
       - name: Python version
         run: python --version
@@ -212,3 +228,60 @@ jobs:
         run: |
           echo "::add-matcher::.github/pytest.json"
           pytest
+
+  test_latest:
+    name: Latest dependencies
+    # Canary for a clean-environment install: all dependencies resolve to the newest PyPI versions,
+    # so we notice upstream breakage early.
+    # Allowed to fail on PRs so it never blocks merges; the weekly scheduled run (cron) still alerts maintainers.
+    continue-on-error: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Install Qt runtime system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 libxcb1 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "${{ env.LATEST_PYTHON }}"
+          cache: 'pip'
+      - name: Install pymeasure with latest dependencies
+        run: pip install ".[gui,tcp,tests,dev]" PyQt6
+      - name: Dependency versions
+        run: pip list
+      - name: Run pytest with xvfb
+        run: |
+          echo "::add-matcher::.github/pytest.json"
+          xvfb-run -a pytest
+      - name: Type check with pyright
+        # Canary for upstream type changes.
+        # TODO: drop `continue-on-error` once a fixed PyQt6 is available and the
+        # exclusion in `lint_typecheck` is removed.
+        continue-on-error: true
+        run: pyright
+
+  ci_status:
+    name: CI Status
+    runs-on: "ubuntu-latest"
+    needs: [lint_typecheck, docs, test_coverage, test, test_pandas3, test_latest]
+    # Runs even when upstream jobs failed or were cancelled (!cancelled()), so that
+    # this job — intended as the required status check ("merge check") for branch
+    # protection — always reports a conclusion instead of staying pending/skipped.
+    if: always()
+    steps:
+      - name: Aggregate results
+        # 'skipped' is treated as a failure, so that an upstream job skipped via
+        # an 'if:' condition cannot silently turn this aggregate check green.
+        run: |
+          # The GitHub expression is evaluated before the shell runs and
+          # expands to 'true' or 'false', which bash executes as commands.
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}; then
+            echo "One or more CI jobs did not succeed."
+            exit 1
+          else
+            echo "All CI jobs succeeded."
+            exit 0
+          fi

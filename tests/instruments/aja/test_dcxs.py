@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.aja.dcxs import DCXS
+from pymeasure.test import expected_protocol
 
 
 def test_id():

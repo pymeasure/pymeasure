@@ -22,9 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.anritsu import AnritsuMS2090A
+from pymeasure.test import expected_protocol
 
 
 def test_init():

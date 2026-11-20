@@ -24,14 +24,10 @@
 
 
 import logging
-
 from typing import Any
 
-from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              strict_range)
+from pymeasure.instruments import AdapterType, Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -41,7 +37,7 @@ class ptwDIAMENTOR(Instrument):
     """A class representing the PTW DIAMENTOR DAP dosemeters."""
 
     def __init__(self,
-                 adapter: Adapter | int | str,
+                 adapter: AdapterType,
                  name: str = "PTW DIAMENTOR DAP dosemeter",
                  baud_rate: int = 9600,
                  **kwargs: Any) -> None:
@@ -53,12 +49,12 @@ class ptwDIAMENTOR(Instrument):
             **kwargs
         )
 
-    def read(self) -> str:
+    def read(self, **kwargs) -> str:
         """Read the device response and check for errors.
 
         :raises: *ValueError* for error response or *ConnectionError* for an unknown error
         """
-        got = super().read()
+        got = super().read(**kwargs)
 
         if got.startswith("E"):
 
@@ -75,7 +71,7 @@ class ptwDIAMENTOR(Instrument):
                 "E26": "Firmware malfunction"
                 }
 
-            if got in errors.keys():
+            if got in errors:
                 error_text = f"{got}, {errors[got]}"
                 raise ValueError(error_text)
             else:
@@ -146,14 +142,14 @@ class ptwDIAMENTOR(Instrument):
     is_calibrated = Instrument.measurement(
         "CRC",
         """Get the calibration status (bool).""",
-        cast=cast_or_str(float),
+        cast=str,
         get_process_list=lambda v: not int(v[1])
         )
 
     is_eeprom_ok = Instrument.measurement(
         "CRC",
         """Get the EEPROM CRC ok status (bool).""",
-        cast=cast_or_str(float),
+        cast=str,
         get_process_list=lambda v: not int(v[0][3:])
         )
 
@@ -180,7 +176,21 @@ class ptwDIAMENTOR(Instrument):
         cast=str,
         )
 
-    measurement = Instrument.measurement(
+    @property
+    def measurement(self) -> dict[str, float]:
+        """Get the measurement result (dict).
+
+        :dict keys: ``dap``,
+                    ``dap_rate``,
+                    ``time``
+
+        The result consists of the dose-area-product (DAP) and the  dose-area-product rate.
+        The units of ``dap`` and ``dap_rate`` depend on the :attr:`dap_unit` property.
+        Time is in seconds.
+        """
+        return self.measurement_result
+
+    measurement_result = Instrument.measurement(
         "M",
         """Get the measurement result (dict).
 
@@ -192,7 +202,7 @@ class ptwDIAMENTOR(Instrument):
         The units of ``dap`` and ``dap_rate`` depend on the :attr:`dap_unit` property.
         Time is in seconds.
         """,
-        cast=cast_or_str(float),
+        cast=str,
         get_process_list=lambda v: {"dap": float(v[0][1:]),
                                     "dap_rate": float(v[1]),
                                     "time": 60*int(v[2]) + int(v[3])

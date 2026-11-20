@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 #
 
-from time import time, sleep
 from enum import IntEnum
+from time import sleep, time
 
 from pymeasure.errors import Error
-from pymeasure.instruments import Instrument, SCPIMixin, Channel
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 

@@ -25,10 +25,11 @@
 # Most of this code originally from:
 # http://www.scipy.org/Cookbook/Data_Acquisition_with_NIDAQmx
 
-import logging
 import ctypes
-import numpy as np
+import logging
 from sys import platform
+
+import numpy as np
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -36,11 +37,11 @@ log.addHandler(logging.NullHandler())
 try:
     if platform == "win32":
         nidaq = ctypes.windll.nicaiu
-except OSError as err:
+except (OSError, AttributeError) as err:
     log.info('Failed loading the NI-DAQmx library. '
              + 'Check the NI-DAQmx documentation on how to '
              + 'install this external dependency. '
-             + f'OSError: {err}')
+             + f'{type(err).__name__}: {err}')
     raise
 
 # Data Types
@@ -156,16 +157,15 @@ class DAQmx:
         """a simple error checking routine"""
         if err < 0:
             buf_size = 100
-            buf = ctypes.create_string_buffer('\000' * buf_size)
+            buf = ctypes.create_string_buffer(b'\000' * buf_size)
             nidaq.DAQmxGetErrorString(err, ctypes.byref(buf), buf_size)
-            raise RuntimeError(f'nidaq call failed with error {err}: {repr(buf.value)}')
+            raise RuntimeError(f'nidaq call failed with error {err}: {buf.value!r}')
         if err > 0:
             buf_size = 100
-            buf = ctypes.create_string_buffer('\000' * buf_size)
+            buf = ctypes.create_string_buffer(b'\000' * buf_size)
             nidaq.DAQmxGetErrorString(err, ctypes.byref(buf), buf_size)
-            raise RuntimeError(f'nidaq generated warning {err}: {repr(buf.value)}')
+            raise RuntimeError(f'nidaq generated warning {err}: {buf.value!r}')
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.stop()
         self.terminated = True
-        super().shutdown()

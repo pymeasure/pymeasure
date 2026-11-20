@@ -33,15 +33,21 @@ python script.py
 
 """
 
+import logging
 import random
 import tempfile
 from time import sleep
 
+from pymeasure.experiment import (
+    FloatParameter,
+    IntegerParameter,
+    Parameter,
+    Procedure,
+    Results,
+    Worker,
+)
 from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results, Worker
 
-import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
@@ -82,7 +88,7 @@ if __name__ == "__main__":
     scribe = console_log(log, level=logging.DEBUG)
     scribe.start()
 
-    filename = tempfile.mktemp()
+    fd, filename = tempfile.mkstemp()
     log.info(f"Using data file: {filename}")
 
     procedure = TestProcedure()
@@ -90,7 +96,7 @@ if __name__ == "__main__":
     procedure.delay = 0.01
     log.info(f"Set up TestProcedure with {procedure.iterations} iterations")
 
-    results = Results(procedure, filename)
+    results = Results(procedure, filename, file_descriptor=fd)
     log.info("Set up Results")
 
     worker = Worker(results, scribe.queue, log_level=logging.DEBUG)

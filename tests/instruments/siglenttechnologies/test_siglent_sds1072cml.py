@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.siglenttechnologies import SDS1072CML
+from pymeasure.test import expected_protocol
 
 
 def test_init():

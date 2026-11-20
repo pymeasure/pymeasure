@@ -31,6 +31,7 @@
 
 
 import pytest
+
 from pymeasure.instruments.agilent.agilentN8975A import AgilentN8975A
 
 
@@ -113,7 +114,7 @@ class TestFixedMode:
         n8975a_fixed.bandwidth = 4e6  # highest bandwidth for fast execution
         assert [] == n8975a_fixed.check_errors()
         n8975a_fixed.calibrate()
-        n8975a_fixed.complete
+        _ = n8975a_fixed.complete
 
     def test_single(self, n8975a_fixed):
         n8975a_fixed.single()
@@ -150,7 +151,7 @@ class TestListMode:
         n8975a_list.bandwidth = 4e6  # highest bandwidth for fast execution
         assert [] == n8975a_list.check_errors()
         n8975a_list.calibrate()
-        n8975a_list.complete
+        _ = n8975a_list.complete
 
     def test_single(self, n8975a_list):
         n8975a_list.single()
@@ -193,7 +194,7 @@ class TestSweepMode:
         n8975a_sweep.bandwidth = 4e6  # highest bandwidth for fast execution
         assert [] == n8975a_sweep.check_errors()
         n8975a_sweep.calibrate()
-        n8975a_sweep.complete
+        _ = n8975a_sweep.complete
 
     def test_single(self, n8975a_sweep):
         n8975a_sweep.single()

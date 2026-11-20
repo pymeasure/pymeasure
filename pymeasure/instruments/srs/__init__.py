@@ -22,9 +22,10 @@
 # THE SOFTWARE.
 #
 
+from .dc205 import DC205
 from .ldc500series import LDC500Series
-from .sr830 import SR830
 from .sg380 import SG380
-from .sr860 import SR860
-from .sr570 import SR570
 from .sr510 import SR510
+from .sr570 import SR570
+from .sr830 import SR830
+from .sr860 import SR860

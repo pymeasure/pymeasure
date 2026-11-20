@@ -22,8 +22,9 @@
 # THE SOFTWARE.
 #
 
-import pytest
 import time
+
+import pytest
 
 from pymeasure.instruments.aimtti import LD400P
 

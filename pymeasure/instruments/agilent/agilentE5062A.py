@@ -22,15 +22,17 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin, Channel
-from pymeasure.instruments.validators import strict_range, strict_discrete_range, \
-    strict_discrete_set
-
-from pyvisa.errors import VisaIOError
-import numpy as np
-
 import functools
 
+import numpy as np
+from pyvisa.errors import VisaIOError
+
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.validators import (
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+)
 
 DISPLAY_LAYOUT_OPTIONS = [
         "D1",
@@ -596,7 +598,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
         """
         try:
-            self.complete
+            _ = self.complete
         except VisaIOError:
             if attempt == max_attempts:
                 raise

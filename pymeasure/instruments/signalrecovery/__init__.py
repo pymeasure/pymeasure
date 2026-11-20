@@ -22,5 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .dsp7265 import DSP7265
 from .dsp7225 import DSP7225
+from .dsp7265 import DSP7265

@@ -23,11 +23,8 @@
 #
 import logging
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin, cast_or_str
-from pymeasure.instruments.validators import (
-    strict_discrete_set,
-    strict_range
-)
+from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin, cast_or_str
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

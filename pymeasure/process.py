@@ -23,7 +23,6 @@
 #
 
 import logging
-
 from multiprocessing import get_context
 
 log = logging.getLogger(__name__)

@@ -23,14 +23,15 @@
 #
 
 import logging
-import time
 import re
+import time
 from warnings import warn
 
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import truncated_range
+
 from .buffer import KeithleyBuffer
 
 log = logging.getLogger(__name__)

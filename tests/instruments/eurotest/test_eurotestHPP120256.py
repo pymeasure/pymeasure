@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.eurotest.eurotestHPP120256 import EurotestHPP120256
+from pymeasure.test import expected_protocol
 
 
 def test_voltage_setpoint():

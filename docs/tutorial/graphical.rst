@@ -405,17 +405,17 @@ You can expose variables, instruments, and modules to this console by passing a 
                 y_axis='Random Number',
             )
             self.setWindowTitle('GUI Example')
-            
+
             # 1. Create the console widget and expose variables to it
             self.console_widget = ConsoleWidget(
                 "Script Console",
                 namespace={
-                    'window': self, 
+                    'window': self,
                     'device': '<your_instrument>', # replace with your instrument instance
                     'np': '<numpy_module>' # replace with numpy if imported
                 }
             )
-            
+
             # 2. Append it manually so it appears as the last tab
             self.widget_list += (self.console_widget,)
             self.tabs.addTab(self.console_widget, self.console_widget.name)
@@ -751,29 +751,29 @@ The following example is a variant of the code example from `Using the ManagedWi
    import random
    import tempfile
    from time import sleep
-   
+
    from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
    from pymeasure.experiment import Results
    from pymeasure.display.console import ManagedConsole
    from pymeasure.display.Qt import QtWidgets
    from pymeasure.display.windows import ManagedWindow
    import logging
-   
+
    log = logging.getLogger('')
    log.addHandler(logging.NullHandler())
-   
-   
+
+
    class TestProcedure(Procedure):
        iterations = IntegerParameter('Loop Iterations', default=100)
        delay = FloatParameter('Delay Time', units='s', default=0.2)
        seed = Parameter('Random Seed', default='12345')
-   
+
        DATA_COLUMNS = ['Iteration', 'Random Number']
-   
+
        def startup(self):
            log.info("Setting up random number generator")
            random.seed(self.seed)
-   
+
        def execute(self):
            log.info("Starting to generate numbers")
            for i in range(self.iterations):
@@ -788,13 +788,13 @@ The following example is a variant of the code example from `Using the ManagedWi
                if self.should_stop():
                    log.warning("Catch stop command in procedure")
                    break
-   
+
        def shutdown(self):
            log.info("Finished")
-   
-   
+
+
    class MainWindow(ManagedWindow):
-   
+
        def __init__(self):
            super(MainWindow, self).__init__(
                procedure_class=TestProcedure,
@@ -804,8 +804,8 @@ The following example is a variant of the code example from `Using the ManagedWi
                y_axis='Random Number'
            )
            self.setWindowTitle('GUI Example')
-   
-   
+
+
    if __name__ == "__main__":
        if len(sys.argv) > 1:
            # If any parameter is passed, the console mode is run
@@ -815,7 +815,7 @@ The following example is a variant of the code example from `Using the ManagedWi
            app = QtWidgets.QApplication(sys.argv)
            window = MainWindow()
            window.show()
-   
+
        sys.exit(app.exec())
 
 If we run the script above without any parameter, you will have the graphical user interface example.

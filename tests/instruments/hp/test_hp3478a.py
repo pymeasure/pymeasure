@@ -24,8 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.hp import HP3478A
+from pymeasure.test import expected_protocol
 
 VALID_CAL_DATA = [
         0, 0, 0, 0, 3, 0, 8, 2, 15, 4, 4, 0, 13, 11, 0, 0,
@@ -93,16 +93,15 @@ def test_calibration_data_getter():
 
 
 def test_calibration_data_setter_cal_disabled():
-    with pytest.raises(Exception, match="CAL ENABLE switch not set to ON"):
-        with expected_protocol(
-                HP3478A,
-                # cal_enable cleared. As a result there won't be calibration
-                # write transactions.
-                [
-                    (b"B", b'\x00\x00\x00\x00\x00'),
-                ]
-        ) as instr:
-            instr.calibration_data = VALID_CAL_DATA
+    with pytest.raises(Exception, match="CAL ENABLE switch not set to ON"), expected_protocol(
+            HP3478A,
+            # cal_enable cleared. As a result there won't be calibration
+            # write transactions.
+            [
+                (b"B", b'\x00\x00\x00\x00\x00'),
+            ]
+    ) as instr:
+        instr.calibration_data = VALID_CAL_DATA
 
 
 def test_calibration_data_setter_pass():
@@ -120,18 +119,17 @@ def test_calibration_data_setter_pass():
 
 
 def test_calibration_data_setter_invalid_data():
-    with pytest.raises(ValueError, match="cal_data verification fail"):
-        with expected_protocol(
-                HP3478A,
-                # setter fail due to invalid data
-                [
-                    (b"B", b'\x00\x20\x00\x00\x00'),
-                ]
-        ) as instr:
-            # Assigning invalid data results in an Exception without data writes
-            valid_cal_data_corrupt = VALID_CAL_DATA.copy()
-            valid_cal_data_corrupt[1] = 1
-            instr.calibration_data = valid_cal_data_corrupt
+    with pytest.raises(ValueError, match="cal_data verification fail"), expected_protocol(
+            HP3478A,
+            # setter fail due to invalid data
+            [
+                (b"B", b'\x00\x20\x00\x00\x00'),
+            ]
+    ) as instr:
+        # Assigning invalid data results in an Exception without data writes
+        valid_cal_data_corrupt = VALID_CAL_DATA.copy()
+        valid_cal_data_corrupt[1] = 1
+        instr.calibration_data = valid_cal_data_corrupt
 
 
 def test_write_calibration_data():

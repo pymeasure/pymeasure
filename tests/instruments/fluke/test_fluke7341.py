@@ -24,10 +24,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
-
 from pymeasure.instruments.fluke import Fluke7341
+from pymeasure.test import expected_protocol
 
 
 def test_setpoint_getter():

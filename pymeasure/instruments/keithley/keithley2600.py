@@ -27,8 +27,9 @@ import time
 from warnings import warn
 
 import numpy as np
+
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 # Setup logging
 log = logging.getLogger(__name__)
@@ -62,7 +63,7 @@ class Keithley2600(SCPIUnknownMixin, Instrument):
             message = err[1].replace('"', '')
         else:
             code = message = err[0]
-        log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
+        log.info(f"ERROR {code!s},{message!s} - len {len(err)!s}")
         return (code, message)
 
     @property

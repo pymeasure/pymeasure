@@ -22,12 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set
 from time import sleep
 
 import numpy as np
+
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments.instrument import AdapterType
+from pymeasure.instruments.validators import strict_discrete_set
 
 
 class FWBell5080(SCPIMixin, Instrument):
@@ -50,9 +52,11 @@ class FWBell5080(SCPIMixin, Instrument):
 
     """
 
-    def __init__(self, adapter, name="F.W. Bell 5080 Handheld Gaussmeter", **kwargs):
-        kwargs.setdefault('timeout', 500)
-        kwargs.setdefault('baudrate', 2400)
+    def __init__(
+        self, adapter: AdapterType, name: str = "F.W. Bell 5080 Handheld Gaussmeter", **kwargs
+    ):
+        kwargs.setdefault("timeout", 500)
+        kwargs.setdefault("baudrate", 2400)
         super().__init__(
             adapter,
             name,
@@ -107,7 +111,7 @@ class FWBell5080(SCPIMixin, Instrument):
         cast=int
     )
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`
         method to remove semicolons and replace spaces with colons.
         """
@@ -115,24 +119,24 @@ class FWBell5080(SCPIMixin, Instrument):
         # However the response from ask(':UNIT:FLUX?') is "DC TESLA", with no colon.
         # We replace space with colon to preserve the mapping in UNITS.
         # Semicolons may be appended to end of response from FW Bell 5080, and are removed
-        return super().read().replace(' ', ':').replace(';', '')
+        return super().read(**kwargs).replace(' ', ':').replace(';', '')
 
-    def reset(self):
+    def reset(self) -> None:
         """ Resets the instrument. """
         self.clear()
 
-    def fields(self, samples=1):
+    def fields(self, samples: int = 1):
         """ Returns a numpy array of field samples for a given sample number.
 
         :param samples: The number of samples to perform
         """
         if samples < 1:
-            raise Exception("F.W. Bell 5080 does not support samples less than 1.")
+            raise ValueError("F.W. Bell 5080 does not support samples less than 1.")
         else:
             data = [self.field for i in range(int(samples))]
             return np.array(data, dtype=np.float64)
 
-    def auto_range(self):
+    def auto_range(self) -> None:
         """ Enables the auto range functionality. """
         self.write(":SENS:FLUX:RANG:AUTO")
         # Instrument needs a delay before next command

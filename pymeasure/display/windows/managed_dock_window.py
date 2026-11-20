@@ -24,6 +24,7 @@
 
 import logging
 
+from ...experiment.procedure import Procedure
 from ..widgets.dock_widget import DockWidget
 from ..widgets.log_widget import LogWidget
 from .managed_window import ManagedWindowBase
@@ -52,8 +53,16 @@ class ManagedDockWindow(ManagedWindowBase):
         :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
     """
 
-    def __init__(self, procedure_class, x_axis=None, y_axis=None,
-                 linewidth=1, log_fmt=None, log_datefmt=None, **kwargs):
+    def __init__(
+        self,
+        procedure_class: type[Procedure],
+        x_axis: list[str] | str,
+        y_axis: list[str] | str,
+        linewidth: float = 1,
+        log_fmt: str | None = None,
+        log_datefmt: str | None = None,
+        **kwargs,
+    ):
 
         self.x_axis = x_axis
         self.y_axis = y_axis

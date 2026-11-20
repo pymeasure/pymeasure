@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 import time
+
 import pytest
 
 from pymeasure.instruments.aimtti.aimttiPL import PL303QMDP

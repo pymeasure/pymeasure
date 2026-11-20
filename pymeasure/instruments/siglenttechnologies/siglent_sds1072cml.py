@@ -43,6 +43,7 @@ class VoltageChannel(Channel):
         "Control the vertical sensitivity of a channel in V/divisions.",
         validator=truncated_range,
         values=[2e-3, 10],
+        cast=str,
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
     )
 
@@ -299,7 +300,7 @@ class TriggerChannel(Channel):
             self.id = kwargs["source"]
         changedValues = [key for key in kwargs if trigger_config_dict[key] != kwargs[key]]
         processToChange = [
-            key for key in setValues if any([value in changedValues for value in setValues[key]])
+            key for key in setValues if any(value in changedValues for value in setValues[key])
         ]
         for changedKey in changedValues:
             trigger_config_dict[changedKey] = kwargs[changedKey]
@@ -333,6 +334,7 @@ class SDS1072CML(SCPIMixin, Instrument):
         validator=truncated_range,
         values=[5e-9, 50],
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
+        cast=str,
     )
 
     status = Instrument.measurement(

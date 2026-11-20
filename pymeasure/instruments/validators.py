@@ -104,6 +104,30 @@ def strict_discrete_set(value: T, values: Iterable[T] | dict[T, Any]) -> T:
         raise ValueError(f'Value of {value} is not in the discrete set {values}')
 
 
+def strict_discrete_case_insensitive_set(value: T, values: Iterable[T] | dict[T, Any]) -> T:
+    """Validate a value against a discrete set, ignoring the case of strings.
+
+    Returns the element of ``values`` that matches ``value`` case insensitively.
+    Strings are compared case-insensitively, all other values with ``==``.
+    A ValueError is raised if ``values`` contains no matching element.
+    The matched element of ``values`` is returned instead of ``value`` itself, so that
+    devices receive the spelling documented in ``values``.
+    This also keeps ``map_values=True`` working, because it looks the validated value up
+    in ``values``.
+
+    :param value: A value to test
+    :param values: A set of values that are valid
+    :raises: ValueError if the value is not in the set
+    """
+    for valid in values:
+        if isinstance(valid, str) and isinstance(value, str):
+            if valid.casefold() == value.casefold():
+                return valid
+        elif valid == value:
+            return valid
+    raise ValueError(f'Value of {value} is not in the discrete set {values}')
+
+
 def truncated_range(value: NumericT, values: NumericSeq) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the closest
@@ -111,6 +135,14 @@ def truncated_range(value: NumericT, values: NumericSeq) -> NumericT:
 
     :param value: A value to test
     :param values: A set of values that are valid
+
+    .. note::
+
+        Out-of-range values are silently clipped to the closest range bound
+        without raising an error or otherwise informing the user.
+        The value actually sent to the device may therefore differ from the value the user set.
+        Prefer :func:`strict_range` by default and only use a truncated validator when
+        silent clipping is genuinely desired and the property docstring documents this behavior.
     """
     if min(values) <= value <= max(values):
         return value
@@ -152,6 +184,15 @@ def truncated_discrete_set(value: NumericT, values: Iterable[NumericT]) -> Numer
 
     :param value: A value to test
     :param values: A set of values that are valid
+
+    .. note::
+
+        Values not in the discrete set are silently mapped without raising an
+        error or otherwise informing the user. The value actually sent to
+        the device may therefore differ from the value the user set.
+        Prefer :func:`strict_discrete_set` by default and only use a truncated
+        validator when silent clipping is genuinely desired and the property
+        docstring documents this behavior.
     """
     # Force the values to be sorted
     values = sorted(values)
@@ -205,6 +246,14 @@ def truncated_discrete_set_positive(
 ) -> NumericT | Literal[False]:
     """Truncates the number to the closest element in the positive discrete set.
     Returns False if the number is larger than the maximum value or negative.
+
+    .. note::
+
+        Invalid values are silently mapped without raising an error or
+        otherwise informing the user. The value actually sent to the device
+        (or the resulting no-op) may therefore differ from what the user set.
+        Prefer :func:`strict_discrete_set` by default and only use a truncated validator when
+        silent clipping is genuinely desired and the property docstring documents this behavior.
     """
     if number < 0:
         return False

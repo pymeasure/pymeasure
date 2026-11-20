@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.teledyne.teledyneT3AFG import TeledyneT3AFG
+from pymeasure.test import expected_protocol
 
 
 def test_output_enabled():
@@ -42,8 +42,8 @@ def test_wavetype():
     with expected_protocol(
         TeledyneT3AFG,
         [("C1:BSWV WVTP,RAMP", None),
-         ("C1:BSWV?", "C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
-          "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0")],
+         ("C1:BSWV?", ("C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
+          "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0"))],
     ) as inst:
         inst.ch_1.wavetype = 'RAMP'
         assert inst.ch_1.wavetype == "SINE"
@@ -55,8 +55,8 @@ def test_frequency():
         TeledyneT3AFG,
         [("C1:BSWV FRQ,1000", None),
          ("SYST:ERR?", "-0, No errors"),
-         ("C1:BSWV?", "C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
-          "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0")],
+         ("C1:BSWV?", ("C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
+          "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0"))],
     ) as inst:
         inst.ch_1.frequency = 1000
         assert inst.ch_1.frequency == 0.3
@@ -77,8 +77,8 @@ def test_amplitude():
         TeledyneT3AFG,
         [("C1:BSWV AMP,1", None),
          ("SYST:ERR?", "-0, No errors"),
-         ("C1:BSWV?", "C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
-          "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0")],
+         ("C1:BSWV?", ("C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
+          "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0"))],
     ) as inst:
         inst.ch_1.amplitude = 1
         assert inst.ch_1.amplitude == 0.08

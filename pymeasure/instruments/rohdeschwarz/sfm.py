@@ -23,6 +23,7 @@
 #
 
 import logging
+
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 

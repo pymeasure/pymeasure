@@ -24,11 +24,10 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
+from pymeasure.instruments import Channel, Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 from .buffer import KeithleyBuffer
-
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

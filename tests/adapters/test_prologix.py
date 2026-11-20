@@ -27,13 +27,12 @@ import pytest
 from pymeasure.adapters import PrologixAdapter
 from pymeasure.test import expected_protocol
 
-
 init_comm = [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None)]
 
 
 def test_init():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             init_comm,
     ):
         pass
@@ -41,7 +40,7 @@ def test_init():
 
 def test_init_different_config():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 1", None), ("++eoi 0", None), ("++eos 0", None)],
             auto=True, eoi=False, eos="\r\n",
     ):
@@ -51,7 +50,7 @@ def test_init_different_config():
 @pytest.mark.parametrize("message, value", (("1", True), ("0", False)))
 def test_auto(message, value):
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             init_comm + [("++auto", message)],
     ) as adapter:
         assert adapter.auto is value
@@ -59,7 +58,7 @@ def test_auto(message, value):
 
 def test_gpib_read_timeout():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             init_comm + [
                 ("++read_tmo_ms 700", None),
                 ("++read_tmo_ms", 700)
@@ -71,7 +70,7 @@ def test_gpib_read_timeout():
 
 def test_write():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              ("something", None)],
     ) as adapter:
@@ -80,7 +79,7 @@ def test_write():
 
 def test_write_address():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              ("++addr 5", None), ("something", None)],
             address=5,
@@ -90,7 +89,7 @@ def test_write_address():
 
 def test_read():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              ("write", None), ("++read eoi", "response")],
     ) as adapter:
@@ -100,7 +99,7 @@ def test_read():
 
 def test_write_bytes():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              (b"something", None)],
     ) as adapter:
@@ -115,7 +114,7 @@ def test_write_bytes():
 )
 def test_write_binary_values(test_input, expected):
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              (expected, None)]
     ) as adapter:
@@ -124,8 +123,110 @@ def test_write_binary_values(test_input, expected):
 
 def test_wait_for_srq():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              ("++srq", None), ("++read eoi", "0"), ("++srq", None), ("++read eoi", "1")]
     ) as adapter:
         adapter.wait_for_srq()
+
+
+@pytest.mark.parametrize("index, value", [(0, "\r\n"), (1, "\r"), (2, "\n"), (3, "")])
+def test_eos_getter(index, value):
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm + [("++eos", str(index))],
+    ) as adapter:
+        assert adapter.eos == value
+
+
+@pytest.mark.parametrize("value, index", [("\r\n", 0), ("\r", 1), ("\n", 2), ("", 3)])
+def test_eos_setter(value, index):
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm + [(f"++eos {index}", None)],
+    ) as adapter:
+        adapter.eos = value
+
+
+def test_version():
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm + [("++ver", "Prologix v1.2.3")],
+    ) as adapter:
+        assert adapter.version == "Prologix v1.2.3"
+
+
+def test_reset():
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm + [("++rst", None)],
+    ) as adapter:
+        adapter.reset()
+
+
+def test_write_binary_values_with_address():
+    expected = b'OUTP#13\x01\x02\x03\n'
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm + [("++addr 5\n", None), (expected, None)],
+            address=5,
+    ) as adapter:
+        adapter.write_binary_values("OUTP", [1, 2, 3], datatype='B')
+
+
+def test_read_bytes_requests_data_when_unavailable():
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm + [("++read eoi", b"data")],
+    ) as adapter:
+        adapter.connection.get_visa_attribute = lambda attr: 0
+        assert adapter._read_bytes(4) == b"data"
+
+
+def test_read_bytes_reads_buffered_data():
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm + [(None, b"data")],
+    ) as adapter:
+        adapter.connection.get_visa_attribute = lambda attr: 4
+        assert adapter._read_bytes(4) == b"data"
+
+
+def test_gpib_returns_new_adapter():
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm,
+    ) as adapter:
+        adapter.manager = None
+        new_adapter = adapter.gpib(9)
+        assert isinstance(new_adapter, PrologixAdapter)
+        assert new_adapter.connection is adapter.connection
+        assert new_adapter.address == 9
+
+
+def test_wait_for_srq_timeout():
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm + [("++srq", None), ("++read eoi", "0")],
+    ) as adapter, pytest.raises(TimeoutError):
+        adapter.wait_for_srq(timeout=0, delay=0)
+
+
+def test_repr_with_address():
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm,
+            address=5,
+    ) as adapter:
+        adapter.connection.resource_name = "ASRL5::INSTR"
+        assert repr(adapter) == ("<PrologixAdapter(resource_name='ASRL5::INSTR', "
+                                 "address=5)>")
+
+
+def test_repr_without_address():
+    with expected_protocol(
+            PrologixAdapter,  # type: ignore
+            init_comm,
+    ) as adapter:
+        adapter.connection.resource_name = "ASRL5::INSTR"
+        assert repr(adapter) == "<PrologixAdapter(resource_name='ASRL5::INSTR')>"

@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.ptw.ptwUNIDOS import ptwUNIDOS
+from pymeasure.test import expected_protocol
 
 # JSON and methods are tested with the device
 
@@ -55,12 +56,11 @@ class TestMethods:
             inst.interval_measurement()
 
     def test_intervall_deprecation_warning(self):
-        with pytest.warns(FutureWarning):
-            with expected_protocol(
-                ptwUNIDOS,
-                [("INT", "INT")]
-            ) as inst:
-                inst.intervall()
+        with pytest.warns(FutureWarning), expected_protocol(
+            ptwUNIDOS,
+            [("INT", "INT")]
+        ) as inst:
+            inst.intervall()
 
     def test_measure(self):
         with expected_protocol(
@@ -122,9 +122,8 @@ class TestProperties:
 
     @pytest.mark.parametrize("it", [-3, 0, 1E12])
     def test_integration_time_limits(self, it):
-        with expected_protocol(ptwUNIDOS, []) as inst:
-            with pytest.raises(ValueError):
-                inst.integration_time = it
+        with expected_protocol(ptwUNIDOS, []) as inst, pytest.raises(ValueError):
+            inst.integration_time = it
 
     def test_mac_address(self):
         with expected_protocol(
@@ -264,9 +263,8 @@ class TestProperties:
 
     @pytest.mark.parametrize("voltage", [-401, 401, 1E3])
     def test_voltage_limits(self, voltage):
-        with expected_protocol(ptwUNIDOS, []) as inst:
-            with pytest.raises(ValueError):
-                inst.voltage = voltage
+        with expected_protocol(ptwUNIDOS, []) as inst, pytest.raises(ValueError):
+            inst.voltage = voltage
 
     def test_write_enabled(self):
         with expected_protocol(

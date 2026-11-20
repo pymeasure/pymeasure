@@ -37,17 +37,16 @@ python console.py --seed 12345 #Console version
 
 """
 
-import sys
+import logging
 import random
+import sys
 import tempfile
 from time import sleep
 
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results
 from pymeasure.display.console import ManagedConsole
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
-import logging
+from pymeasure.experiment import FloatParameter, IntegerParameter, Parameter, Procedure, Results
 
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
@@ -96,10 +95,10 @@ class MainWindow(ManagedWindow):
         self.setWindowTitle('GUI Example')
 
     def queue(self):
-        filename = tempfile.mktemp()
+        fd, filename = tempfile.mkstemp()
 
         procedure = self.make_procedure()
-        results = Results(procedure, filename)
+        results = Results(procedure, filename, file_descriptor=fd)
         experiment = self.new_experiment(results)
 
         self.manager.queue(experiment)

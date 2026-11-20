@@ -26,9 +26,8 @@
 import pytest
 from pytest import raises
 
+from pymeasure.instruments.ophir.ophir_base import Capabilities, Modes, OphirBase, ScreenModes
 from pymeasure.test import expected_protocol
-
-from pymeasure.instruments.ophir.ophir_base import OphirBase, Modes, ScreenModes, Capabilities
 
 
 def test_read_processes_response():
@@ -108,7 +107,7 @@ class TestRange:
             OphirBase,
             [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW"), ("$RN", "*4")],
         ) as inst:
-            inst.range_entries  # to set the values
+            _ = inst.range_entries  # to set the values
             assert inst.range == "3.00uW"
 
     def test_range_setter(self):
@@ -116,7 +115,7 @@ class TestRange:
             OphirBase,
             [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW"), ("$WN1", "*")],
         ) as inst:
-            inst.range_entries  # to set the values
+            _ = inst.range_entries  # to set the values
             inst.range = "3.00mW"
 
     def test_range_index_getter(self):
@@ -196,7 +195,7 @@ class TestWavelength:
                 ("$WI1", "*"),
             ],
         ) as inst:
-            inst.wavelength  # read wavelength to set the limits
+            _ = inst.wavelength  # read wavelength to set the limits
             inst.wavelength = 248
 
     def test_define_wavelength_entry(self):

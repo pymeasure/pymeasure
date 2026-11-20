@@ -29,7 +29,9 @@ from warnings import warn
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.common_base import identity
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+
 from .buffer import KeithleyBuffer
 
 # Setup logging
@@ -275,25 +277,29 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     means = Instrument.measurement(
         ":TRACe:STATistics:AVERage?",
         """Get the calculated means (averages) for voltage,
-        current, and resistance from the buffer data  as a list. """
+        current, and resistance from the buffer data  as a list. """,
+        get_process_list=identity,
     )
 
     maximums = Instrument.measurement(
         ":TRACe:STATistics:MAXimum?",
         """ Get the calculated maximums for voltage, current, and
-        resistance from the buffer data as a list. """
+        resistance from the buffer data as a list. """,
+        get_process_list=identity,
     )
 
     minimums = Instrument.measurement(
         ":TRACe:STATistics:MINimum?",
         """ Get the calculated minimums for voltage, current, and
-        resistance from the buffer data as a list. """
+        resistance from the buffer data as a list. """,
+        get_process_list=identity,
     )
 
     standard_devs = Instrument.measurement(
         ":TRACe:STATistics:STDDev?",
         """ Get the calculated standard deviations for voltage,
-        current, and resistance from the buffer data as a list. """
+        current, and resistance from the buffer data as a list. """,
+        get_process_list=identity,
     )
 
     ###########

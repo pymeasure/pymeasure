@@ -38,7 +38,7 @@ dependencies = [
 
 [project.optional-dependencies]
 gui = [
-    "pyqtgraph>=0.12",
+    "pyqtgraph>=0.13.3",
     "qtpy>=2.4",
 ]
 tcp = [
@@ -56,10 +56,11 @@ docs = [
     "sphinx>=5.0.0",
     "sphinx_rtd_theme>=1.1.0",
     "sphinx_autodoc_typehints>=2.3.0",
+    "sphinx-lint>=1.0.2",
 ]
 dev = [
     "pyright>=1.1.400",
-    "ruff",
+    "ruff>=0.16.0",
 ]
 
 [project.urls]
@@ -91,9 +92,12 @@ line-length = 100
 
 [tool.ruff.lint]
 extend-select = ["E", "E9", "F63", "F7", "F82", "W", "UP", "FURB"]
+extend-ignore = ["RUF012", "N999", "DTZ007", "DTZ005"]
+external = ["E2", "E3"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]
+"tests/*" = ["RUF012"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
@@ -108,5 +112,5 @@ reportAttributeAccessIssue = "warning"
 reportOptionalSubscript = "warning"
 reportOptionalMemberAccess = "warning"
 reportIncompatibleMethodOverride = "warning"
-reportOperatorIssue = "warning"
-defineConstant = { PYQT5 = true, PYSIDE2 = false, PYQT6 = false, PYSIDE6 = false }
+reportPrivateImportUsage = "none"
+defineConstant = { PYQT6 = true, PYSIDE2 = false, PYQT5 = false, PYSIDE6 = false }

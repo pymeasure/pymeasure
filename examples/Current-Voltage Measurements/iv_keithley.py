@@ -39,12 +39,13 @@ python iv_keithley.py
 import logging
 import sys
 from time import sleep
+
 import numpy as np
 
-from pymeasure.instruments.keithley import Keithley2000, Keithley2400
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
-from pymeasure.experiment import Procedure, FloatParameter, unique_filename, Results
+from pymeasure.experiment import FloatParameter, Procedure, Results, unique_filename
+from pymeasure.instruments.keithley import Keithley2000, Keithley2400
 
 log = logging.getLogger("")
 log.addHandler(logging.NullHandler())

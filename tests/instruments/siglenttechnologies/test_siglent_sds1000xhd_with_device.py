@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 
-import pytest
 import time
+
+import pytest
+
 from pymeasure.instruments.siglenttechnologies import SDS1000XHD
 
 """

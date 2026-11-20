@@ -23,10 +23,10 @@
 #
 
 from warnings import warn
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import strict_discrete_set
 
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.common_base import cast_or_str, identity
+from pymeasure.instruments.validators import strict_discrete_set
 
 deprecated_text = """
 
@@ -291,6 +291,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
 
         Reading this property will NOT initialize a trigger.
         If you need that, use the `reading` property instead.""",
+        get_process_list=identity,
     )
 
     # Display related commands
@@ -360,14 +361,14 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         otherwise the command will fail.""",
     )
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Write a command to the instrument."""
         if "{function_prefix_for_range}" in command:
             command = command.replace("{function_prefix_for_range}",
                                       self._get_function_prefix_for_range())
         elif "{function}" in command:
             command = command.replace("{function}", HP34401A.FUNCTIONS[self.function_])
-        super().write(command)
+        super().write(command, **kwargs)
 
     def _get_function_prefix_for_range(self):
         function_prefix = HP34401A.FUNCTIONS_WITH_RANGE[self.function_]

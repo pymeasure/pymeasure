@@ -22,11 +22,12 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from contextlib import nullcontext as does_not_raise
 
-from pymeasure.test import expected_protocol
+import pytest
+
 from pymeasure.instruments.formfactor.velox import Velox
+from pymeasure.test import expected_protocol
 
 
 class TestChuck:
@@ -88,7 +89,7 @@ class TestChuck:
              ("ReadChuckIndex Y", "0:100 200"),
              ]
         ) as inst:
-            inst.chuck.index = (100, 200)
+            inst.chuck.index = (100., 200)
             assert [100, 200] == inst.chuck.index
 
 
@@ -112,11 +113,27 @@ class TestWaferMap:
         with expected_protocol(
             Velox,
             [("StepNextDie 5 6", "0: 5 6 1 2"),
+             ("StepNextDie 5 6", "0: 5 6 1 2"),
              ("StepNextDie 5 6 1", "0: 5 6 1 2"),
+             ("StepNextDie 5 6 1", "0: 5 6 1 2"),
+             ("StepNextDie 5 6", "0: 5 6 1 2"),  # remove after deprecation
+             ("StepNextDie 5 6 1", "0: 5 6 1 2"),  # remove after deprecation
+             ("StepNextDie 5 6 1", "0: 5 6 1 2"),  # remove after deprecation
              ]
         ) as inst:
             inst.wafermap.step_to_die(5, 6)
+            inst.wafermap.step_to_die(x_index=5, y_index=6)
             inst.wafermap.step_to_die(5, 6, 1)
+            inst.wafermap.step_to_die(x_index=5, y_index=6, s_index=1)
+
+            # --- start remove after deprecation
+            with pytest.warns(FutureWarning):
+                inst.wafermap.step_to_die(x_pos=5, y_pos=6)
+            with pytest.warns(FutureWarning):
+                inst.wafermap.step_to_die(x_pos=5, y_pos=6, s_pos=1)
+            with pytest.warns(FutureWarning):
+                inst.wafermap.step_to_die(x_index=5, y_index=6, s_pos=1)
+            # --- end remove after deprecation
 
     @pytest.mark.parametrize("enabled, mapping", [
                              (True, 1),
@@ -132,28 +149,27 @@ class TestWaferMap:
 
 class TestVelox:
     def test_error(self):
-        with pytest.raises(ConnectionError):
-            with expected_protocol(
-                Velox,
-                [("*IDN?", "7: Error Message")]
-            ) as inst:
-                inst.id
+        with pytest.raises(ConnectionError), expected_protocol(
+            Velox,
+            [("*IDN?", "7: Error Message")]
+        ) as inst:
+            _ = inst.id
 
     def test_expected_error(self):
-        with does_not_raise(ConnectionError):
-            with expected_protocol(
-                Velox,
-                [("StepNextDie", "703: End of wafer.")]
-            ) as inst:
-                inst.wafermap.step_next_die()
+        with (
+            does_not_raise(ConnectionError),
+            expected_protocol(Velox, [("StepNextDie", "703: End of wafer.")]) as inst,
+        ):
+            inst.wafermap.step_next_die()
+            assert inst.error_code == 703
+            assert inst.error_message == "End of wafer."
 
     def test_options(self):
-        with pytest.raises(NotImplementedError):
-            with expected_protocol(
-                Velox,
-                [("*OPT?", "Fake options")]
-            ) as inst:
-                inst.options
+        with pytest.raises(NotImplementedError), expected_protocol(
+            Velox,
+            [("*OPT?", "Fake options")]
+        ) as inst:
+            _ = inst.options
 
     def test_version(self):
         with expected_protocol(

@@ -24,6 +24,7 @@
 
 import re
 import time
+
 import numpy as np
 
 from pymeasure.adapters import FakeAdapter

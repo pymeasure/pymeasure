@@ -7,6 +7,7 @@ Removed
 - Remove deprecated SCPI methods and properties from :code:`Instrument`.
 - Remove deprecated :code:`control` parameters :code:`command_process` and :code:`kwargs`.
 - Remove deprecated Toptica Ibeamsmart methods: :code:`laser_enabled`, :code:`channel1_enabled` :code:`channel2_enabled`, use :code:`emission` and the driver channels.
+- Remove deprecated Attocube anc300 :code:`host` parameter and deprecated methods :code:`stepu` and :code:`stepd`.
 - Deprecate ESP300 attributes :code:`x`, :code:`y`, :code:`phi`, use :code:`axes` list instead.
 
 Deprecated
@@ -15,10 +16,29 @@ Deprecated
 - Deprecate Toptica Ibeamsmart :code:`enable_continous`, use :code:`enable_continuous` instead.
 - Deprecate Thermotron 3800 :code:`initalize_oven`, use :code:`initialize_oven` instead.
 - Deprecate :code:`discreteTruncate` validator, use :code:`truncated_discrete_set_positive` instead.
+- Deprecate :code:`Procedure.refresh_parameters` as it is a no-op now.
+- Deprecate unused :code:`console.py` module with :code:`ProgressBar` and :code:`display`.
+- Deprecate Thorlabs PRO8000 flat properties (:code:`slot`, :code:`LDCCurrent`, :code:`LDCStatus`, ...), use the per-slot channels instead.
 
 Changed
 -------
 - For property creators :code:`Instrument.control`... the conversion parameters (:code:`cast` etc.) are keyword only, now.
+- Refactored :class:`.Parameter` and :class:`.Metadata` to share a common descriptor base (``_InstanceValueDescriptor``).
+  Values are now eagerly converted at assignment time via :meth:`~Parameter.convert` (identity for ``Metadata``).
+  The ``_param_values``/``_metadata_values`` side-dicts on :class:`.Procedure` were removed; the live value now lives on the parameter/metadata object's ``_value``. ``convert`` no longer needs to be idempotent.
+  ``None`` is the explicit "unset" sentinel and bypasses ``convert``.
+  ``Procedure.refresh_parameters`` is now a deprecated no-op (retained for API compatibility).
+  ``UnknownProcedure`` now returns empty ``parameter_objects``/``metadata_objects`` dicts so loading an unimportable procedure no longer raises.
+- Procedure use :class:`ProcedureStatus` enum instead of status and status message dicts.
+- Added auto ranging to Agilent E5270B ``voltage`` and ``current``. It improves measurement resolution but might slightly increase the measurement time.
+
+Instruments
+-----------
+- Fix Yokogawa AQ6370 :code:`authenticate_ethernet` to compare responses case-insensitively (older firmware such as the AQ6370B answers in lower case) and raise :code:`ConnectionError` instead of asserting.
+
+GUI
+---
+- Tear down plot frames and their crosshairs safely when a plot is closed or deleted, which fixes intermittent crashes during window and test teardown.
 
 Version 0.16.0 (2026-05-20)
 ===========================
@@ -264,7 +284,7 @@ Instruments mechanics
 - Add :code:`next_error` property to SCPI instruments (@BenediktBurger, #1024)
 - Make :code:`query_delay=None` the default for :code:`wait_for` (@BenediktBurger, #1077)
 - Fix :code:`expected_protocol` using empty dictionary as default value (@BenediktBurger, #1087)
-- Remove auto-importing all instruments in :code:`pymeasure/instruments/__init__.py`` (@mcdo0486, #919)
+- Remove auto-importing all instruments in :code:`pymeasure/instruments/__init__.py` (@mcdo0486, #919)
 - Add :code:`find_serial_port` to find a serial port by providing USB information (@BenediktBurger, #982)
 
 Instruments

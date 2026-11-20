@@ -23,8 +23,9 @@
 #
 
 import pytest
-from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.ptw.ptwDIAMENTOR import ptwDIAMENTOR
+from pymeasure.test import expected_protocol
 
 
 def test_baudrate():

@@ -22,10 +22,20 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pyqtgraph as pg
+from numpy.typing import DTypeLike
+
+from pymeasure.experiment.results import Results
+
+if TYPE_CHECKING:
+    from pymeasure.display.widgets.plot_widget import PlotWidget
+
 from .Qt import QtCore, QtGui
 
 log = logging.getLogger(__name__)
@@ -38,26 +48,61 @@ class ResultsCurve(pg.PlotDataItem):
     the full file instead of just appending.
     """
 
-    def __init__(self, results, x, y, force_reload=False, wdg=None, **kwargs):
+    def __init__(
+        self,
+        results: Results,
+        x: str,
+        y: str,
+        force_reload: bool = False,
+        wdg: PlotWidget | None = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.results = results
         self.wdg = wdg
         self.pen = kwargs.get('pen', None)
-        self.x, self.y = x, y
+        self.x_label, self.y_label = x, y
         self.force_reload = force_reload
         self.color = self.opts['pen'].color()
 
-    def update_data(self):
+    @property
+    def x(self) -> str:
+        """Set the x label.
+
+        .. deprecated:: 0.17.0
+            Use :attr:`x_label` instead.
+        """
+        return self.x_label
+
+    @x.setter
+    def x(self, value: str) -> None:
+        self.x_label = value
+
+    @property
+    def y(self) -> str:
+        """Set the y label.
+
+        .. deprecated:: 0.17.0
+            Use :attr:`y_label` instead.
+        """
+        return self.y_label
+
+    @y.setter
+    def y(self, value: str) -> None:
+        self.y_label = value
+
+    def update_data(self) -> None:
         """Updates the data by polling the results"""
         if self.force_reload:
             self.results.reload()
         data = self.results.data  # get the current snapshot
+        if data is not None:
+            # Set x-y data
+            self.setData(data[self.x_label], data[self.y_label])
 
-        # Set x-y data
-        self.setData(data[self.x], data[self.y])
-
-    def set_color(self, color):
-        self.pen.setColor(color)
+    def set_color(self, color) -> None:
+        if self.pen:
+            self.pen.setColor(color)
         self.color = self.opts['pen'].color()
         self.updateItems(styleUpdate=True)
 
@@ -67,8 +112,19 @@ class ResultsCurve(pg.PlotDataItem):
 class ResultsImage(pg.ImageItem):
     """ Creates an image loaded dynamically from a file through the Results
     object."""
+    x: str
+    y: str
 
-    def __init__(self, results, x, y, z, force_reload=False, wdg=None, **kwargs):
+    def __init__(
+        self,
+        results: Results,
+        x: str,
+        y: str,
+        z: str,
+        force_reload: bool = False,
+        wdg=None,
+        **kwargs,
+    ):
         self.results = results
         self.wdg = wdg
         self.x = x
@@ -84,9 +140,9 @@ class ResultsImage(pg.ImageItem):
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1
         self.img_data = np.zeros((self.ysize, self.xsize, 4))
         self.force_reload = force_reload
-        self.cm = pg.colormap.get('viridis')
+        self.cm = cast(pg.ColorMap, pg.colormap.get('viridis'))
 
-        super().__init__(image=self.img_data)
+        super().__init__(image=self.img_data, **kwargs)
 
         # Scale and translate image so that the pixels are in the correct
         # position in "data coordinates"
@@ -96,11 +152,13 @@ class ResultsImage(pg.ImageItem):
                      int(self.ystart / self.ystep) - 0.5)  # 0.5 so pixels centered
         self.setTransform(tr)
 
-    def update_data(self):
+    def update_data(self) -> None:
         if self.force_reload:
             self.results.reload()
 
         data = self.results.data
+        if data is None:
+            return
         zmin = data[self.z].min()
         zmax = data[self.z].max()
 
@@ -109,12 +167,13 @@ class ResultsImage(pg.ImageItem):
             xdat = row[self.x]
             ydat = row[self.y]
             xidx, yidx = self.find_img_index(xdat, ydat)
-            self.img_data[yidx, xidx, :] = self.colormap((row[self.z] - zmin) / (zmax - zmin))
+            self.img_data[yidx, xidx, :] = cast(
+                np.ndarray, self.colormap((row[self.z] - zmin) / (zmax - zmin)))
 
         # set image data, need to transpose since pyqtgraph assumes column-major order
         self.setImage(image=np.transpose(self.img_data, axes=(1, 0, 2)))
 
-    def find_img_index(self, x, y):
+    def find_img_index(self, x, y) -> list[int]:
         """ Finds the integer image indices corresponding to the
         closest x and y points of the data given some x and y data.
         """
@@ -136,7 +195,7 @@ class ResultsImage(pg.ImageItem):
 
     def colormap(self, x):
         """ Return mapped color as 0.0-1.0 floats RGBA """
-        return self.cm.map(x, mode='float')
+        return self.cm.map(x, mode=pg.ColorMap.FLOAT)
 
     # TODO: colormap selection
 
@@ -151,24 +210,37 @@ class BufferCurve(pg.PlotDataItem):
         super().__init__(**kwargs)
         self._buffer = None
 
-    def prepare(self, size, dtype=np.float32):
+    def prepare(self, size: int, dtype: DTypeLike | None = np.float32) -> None:
         """ Prepares the buffer based on its size, data type """
         self._buffer = np.empty((size, 2), dtype=dtype)
         self._ptr = 0
 
-    def append(self, x, y):
-        """ Appends data to the curve with optional errors """
+    def append(self, x, y) -> None:
+        """ Appends data to the curve with optional errors."""
         if self._buffer is None:
-            raise Exception("BufferCurve buffer must be prepared")
+            raise ValueError("BufferCurve buffer must be prepared")
         if len(self._buffer) <= self._ptr:
-            raise Exception("BufferCurve overflow")
+            raise OverflowError("BufferCurve overflow")
 
         # Set x-y data
         self._buffer[self._ptr, :2] = [x, y]
+        self._ptr += 1
         self.setData(self._buffer[:self._ptr, :2])
 
-        self._ptr += 1
         self.data_updated.emit()
+
+
+class _SafeInfiniteLine(pg.InfiniteLine):
+    """Infinite line that tolerates being queried after its ViewBox is gone."""
+
+    def boundingRect(self) -> QtCore.QRectF | None:
+        # Keep the ViewBox alive while pyqtgraph recomputes the rect: getViewBox()
+        # caches only a weak reference, and the wrapper can be collected before
+        # pyqtgraph calls getViewBox() again.
+        viewbox = self.getViewBox()
+        if viewbox is None:
+            return QtCore.QRectF()
+        return super().boundingRect()
 
 
 class Crosshairs(QtCore.QObject):
@@ -178,7 +250,7 @@ class Crosshairs(QtCore.QObject):
 
     coordinates = QtCore.Signal(float, float)
 
-    def __init__(self, plot, pen=None):
+    def __init__(self, plot: pg.PlotItem, pen=None):
         """ Initiates the crosshars onto a plot given the pen style.
 
         Example pen:
@@ -186,8 +258,9 @@ class Crosshairs(QtCore.QObject):
         """
         super().__init__()
 
-        self.vertical = pg.InfiniteLine(angle=90, movable=False, pen=pen)
-        self.horizontal = pg.InfiniteLine(angle=0, movable=False, pen=pen)
+        self._torn_down = False
+        self.vertical = _SafeInfiniteLine(angle=90, movable=False, pen=pen)
+        self.horizontal = _SafeInfiniteLine(angle=0, movable=False, pen=pen)
         plot.addItem(self.vertical, ignoreBounds=True)
         plot.addItem(self.horizontal, ignoreBounds=True)
 
@@ -196,29 +269,65 @@ class Crosshairs(QtCore.QObject):
                                     slot=self.mouseMoved)
         self.plot = plot
 
-    def hide(self):
+    def teardown(self) -> None:
+        """Release the signal proxy and detach the lines from the plot.
+
+        Afterwards the crosshairs must not be used anymore.
+        The method is idempotent and tolerates a plot that is already gone.
+        """
+        if self._torn_down:
+            return
+        self._torn_down = True
+        proxy = getattr(self, "proxy", None)
+        if proxy is not None:
+            # pyqtgraph keeps only a weak reference to the bound ``mouseMoved`` slot; the
+            # strong reference comes from the Qt signal connection, which would otherwise
+            # call it while the plot is being destroyed.
+            if hasattr(proxy, "disconnect"):
+                try:
+                    proxy.disconnect()
+                except (RuntimeError, TypeError):
+                    pass
+            else:
+                proxy.blockSignal = True
+        plot = self.plot
+        if plot is not None:
+            for line in (self.vertical, self.horizontal):
+                try:
+                    plot.removeItem(line)
+                except (RuntimeError, TypeError, AttributeError):
+                    pass
+        self.plot = None
+        self.position = None
+
+    def hide(self) -> None:
         self.vertical.hide()
         self.horizontal.hide()
 
-    def show(self):
+    def show(self) -> None:
         self.vertical.show()
         self.horizontal.show()
 
-    def update(self):
+    def update(self) -> None:
         """ Updates the mouse position based on the data in the plot. For
         dynamic plots, this is called each time the data changes to ensure
         the x and y values correspond to those on the display.
         """
+        # A queued proxy flush may still arrive after teardown.
+        if self._torn_down or self.plot is None:
+            return
         if self.position is not None:
             mouse_point = self.plot.vb.mapSceneToView(self.position)
             self.coordinates.emit(mouse_point.x(), mouse_point.y())
             self.vertical.setPos(mouse_point.x())
             self.horizontal.setPos(mouse_point.y())
 
-    def mouseMoved(self, event=None):
+    def mouseMoved(self, event: list | None = None) -> None:
         """ Updates the mouse position upon mouse movement """
+        if self._torn_down:
+            return
         if event is not None:
             self.position = event[0]
             self.update()
         else:
-            raise Exception("Mouse location not known")
+            raise ValueError("Mouse location not known")

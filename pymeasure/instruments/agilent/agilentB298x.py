@@ -24,12 +24,8 @@
 
 from typing import Any
 
-from pymeasure.adapters import Adapter
-from pymeasure.instruments import SCPIMixin, Instrument, cast_or_str
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              strict_range,
-                                              joined_validators
-                                              )
+from pymeasure.instruments import AdapterType, Instrument, SCPIMixin, cast_or_str
+from pymeasure.instruments.validators import joined_validators, strict_discrete_set, strict_range
 
 
 class BatteryMixin:
@@ -61,7 +57,7 @@ class AgilentB2981(SCPIMixin, Instrument):
     The B2981 is a Femto/Picoammeter."""
 
     def __init__(self,
-                 adapter: Adapter | int | str,
+                 adapter: AdapterType,
                  name: str = "Agilent/Keysight B2980A/B series",
                  **kwargs: Any):
         super().__init__(
@@ -651,7 +647,6 @@ class AgilentB2983(AgilentB2981, BatteryMixin):
 
     The B2983 is a Femto/Picoammeterwith with battery operation.
     """
-    pass
 
 
 class AgilentB2985(AgilentB2981):
@@ -1140,4 +1135,3 @@ class AgilentB2987(AgilentB2985, BatteryMixin):
     The B2987 is a Femto/Picoammeter and Electrometer/High Resistance Meter
     with battery operation.
     """
-    pass

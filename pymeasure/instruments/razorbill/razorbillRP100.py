@@ -24,8 +24,7 @@
 
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              strict_range)
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class razorbillRP100(SCPIUnknownMixin, Instrument):

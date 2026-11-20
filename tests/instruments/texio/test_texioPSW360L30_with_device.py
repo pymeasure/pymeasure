@@ -24,6 +24,7 @@
 import time
 
 import pytest
+
 from pymeasure.instruments.texio.texioPSW360L30 import TexioPSW360L30
 
 

@@ -23,16 +23,17 @@
 #
 import importlib
 import logging
-
-import pytest
 import os
 import tempfile
 from time import sleep
 
-from pymeasure.experiment import Listener, Procedure
-from pymeasure.experiment.workers import Worker
-from pymeasure.experiment.results import Results
+import pytest
 from data.procedure_for_testing import RandomProcedure
+
+from pymeasure.experiment import Listener, Procedure
+from pymeasure.experiment.procedure import ProcedureStatus
+from pymeasure.experiment.results import Results
+from pymeasure.experiment.workers import Worker
 
 tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
                           and importlib.util.find_spec('zmq'))
@@ -40,7 +41,9 @@ tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
 
 def test_worker_stop():
     procedure = RandomProcedure()
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
@@ -53,7 +56,9 @@ def test_worker_finish():
     procedure = RandomProcedure()
     procedure.iterations = 100
     procedure.delay = 0.001
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
@@ -62,6 +67,7 @@ def test_worker_finish():
     assert not worker.is_alive()
 
     new_results = Results.load(file, procedure_class=RandomProcedure)
+    assert new_results.data is not None
     assert new_results.data.shape == (100, 2)
 
 
@@ -69,7 +75,9 @@ def test_worker_closes_file_after_finishing():
     procedure = RandomProcedure()
     procedure.iterations = 100
     procedure.delay = 0.001
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
@@ -87,14 +95,16 @@ def test_zmq_does_not_crash_worker(caplog):
     See https://github.com/ralph-group/pymeasure/issues/168
     """
     procedure = RandomProcedure()
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     # If we define a port here we get ZMQ communication
     # if cloudpickle is installed
     worker = Worker(results, port=5888, log_level=logging.DEBUG)
     worker.start()
     worker.join(timeout=20.0)  # give it enough time to finish the procedure
-    assert procedure.status == procedure.FINISHED
+    assert procedure.status == ProcedureStatus.FINISHED
     del worker  # make sure to clean up, reduce the possibility of test
     # dependencies via left-over sockets
 
@@ -113,7 +123,9 @@ def test_zmq_topic_filtering_works(caplog):
             self.emit('progress', 99)
 
     procedure = ThreeEmitsProcedure()
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     received = []
     worker = Worker(results, port=5888, log_level=logging.DEBUG)
@@ -126,6 +138,6 @@ def test_zmq_topic_filtering_works(caplog):
         topic, record = listener.receive()
         received.append((topic, record))
     worker.join(timeout=20.0)  # give it enough time to finish the procedure
-    assert procedure.status == procedure.FINISHED
+    assert procedure.status == ProcedureStatus.FINISHED
     assert len(received) == 3
-    assert all([item[0] == 'results' for item in received])
+    assert all(item[0] == 'results' for item in received)

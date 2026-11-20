@@ -30,9 +30,11 @@
 # Test was performed with B2987B
 #
 
-import pytest
-from pymeasure.instruments.agilent.agilentB298x import AgilentB2987  # B2987 supports all features
 from time import sleep
+
+import pytest
+
+from pymeasure.instruments.agilent.agilentB298x import AgilentB2987  # B2987 supports all features
 
 TEST_AMMETER = True
 TEST_ELECTROMETER = True
@@ -60,7 +62,7 @@ def resetted_b298x(agilentB298x):
 @pytest.fixture
 def b298x_idle(agilentB298x):
     agilentB298x.abort()
-    agilentB298x.trigger_all_is_idle
+    _ = agilentB298x.trigger_all_is_idle
     agilentB298x.source_enabled = True
     agilentB298x.input_enabled = True
     return agilentB298x
@@ -71,7 +73,7 @@ class TestAmmeter:
     """Test of the ammeter functions."""
 
     def test_device_id(self, resetted_b298x):
-        vendor, device_id, serial_number, firmware_version = resetted_b298x.id.split(',')
+        _vendor, device_id, _serial_number, _firmware_version = resetted_b298x.id.split(',')
         assert "B298" in device_id
 
     def test_input_enabled(self, agilentB298x):

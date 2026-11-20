@@ -17,7 +17,7 @@ Some devices require a more advanced communication protocol, e.g. due to checksu
     # If we want to run protocol tests on doctest code, we need to use a
     # separate doctest "group" and a different set of imports.
     # See https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html
-    from pymeasure.instruments import Instrument, Channel
+    from pymeasure.instruments import AdapterType, Instrument, Channel
     from pymeasure.test import expected_protocol
 
 
@@ -51,23 +51,24 @@ Additionally, the device needs some time after it received a command, before it 
         :param address: The device address for the communication.
         :param query_delay: Wait time after writing and before reading in seconds.
         """
-        def __init__(self, adapter, name="ExtremeCommunication", address=0, query_delay=0.1):
+        def __init__(self, adapter: AdapterType, name: str = "ExtremeCommunication",
+                     address: int = 0, query_delay: float = 0.1):
             super().__init__(adapter, name)
             self.address = f"{address:03}"
             self.query_delay = query_delay
-    
-        def write(self, command):
+
+        def write(self, command: str, **kwargs) -> None:
             """Add the device address in front of every command before sending it."""
-            super().write(self.address + command)
-    
-        def wait_for(self, query_delay=0):
+            super().write(self.address + command, **kwargs)
+
+        def wait_for(self, query_delay: float = 0) -> None:
             """Wait for some time.
 
             :param query_delay: override the global query_delay.
             """
             super().wait_for(query_delay or self.query_delay)
-    
-        def read(self):
+
+        def read(self) -> str:
             """Read from the device and check the response.
 
             Assert that the response starts with the device address.
@@ -77,7 +78,7 @@ Additionally, the device needs some time after it received a command, before it 
                 return got[3:]
             else:
                 raise ConnectionError(f"Expected message address '{self.address}', but read '{got[3:]}' for wrong address '{got[:3]}'.")
-    
+
         voltage = Instrument.measurement(
             ":VOLT:?", """Measure the voltage in Volts.""")
 
@@ -100,12 +101,12 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
 
     class ExtremeBytes(Instrument):
         """Control the ExtremeBytes instrument with byte-based communication."""
-        def __init__(self, adapter, name="ExtremeBytes"):
+        def __init__(self, adapter: AdapterType, name: str = "ExtremeBytes"):
             super().__init__(adapter, name)
-    
-        def write(self, command):
+
+        def write(self, command: str, **kwargs) -> None:
             """Write to the device according to the comma separated command.
-    
+
             :param command: R or W for read or write, hexadecimal address, and data.
             """
             function, address, data = command.split(",")
@@ -113,8 +114,8 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
             b.extend(int(address, 16).to_bytes(2, byteorder="big"))
             b.extend(int(data).to_bytes(length=8, byteorder="big", signed=True))
             self.write_bytes(bytes(b))
-    
-        def read(self):
+
+        def read(self) -> str:
             """Read the response and return the data as a string, if applicable."""
             response = self.read_bytes(2)  # return type and payload
             if response[0] == 0x00:
@@ -125,7 +126,7 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
                 return str(int.from_bytes(data, byteorder="big", signed=True))
             if response[0] == 0x10 and response[1] != 0x00:
                 raise ConnectionError(f"Writing to the device failed with error {response[1]}")
-    
+
         voltage = Instrument.control(
             "R,0x106,1", "W,0x106,%i",
             """Control the output voltage in mV.""",

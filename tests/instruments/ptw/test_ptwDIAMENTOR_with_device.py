@@ -27,9 +27,11 @@
 #
 
 
-import pytest
-from pymeasure.instruments.ptw.ptwDIAMENTOR import ptwDIAMENTOR
 from time import sleep
+
+import pytest
+
+from pymeasure.instruments.ptw.ptwDIAMENTOR import ptwDIAMENTOR
 
 BAUD_RATES = [9600, 19200, 38400, 57600, 115200]
 DAP_UNITS = ["cGycm2", "Gycm2", "uGym2", "Rcm2"]

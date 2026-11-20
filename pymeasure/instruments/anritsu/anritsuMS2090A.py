@@ -22,11 +22,12 @@
 # THE SOFTWARE.
 #
 import logging
+
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import (
     strict_discrete_set,
-    truncated_range,
     strict_range,
+    truncated_range,
 )
 
 log = logging.getLogger(__name__)

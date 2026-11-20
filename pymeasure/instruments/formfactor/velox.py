@@ -24,15 +24,17 @@
 
 
 import logging
+from warnings import warn
 
-from pymeasure.instruments import Channel, Instrument, SCPIMixin
-from pymeasure.instruments.common_base import cast_or_str
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from pymeasure.instruments import Channel, Instrument, SCPIMixin, cast_or_str
+from pymeasure.instruments.common_base import identity
+from pymeasure.instruments.instrument import AdapterType
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-VELOCITY_RANGE = [0.1, 100]
+VELOCITY_RANGE: list[float] = [0.1, 100]
 PROBER_UNITS = {"microns": "Y",
                 "mils": "I",
                 "jogs": "J",
@@ -50,41 +52,43 @@ PROBER_REFERENCES = {"home": "H",
 class Chuck(Channel):
     """A class representing the Chuck functions of the wafer prober."""
 
-    def move_contact(self, velocity=100):
+    def move_contact(self, velocity: float = 100) -> str:
         """Move the chuck to the contact height.
 
-        :param  float velocity: Speed in percent, strictly from ``0.1`` to ``100``.
+        :param velocity: Speed in percent, strictly from ``0.1`` to ``100``.
 
         """
         strict_range(velocity, VELOCITY_RANGE)
         return self.ask(f"MoveChuckContact {velocity}")
 
-    def move_align(self, velocity=100):
+    def move_align(self, velocity: float = 100) -> str:
         """Move the chuck to the align height.
 
-        :param  float velocity: Speed in percent, strictly from ``0.1`` to ``100``.
+        :param velocity: Speed in percent, strictly from ``0.1`` to ``100``.
 
         """
         strict_range(velocity, VELOCITY_RANGE)
         return self.ask(f"MoveChuckAlign {velocity}")
 
-    def move_separation(self, velocity=100):
+    def move_separation(self, velocity: float = 100) -> str:
         """Move the chuck to the separation height.
 
-        :param  float velocity: Speed in percent, strictly from ``0.1`` to ``100``.
+        :param velocity: Speed in percent, strictly from ``0.1`` to ``100``.
 
         """
         strict_range(velocity, VELOCITY_RANGE)
         return self.ask(f"MoveChuckSeparation {velocity}")
 
-    def move_index(self, x_steps, y_steps, pos_ref="home", velocity=100):
+    def move_index(
+        self, x_steps: int, y_steps: int, pos_ref: str = "home", velocity: float = 100
+    ) -> str:
         """Move the chuck in index steps.
 
-        :param  int x_steps: Index steps in X direction
-        :param  int y_steps: Index steps in Y direction
-        :param  str pos_ref: Position reference, strictly ``home``,
+        :param x_steps: Index steps in X direction
+        :param y_steps: Index steps in Y direction
+        :param pos_ref: Position reference, strictly ``home``,
             ``zero``, ``center`` or ``diehome``.
-        :param  float velocity: Speed in percent, strictly from ``0.1`` to ``100``.
+        :param velocity: Speed in percent, strictly from ``0.1`` to ``100``.
 
         """
         pos_ref = pos_ref.lower()
@@ -93,16 +97,23 @@ class Chuck(Channel):
         _ref = PROBER_REFERENCES[pos_ref]
         return self.ask(f"MoveChuckIndex {x_steps} {y_steps} {_ref} {velocity}")
 
-    def move(self, x, y, pos_ref="home", unit="microns", velocity=100):
+    def move(
+        self,
+        x: float,
+        y: float,
+        pos_ref: str = "home",
+        unit: str = "microns",
+        velocity: float = 100,
+    ) -> str:
         """Move the chuck by the specified distance.
 
-        :param  float x: Distance in X direction
-        :param  float y: Distance in Y direction
-        :param  str pos_ref: Position reference, strictly ``home``,
+        :param x: Distance in X direction
+        :param y: Distance in Y direction
+        :param pos_ref: Position reference, strictly ``home``,
             ``zero``, ``center`` or ``diehome``.
-        :param  str unit: Unit of **x** and **y**, strictly ``micron``,
+        :param unit: Unit of **x** and **y**, strictly ``micron``,
             ``mils``, ``jogs``, ``encoder`` or ``index``.
-        :param  float velocity: Speed in percent, strictly from ``0.1`` to ``100``.
+        :param velocity: Speed in percent, strictly from ``0.1`` to ``100``.
 
         """
         pos_ref = pos_ref.lower()
@@ -122,7 +133,8 @@ class Chuck(Channel):
         """Control the chuck index (x, y) in micrometer (float, float).""",
         separator=" ",
         check_set_errors=True,
-        )
+        get_process_list=identity,
+    )
 
 
 class WaferMap(Channel):
@@ -131,31 +143,31 @@ class WaferMap(Channel):
     end_reached = False
     """Get whether the end of the wafermap is reached or not (bool)."""
 
-    def step_first_die(self):
+    def step_first_die(self) -> list[int | str]:
         """Move the chuck to the first die and clear the the binning results.
 
-        :return: List of the int containing the coordinates of the first die.
+        :return: List of the int containing the indices of the first die.
 
-                    - item[0]: X coordinate
-                    - item[1]: Y coordinate
-                    - item[2]: Current subdie index
-                    - item[3]: Total number of subdies in the die
+                    - item[0]: X index
+                    - item[1]: Y index
+                    - item[2]: Current subsite index
+                    - item[3]: Total number of subsites in the die
 
         """
         return self.values("StepFirstDie",
                            separator=" ",
-                           cast=int,
+                           cast=cast_or_str(int),
                            )
 
-    def step_next_die(self):
+    def step_next_die(self) -> list[int | str]:
         """Move the chuck to the next logical die.
 
-        :return: List of the int containing the coordinates of the new die.
+        :return: List of the int containing the indices of the new die.
 
-            - item[0]: X coordinate
-            - item[1]: Y coordinate
-            - item[2]: Current subdie index
-            - item[3]: Total number of subdies in the die
+            - item[0]: X index
+            - item[1]: Y index
+            - item[2]: Current subsite index
+            - item[3]: Total number of subsites in the die
 
         """
         return self.values("StepNextDie",
@@ -163,18 +175,47 @@ class WaferMap(Channel):
                            cast=cast_or_str(int),
                            )
 
-    def step_to_die(self, x_pos, y_pos, s_pos=None):
+    def step_to_die(self,
+                    x_index: int | None = None,
+                    y_index: int | None = None,
+                    s_index: int | None = None,
+                    x_pos: int | None = None,  # remove after deprecation
+                    y_pos: int | None = None,  # remove after deprecation
+                    s_pos: int | None = None,  # remove after deprecation
+                    ) -> None:
         """Move the chuck to the specified die coordinates.
 
-        :param int x_pos: X coordinate.
-        :param int y_pos: Y coordinate.
-        :param int s_pos: subdie index.
+        :param x_index: X index.
+        :param y_index: Y index.
+        :param s_index: subsite index.
+
+        .. deprecated:: 0.17.0
+            The arguments `x_pos`, `y_pos`, and `s_pos` are deprecated use `x_index`,
+            `y_index`, and `s_index` instead.
 
         """
+        # --- start remove after deprecation
+        if x_pos is not None:
+            warn("'x_pos' argument of step_to_die is deprecated, use 'x_index' instead.",
+                 FutureWarning)
+            x_index = x_pos
 
-        coordinates = [x_pos, y_pos]
-        if s_pos:
-            coordinates.append(s_pos)
+        if y_pos is not None:
+            warn("'y_pos' argument of step_to_die is deprecated, use 'y_index' instead.",
+                 FutureWarning)
+            y_index = y_pos
+
+        if s_pos is not None:
+            warn("'s_pos' argument of step_to_die is deprecated, use 's_index' instead.",
+                 FutureWarning)
+            s_index = s_pos
+        # --- end remove after deprecation
+
+        if x_index is None or y_index is None:
+            raise TypeError("step_to_die() requires x_index and y_index")
+        coordinates = [x_index, y_index]
+        if s_index is not None:
+            coordinates.append(s_index)
 
         _coord = " ".join(map(str, coordinates))
         self.ask(f"StepNextDie {_coord}")
@@ -214,14 +255,10 @@ class Velox(SCPIMixin, Instrument):
     chuck = Instrument.ChannelCreator(Chuck)
     wafermap = Instrument.ChannelCreator(WaferMap)
 
-    def __init__(self, adapter, name="FormFactor Velox",
-                 timeout=40000,
-                 **kwargs):
-        super().__init__(
-            adapter, name,
-            timeout=timeout,
-            **kwargs
-        )
+    def __init__(
+        self, adapter: AdapterType, name: str = "FormFactor Velox", timeout: int = 40000, **kwargs
+    ):
+        super().__init__(adapter, name, timeout=timeout, **kwargs)
 
     @property
     def options(self):
@@ -235,7 +272,7 @@ class Velox(SCPIMixin, Instrument):
         cast=str,
         )
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """
         Read the response and check for errors.
 
@@ -247,7 +284,7 @@ class Velox(SCPIMixin, Instrument):
         self.error_message = ""
         self.wafermap.end_reached = False
 
-        got = super().read()
+        got = super().read(**kwargs)
 
         # some commands like *IDN do not return '0: ...'
         # in such a case return the entire response string

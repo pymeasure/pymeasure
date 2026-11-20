@@ -23,17 +23,17 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
 from pymeasure.instruments.santec.tsl500series import (  # noqa: F401
     SweepMode,
     SweepPattern,
     SweepRouting,
     SweepStatus,
+    TSL500Series,
+    combine_pattern_routing,
     mode_to_pattern,
     mode_to_routing,
-    combine_pattern_routing,
-    TSL500Series,
 )
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class TSL550(TSL500Series):

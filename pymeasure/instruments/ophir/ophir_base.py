@@ -22,16 +22,13 @@
 # THE SOFTWARE.
 #
 
-from enum import Enum, IntFlag, IntEnum
-
-from typing import Any, TypedDict, TypeVar
 from collections.abc import Callable, Sequence
+from enum import Enum, IntEnum, IntFlag
+from typing import Any, TypedDict, TypeVar
 
-from pymeasure.adapters import Adapter
+from pymeasure.instruments import AdapterType, Instrument
 from pymeasure.instruments.common_base import CommonBase, cast_or_str
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
-
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 T = TypeVar("T")
 
@@ -108,7 +105,7 @@ class OphirCommunication(Instrument):
     For USB exists a COM (win32) object as well, which can be used as an alternative to this driver.
     """
 
-    def __init__(self, adapter: Adapter | str | int, name: str = "Ophir", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Ophir", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -156,12 +153,23 @@ class OphirCommunication(Instrument):
         self,
         command: str,
         separator: str | None = ",",
-        cast: Callable[[str], T] = float,  # type: ignore[assignment]
+        cast: type[T] | Callable[[str], T] = float,
+        preprocess_reply: Callable[[str], str] | None = None,
+        maxsplit: int = -1,
         **kwargs,
-    ) -> list[T | str]:
+    ) -> list[T]:
         """Write a command to the instrument and return a list of formatted values from the result.
+
+        Ignore the `separator` parameter and use the device default `None`.
         """
-        return super().values(command, separator=None, cast=cast, **kwargs)
+        return super().values(
+            command,
+            separator=None,
+            cast=cast,
+            preprocess_reply=preprocess_reply,
+            maxsplit=maxsplit,
+            **kwargs,
+        )
 
     def check_errors(self) -> list[Any]:
         """Check for errors after setting a value."""
@@ -183,7 +191,7 @@ class OphirBase(OphirCommunication):
     Modes = Modes
     ScreenModes = ScreenModes
 
-    def __init__(self, adapter: Adapter | str | int, name: str = "Ophir", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Ophir", **kwargs):
         super().__init__(adapter, name, **kwargs)
         self.wavelength_get_process_list = self._wavelength_get_process
 
@@ -361,7 +369,7 @@ class OphirBase(OphirCommunication):
     ) -> tuple[tuple[float, float] | None, Sequence[float | str | None]]:
         """Get wavelength limits for continuous sensor and wavelength list."""
         values = self.values("AW", cast=str)  # All Wavelengths
-        current, limits, entries = self._extract_wavelengths(values)
+        _current, limits, entries = self._extract_wavelengths(values)
         return limits, entries
 
     wavelength = Instrument.control(

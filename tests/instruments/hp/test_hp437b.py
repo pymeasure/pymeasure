@@ -23,10 +23,9 @@
 #
 import pytest
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.hp import HP437B
 from pymeasure.instruments.hp.hp437b import SensorType
+from pymeasure.test import expected_protocol
 
 
 def test_calibrate():

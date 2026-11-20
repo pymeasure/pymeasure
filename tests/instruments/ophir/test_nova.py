@@ -25,9 +25,8 @@
 
 import pytest
 
-from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.ophir.nova import Nova
+from pymeasure.test import expected_protocol
 
 LegacyModes = Nova.LegacyModes
 

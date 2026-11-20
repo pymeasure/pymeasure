@@ -11,4 +11,3 @@ This section contains specific documentation on the Heidenhain instruments that 
    :maxdepth: 2
 
    nd287
-   
