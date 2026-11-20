@@ -151,11 +151,23 @@ def test_monitor_processes_multiple_messages(qtbot):
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
+def missing_cloudpickle(monkeypatch):
+    """Simulate an environment where the optional cloudpickle module is absent."""
+    # Must precede mocked_zmq in a test signature (same-scope fixtures instantiate in order).
+    monkeypatch.setattr(listeners, "cloudpickle", None)
+
+
+@pytest.fixture
 def mocked_zmq(monkeypatch):
-    """Patch the module-level zmq attribute of listeners with a MagicMock."""
+    """Patch listeners.zmq with a MagicMock.
+
+    Also substitute listeners.cloudpickle with a MagicMock when that optional module is absent.
+    """
     pytest.importorskip("zmq")
     fake_zmq = mock.MagicMock()
     monkeypatch.setattr(listeners, "zmq", fake_zmq)
+    if listeners.cloudpickle is None:
+        monkeypatch.setattr(listeners, "cloudpickle", mock.MagicMock())
     return fake_zmq
 
 
@@ -185,6 +197,15 @@ def test_qlistener_initialization(qtbot, mocked_zmq):
         listener.poller.register.assert_called_once_with(
             listener.subscriber, mocked_zmq.POLLIN
         )
+    finally:
+        listener.deleteLater()
+
+
+def test_qlistener_initialization_without_cloudpickle(qtbot, missing_cloudpickle, mocked_zmq):
+    listener = QListener(port=12345, topic="mytopic")
+    try:
+        assert listener.port == 12345
+        assert listener.topic == "mytopic"
     finally:
         listener.deleteLater()
 
