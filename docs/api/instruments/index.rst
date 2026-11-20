@@ -65,6 +65,7 @@ Instruments by manufacturer:
    pendulum/index
    proterial/index
    ptw/index
+   purephotonics/index
    racal/index
    razorbill/index
    redpitaya/index
