@@ -24,13 +24,12 @@
 
 import logging
 from datetime import datetime
-from enum import Enum, IntFlag
+from enum import Enum, IntFlag, StrEnum
 from math import log10
 
 import numpy as np
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import (
     joined_validators,

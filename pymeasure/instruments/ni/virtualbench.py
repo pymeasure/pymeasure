@@ -31,7 +31,7 @@ import re
 
 # ctypes only required for VirtualBench_Direct class
 from ctypes import byref, c_int, cdll
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import NoReturn
 
 import numpy as np
@@ -177,7 +177,7 @@ class VirtualBench:
         (seconds_since_1970,
          fractional_seconds) = self.convert_timestamp_to_values(timestamp)
         fractional_seconds = timedelta(seconds=fractional_seconds)
-        return (datetime.fromtimestamp(seconds_since_1970, timezone.utc) +
+        return (datetime.fromtimestamp(seconds_since_1970, UTC) +
                 fractional_seconds)
 
     def collapse_channel_string(self, names_in):
