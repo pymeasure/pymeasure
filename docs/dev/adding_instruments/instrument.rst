@@ -36,7 +36,33 @@ Documentation for each instrument is required, and helps others understand the f
         |--> index.rst
         |--> extreme5000.rst
 
-Copy an existing instrument documentation file, which will automatically generate the documentation for the instrument. The :code:`index.rst` file should link to the :code:`extreme5000` file. For a new manufacturer, the manufacturer should be also linked in :code:`pymeasure/docs/api/instruments/index.rst`.
+Start :code:`extreme5000.rst` with the following template, replacing the title and fully qualified class name for your instrument:
+
+.. code-block:: rst
+
+    #######################
+    Extreme 5000 instrument
+    #######################
+
+    .. autoclass:: pymeasure.instruments.extreme.extreme5000.Extreme5000
+        :members:
+        :show-inheritance:
+
+The :code:`:members:` option includes documented members defined by the class, and :code:`:show-inheritance:` lists its base classes.
+If your driver inherits instrument-specific features from another instrument class, add this option to the :code:`autoclass` directive:
+
+.. code-block:: rst
+
+    :inherited-members: Instrument, CommonBase
+
+The names given to :code:`:inherited-members:` are base classes whose members are excluded.
+This includes inherited instrument-specific members while omitting shared framework members from :class:`~pymeasure.instruments.Instrument` and :class:`~pymeasure.instruments.common_base.CommonBase`, such as :code:`ChannelCreator`, which can otherwise produce duplicate-object warnings.
+
+If your instrument exposes channel classes, document those in the same file as well.
+See the :ref:`channel documentation instructions <channels>` for the channel :code:`autoclass` template.
+
+The :code:`index.rst` file should link to the :code:`extreme5000` file.
+For a new manufacturer, the manufacturer should be also linked in :code:`pymeasure/docs/api/instruments/index.rst`.
 
 Instrument file
 ===============
