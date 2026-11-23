@@ -101,9 +101,10 @@ class AnalogInputSlowChannel(Channel):
 class AnalogOutputSlowChannel(Channel):
     """ A slow analog output channel"""
 
-    voltage = Channel.setting(
-        "ANALOG:PIN AOUT{ch}, %f",
-        """ Set the voltage on the corresponding analog input channel, range is [0, 1.8]V""",
+    voltage = Channel.control(
+        "ANALOG:PIN? AOUT{ch}", "ANALOG:PIN AOUT{ch}, %f",
+        """ Control the voltage on the corresponding slow analog output channel,
+        range is [0, 1.8]V""",
         validator=truncated_range,
         values=[0, 1.8],
     )
@@ -196,9 +197,14 @@ class AnalogOutputFastChannel(Channel):
         "SOUR{ch}:VOLT?",
         "SOUR{ch}:VOLT %f",
         """ Control the voltage amplitude of the
-        output waveform in V, from 0 V to 1 V.""",
+        output waveform in V, from 0 V to 1 V.
+
+        The allowed range can be changed per channel with the dynamic property
+        :attr:`amplitude_values`, for instance for boards with a larger output
+        range (STEMlab 125-14 Pro Gen 2: up to 2 V).""",
         validator=strict_range,
         values=AMPLITUDES,
+        dynamic=True,
     )
 
     OFFSETS = [-0.995, +0.995]  # in V
@@ -208,9 +214,12 @@ class AnalogOutputFastChannel(Channel):
         """ Control the voltage offset of the
         output waveform in V, from -1 V to 1 V, depending on the set
         voltage amplitude (maximum offset = (Vmax - amplitude) / 2).
+        The allowed range can be changed per channel with the dynamic property
+        :attr:`offset_values`.
         """,
         validator=strict_range,
         values=OFFSETS,
+        dynamic=True,
     )
 
     PHASES = (-360, 360)  # in degrees

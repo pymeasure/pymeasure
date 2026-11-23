@@ -23,6 +23,7 @@ Deprecated
 
 Changed
 -------
+- Red Pitaya: the slow analog output :code:`voltage` can be read back, and the fast output :code:`amplitude` and :code:`offset` ranges can be adjusted per channel (dynamic properties :code:`amplitude_values` and :code:`offset_values`), e.g. for the STEMlab 125-14 Pro (Gen 2).
 - For property creators :code:`Instrument.control`... the conversion parameters (:code:`cast` etc.) are keyword only, now.
 - Refactored :class:`.Parameter` and :class:`.Metadata` to share a common descriptor base (``_InstanceValueDescriptor``).
   Values are now eagerly converted at assignment time via :meth:`~Parameter.convert` (identity for ``Metadata``).
