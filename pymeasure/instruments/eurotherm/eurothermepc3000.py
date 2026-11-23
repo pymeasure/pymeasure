@@ -67,7 +67,7 @@ class EurothermEPC3000(EurothermBase):
 
     firmware_version = Instrument.measurement(
         "I,107",
-        """Measure the firmware version (str, e.g. ``'V5.01'``).
+        """Get the firmware version (str, e.g. ``'V5.01'``).
 
         The controller returns it as a 16-bit integer with the major version in the high byte
         and the minor version in the low byte.""",

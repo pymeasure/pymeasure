@@ -22,5 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .eurotherm_base import EurothermBase
 from .eurothermepc3000 import EurothermEPC3000

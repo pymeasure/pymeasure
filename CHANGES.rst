@@ -34,7 +34,7 @@ Changed
 
 Instruments
 -----------
-- Add the Eurotherm EPC3000 temperature controller and a base class for Eurotherm controllers communicating via Modbus (RTU and TCP).
+- Add the Eurotherm EPC3000 temperature controller, a base class for Eurotherm controllers communicating via Modbus (RTU and TCP), and a ``modbus`` module with the Modbus CRC16 and function codes.
 - Fix Yokogawa AQ6370 :code:`authenticate_ethernet` to compare responses case-insensitively (older firmware such as the AQ6370B answers in lower case) and raise :code:`ConnectionError` instead of asserting.
 
 GUI

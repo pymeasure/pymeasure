@@ -28,34 +28,17 @@ from typing import cast
 
 from pymeasure.adapters import Adapter
 from pymeasure.instruments import AdapterType, Channel, Instrument
+from pymeasure.instruments.modbus import (
+    MODBUS_ERRORS,
+    READ_REGISTERS,
+    WRITE_REGISTERS,
+    crc16,
+)
 from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-
-def crc16(data: bytes | bytearray) -> bytes:
-    """Calculate the Modbus RTU CRC16 of `data`, returned low byte first."""
-    crc = 0xFFFF
-    for octet in data:
-        crc ^= octet
-        for _ in range(8):
-            lsb = crc & 0x1
-            crc >>= 1
-            if lsb:
-                crc ^= 0xA001
-    return crc.to_bytes(2, "little")
-
-
-READ_REGISTERS = 0x03
-WRITE_REGISTERS = 0x10
-
-MODBUS_ERRORS = {
-    0x01: "Illegal function.",
-    0x02: "Illegal data address.",
-    0x03: "Illegal data value.",
-    0x04: "Slave device failure.",
-}
 
 #: Offset of the IEEE region, where each parameter uses two 16-bit registers.
 IEEE_REGION = 0x8000
@@ -254,19 +237,26 @@ class EurothermBase(Instrument):
             return str(int.from_bytes(data, "big") / 1000)
         return str(int.from_bytes(data, "big"))
 
+    def _read_exact(self, count: int, **kwargs) -> bytes:
+        """Read exactly `count` bytes, raising a ConnectionError if fewer arrive."""
+        data = self.read_bytes(count, **kwargs)
+        if len(data) != count:
+            raise ConnectionError(f"Received {len(data)} bytes instead of {count}.")
+        return data
+
     def _read_rtu(self, **kwargs) -> tuple[int, bytes]:
         """Read a Modbus RTU response, return its function code and data."""
-        header = self.read_bytes(2, **kwargs)
+        header = self._read_exact(2, **kwargs)
         if header[0] != self.address:
             raise ConnectionError(f"Response from unexpected address {header[0]}.")
         if header[1] & 0x80:
-            body = self.read_bytes(3, **kwargs)
+            body = self._read_exact(3, **kwargs)
         elif header[1] == READ_REGISTERS:
-            length = self.read_bytes(1, **kwargs)
+            length = self._read_exact(1, **kwargs)
             header += length
-            body = self.read_bytes(length[0] + 2, **kwargs)
+            body = self._read_exact(length[0] + 2, **kwargs)
         elif header[1] == WRITE_REGISTERS:
-            body = self.read_bytes(6, **kwargs)
+            body = self._read_exact(6, **kwargs)
         else:
             raise ConnectionError(f"Unexpected Modbus function code {header[1]}.")
         if crc16(header + body[:-2]) != body[-2:]:
@@ -276,11 +266,11 @@ class EurothermBase(Instrument):
     def _read_tcp(self, **kwargs) -> tuple[int, bytes]:
         """Read a Modbus TCP response, return its function code and data."""
         for _ in range(self._MAX_STALE_FRAMES + 1):
-            header = self.read_bytes(7, **kwargs)
+            header = self._read_exact(7, **kwargs)
             length = int.from_bytes(header[4:6], "big")
             if not 2 <= length <= 254:
                 raise ConnectionError(f"Invalid Modbus TCP frame length {length}.")
-            pdu = self.read_bytes(length - 1, **kwargs)  # always consume the whole frame
+            pdu = self._read_exact(length - 1, **kwargs)  # always consume the whole frame
             if int.from_bytes(header[:2], "big") == self._transaction:
                 break
             log.debug("Discarding a Modbus TCP response of another transaction.")

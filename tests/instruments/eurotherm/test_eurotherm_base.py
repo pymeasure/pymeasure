@@ -27,14 +27,8 @@
 import pytest
 
 from pymeasure.adapters import FakeAdapter
-from pymeasure.instruments.eurotherm import EurothermBase
-from pymeasure.instruments.eurotherm.eurotherm_base import crc16
+from pymeasure.instruments.eurotherm.eurotherm_base import EurothermBase
 from pymeasure.test import expected_protocol
-
-
-def test_crc16():
-    # Example from the Modbus over serial line specification.
-    assert crc16(b"\x02\x07") == b"\x41\x12"
 
 
 def test_init():
@@ -138,6 +132,14 @@ def test_flush_error_propagates():
 
     with pytest.raises(OSError, match="flush failed"):
         _ = EurothermBase(FlushingAdapter()).active_setpoint
+
+
+def test_truncated_rtu_header():
+    with expected_protocol(
+        EurothermBase,
+        [(b"\x01\x03\x00\x0f\x00\x01\xb4\t", b"\x01")],
+    ) as inst, pytest.raises(ConnectionError, match="instead of 2"):
+        _ = inst.active_setpoint
 
 
 def test_write_echo_mismatch():
