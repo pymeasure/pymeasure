@@ -243,7 +243,8 @@ Defaults shared by all interfaces
 *********************************
 
 When the caller supplies a VISA resource name or a GPIB address, the instrument passes its connection settings to :py:class:`~pymeasure.adapters.VISAAdapter`.
-Use ``kwargs.setdefault`` for a default that applies to every interface.
+Use ``kwargs.setdefault`` for a shared default that can stay in ``**kwargs``.
+Put options that users should see when constructing an instrument in the constructor signature.
 For example, this instrument uses a timeout of 1500 ms unless the caller supplies a different ``timeout``:
 
 .. code-block:: python
@@ -260,21 +261,25 @@ Interface-specific defaults
 Put settings that depend on the VISA interface in the matching `interface type <https://pyvisa.readthedocs.io/en/latest/api/constants.html#pyvisa.constants.InterfaceType>`__ dictionary, even if the instrument has only one physical interface.
 For example, an RS-232 instrument connected through a serial-to-Ethernet converter may appear as a TCP/IP resource.
 In that case the converter handles the serial baud rate, so the driver should pass its baud rate default only when opening an ASRL resource.
+If the instrument supports a configurable baud rate, expose it in the constructor signature and use its value in the ``asrl`` dictionary.
+In this example, both the direct serial connection and the TCP/IP converter carry responses terminated by CRLF.
 
 .. code-block:: python
 
-    def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", **kwargs):
+    def __init__(
+        self, adapter: AdapterType, name: str = "Extreme 5000", baud_rate: int = 2400, **kwargs
+    ):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
             name,
             gpib={'enable_repeat_addressing': False, 'read_termination': '\r'},
-            asrl={'baud_rate': 2400, 'read_termination': '\r\n'},
+            asrl={'baud_rate': baud_rate, 'read_termination': '\r\n'},
+            tcpip={'read_termination': '\r\n'},
             **kwargs
         )
 
 ``VISAAdapter`` uses only the dictionary matching the resource and gives explicit keyword arguments precedence over entries in that dictionary.
 For example, passing ``baud_rate=9600`` for an ASRL resource overrides the 2400 baud default.
-If an option should be visible in the constructor signature, name it there and use its value in the matching dictionary.
 
 For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, see whether :ref:`advanced_communication_protocols` fits your bill. If, for some exotic reason, you need a special connection type, which you cannot model with PyVISA, you can write your own Adapter.
