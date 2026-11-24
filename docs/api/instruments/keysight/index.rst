@@ -18,6 +18,7 @@ If the instrument you are looking for is not here, also check :doc:`Agilent<../a
    keysightE3631A
    keysightEDU36311A
    keysight81160A
+   keysight35670A
    keysight33250A
    keysightPNA
    keysightE364xA
