@@ -36,6 +36,7 @@ Instruments by manufacturer:
    bkprecision/index
    danfysik/index
    deltaelektronica/index
+   easttester/index
    edwards/index
    eurotest/index
    fluke/index
