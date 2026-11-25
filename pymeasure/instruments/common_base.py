@@ -960,6 +960,8 @@ class CommonBase:
         :param get_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
         :param get_process_list: A function that takes the value list and processes it.
+            If value mapping is enabled, a returned one-item list is mapped by its item.
+            Scalar and multi-item results are returned unchanged.
         :param set_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
         :param check_set_errors: Toggles checking errors after setting
@@ -1053,23 +1055,28 @@ class CommonBase:
                               f"""'{get_command}': '{"', '".join(errors)}'.""")
             if len(vals) == 1:
                 value = get_process(vals[0])
-                if not map_values:
-                    return value
-                elif isinstance(values, (list, tuple, range)):
-                    return values[int(value)]
-                elif isinstance(values, dict):
-                    for k, v in values.items():
-                        if v == value:
-                            return k
-                    raise KeyError(f"Value {value} not found in mapped values")
-                else:
-                    raise ValueError(
-                        f'Values of type `{type(values)}` are not allowed '
-                        'for Instrument.control'
-                    )
             else:
-                vals = get_process_list(vals)
-                return vals
+                processed_values = get_process_list(vals)
+                if not map_values or not isinstance(processed_values, list):
+                    return processed_values
+                if len(processed_values) != 1:
+                    return processed_values
+                value = processed_values[0]
+
+            if not map_values:
+                return value
+            elif isinstance(values, (list, tuple, range)):
+                return values[int(value)]
+            elif isinstance(values, dict):
+                for k, v in values.items():
+                    if v == value:
+                        return k
+                raise KeyError(f"Value {value} not found in mapped values")
+            else:
+                raise ValueError(
+                    f'Values of type `{type(values)}` are not allowed '
+                    'for Instrument.control'
+                )
 
         def fset(
             self: "CommonBase",
