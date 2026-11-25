@@ -410,3 +410,47 @@ def test_digital_reset():
     ) as inst:
         assert inst.digital_reset() is None
 
+
+
+def test_analog_out_slow_voltage_setter():
+    with expected_protocol(
+            RedPitayaScpi,
+            [(b'ANALOG:PIN AOUT2, 0.500000', None)],
+    ) as inst:
+        inst.analog_out_slow[2].voltage = 0.5
+
+
+def test_analog_out_slow_voltage_getter():
+    with expected_protocol(
+            RedPitayaScpi,
+            [(b'ANALOG:PIN? AOUT2', b'0.5')],
+    ) as inst:
+        assert inst.analog_out_slow[2].voltage == pytest.approx(0.5)
+
+
+def test_analog_out_amplitude_default_range():
+    with expected_protocol(
+            RedPitayaScpi,
+            [],
+    ) as inst, pytest.raises(ValueError):
+        inst.aout1.amplitude = 1.5
+
+
+def test_analog_out_amplitude_dynamic_range():
+    with expected_protocol(
+            RedPitayaScpi,
+            [(b'SOUR1:VOLT 1.500000', None)],
+    ) as inst:
+        inst.aout1.amplitude_values = [0, 2]
+        inst.aout1.amplitude = 1.5
+        with pytest.raises(ValueError):
+            inst.aout1.amplitude = 2.5
+
+
+def test_analog_out_offset_dynamic_range():
+    with expected_protocol(
+            RedPitayaScpi,
+            [(b'SOUR2:VOLT:OFFS 1.500000', None)],
+    ) as inst:
+        inst.aout2.offset_values = [-2, 2]
+        inst.aout2.offset = 1.5

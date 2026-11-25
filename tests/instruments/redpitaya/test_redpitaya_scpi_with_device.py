@@ -93,6 +93,7 @@ class TestRedpitaya:
         for ind in range(4):
             _ = inst.analog_in_slow[ind].voltage
             inst.analog_out_slow[ind].voltage = 0.5
+            assert inst.analog_out_slow[ind].voltage == pytest.approx(0.5, abs=0.05)
 
     def test_decimation(self, redpitaya_scpi):
         inst = redpitaya_scpi
