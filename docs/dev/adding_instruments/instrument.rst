@@ -237,70 +237,49 @@ This might be because an instrument connection requires *specific non-default se
 
 The :py:class:`~pymeasure.adapters.VISAAdapter` class offers a flexible way of dealing with connection settings fully within the initializer of your instrument.
 
-Single interface
-****************
+.. _single-interface:
 
-The simplest version, suitable when the instrument connection needs default settings, just passes all keywords through to the ``Instrument`` initializer, which hands them over to :py:class:`~pymeasure.adapters.VISAAdapter` if ``adapter`` is a string or integer.
+Defaults shared by all interfaces
+*********************************
 
-.. code-block:: python
-
-    def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", **kwargs):
-        super().__init__(
-            adapter,
-            name,
-            **kwargs
-        )
-
-If you want to set defaults that should be prominently visible to the user and may be overridden, place them in the signature.
-This is suitable when the instrument has one type of interface, or any defaults are valid for all interface types, see the documentation in :py:class:`~pymeasure.adapters.VISAAdapter` for details.
-
-.. code-block:: python
-
-    def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", baud_rate: int = 2400, **kwargs):
-        super().__init__(
-            adapter,
-            name,
-            baud_rate=baud_rate,
-            **kwargs
-        )
-
-If you want to set defaults, but they don't need to be prominently exposed for replacement, use this pattern, which sets the value only when there is no entry in ``kwargs``, yet.
+When the caller supplies a VISA resource name or a GPIB address, the instrument passes its connection settings to :py:class:`~pymeasure.adapters.VISAAdapter`.
+Use ``kwargs.setdefault`` for a shared default that can stay in ``**kwargs``.
+Put options that users should see when constructing an instrument in the constructor signature.
+For example, this instrument uses a timeout of 1500 ms unless the caller supplies a different ``timeout``:
 
 .. code-block:: python
 
     def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", **kwargs):
         kwargs.setdefault('timeout', 1500)
-        super().__init__(
-            adapter,
-            name,
-            **kwargs
-        )
+        super().__init__(adapter, name, **kwargs)
 
-Multiple interfaces
-*******************
+.. _multiple-interfaces:
 
-Now, if you have instruments with multiple interfaces (e.g. serial, TCPI/IP, USB), things get interesting.
-You might have settings common to all interfaces (like ``timeout``), but also settings that are only valid for one interface type, but not others.
+Interface-specific defaults
+***************************
 
-The trick is to add keyword arguments that name the interface type, like ``asrl`` or ``gpib``, below (see `here <https://pyvisa.readthedocs.io/en/latest/api/constants.html#pyvisa.constants.InterfaceType>`__ for the full list).
-These then contain a *dictionary* with the settings specific to the respective interface:
+Put settings that depend on the VISA interface in the matching `interface type <https://pyvisa.readthedocs.io/en/latest/api/constants.html#pyvisa.constants.InterfaceType>`__ dictionary, even if the instrument has only one physical interface.
+For example, an RS-232 instrument connected through a serial-to-Ethernet converter may appear as a TCP/IP resource.
+In that case the converter handles the serial baud rate, so the driver should pass its baud rate default only when opening an ASRL resource.
+If the instrument supports a configurable baud rate, expose it in the constructor signature and use its value in the ``asrl`` dictionary.
+In this example, both the direct serial connection and the TCP/IP converter carry responses terminated by CRLF.
 
 .. code-block:: python
 
-    def __init__(self, adapter: AdapterType, name: str = "Extreme 5000", baud_rate: int = 2400, **kwargs):
+    def __init__(
+        self, adapter: AdapterType, name: str = "Extreme 5000", baud_rate: int = 2400, **kwargs
+    ):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
             name,
-            gpib=dict(enable_repeat_addressing=False,
-                      read_termination='\r'),
-            asrl={'baud_rate': baud_rate,
-                  'read_termination': '\r\n'},
+            gpib={'enable_repeat_addressing': False, 'read_termination': '\r'},
+            asrl={'baud_rate': baud_rate, 'read_termination': '\r\n'},
+            tcpip={'read_termination': '\r\n'},
             **kwargs
         )
 
-When the instrument instance is created, the interface-specific settings for the actual interface being used get merged with ``**kwargs`` before passing them on to PyVISA, the rest is discarded.
-This way, we always pass on a valid set of arguments.
-In addition, any entries in ``**kwargs**`` take precedence, so if they need to, it is *still* possible for users to override any defaults you set in the instrument definition.
+``VISAAdapter`` uses only the dictionary matching the resource and gives explicit keyword arguments precedence over entries in that dictionary.
+For example, passing ``baud_rate=9600`` for an ASRL resource overrides the 2400 baud default.
 
 For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, see whether :ref:`advanced_communication_protocols` fits your bill. If, for some exotic reason, you need a special connection type, which you cannot model with PyVISA, you can write your own Adapter.
