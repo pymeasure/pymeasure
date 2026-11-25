@@ -259,7 +259,7 @@ class KeysightPNA(SCPIMixin, Instrument):
                           )
 
         pna.load_state("D:/States/MyState.csa")
-        pna.adapter.connection.timeout = 20000  # set a new timeout to 20 sec
+        pna.adapter.timeout = 20000  # set a new timeout to 20 sec
         pna.ch_1.single()  # execute a single trigger of channel 1
         pna.complete  # wait till the sweep has finished
         x_data = pna.ch_1.tr_1.x_data  # get the X data of trace 1 in channel 1

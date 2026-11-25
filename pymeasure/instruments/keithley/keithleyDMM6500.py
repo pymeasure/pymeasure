@@ -23,6 +23,7 @@
 #
 
 import logging
+from typing import cast
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin, cast_or_str
 from pymeasure.instruments.common_base import InstrumentProperty
@@ -1205,7 +1206,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
                 chn_list[idx] = int(ch)
             except ValueError:
                 # process string "a:b" -> a, a+1, ..., b
-                ch = list(map(int, ch.split(":")))
+                ch = list(map(int, cast(str, ch).split(":")))
                 ch[-1] += 1
                 chn_list[idx: idx + 1] = list(range(*ch))
         return chn_list

@@ -29,6 +29,7 @@ from time import time as now
 import numpy as np
 from pyvisa import VisaIOError
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import AdapterType, Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -371,7 +372,7 @@ class HP8753E(SCPIMixin, Instrument):
                 )
 
         sleep(0.5)
-        while self.adapter.connection.bytes_in_buffer > 0:
+        while visa_resource(self.adapter).bytes_in_buffer > 0:
             _ = self.read()
             sleep(0.25)
 
@@ -442,7 +443,7 @@ class HP8753E(SCPIMixin, Instrument):
 
         while len(temp_data) < (points):
             try:
-                if self.adapter.connection.bytes_in_buffer >= 50:
+                if visa_resource(self.adapter).bytes_in_buffer >= 50:
                     temp_data.append(self.read_bytes(50).decode("utf-8").strip("\n").split(","))
                 else:
                     sleep(0.001)

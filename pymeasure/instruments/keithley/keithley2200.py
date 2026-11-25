@@ -123,5 +123,6 @@ class Keithley2200(SCPIUnknownMixin, Instrument):
         ":DISP:TEXT:DATA?",
         ":DISP:TEXT:DATA '%s'",
         """Control text to be displayed(32 characters).""",
+        cast=str,
         get_process=lambda v: v.replace('"', ""),
     )

@@ -9,7 +9,7 @@ authors = [
     {name = "PyMeasure Developers"}
 ]
 description = "Scientific measurement library for instruments, experiments, and live-plotting"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = ["measure", "instrument", "experiment control", "automate", "graph", "plot"]
 license = {text = "MIT"}
 classifiers = [
@@ -21,7 +21,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -56,6 +55,7 @@ docs = [
     "sphinx>=5.0.0",
     "sphinx_rtd_theme>=1.1.0",
     "sphinx_autodoc_typehints>=2.3.0",
+    "sphinx-lint>=1.0.2",
 ]
 dev = [
     "pyright>=1.1.400",
@@ -104,13 +104,12 @@ filterwarnings = [
 ]
 
 [tool.pyright]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 typeCheckingMode = "basic"
 reportMissingImports = "warning"
 reportAttributeAccessIssue = "warning"
 reportOptionalSubscript = "warning"
 reportOptionalMemberAccess = "warning"
 reportIncompatibleMethodOverride = "warning"
-reportOperatorIssue = "warning"
 reportPrivateImportUsage = "none"
 defineConstant = { PYQT6 = true, PYSIDE2 = false, PYQT5 = false, PYSIDE6 = false }

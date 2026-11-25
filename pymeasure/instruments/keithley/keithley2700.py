@@ -120,6 +120,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         check_get_errors=True,
         check_set_errors=True,
         separator=None,
+        cast=str,
         get_process=lambda v: [
             int(vv) for vv in (v.strip(" ()@,").split(",")) if vv != ""
         ],

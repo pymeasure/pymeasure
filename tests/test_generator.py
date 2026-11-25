@@ -507,7 +507,7 @@ def test_set_monitored_quantity(comm_pairs, args, kwargs, value):
                               b"\x01\x03\x04\x00\x00\x03\xE8\xFA\x8D")])
         a.log.addHandler(ByteStreamHandler(generator._stream))
         a.log.setLevel(logging.DEBUG)
-        generator.inst = TC038D(a)
+        generator.inst = TC038D(a)  # pyright: ignore[reportAttributeAccessIssue]
         generator._class = "TC038D"
         assert generator.test_property_getter("temperature") == 100
         assert generator._getters == {'temperature': (

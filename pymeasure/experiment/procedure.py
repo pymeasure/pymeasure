@@ -28,12 +28,12 @@ import logging
 import re
 import sys
 from copy import deepcopy
+from enum import StrEnum
 from typing import Any
 from warnings import warn
 
 from pint import UndefinedUnitError, facets
 
-from pymeasure.instruments._strenum import StrEnum
 from pymeasure.units import ureg
 
 from .parameters import Measurable, Metadata, Parameter
@@ -341,9 +341,14 @@ class ProcedureWrapper:
 
         # Restore the procedure
         spec = importlib.util.spec_from_file_location(self._module, self._file)
-        module = importlib.util.module_from_spec(spec)  # type: ignore[reportArgumentType]
+        if spec is None:
+            raise ValueError(
+                f"Specifications cannot be loaded for module '{self._module}' at '{self._file}'."
+            )
+        module = importlib.util.module_from_spec(spec)
         sys.modules[self._module] = module
-        spec.loader.exec_module(module)
+        if spec.loader is not None:
+            spec.loader.exec_module(module)
         cls = getattr(module, self._class)
 
         self.procedure: Procedure = cls()

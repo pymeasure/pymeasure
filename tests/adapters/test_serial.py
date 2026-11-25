@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from unittest.mock import patch
+
 import pytest
 import serial
 
@@ -84,6 +86,82 @@ def test_read_bytes_break_on_termchar(adapter, count):
     adapter.read_termination = "\n"
     adapter.write_bytes(b"basd\x02\nfasdf\n")
     assert adapter.read_bytes(count, break_on_termchar=True) == b"basd\x02\n"
+
+
+def test_init_with_port_string():
+    """Construct a SerialAdapter passing a port string.
+
+    This covers the `serial.Serial(port, **kwargs)` branch. On Linux
+    `serial.Serial("loop://")` would attempt `os.open` and raise
+    `SerialException`, so we patch `serial.Serial` to verify the construction
+    path while still obtaining a usable `loop://` connection for assertions.
+    """
+    real_connection = serial.serial_for_url("loop://", timeout=0.2)
+    with patch(
+        "pymeasure.adapters.serial.serial.Serial",
+        return_value=real_connection,
+    ) as mock_serial:
+        adapter = SerialAdapter("loop://", timeout=0.2)
+    try:
+        mock_serial.assert_called_once_with("loop://", timeout=0.2)
+        assert adapter.connection is real_connection
+    finally:
+        adapter.connection.close()
+
+
+def test_flush_read_buffer(adapter):
+    """Verify that `flush_read_buffer` empties the input buffer."""
+    adapter.write_bytes(b"some data")
+    assert adapter.connection.in_waiting > 0
+    adapter.flush_read_buffer()
+    assert adapter.connection.in_waiting == 0
+
+
+def test_timeout_in_milliseconds(adapter):
+    """The timeout property is in integer milliseconds and pyserial stores seconds."""
+    adapter.timeout = 250
+    assert adapter.timeout == 250
+    assert isinstance(adapter.timeout, int)
+    assert adapter.connection.timeout == 0.25
+
+
+def test_timeout_initial_value_is_milliseconds(adapter):
+    """The constructor timeout of 0.2 s is reported as 200 ms."""
+    assert adapter.timeout == 200
+    assert isinstance(adapter.timeout, int)
+
+
+def test_timeout_none_is_passed_through(adapter):
+    """``None`` means no timeout and is pyserial's native sentinel."""
+    adapter.timeout = None
+    assert adapter.timeout is None
+    assert adapter.connection.timeout is None
+
+
+def test_timeout_infinity_is_passed_as_none(adapter):
+    """``float("inf")`` is pyserial's infinite timeout and is reported as ``None``."""
+    adapter.timeout = float("inf")
+    assert adapter.connection.timeout is None
+    assert adapter.timeout is None
+
+
+def test_timeout_rounds_seconds_to_milliseconds(adapter):
+    """A fractional pyserial timeout is reported as rounded integer milliseconds."""
+    adapter.connection.timeout = 0.1234567
+    assert adapter.timeout == 123
+    assert isinstance(adapter.timeout, int)
+
+
+def test_timeout_zero_is_passed_through(adapter):
+    """A zero timeout keeps pyserial's non-blocking semantics."""
+    adapter.timeout = 0
+    assert adapter.timeout == 0
+    assert adapter.connection.timeout == 0
+
+
+def test_repr(adapter):
+    """Verify the `repr` of a SerialAdapter includes `port=`."""
+    assert repr(adapter) == "<SerialAdapter(port='loop://')>"
 
 
 @pytest.mark.parametrize("test_input,expected", [([1, 2, 3], b'OUTP#13\x01\x02\x03'),

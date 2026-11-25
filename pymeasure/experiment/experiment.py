@@ -116,7 +116,7 @@ class Experiment:
         title: str,
         procedure: Procedure,
         analyse: Callable[[pd.DataFrame], pd.DataFrame] = (lambda x: x),
-    ):
+    ) -> None:
         self.title = title
         self.procedure = procedure
         self.measlist = []
@@ -125,7 +125,7 @@ class Experiment:
         self.figs = []
         self._data = []
         self.analyse = analyse
-        self._data_timeout = 10
+        self._data_timeout: float = 10
 
         config = get_config()
         set_mpl_rcparams(config)
@@ -144,7 +144,7 @@ class Experiment:
         self.worker = Worker(self.results, self.scribe.queue, logging.DEBUG)
         log.info("Create worker")
 
-    def start(self):
+    def start(self) -> None:
         """Start the worker"""
         log.info("Starting worker...")
         self.worker.start()
@@ -156,7 +156,7 @@ class Experiment:
         self._data = self.analyse(self.results.data.copy())
         return self._data
 
-    def wait_for_data(self):
+    def wait_for_data(self) -> bool:
         """Wait for the data attribute to fill with datapoints."""
         t = time.time()
         while self.data.empty:
@@ -166,7 +166,7 @@ class Experiment:
                 return False
         return True
 
-    def plot_live(self, *args, **kwargs):
+    def plot_live(self, *args, **kwargs) -> None:
         """Live plotting loop for jupyter notebook, which automatically updates
         (an) in-line matplotlib graph(s). Will create a new plot as specified by input
         arguments, or will update (an) existing plot(s)."""
@@ -180,7 +180,7 @@ class Experiment:
                 self.worker.terminate()
             self.scribe.stop()
 
-    def plot(self, *args, **kwargs):
+    def plot(self, *args, **kwargs) -> None:
         """Plot the results from the experiment.data pandas dataframe. Store the
         plots in a plots list attribute."""
         if self.wait_for_data():
@@ -191,7 +191,7 @@ class Experiment:
                 self.figs.append(ax.get_figure())
             self._user_interrupt = False
 
-    def clear_plot(self):
+    def clear_plot(self) -> None:
         """Clear the figures and plot lists."""
         for fig in self.figs:
             fig.clf()
@@ -201,7 +201,7 @@ class Experiment:
         self.plots = []
         gc.collect()
 
-    def update_plot(self):
+    def update_plot(self) -> None:
         """Update the plots in the plots list with new data from the experiment.data
         pandas dataframe."""
         try:
@@ -223,7 +223,7 @@ class Experiment:
             display.display(*self.figs)
             self._user_interrupt = True
 
-    def update_line(self, ax, hl, xname, yname):
+    def update_line(self, ax, hl, xname, yname) -> None:
         """Update a line in a matplotlib graph with new data."""
         del hl._xorig, hl._yorig
         hl.set_xdata(self._data[xname])
@@ -232,7 +232,7 @@ class Experiment:
         ax.autoscale()
         gc.collect()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.scribe.stop()
         if self.worker.is_alive():
             self.worker.recorder_queue.put(None)

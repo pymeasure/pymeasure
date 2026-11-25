@@ -85,8 +85,11 @@ def test_update_preview_loads_file_contents(qtbot, tmp_path, extension):
 
     dialog.update_preview(str(data_file))
 
-    names = [dialog.preview_param.topLevelItem(i).text(0)
-             for i in range(dialog.preview_param.topLevelItemCount())]
+    names = []
+    for i in range(dialog.preview_param.topLevelItemCount()):
+        item = dialog.preview_param.topLevelItem(i)
+        assert item is not None
+        names.append(item.text(0))
     assert "X" in names
     assert "Y" in names
 

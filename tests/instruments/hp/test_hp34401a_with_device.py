@@ -279,6 +279,6 @@ def test_stored_readings_count(resetted_hp34401a):
 
 
 def test_self_test_result(resetted_hp34401a):
-    resetted_hp34401a.adapter.connection.timeout = 60000
+    resetted_hp34401a.adapter.timeout = 60000
     assert resetted_hp34401a.self_test_result in [True, False]
     assert len(resetted_hp34401a.check_errors()) == 0

@@ -71,7 +71,12 @@ class Trace(Channel):
 
 
 class AQ6370Series(SCPIMixin, Instrument):
-    """Represents Yokogawa AQ6370 Series of optical spectrum analyzer."""
+    """Represents Yokogawa AQ6370 Series of optical spectrum analyzer.
+
+    For an ethernet connection, pass the port as part of a socket resource name, e.g.
+    ``"TCPIP::192.168.1.10::10001::SOCKET"`` (10001 is the factory default port), and call
+    :meth:`authenticate_ethernet` before sending any other command.
+    """
 
     def __init__(
         self,
@@ -92,7 +97,6 @@ class AQ6370Series(SCPIMixin, Instrument):
             tcpip={
                 "read_termination": "\r\n",
                 "write_termination": "\r\n",
-                "port": 10001,  # configurable
             },
             **kwargs,
         )

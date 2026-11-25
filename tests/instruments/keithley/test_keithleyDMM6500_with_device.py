@@ -120,7 +120,7 @@ SCREEN_DISPLAY_SELS = (
 @pytest.fixture(scope="module")
 def dmm6500(connected_device_address):
     instr = KeithleyDMM6500(connected_device_address)
-    instr.adapter.connection.timeout = 10000
+    instr.adapter.timeout = 10000
     return instr
 
 

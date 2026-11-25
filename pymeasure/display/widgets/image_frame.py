@@ -52,14 +52,17 @@ class ImageFrame(PlotFrame):
         self.change_z_axis(z_axis)
 
     def change_z_axis(self, axis: str) -> None:
-        for item in self.plot.items:
+        plot = self.plot
+        if plot is None:
+            return
+        for item in plot.items:
             if isinstance(item, self.ResultsClass):
                 item.z = axis
                 item.update_data()
         label, units = self.parse_axis(axis)
         if units is not None:
-            self.plot.setTitle(label + f' ({units})')
+            plot.setTitle(label + f' ({units})')
         else:
-            self.plot.setTitle(label)
+            plot.setTitle(label)
         self.z_axis = axis
         self.z_axis_changed.emit(axis)

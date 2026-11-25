@@ -121,8 +121,11 @@ def test_layout_arranges_widgets(qtbot):
     assert vbox.count() == 2
     # First item is the horizontal box, second is the image frame widget
     hbox_item = vbox.itemAt(0)
+    assert hbox_item is not None
     assert isinstance(hbox_item.layout(), QtWidgets.QHBoxLayout)
-    assert vbox.itemAt(1).widget() is wdg.image_frame
+    frame_item = vbox.itemAt(1)
+    assert frame_item is not None
+    assert frame_item.widget() is wdg.image_frame
 
 
 def test_size_hint(qtbot):
@@ -188,6 +191,7 @@ def test_load_adds_curve_to_plot(qtbot):
     results = cast(Results, _FakeResults())
     image = wdg.new_curve(results)
     wdg.load(image)
+    assert wdg.plot is not None
     assert image in wdg.plot.items
     assert image.z == wdg.columns_z.currentText()
 
@@ -197,16 +201,44 @@ def test_remove_removes_curve_from_plot(qtbot):
     results = cast(Results, _FakeResults())
     image = wdg.new_curve(results)
     wdg.load(image)
+    assert wdg.plot is not None
     assert image in wdg.plot.items
 
     wdg.remove(image)
     assert image not in wdg.plot.items
 
 
+def test_close_tears_down_image_frame(qtbot):
+    """Closing the widget forwards teardown to its image frame and drops the plot alias."""
+    wdg = _make_widget(qtbot)
+    frame = wdg.image_frame
+
+    wdg.close()
+
+    assert frame._torn_down is True
+    assert wdg.plot is None
+
+
+def test_never_shown_image_widget_tears_down_when_window_deleted(qtbot, qapp):
+    """A frame on a never-shown image tab is reached through its window filter."""
+    window = QtWidgets.QMainWindow()
+    wdg = ImageWidget("image", columns=COLUMNS, x_axis="x", y_axis="y")
+    window.setCentralWidget(wdg)
+    frame = wdg.image_frame
+    qtbot.addWidget(window)
+
+    window.deleteLater()
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+    qapp.processEvents()
+
+    assert frame._torn_down is True
+
+
 def test_remove_removes_plain_plot_item(qtbot):
     """remove works on any plot item that was added directly to the plot."""
     wdg = _make_widget(qtbot)
     item = pg.PlotDataItem()
+    assert wdg.plot is not None
     wdg.plot.addItem(item)
     assert item in wdg.plot.items
 

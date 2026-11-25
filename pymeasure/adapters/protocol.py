@@ -105,6 +105,9 @@ class ProtocolAdapter(Adapter):
         self, connection_attributes: dict | None, connection_methods: dict | None
     ) -> None:
         self.connection = MagicMock()
+        # MagicMock fabricates attributes on access, so seed the adapter contract's
+        # "no timeout" default explicitly.
+        self.connection.timeout = None
         if connection_attributes is not None:
             for key, value in connection_attributes.items():
                 setattr(self.connection, key, value)
@@ -195,3 +198,12 @@ class ProtocolAdapter(Adapter):
         encountering an END indicator (which causes loss of data).
         """
         self.connection.flush("pyvisa.constants.BufferOperation.discard_read_buffer")
+
+    @property
+    def timeout(self) -> int | None:
+        """Control the timeout in integer milliseconds, stored on the mocked connection."""
+        return self.connection.timeout
+
+    @timeout.setter
+    def timeout(self, value: int | None) -> None:
+        self.connection.timeout = value

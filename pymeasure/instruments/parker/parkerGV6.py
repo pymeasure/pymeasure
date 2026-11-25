@@ -48,12 +48,12 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         )
         self.set_defaults()
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """ Overwrite the Instrument.read command to provide the correct
         functionality
         """
         # TODO seems to be broken as it does not make sense see issue #623
-        return re.sub(r'\r\n\n(>|\?)? ', '', "\n".join(self.readlines()))
+        return re.sub(r'\r\n\n(>|\?)? ', '', "\n".join(self.readlines(**kwargs)))
 
     def set_defaults(self):
         """ Set up the default values for the motor, which

@@ -112,8 +112,9 @@ def test_placeholder_completer_split_path_open_brace_populates_model():
     completer = PlaceholderCompleter(["foo", "bar"])
     completer.splitPath("data{")
     model = completer.model()
+    assert model is not None
     assert model.rowCount() == 2
-    items = [model.data(model.index(i), QtCore.Qt.DisplayRole) for i in range(model.rowCount())]  # pyright: ignore[reportCallIssue, reportOptionalMemberAccess]
+    items = [model.data(model.index(i), QtCore.Qt.DisplayRole) for i in range(model.rowCount())]  # pyright: ignore[reportCallIssue]
     assert "data{foo}" in items
     assert "data{bar}" in items
 
@@ -122,10 +123,14 @@ def test_placeholder_completer_split_path_balanced_braces_clears_model():
     completer = PlaceholderCompleter(["foo", "bar"])
     # First populate the model
     completer.splitPath("data{")
-    assert completer.model().rowCount() == 2
+    model = completer.model()
+    assert model is not None
+    assert model.rowCount() == 2
     # Balanced braces should clear the model
     completer.splitPath("data{foo}")
-    assert completer.model().rowCount() == 0
+    model = completer.model()
+    assert model is not None
+    assert model.rowCount() == 0
 
 
 # ---------------- FilenameValidator ----------------

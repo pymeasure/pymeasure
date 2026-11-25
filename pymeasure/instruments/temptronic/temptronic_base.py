@@ -561,8 +561,6 @@ class ATSBase(SCPIUnknownMixin, Instrument):
         """
         self.write("RSTO")
 
-        return self
-
     def enter_cycle(self):
         """Enter Cycle by sending ``RMPC 1``.
 
@@ -571,8 +569,6 @@ class ATSBase(SCPIUnknownMixin, Instrument):
         """
         self.write("RMPC 1")
 
-        return self
-
     def enter_ramp(self):
         """Enter Ramp by sending ``RMPS 0``.
 
@@ -580,16 +576,12 @@ class ATSBase(SCPIUnknownMixin, Instrument):
         """
         self.write("RMPS 0")
 
-        return self
-
     def clear(self):
         """Clear device-specific errors.
 
         See :attr:`~.error_code` for further information.
         """
         self.write("CLER")
-
-        return self
 
     def next_setpoint(self):
         """Step to the next setpoint during temperature cycling.

@@ -113,11 +113,27 @@ class TestWaferMap:
         with expected_protocol(
             Velox,
             [("StepNextDie 5 6", "0: 5 6 1 2"),
+             ("StepNextDie 5 6", "0: 5 6 1 2"),
              ("StepNextDie 5 6 1", "0: 5 6 1 2"),
+             ("StepNextDie 5 6 1", "0: 5 6 1 2"),
+             ("StepNextDie 5 6", "0: 5 6 1 2"),  # remove after deprecation
+             ("StepNextDie 5 6 1", "0: 5 6 1 2"),  # remove after deprecation
+             ("StepNextDie 5 6 1", "0: 5 6 1 2"),  # remove after deprecation
              ]
         ) as inst:
             inst.wafermap.step_to_die(5, 6)
+            inst.wafermap.step_to_die(x_index=5, y_index=6)
             inst.wafermap.step_to_die(5, 6, 1)
+            inst.wafermap.step_to_die(x_index=5, y_index=6, s_index=1)
+
+            # --- start remove after deprecation
+            with pytest.warns(FutureWarning):
+                inst.wafermap.step_to_die(x_pos=5, y_pos=6)
+            with pytest.warns(FutureWarning):
+                inst.wafermap.step_to_die(x_pos=5, y_pos=6, s_pos=1)
+            with pytest.warns(FutureWarning):
+                inst.wafermap.step_to_die(x_index=5, y_index=6, s_pos=1)
+            # --- end remove after deprecation
 
     @pytest.mark.parametrize("enabled, mapping", [
                              (True, 1),

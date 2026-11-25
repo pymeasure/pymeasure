@@ -43,6 +43,7 @@ class VoltageChannel(Channel):
         "Control the vertical sensitivity of a channel in V/divisions.",
         validator=truncated_range,
         values=[2e-3, 10],
+        cast=str,
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
     )
 
@@ -333,6 +334,7 @@ class SDS1072CML(SCPIMixin, Instrument):
         validator=truncated_range,
         values=[5e-9, 50],
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
+        cast=str,
     )
 
     status = Instrument.measurement(

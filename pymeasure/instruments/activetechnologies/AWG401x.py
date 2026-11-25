@@ -31,6 +31,7 @@ import pprint
 from collections import abc, namedtuple
 from collections.abc import Iterator, Sequence
 
+from pymeasure.adapters.visa import visa_resource
 from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
 from pymeasure.instruments.common_base import CommonBase, IdType
 from pymeasure.instruments.instrument import AdapterType
@@ -827,7 +828,7 @@ class AWG401x_AWG(AWG401x_base):
         def _get_waveform(self, waveform_name: str) -> abc.Sequence[int | float]:
             """Get the waveform point of a specified waveform"""
 
-            bin_value = self.parent.adapter.connection.query_binary_values(
+            bin_value = visa_resource(self.parent.adapter).query_binary_values(
                 'WLISt:WAVeform:DATA? "' + waveform_name + '"',
                 header_fmt='ieee',
                 datatype='h')

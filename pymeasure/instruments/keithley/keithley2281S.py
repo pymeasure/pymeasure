@@ -432,7 +432,7 @@ class BatterySimulationChannel(Channel):
         )
 
 
-class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
+class Keithley2281S(SCPIMixin, KeithleyBuffer, Instrument):
     """
     Represents the Keithley 2281S-20-6 power supply and battery simulator / characterizer.
     Common commands beside `function_mode` and power supply commands should also work for
@@ -453,14 +453,13 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     @property
     def buffer_data(self):
         """Get a pandas dataframe of values from the buffer."""
-        # Replace with match case, once Python>=3.10 is required
-        function_mode = self.function_mode
-        if function_mode == "POWER":
-            return self.ps.buffer_data
-        if function_mode == "TEST":
-            return self.bt.buffer_data
-        if function_mode == "SIMULATOR":
-            return self.bs.buffer_data
+        match self.function_mode:
+            case "POWER":
+                return self.ps.buffer_data
+            case "TEST":
+                return self.bt.buffer_data
+            case "SIMULATOR":
+                return self.bs.buffer_data
 
     display_text_data = Instrument.setting(
         ":DISP:USER:TEXT '%s'", """Set control text to be displayed(24 characters)."""

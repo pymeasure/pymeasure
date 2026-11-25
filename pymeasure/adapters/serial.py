@@ -39,7 +39,8 @@ class SerialAdapter(Adapter):
     :param port: Serial port
     :param write_termination: String appended to messages before writing them.
     :param read_termination: String expected at end of read message and removed.
-    :param \\**kwargs: Any valid key-word argument for serial.Serial
+    :param \\**kwargs: Any valid key-word argument for serial.Serial. A ``timeout`` passed here
+        is pyserial's timeout in seconds, unlike the millisecond-valued :attr:`timeout` property.
     """
 
     connection: serial.Serial
@@ -122,6 +123,26 @@ class SerialAdapter(Adapter):
     def flush_read_buffer(self) -> None:
         """Flush and discard the input buffer."""
         self.connection.reset_input_buffer()
+
+    @property
+    def timeout(self) -> int | None:
+        """Control the read timeout in integer milliseconds, ``None`` waits indefinitely.
+
+        A value of ``float("inf")`` is treated like ``None``, as both mean "no timeout".
+
+        pyserial stores the timeout in seconds, so the setter converts to seconds and the getter
+        converts back and rounds to whole milliseconds.
+        """
+        if self.connection.timeout is None:
+            return None
+        return round(self.connection.timeout * 1000)
+
+    @timeout.setter
+    def timeout(self, value: float | None) -> None:
+        if value is None or value == float("inf"):
+            self.connection.timeout = None
+        else:
+            self.connection.timeout = value / 1000
 
     def __repr__(self) -> str:
         return f"<SerialAdapter(port='{self.connection.port}')>"
