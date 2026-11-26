@@ -350,6 +350,13 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 class PandasModelByRow(PandasModelBase):
     concat_axis: Literal[0, 1] = 0
 
+    def _get_new_rows_columns(
+        self, results: ResultsTable, r1: int, c1: int, r2: int, c2: int
+    ) -> tuple[int, int, int, int]:
+        rows, _, columns, columns_start = super()._get_new_rows_columns(results, r1, c1, r2, c2)
+        rows_start, _ = self.translate_to_global(results, r1, c1)
+        return rows, rows_start, columns, columns_start
+
     def pandas_row_count(self) -> int:
         rows = 0
         for r in self.results_list:

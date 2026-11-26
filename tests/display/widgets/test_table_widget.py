@@ -860,3 +860,27 @@ def test_layout_with_successive_results(qtbot, initially_loaded, layout):
     first.data = _make_df(4)
     wdg.table.update_tables(force=True)
     assert (model.rowCount(), model.columnCount()) == ((7, 2) if layout == 0 else (4, 4))
+
+
+@pytest.mark.parametrize("grow_first", [True, False])
+def test_layout_change_preserves_later_result_index_when_rows_grow(qtbot, grow_first):
+    wdg = _make_widget(qtbot, by_column=True, refresh_time=None)
+    first = FakeResults(_make_df(2))
+    second = FakeResults(_make_df(3) + 100)
+    for results in (first, second):
+        wdg.load(wdg.new_curve(cast(Results, results)))
+    wdg.layout_selector.setCurrentIndex(0)
+    wdg.layout_selector.activated.emit(0)
+    model = wdg.table.source_model()
+    selected = QtCore.QPersistentModelIndex(model.index(2, 1))
+    value = selected.data()
+    inserted = []
+    model.rowsInserted.connect(lambda parent, start, end: inserted.append((start, end)))
+    if grow_first:
+        first.data = _make_df(4)
+    else:
+        second.data = _make_df(5) + 100
+    wdg.table.update_tables(force=True)
+    assert inserted == ([(2, 3)] if grow_first else [(5, 6)])
+    assert selected.row() == (4 if grow_first else 2)
+    assert selected.data() == value
