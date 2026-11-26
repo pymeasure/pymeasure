@@ -22,34 +22,20 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Channel, Instrument, SCPIMixin
-from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import truncated_discrete_set
 
+from .rigol_generator import (
+    RigolGenerator,
+    RigolGeneratorChannel,
+)
 
-class VoltageChannel(Channel):
-    """Represents a channel of the signal generator."""
 
-    output_enabled = Channel.control(
-        ":OUTP{ch}?",
-        ":OUTP{ch} %s",
-        """Control the status of the channel.
-         True if the channel is on and False if not.""",
-        validator=truncated_discrete_set,
-        values={True: "ON", False: "OFF"},
-        map_values=True,
-        cast=str,
-    )
+class VoltageChannel(RigolGeneratorChannel):
+    """Represents a voltage channel of the DG800 signal generator."""
 
-    load = Channel.control(
-        ":OUTP{ch}:LOAD?",
-        ":OUTP{ch}:LOAD %f",
-        """Control the output impedance of a given channel.
-         Returns 9.9e+37 for infinite impedance.""",
-    )
-
-    high_impedance = Channel.control(
-        ":OUTP{ch}:IMP?",
+    # LEGACY! Set load='INF' for high impedance.
+    high_impedance = Channel.setting(
         ":OUTP{ch}:IMP %s",
         """Control the output impedance to be HighZ.
         This means displayed voltages will be internally converted to
@@ -58,80 +44,6 @@ class VoltageChannel(Channel):
         validator=truncated_discrete_set,
         values={True: "INF", False: "50"},
         map_values=True,
-        cast=str,
-    )
-
-    frequency = Channel.control(
-        ":SOUR{ch}:FREQ?", ":SOUR{ch}:FREQ %f", """ Control the output frequency (Hz)"""
-    )
-
-    sync_enabled = Channel.control(
-        ":OUTP{ch}:SYNC?",
-        ":OUTP{ch}:SYNC %s",
-        """Control the synchronization flag.
-          True if the channel triggers the synchronization connector and False if not """,
-        validator=truncated_discrete_set,
-        values={True: "ON", False: "OFF"},
-        map_values=True,
-        cast=str,
-    )
-
-    sine = Channel.setting(
-        ":SOUR{ch}:APPL:SIN %f,%f,%f,%f",
-        """
-        Set the waveform generator to output a sine of specified parameters
-        :param int freq: The frequency of the sine in Hz
-        :param float ampl: The peak to peak amplitude of the sine in V
-        :param float offset: The DC offset of the sine in V
-        :param float phase: The phase offset of the sine in degrees
-        """,
-    )
-    square = Channel.setting(
-        ":SOUR{ch}:APPL:SQU %f,%f,%f,%f",
-        """
-        Set the waveform generator to output a square wave of specified parameters
-        :param int freq: The frequency of the wave in Hz
-        :param float ampl: The peak to peak amplitude of the wave in V
-        :param float offset: The DC offset of the wave in V
-        :param float phase: The phase offset of the wave in degrees
-        """,
-    )
-    triangle = Channel.setting(
-        ":SOUR{ch}:APPL:RAMP %f,%f,%f,%f",
-        """
-        Set the waveform generator to output a triangle wave of specified parameters
-        :param int freq: The frequency of the wave in Hz
-        :param float ampl: The peak to peak amplitude of the wave in V
-        :param float offset: The DC offset of the wave in V
-        :param float phase: The phase offset of the wave in degrees
-        """,
-    )
-    pulse = Channel.setting(
-        ":SOUR{ch}:APPL:PULS %f,%f,%f,%f",
-        """
-        Set the waveform generator to output a pulse wave of specified parameters
-        Note that the duty cycle is specified using the duty_cycle method.
-        :param int freq: The frequency of the wave in Hz
-        :param float ampl: The peak to peak amplitude of the wave in V
-        :param float offset: The DC offset of the wave in V
-        :param float phase: The phase offset of the wave in degrees
-        """,
-    )
-
-    duty_cycle = Channel.control(
-        ":SOUR{ch}:PULS:DCYC?",
-        ":SOUR{ch}:PULS:DCYC %f",
-        """
-        Control the duty cycle of pulses out of the waveform generator. (float)
-        """,
-    )
-
-    pulse_width = Channel.control(
-        ":SOUR{ch}:PULS:WIDT?",
-        ":SOUR{ch}:PULS:WIDT %f",
-        """
-        Control the pulse width of pulses (in seconds) out of the waveform generator.
-        """,
     )
 
     noise = Channel.setting(
@@ -157,13 +69,8 @@ class VoltageChannel(Channel):
         cast=str,
     )
 
-    waveform = Channel.measurement(
-        ":SOUR{ch}:APPL?", """Get a descriptor of the waveform applied.""",
-        cast=cast_or_str(float),
-    )
 
-
-class DG800(SCPIMixin, Instrument):
+class DG800(RigolGenerator):
     """Represents a Rigol DG800-series waveform generator
     and provides a high-level for interacting with the instrument
     """

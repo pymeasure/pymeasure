@@ -26,3 +26,4 @@ from .rigol_dg800 import DG800
 from .rigol_dg5000pro import DG5000Pro
 from .rigol_dho_base import DHOBase
 from .rigol_ds1000z import RigolDS1000Z
+from .rigol_generator import RigolGenerator
