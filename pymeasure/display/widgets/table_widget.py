@@ -342,6 +342,8 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
     def copy_model(self, model_class: type[PandasModelBase]) -> PandasModelBase:
         model = model_class(self.column_index, self.results_list[:])
+        for results in model.results_list:
+            results.data_changed.connect(partial(model._data_changed, results))
         return model
 
 

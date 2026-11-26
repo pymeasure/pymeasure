@@ -839,3 +839,24 @@ def test_table_widget_layout_class_map(qtbot):
         "By Row": PandasModelByRow,
         "By Column": PandasModelByColumn,
     }
+
+
+@pytest.mark.parametrize("initially_loaded", [False, True])
+@pytest.mark.parametrize("layout", [0, 1])
+def test_layout_with_successive_results(qtbot, initially_loaded, layout):
+    wdg = _make_widget(qtbot, by_column=(layout == 0), refresh_time=None)
+    first = FakeResults(_make_df(2))
+    first_table = wdg.new_curve(cast(Results, first))
+    if initially_loaded:
+        wdg.load(first_table)
+    wdg.layout_selector.setCurrentIndex(layout)
+    wdg.layout_selector.activated.emit(layout)
+    if not initially_loaded:
+        wdg.load(first_table)
+    second = FakeResults(_make_df(3))
+    wdg.load(wdg.new_curve(cast(Results, second)))
+    model = wdg.table.source_model()
+    assert (model.rowCount(), model.columnCount()) == ((5, 2) if layout == 0 else (3, 4))
+    first.data = _make_df(4)
+    wdg.table.update_tables(force=True)
+    assert (model.rowCount(), model.columnCount()) == ((7, 2) if layout == 0 else (4, 4))
