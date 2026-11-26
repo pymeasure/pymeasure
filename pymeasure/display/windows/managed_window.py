@@ -407,11 +407,22 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 self.manager.remove(exp)
 
     def delete_experiment_data(self, experiment: list[Experiment] | Experiment) -> None:
+        """Confirm deletion of the first data file for each selected experiment.
+
+        Additional data files associated with the results are kept.
+
+        :param experiment: Experiment or list of experiments to remove.
+        """
         experiments = experiment if isinstance(experiment, list) else [experiment]
         if len(experiments) > 1:
             message = f"Are you sure you want to delete these {len(experiments)} data files?"
         else:
             message = "Are you sure you want to delete this data file?"
+
+        message += (
+            "\n\nOnly the first data file for each experiment is deleted. "
+            "Any additional data files are kept."
+        )
 
         reply = QtWidgets.QMessageBox.question(self, 'Delete Data',
                                                message,
