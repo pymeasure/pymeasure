@@ -180,6 +180,13 @@ Here we are free to modify the procedure before putting it on the queue.
 In this context, the :class:`~pymeasure.display.manager.Manager` uses an :class:`~pymeasure.display.manager.Experiment` object to keep track of the :class:`~pymeasure.experiment.procedure.Procedure`, :class:`~pymeasure.experiment.results.Results`, and its associated graphical representations in the browser and live-graph.
 This is then given to the :class:`~pymeasure.display.manager.Manager` to queue the experiment.
 
+The browser's **Delete Data File** action removes an experiment from the display and
+deletes only its first data file (``Results.data_filename``).
+If you save the same results to several files by passing a list of filenames to
+:class:`~pymeasure.experiment.results.Results`, the additional files are kept.
+Selecting several experiments deletes the first file of each selected experiment,
+after confirmation.
+
 .. image:: pymeasure-managedwindow-queued.png
     :alt: ManagedWindow Queue Example
 
